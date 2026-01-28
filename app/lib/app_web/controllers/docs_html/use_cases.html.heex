@@ -15,7 +15,7 @@
         <h3 class="text-lg font-semibold text-slate-900 m-0">Email Sequences</h3>
         <p class="text-slate-600 text-sm mt-1 mb-0">Schedule follow-up emails without managing queues or workers.</p>
       </div>
-      <pre class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto"><code>// Schedule welcome email 24 hours after signup
+      <pre class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><code>// Schedule welcome email 24 hours after signup
 await fetch('https://prikke.whitenoise.no/api/jobs', &#123;
   method: 'POST',
   headers: &#123; 'Authorization': 'Bearer YOUR_API_KEY' &#125;,
@@ -36,7 +36,7 @@ await fetch('https://prikke.whitenoise.no/api/jobs', &#123;
         <h3 class="text-lg font-semibold text-slate-900 m-0">Report Generation</h3>
         <p class="text-slate-600 text-sm mt-1 mb-0">Generate PDFs or exports without timing out. Email when ready.</p>
       </div>
-      <pre class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto"><code>// Return immediately, process in background
+      <pre class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><code>// Return immediately, process in background
 await prikke.createJob(&#123;
   name: 'generate-report',
   url: 'https://myapp.com/api/reports/generate',
@@ -55,7 +55,7 @@ return Response.json(&#123; status: 'processing' &#125;);</code></pre>
         <h3 class="text-lg font-semibold text-slate-900 m-0">Webhook Relay</h3>
         <p class="text-slate-600 text-sm mt-1 mb-0">Acknowledge webhooks fast, process reliably later.</p>
       </div>
-      <pre class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto"><code>// Stripe webhook - return 200 immediately
+      <pre class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><code>// Stripe webhook - return 200 immediately
 export async function POST(req) &#123;
   const event = await req.json();
   await prikke.createJob(&#123;
@@ -80,7 +80,7 @@ export async function POST(req) &#123;
         <h3 class="text-lg font-semibold text-slate-900 m-0">Subscription Renewals</h3>
         <p class="text-slate-600 text-sm mt-1 mb-0">Process recurring billing daily at 6 AM UTC.</p>
       </div>
-      <pre class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto"><code>&#123;
+      <pre class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><code>&#123;
   "name": "process-renewals",
   "url": "https://myapp.com/api/billing/renewals",
   "cron": "0 6 * * *"
@@ -95,7 +95,7 @@ export async function POST(req) &#123;
         <h3 class="text-lg font-semibold text-slate-900 m-0">Database Cleanup</h3>
         <p class="text-slate-600 text-sm mt-1 mb-0">Clean up old sessions every night at 2 AM.</p>
       </div>
-      <pre class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto"><code>&#123;
+      <pre class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><code>&#123;
   "name": "cleanup-sessions",
   "url": "https://myapp.com/api/maintenance/cleanup",
   "cron": "0 2 * * *"
@@ -110,7 +110,7 @@ export async function POST(req) &#123;
         <h3 class="text-lg font-semibold text-slate-900 m-0">Health Checks</h3>
         <p class="text-slate-600 text-sm mt-1 mb-0">Monitor external APIs every 15 minutes.</p>
       </div>
-      <pre class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto"><code>&#123;
+      <pre class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><code>&#123;
   "name": "healthcheck-stripe",
   "url": "https://myapp.com/api/health/stripe",
   "cron": "*/15 * * * *"
