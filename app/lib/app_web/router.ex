@@ -18,6 +18,14 @@ defmodule PrikkeWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+
+    # Documentation
+    get "/docs", DocsController, :index
+    get "/docs/getting-started", DocsController, :getting_started
+    get "/docs/api", DocsController, :api
+    get "/docs/cron", DocsController, :cron
+    get "/docs/webhooks", DocsController, :webhooks
+    get "/use-cases", DocsController, :use_cases
   end
 
   # Health check endpoint for Koyeb

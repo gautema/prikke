@@ -1,0 +1,83 @@
+<.docs_layout>
+  <h1>Cron Syntax</h1>
+  <p class="text-xl text-slate-600 mb-10">How to write cron expressions for recurring jobs.</p>
+
+  <h2>Format</h2>
+  <p>A cron expression has 5 fields:</p>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-6 my-6 font-mono text-center">
+    <div class="text-2xl tracking-[8px] mb-4">* * * * *</div>
+    <div class="flex justify-center gap-4 text-xs text-slate-500">
+      <span>minute</span>
+      <span>hour</span>
+      <span>day</span>
+      <span>month</span>
+      <span>weekday</span>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Field</th><th>Values</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Minute</td><td><code>0-59</code></td><td>Minute of the hour</td></tr>
+      <tr><td>Hour</td><td><code>0-23</code></td><td>Hour of the day (UTC)</td></tr>
+      <tr><td>Day</td><td><code>1-31</code></td><td>Day of the month</td></tr>
+      <tr><td>Month</td><td><code>1-12</code></td><td>Month of the year</td></tr>
+      <tr><td>Weekday</td><td><code>0-6</code></td><td>Day of the week (0 = Sunday)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Special Characters</h2>
+  <table>
+    <thead>
+      <tr><th>Character</th><th>Meaning</th><th>Example</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>*</code></td><td>Any value</td><td><code>* * * * *</code> = every minute</td></tr>
+      <tr><td><code>,</code></td><td>List</td><td><code>0,30 * * * *</code> = at :00 and :30</td></tr>
+      <tr><td><code>-</code></td><td>Range</td><td><code>0 9-17 * * *</code> = every hour 9am-5pm</td></tr>
+      <tr><td><code>/</code></td><td>Step</td><td><code>*/15 * * * *</code> = every 15 minutes</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Common Examples</h2>
+  <table>
+    <thead>
+      <tr><th>Expression</th><th>Meaning</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>* * * * *</code></td><td>Every minute</td></tr>
+      <tr><td><code>0 * * * *</code></td><td>Every hour</td></tr>
+      <tr><td><code>0 0 * * *</code></td><td>Every day at midnight UTC</td></tr>
+      <tr><td><code>0 6 * * *</code></td><td>Every day at 6:00 AM UTC</td></tr>
+      <tr><td><code>0 9 * * 1-5</code></td><td>Weekdays at 9:00 AM UTC</td></tr>
+      <tr><td><code>0 0 * * 0</code></td><td>Every Sunday at midnight</td></tr>
+      <tr><td><code>0 0 1 * *</code></td><td>First day of every month</td></tr>
+      <tr><td><code>*/15 * * * *</code></td><td>Every 15 minutes</td></tr>
+      <tr><td><code>0 */2 * * *</code></td><td>Every 2 hours</td></tr>
+      <tr><td><code>30 4 * * *</code></td><td>Every day at 4:30 AM UTC</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Timezone</h2>
+  <p>All cron expressions run in <strong>UTC</strong>. Convert your local time to UTC when setting up jobs.</p>
+  <p>For example, if you want a job to run at 9:00 AM CET (Central European Time):</p>
+  <ul>
+    <li>CET is UTC+1, so 9:00 AM CET = 8:00 AM UTC</li>
+    <li>Use: <code>0 8 * * *</code></li>
+  </ul>
+
+  <h2>Minimum Interval</h2>
+  <p>The minimum interval depends on your plan:</p>
+  <table>
+    <thead>
+      <tr><th>Plan</th><th>Minimum</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Free</td><td>Every hour (<code>0 * * * *</code>)</td></tr>
+      <tr><td>Pro</td><td>Every minute (<code>* * * * *</code>)</td></tr>
+    </tbody>
+  </table>
+</.docs_layout>

@@ -111,5 +111,12 @@ Local Dev:
   mix phx.server → Docker PostgreSQL 18
 ```
 
+### Future Enhancements (Noted)
+- **Swagger/OpenAPI docs** - Generate API documentation from code (Phase 9+)
+
+### URL Configuration
+- App URL: `prikke.whitenoise.no`
+- API URL: `api.prikke.whitenoise.no`
+
 ---
 Last updated: 2026-01-28

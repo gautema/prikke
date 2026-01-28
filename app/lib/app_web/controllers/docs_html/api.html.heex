@@ -1,0 +1,178 @@
+<.docs_layout>
+  <h1>API Reference</h1>
+  <p class="text-xl text-slate-600 mb-10">Base URL: <code>https://api.prikke.whitenoise.no</code></p>
+
+  <h2>Authentication</h2>
+  <p>All API requests require an API key. Include it in the Authorization header:</p>
+  <pre><code>Authorization: Bearer pk_live_xxx.sk_live_yyy</code></pre>
+
+  <h2>Declarative API</h2>
+  <p>Prikke supports a declarative, idempotent API. Push your entire configuration in one call and get back what changed. Perfect for infrastructure-as-code workflows.</p>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-purple-500 text-white">PUT</span>
+      <span class="font-mono text-sm">/sync</span>
+    </div>
+    <p>Sync your entire project configuration. This is idempotent - safe to call repeatedly with the same config.</p>
+
+    <h4 class="text-sm mt-4 mb-2">Request Body</h4>
+    <table class="text-sm">
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>jobs</code></td><td>array</td><td>Array of job configurations</td></tr>
+      <tr><td><code>jobs[].key</code></td><td>string</td><td>Unique key for this job (your identifier)</td></tr>
+      <tr><td><code>jobs[].name</code></td><td>string</td><td>Display name for this job</td></tr>
+      <tr><td><code>jobs[].url</code></td><td>string</td><td>The URL to call</td></tr>
+      <tr><td><code>jobs[].method</code></td><td>string</td><td>HTTP method: GET or POST (default: POST)</td></tr>
+      <tr><td><code>jobs[].cron</code></td><td>string</td><td>Cron expression for recurring jobs</td></tr>
+      <tr><td><code>jobs[].headers</code></td><td>object</td><td>Custom headers to send (optional)</td></tr>
+      <tr><td><code>jobs[].body</code></td><td>string</td><td>Request body for POST requests (optional)</td></tr>
+      <tr><td><code>notifications</code></td><td>object</td><td>Notification settings (optional)</td></tr>
+      <tr><td><code>delete_removed</code></td><td>boolean</td><td>Delete jobs not in this config (default: false)</td></tr>
+    </table>
+
+    <h4 class="text-sm mt-4 mb-2">Example</h4>
+    <pre><code>curl -X PUT https://api.prikke.whitenoise.no/sync \
+  -H "Authorization: Bearer pk_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jobs": [
+      {
+        "key": "daily-backup",
+        "name": "Daily backup",
+        "url": "https://myapp.com/api/backup",
+        "cron": "0 6 * * *"
+      }
+    ],
+    "notifications": {
+      "email": "alerts@myapp.com"
+    },
+    "delete_removed": true
+  }'</code></pre>
+  </div>
+
+  <h2>Jobs API</h2>
+  <p>You can also manage jobs individually using traditional REST endpoints.</p>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-emerald-500 text-white">POST</span>
+      <span class="font-mono text-sm">/jobs</span>
+    </div>
+    <p>Create a new scheduled job.</p>
+
+    <h4 class="text-sm mt-4 mb-2">Request Body</h4>
+    <table class="text-sm">
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>key</code></td><td>string</td><td>Unique key for this job (optional)</td></tr>
+      <tr><td><code>name</code></td><td>string</td><td>A name for this job</td></tr>
+      <tr><td><code>url</code></td><td>string</td><td>The URL to call</td></tr>
+      <tr><td><code>method</code></td><td>string</td><td>HTTP method: GET or POST (default: POST)</td></tr>
+      <tr><td><code>cron</code></td><td>string</td><td>Cron expression for recurring jobs</td></tr>
+      <tr><td><code>run_at</code></td><td>string</td><td>ISO 8601 timestamp for one-time jobs</td></tr>
+      <tr><td><code>headers</code></td><td>object</td><td>Custom headers to send (optional)</td></tr>
+      <tr><td><code>body</code></td><td>string</td><td>Request body for POST requests (optional)</td></tr>
+    </table>
+
+    <p class="text-sm text-slate-500">Use either <code>cron</code> (recurring) or <code>run_at</code> (one-time), not both.</p>
+
+    <h4 class="text-sm mt-4 mb-2">Example: Recurring Job</h4>
+    <pre><code>curl -X POST https://api.prikke.whitenoise.no/jobs \
+  -H "Authorization: Bearer pk_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "key": "daily-backup",
+    "name": "Daily backup",
+    "url": "https://myapp.com/api/backup",
+    "cron": "0 6 * * *"
+  }'</code></pre>
+
+    <h4 class="text-sm mt-4 mb-2">Example: One-time Job</h4>
+    <pre><code>curl -X POST https://api.prikke.whitenoise.no/jobs \
+  -H "Authorization: Bearer pk_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Send reminder",
+    "url": "https://myapp.com/api/remind",
+    "run_at": "2025-02-01T09:00:00Z"
+  }'</code></pre>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-blue-500 text-white">GET</span>
+      <span class="font-mono text-sm">/jobs</span>
+    </div>
+    <p>List all your jobs.</p>
+    <pre><code>curl https://api.prikke.whitenoise.no/jobs \
+  -H "Authorization: Bearer pk_live_xxx"</code></pre>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-amber-500 text-white">PATCH</span>
+      <span class="font-mono text-sm">/jobs/:id</span>
+    </div>
+    <p>Update a job. You can update any field.</p>
+    <pre><code>curl -X PATCH https://api.prikke.whitenoise.no/jobs/job_abc123 \
+  -H "Authorization: Bearer pk_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{"cron": "0 7 * * *"}'</code></pre>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-red-500 text-white">DELETE</span>
+      <span class="font-mono text-sm">/jobs/:id</span>
+    </div>
+    <p>Delete a job. This also cancels any pending executions.</p>
+    <pre><code>curl -X DELETE https://api.prikke.whitenoise.no/jobs/job_abc123 \
+  -H "Authorization: Bearer pk_live_xxx"</code></pre>
+  </div>
+
+  <h2>Executions</h2>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-blue-500 text-white">GET</span>
+      <span class="font-mono text-sm">/jobs/:id/executions</span>
+    </div>
+    <p>Get execution history for a job.</p>
+    <pre><code>{
+  "executions": [
+    {
+      "id": "exec_123",
+      "status": "success",
+      "status_code": 200,
+      "duration_ms": 145,
+      "started_at": "2025-01-28T06:00:00Z",
+      "finished_at": "2025-01-28T06:00:00Z"
+    }
+  ]
+}</code></pre>
+  </div>
+
+  <h2>Errors</h2>
+  <p>The API returns standard HTTP status codes:</p>
+  <table>
+    <thead>
+      <tr><th>Code</th><th>Meaning</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>200</code></td><td>Success</td></tr>
+      <tr><td><code>400</code></td><td>Bad request - check your parameters</td></tr>
+      <tr><td><code>401</code></td><td>Unauthorized - invalid API key</td></tr>
+      <tr><td><code>404</code></td><td>Not found</td></tr>
+      <tr><td><code>429</code></td><td>Rate limited - slow down</td></tr>
+      <tr><td><code>500</code></td><td>Server error - try again</td></tr>
+    </tbody>
+  </table>
+
+  <p>Error responses include a message:</p>
+  <pre><code>{
+  "error": {
+    "code": "invalid_cron",
+    "message": "Invalid cron expression: '* * * *' (expected 5 fields)"
+  }
+}</code></pre>
+</.docs_layout>

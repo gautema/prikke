@@ -1,0 +1,160 @@
+<.docs_layout>
+  <h1>Use Cases</h1>
+  <p class="text-xl text-slate-600 mb-10">Common patterns for web apps that need background processing.</p>
+
+  <h2>Async Processing for Web Apps</h2>
+  <p>Modern web apps need to handle tasks that are too slow for a request-response cycle. Instead of blocking users or managing complex worker infrastructure, offload work to Prikke.</p>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+    <span class="inline-block bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs mr-2 mb-3">JavaScript</span>
+    <span class="inline-block bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs mr-2 mb-3">Next.js</span>
+    <span class="inline-block bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs mr-2 mb-3">Vercel</span>
+    <h3 class="mt-0">Email Sequences</h3>
+    <p>Schedule follow-up emails without managing queues or workers. Perfect for serverless platforms where you can't run background processes.</p>
+    <pre><code>// When user signs up, schedule welcome sequence
+await fetch('https://api.prikke.whitenoise.no/jobs', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${PRIKKE_API_KEY}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    name: `welcome-email-${userId}`,
+    url: `https://myapp.com/api/send-welcome`,
+    run_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    body: JSON.stringify({ userId, step: 1 })
+  })
+});</code></pre>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+    <span class="inline-block bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs mr-2 mb-3">React</span>
+    <span class="inline-block bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs mr-2 mb-3">API Routes</span>
+    <h3 class="mt-0">Report Generation</h3>
+    <p>Generate PDFs, exports, or analytics reports without timing out. Return immediately to the user and process in the background.</p>
+    <pre><code>// API route that triggers report generation
+export async function POST(request) {
+  const { reportId, userId } = await request.json();
+
+  // Schedule the heavy work
+  await prikke.createJob({
+    name: `report-${reportId}`,
+    url: `${process.env.APP_URL}/api/generate-report`,
+    run_at: new Date().toISOString(), // Run immediately
+    body: JSON.stringify({ reportId, userId })
+  });
+
+  return Response.json({
+    status: 'processing',
+    message: "We'll email you when it's ready"
+  });
+}</code></pre>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+    <span class="inline-block bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs mr-2 mb-3">Serverless</span>
+    <span class="inline-block bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs mr-2 mb-3">Edge</span>
+    <h3 class="mt-0">Webhook Relay</h3>
+    <p>Receive webhooks from third-party services and process them reliably. Don't lose events when your server is slow or down.</p>
+    <pre><code>// Stripe webhook handler - acknowledge fast, process later
+export async function POST(request) {
+  const event = await request.json();
+
+  // Store event and schedule processing
+  await db.webhookEvents.insert(event);
+
+  await prikke.createJob({
+    name: `stripe-${event.id}`,
+    url: `${process.env.APP_URL}/api/process-stripe`,
+    run_at: new Date().toISOString(),
+    body: JSON.stringify({ eventId: event.id })
+  });
+
+  // Return 200 immediately so Stripe doesn't retry
+  return Response.json({ received: true });
+}</code></pre>
+  </div>
+
+  <h2>Scheduled Tasks</h2>
+  <p>Replace cron jobs running on your server with managed, observable scheduling.</p>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+    <span class="inline-block bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs mr-2 mb-3">SaaS</span>
+    <span class="inline-block bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs mr-2 mb-3">Billing</span>
+    <h3 class="mt-0">Subscription Renewals</h3>
+    <p>Process recurring billing, send renewal reminders, and handle failed payments automatically.</p>
+    <pre><code>// Run daily at 6 AM UTC
+{
+  "name": "process-renewals",
+  "url": "https://myapp.com/api/billing/renewals",
+  "cron": "0 6 * * *"
+}</code></pre>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+    <span class="inline-block bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs mr-2 mb-3">Data</span>
+    <span class="inline-block bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs mr-2 mb-3">Analytics</span>
+    <h3 class="mt-0">Database Maintenance</h3>
+    <p>Clean up old records, aggregate analytics, update materialized views, or sync data between systems.</p>
+    <pre><code>// Cleanup old sessions every night at 2 AM
+{
+  "name": "cleanup-sessions",
+  "url": "https://myapp.com/api/maintenance/sessions",
+  "cron": "0 2 * * *"
+}
+
+// Aggregate daily stats every hour
+{
+  "name": "hourly-stats",
+  "url": "https://myapp.com/api/analytics/aggregate",
+  "cron": "0 * * * *"
+}</code></pre>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+    <span class="inline-block bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs mr-2 mb-3">Monitoring</span>
+    <span class="inline-block bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs mr-2 mb-3">Alerts</span>
+    <h3 class="mt-0">Health Checks</h3>
+    <p>Monitor your services and external dependencies. Get alerted when something breaks.</p>
+    <pre><code>// Check external APIs every 15 minutes
+const job = {
+  name: "healthcheck-stripe",
+  url: "https://myapp.com/api/health/stripe",
+  cron: "*/15 * * * *"
+};
+
+// Your endpoint checks and alerts
+export async function POST(request) {
+  const stripeHealth = await checkStripe();
+
+  if (!stripeHealth.ok) {
+    await sendSlackAlert('Stripe API is down');
+  }
+
+  return Response.json({ ok: stripeHealth.ok });
+}</code></pre>
+  </div>
+
+  <h2>Why Not Just Use...</h2>
+
+  <h3>setTimeout / setInterval?</h3>
+  <p>They don't survive server restarts, can't run on serverless, and you have no visibility into what's scheduled.</p>
+
+  <h3>Database polling?</h3>
+  <p>Works for simple cases, but you're building and maintaining job infrastructure instead of your product.</p>
+
+  <h3>Message queues (SQS, RabbitMQ)?</h3>
+  <p>Great for high-throughput, but overkill for most apps. You need workers, retry logic, dead letter queues, monitoring...</p>
+
+  <h3>Serverless cron (Vercel, CloudFlare)?</h3>
+  <p>Limited to fixed schedules, no one-time jobs, no retry logic, no execution history, and you're locked to one platform.</p>
+
+  <h2>The Prikke Approach</h2>
+  <ul>
+    <li><strong>No infrastructure</strong> - Just HTTP endpoints. Works with any stack.</li>
+    <li><strong>Cron + one-time</strong> - Recurring schedules and delayed jobs in one API.</li>
+    <li><strong>Built-in retries</strong> - Exponential backoff, configurable attempts.</li>
+    <li><strong>Full visibility</strong> - See every execution, debug failures, get alerts.</li>
+    <li><strong>EU-hosted</strong> - Your data stays in Europe. GDPR-friendly.</li>
+  </ul>
+</.docs_layout>
