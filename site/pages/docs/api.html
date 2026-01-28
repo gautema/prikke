@@ -1,0 +1,151 @@
+<!--
+title: API Reference
+-->
+
+<h1>API Reference</h1>
+<p class="subtitle">Base URL: <code>https://api.prikke.io</code></p>
+
+<h2>Authentication</h2>
+<p>All API requests require an API key. Include it in the Authorization header:</p>
+<pre><code>Authorization: Bearer pk_live_xxx.sk_live_yyy</code></pre>
+
+<h2>Jobs</h2>
+
+<div class="endpoint">
+    <div class="endpoint-header">
+        <span class="method post">POST</span>
+        <span class="endpoint-path">/jobs</span>
+    </div>
+    <p>Create a new scheduled job.</p>
+
+    <h4>Request Body</h4>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>name</code></td><td>string</td><td>A name for this job</td></tr>
+        <tr><td><code>url</code></td><td>string</td><td>The URL to call</td></tr>
+        <tr><td><code>method</code></td><td>string</td><td>HTTP method: GET or POST (default: POST)</td></tr>
+        <tr><td><code>cron</code></td><td>string</td><td>Cron expression for recurring jobs</td></tr>
+        <tr><td><code>run_at</code></td><td>string</td><td>ISO 8601 timestamp for one-time jobs</td></tr>
+        <tr><td><code>headers</code></td><td>object</td><td>Custom headers to send (optional)</td></tr>
+        <tr><td><code>body</code></td><td>string</td><td>Request body for POST requests (optional)</td></tr>
+    </table>
+
+    <p>Use either <code>cron</code> (recurring) or <code>run_at</code> (one-time), not both.</p>
+
+    <h4>Example: Recurring Job</h4>
+    <pre><code>curl -X POST https://api.prikke.io/jobs \
+  -H "Authorization: Bearer pk_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Daily backup",
+    "url": "https://myapp.com/api/backup",
+    "cron": "0 6 * * *"
+  }'</code></pre>
+
+    <h4>Example: One-time Job</h4>
+    <pre><code>curl -X POST https://api.prikke.io/jobs \
+  -H "Authorization: Bearer pk_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Send reminder",
+    "url": "https://myapp.com/api/remind",
+    "run_at": "2025-02-01T09:00:00Z",
+    "body": "{\"user_id\": 123}"
+  }'</code></pre>
+
+    <h4>Example: Run Immediately</h4>
+    <p>Set <code>run_at</code> to the current time to execute a job right away:</p>
+    <pre><code>curl -X POST https://api.prikke.io/jobs \
+  -H "Authorization: Bearer pk_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Process upload",
+    "url": "https://myapp.com/api/process",
+    "run_at": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
+    "body": "{\"file_id\": \"abc123\"}"
+  }'</code></pre>
+    <p>In JavaScript:</p>
+    <pre><code>await fetch('https://api.prikke.io/jobs', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer pk_live_xxx',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    name: 'Process upload',
+    url: 'https://myapp.com/api/process',
+    run_at: new Date().toISOString(),
+    body: JSON.stringify({ file_id: 'abc123' })
+  })
+});</code></pre>
+</div>
+
+<div class="endpoint">
+    <div class="endpoint-header">
+        <span class="method get">GET</span>
+        <span class="endpoint-path">/jobs</span>
+    </div>
+    <p>List all your jobs.</p>
+    <pre><code>curl https://api.prikke.io/jobs \
+  -H "Authorization: Bearer pk_live_xxx"</code></pre>
+</div>
+
+<div class="endpoint">
+    <div class="endpoint-header">
+        <span class="method get">GET</span>
+        <span class="endpoint-path">/jobs/:id</span>
+    </div>
+    <p>Get a specific job by ID.</p>
+</div>
+
+<div class="endpoint">
+    <div class="endpoint-header">
+        <span class="method patch">PATCH</span>
+        <span class="endpoint-path">/jobs/:id</span>
+    </div>
+    <p>Update a job. You can update any field.</p>
+</div>
+
+<div class="endpoint">
+    <div class="endpoint-header">
+        <span class="method delete">DELETE</span>
+        <span class="endpoint-path">/jobs/:id</span>
+    </div>
+    <p>Delete a job. This also cancels any pending executions.</p>
+</div>
+
+<h2>Executions</h2>
+
+<div class="endpoint">
+    <div class="endpoint-header">
+        <span class="method get">GET</span>
+        <span class="endpoint-path">/jobs/:id/executions</span>
+    </div>
+    <p>Get execution history for a job.</p>
+
+    <h4>Response</h4>
+    <pre><code>{
+  "executions": [
+    {
+      "id": "exec_123",
+      "status": "success",
+      "status_code": 200,
+      "duration_ms": 145,
+      "started_at": "2025-01-28T06:00:00Z",
+      "finished_at": "2025-01-28T06:00:00Z"
+    }
+  ]
+}</code></pre>
+</div>
+
+<h2>Errors</h2>
+<p>The API returns standard HTTP status codes:</p>
+<table>
+    <tr><th>Code</th><th>Meaning</th></tr>
+    <tr><td><code>200</code></td><td>Success</td></tr>
+    <tr><td><code>400</code></td><td>Bad request - check your parameters</td></tr>
+    <tr><td><code>401</code></td><td>Unauthorized - invalid API key</td></tr>
+    <tr><td><code>404</code></td><td>Not found</td></tr>
+    <tr><td><code>429</code></td><td>Rate limited - slow down</td></tr>
+    <tr><td><code>500</code></td><td>Server error - try again</td></tr>
+</table>

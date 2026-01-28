@@ -1,0 +1,157 @@
+<!--
+title: Webhooks
+-->
+
+<h1>Webhooks</h1>
+<p class="subtitle">How we call your endpoints, handle failures, and keep things reliable.</p>
+
+<h2>How It Works</h2>
+<p>When a job triggers, Prikke makes an HTTP request to your configured URL. Your endpoint processes the request and returns a response.</p>
+
+<ol>
+    <li>Job triggers (cron schedule or one-time)</li>
+    <li>Prikke sends HTTP request to your URL</li>
+    <li>Your server processes the request</li>
+    <li>Return 2xx status for success</li>
+    <li>We log the result and schedule retries if needed</li>
+</ol>
+
+<h2>Request Format</h2>
+<p>Every webhook request includes these headers:</p>
+
+<pre><code>POST /your-endpoint HTTP/1.1
+Host: your-app.com
+Content-Type: application/json
+User-Agent: Prikke/1.0
+X-Prikke-Job-Id: job_abc123
+X-Prikke-Execution-Id: exec_xyz789
+X-Prikke-Signature: sha256=abcdef...</code></pre>
+
+<table>
+    <tr><th>Header</th><th>Description</th></tr>
+    <tr><td><code>X-Prikke-Job-Id</code></td><td>The ID of the job being executed</td></tr>
+    <tr><td><code>X-Prikke-Execution-Id</code></td><td>Unique ID for this execution attempt</td></tr>
+    <tr><td><code>X-Prikke-Signature</code></td><td>HMAC signature for verifying authenticity</td></tr>
+</table>
+
+<h2>Verifying Signatures</h2>
+<p>To ensure requests come from Prikke, verify the signature using your webhook secret:</p>
+
+<pre><code>// Node.js example
+const crypto = require('crypto');
+
+function verifySignature(payload, signature, secret) {
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(payload)
+    .digest('hex');
+
+  return `sha256=${expected}` === signature;
+}
+
+// In your handler
+app.post('/webhook', (req, res) => {
+  const signature = req.headers['x-prikke-signature'];
+  const isValid = verifySignature(
+    JSON.stringify(req.body),
+    signature,
+    process.env.PRIKKE_WEBHOOK_SECRET
+  );
+
+  if (!isValid) {
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+
+  // Process the job...
+});</code></pre>
+
+<h2>Response Handling</h2>
+<p>Prikke interprets your response status code:</p>
+
+<table>
+    <tr><th>Status</th><th>Result</th><th>Action</th></tr>
+    <tr><td><code>2xx</code></td><td>Success</td><td>Job marked complete</td></tr>
+    <tr><td><code>4xx</code></td><td>Client error</td><td>Job marked failed (no retry)</td></tr>
+    <tr><td><code>5xx</code></td><td>Server error</td><td>Job retried with backoff</td></tr>
+    <tr><td>Timeout</td><td>Timeout</td><td>Job retried with backoff</td></tr>
+</table>
+
+<div class="note">
+    <strong>Tip:</strong> Return 4xx for permanent failures (bad data, validation errors) and 5xx for temporary failures (database down, external service unavailable).
+</div>
+
+<h2>Timeouts</h2>
+<p>Your endpoint has <strong>30 seconds</strong> to respond. If no response is received within this time, the execution is marked as a timeout and scheduled for retry.</p>
+
+<div class="warning">
+    <strong>Long-running tasks:</strong> If your job takes longer than 30 seconds, acknowledge the request immediately and process asynchronously. Return 200 to indicate the job was accepted.
+</div>
+
+<h2>Automatic Retries</h2>
+<p>When a job fails (5xx or timeout), Prikke automatically retries with exponential backoff:</p>
+
+<table>
+    <tr><th>Attempt</th><th>Delay</th></tr>
+    <tr><td>1st retry</td><td>1 minute</td></tr>
+    <tr><td>2nd retry</td><td>5 minutes</td></tr>
+    <tr><td>3rd retry</td><td>30 minutes</td></tr>
+    <tr><td>4th retry</td><td>2 hours</td></tr>
+    <tr><td>5th retry</td><td>8 hours</td></tr>
+</table>
+
+<p>After 5 failed attempts, the job is marked as permanently failed and you'll receive an alert (if configured).</p>
+
+<h3>Retry Headers</h3>
+<p>On retry attempts, we include an additional header:</p>
+<pre><code>X-Prikke-Attempt: 2</code></pre>
+<p>You can use this to implement custom retry logic or logging.</p>
+
+<h2>Idempotency</h2>
+<p>Your webhook handler should be <strong>idempotent</strong> - safe to call multiple times with the same data. This is important because:</p>
+<ul>
+    <li>Network issues may cause duplicate deliveries</li>
+    <li>Retries will re-send the same request</li>
+    <li>A timeout might occur after your server processed the request</li>
+</ul>
+
+<p>Use the <code>X-Prikke-Execution-Id</code> header to deduplicate:</p>
+
+<pre><code>// Track processed executions
+const processed = new Set(); // Use Redis in production
+
+app.post('/webhook', async (req, res) => {
+  const executionId = req.headers['x-prikke-execution-id'];
+
+  if (processed.has(executionId)) {
+    return res.json({ status: 'already_processed' });
+  }
+
+  // Process the job...
+  await doWork();
+
+  processed.add(executionId);
+  res.json({ status: 'ok' });
+});</code></pre>
+
+<h2>Custom Headers</h2>
+<p>You can configure custom headers when creating a job:</p>
+
+<pre><code>curl -X POST https://api.prikke.io/jobs \
+  -H "Authorization: Bearer pk_live_xxx" \
+  -d '{
+    "name": "My job",
+    "url": "https://myapp.com/webhook",
+    "cron": "0 * * * *",
+    "headers": {
+      "Authorization": "Bearer my-app-token",
+      "X-Custom-Header": "some-value"
+    }
+  }'</code></pre>
+
+<h2>IP Allowlisting</h2>
+<p>If your firewall requires allowlisting, Prikke sends requests from these IP ranges:</p>
+<pre><code>Coming soon - contact us for current IPs</code></pre>
+
+<div class="note">
+    <strong>Recommendation:</strong> Use signature verification instead of IP allowlisting when possible. It's more secure and doesn't break if our infrastructure changes.
+</div>

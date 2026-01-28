@@ -1,4 +1,3 @@
-import { Database } from "bun:sqlite";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 
@@ -6,7 +5,7 @@ const PORT = process.env.PORT || 3000;
 const DATABASE_URL = process.env.DATABASE_URL;
 
 // Use Postgres if DATABASE_URL is set, otherwise SQLite for local dev
-let db: Database | null = null;
+let db: any = null;
 let pgPool: any = null;
 
 if (DATABASE_URL) {
@@ -26,6 +25,7 @@ if (DATABASE_URL) {
   console.log("Connected to Postgres");
 } else {
   // SQLite for local development
+  const { Database } = await import("bun:sqlite");
   db = new Database("waitlist.sqlite");
   db.run(`
     CREATE TABLE IF NOT EXISTS waitlist (
@@ -55,6 +55,29 @@ async function addToWaitlist(email: string): Promise<boolean> {
 }
 
 const staticDir = join(import.meta.dir, "static");
+const pagesDir = join(import.meta.dir, "pages");
+const templatesDir = join(import.meta.dir, "templates");
+
+// Load layout template
+const layoutTemplate = readFileSync(join(templatesDir, "layout.html"), "utf-8");
+
+function renderPage(pagePath: string): string | null {
+  if (!existsSync(pagePath)) return null;
+
+  const content = readFileSync(pagePath, "utf-8");
+
+  // Extract title from HTML comment at top: <!-- title: Page Title -->
+  const titleMatch = content.match(/<!--\s*title:\s*(.+?)\s*-->/);
+  const title = titleMatch ? titleMatch[1] : "Prikke";
+
+  // Remove the title comment from content
+  const cleanContent = content.replace(/<!--\s*title:\s*.+?\s*-->\s*/, "");
+
+  // Render with layout
+  return layoutTemplate
+    .replace("{{title}}", title)
+    .replace("{{content}}", cleanContent);
+}
 
 const server = Bun.serve({
   port: PORT,
@@ -91,24 +114,37 @@ const server = Bun.serve({
       }
     }
 
-    // Static files
-    let filepath = join(staticDir, url.pathname);
-
-    // Handle root
+    // Landing page - serve directly from static (has its own design)
     if (url.pathname === "/") {
-      filepath = join(staticDir, "index.html");
+      const file = Bun.file(join(staticDir, "index.html"));
+      return new Response(file);
     }
+
+    // Try to serve from pages directory (templated)
+    let pagePath = join(pagesDir, url.pathname);
+
     // Try adding .html extension
-    else if (!url.pathname.includes(".") && existsSync(filepath + ".html")) {
-      filepath = filepath + ".html";
+    if (!url.pathname.includes(".") && existsSync(pagePath + ".html")) {
+      pagePath = pagePath + ".html";
     }
     // Try index.html for directories
-    else if (!url.pathname.includes(".") && existsSync(join(filepath, "index.html"))) {
-      filepath = join(filepath, "index.html");
+    else if (!url.pathname.includes(".") && existsSync(join(pagePath, "index.html"))) {
+      pagePath = join(pagePath, "index.html");
     }
 
-    if (existsSync(filepath)) {
-      const file = Bun.file(filepath);
+    if (existsSync(pagePath) && pagePath.endsWith(".html")) {
+      const html = renderPage(pagePath);
+      if (html) {
+        return new Response(html, {
+          headers: { "Content-Type": "text/html" }
+        });
+      }
+    }
+
+    // Static files (favicon, etc.)
+    let staticPath = join(staticDir, url.pathname);
+    if (existsSync(staticPath)) {
+      const file = Bun.file(staticPath);
       return new Response(file);
     }
 
