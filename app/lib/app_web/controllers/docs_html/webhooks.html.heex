@@ -142,7 +142,7 @@ app.post('/webhook', async (req, res) =&gt; &#123;
 
   <h2>Custom Headers</h2>
   <p>You can configure custom headers when creating a job:</p>
-  <pre><code>curl -X POST https://api.prikke.whitenoise.no/jobs \
+  <pre><code>curl -X POST https://prikke.whitenoise.no/api/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
   -d '&#123;"name": "My job", "url": "https://myapp.com/webhook", "cron": "0 * * * *", "headers": &#123;"Authorization": "Bearer my-app-token"&#125;&#125;'</code></pre>
 </.docs_layout>

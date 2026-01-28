@@ -127,8 +127,8 @@ Local Dev:
 - **Swagger/OpenAPI docs** - Generate API documentation from code (Phase 9+)
 
 ### URL Configuration
-- App URL: `prikke.whitenoise.no`
-- API URL: `api.prikke.whitenoise.no`
+- App URL: `https://prikke.whitenoise.no`
+- API URL: `https://prikke.whitenoise.no/api`
 
 ### Important Development Notes
 - **ALWAYS compile and run tests before committing**: `mix compile && mix test`

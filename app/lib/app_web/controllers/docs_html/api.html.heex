@@ -1,6 +1,6 @@
 <.docs_layout>
   <h1>API Reference</h1>
-  <p class="text-xl text-slate-600 mb-10">Base URL: <code>https://api.prikke.whitenoise.no</code></p>
+  <p class="text-xl text-slate-600 mb-10">Base URL: <code>https://prikke.whitenoise.no/api</code></p>
 
   <h2>Authentication</h2>
   <p>All API requests require an API key. Include it in the Authorization header:</p>
@@ -32,7 +32,7 @@
     </table>
 
     <h4 class="text-sm mt-4 mb-2">Example</h4>
-    <pre><code>curl -X PUT https://api.prikke.whitenoise.no/sync \
+    <pre><code>curl -X PUT https://prikke.whitenoise.no/api/sync \
   -H "Authorization: Bearer pk_live_xxx" \
   -H "Content-Type: application/json" \
   -d '&#123;"jobs": [&#123;"key": "daily-backup", "name": "Daily backup", "url": "https://myapp.com/api/backup", "cron": "0 6 * * *"&#125;], "notifications": &#123;"email": "alerts@myapp.com"&#125;, "delete_removed": true&#125;'</code></pre>
@@ -64,13 +64,13 @@
     <p class="text-sm text-slate-500">Use either <code>cron</code> (recurring) or <code>run_at</code> (one-time), not both.</p>
 
     <h4 class="text-sm mt-4 mb-2">Example: Recurring Job</h4>
-    <pre><code>curl -X POST https://api.prikke.whitenoise.no/jobs \
+    <pre><code>curl -X POST https://prikke.whitenoise.no/api/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
   -H "Content-Type: application/json" \
   -d '&#123;"key": "daily-backup", "name": "Daily backup", "url": "https://myapp.com/api/backup", "cron": "0 6 * * *"&#125;'</code></pre>
 
     <h4 class="text-sm mt-4 mb-2">Example: One-time Job</h4>
-    <pre><code>curl -X POST https://api.prikke.whitenoise.no/jobs \
+    <pre><code>curl -X POST https://prikke.whitenoise.no/api/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
   -H "Content-Type: application/json" \
   -d '&#123;"name": "Send reminder", "url": "https://myapp.com/api/remind", "run_at": "2025-02-01T09:00:00Z"&#125;'</code></pre>
@@ -82,7 +82,7 @@
       <span class="font-mono text-sm">/jobs</span>
     </div>
     <p>List all your jobs.</p>
-    <pre><code>curl https://api.prikke.whitenoise.no/jobs \
+    <pre><code>curl https://prikke.whitenoise.no/api/jobs \
   -H "Authorization: Bearer pk_live_xxx"</code></pre>
   </div>
 
@@ -92,7 +92,7 @@
       <span class="font-mono text-sm">/jobs/:id</span>
     </div>
     <p>Update a job. You can update any field.</p>
-    <pre><code>curl -X PATCH https://api.prikke.whitenoise.no/jobs/job_abc123 \
+    <pre><code>curl -X PATCH https://prikke.whitenoise.no/api/jobs/job_abc123 \
   -H "Authorization: Bearer pk_live_xxx" \
   -H "Content-Type: application/json" \
   -d '&#123;"cron": "0 7 * * *"&#125;'</code></pre>
@@ -104,7 +104,7 @@
       <span class="font-mono text-sm">/jobs/:id</span>
     </div>
     <p>Delete a job. This also cancels any pending executions.</p>
-    <pre><code>curl -X DELETE https://api.prikke.whitenoise.no/jobs/job_abc123 \
+    <pre><code>curl -X DELETE https://prikke.whitenoise.no/api/jobs/job_abc123 \
   -H "Authorization: Bearer pk_live_xxx"</code></pre>
   </div>
 
