@@ -1,0 +1,22 @@
+#!/bin/bash
+# Pre-commit hook: compile and test before allowing commit
+# Install with: git config core.hooksPath .githooks
+
+set -e
+
+echo "Running pre-commit checks..."
+
+cd app
+
+# Check if there are staged changes in the app directory
+if git diff --cached --name-only | grep -q "^app/"; then
+    echo "Compiling..."
+    mix compile --warnings-as-errors
+
+    echo "Running tests..."
+    mix test
+
+    echo "Pre-commit checks passed!"
+else
+    echo "No app changes staged, skipping checks."
+fi

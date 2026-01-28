@@ -33,16 +33,9 @@ COPY lib lib
 COPY priv priv
 COPY assets assets
 COPY rel rel
-COPY test test
 
 # Compile application first (generates colocated hooks for assets)
 RUN mix compile
-
-# Run tests - build fails if tests fail (prevents broken code in production)
-# CI=true skips database setup and Repo startup (no Postgres in Docker build)
-RUN MIX_ENV=test CI=true mix deps.get \
-    && MIX_ENV=test CI=true mix compile --warnings-as-errors \
-    && MIX_ENV=test CI=true mix test
 
 # Then compile assets
 RUN mix assets.deploy
