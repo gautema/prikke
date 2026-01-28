@@ -34,9 +34,11 @@ COPY priv priv
 COPY assets assets
 COPY rel rel
 
-# Compile assets and application
-RUN mix assets.deploy
+# Compile application first (generates colocated hooks for assets)
 RUN mix compile
+
+# Then compile assets
+RUN mix assets.deploy
 
 # Build release
 RUN mix release
