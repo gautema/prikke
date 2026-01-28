@@ -42,6 +42,10 @@ Last updated: 2026-01-28
   - New job full page form
   - Edit job full page form
   - Real-time updates via PubSub
+- [x] **Tier limits enforcement**
+  - Free: max 5 jobs, hourly minimum interval
+  - Pro: unlimited jobs, per-minute intervals
+  - Enforced on create and update
 - [ ] **Executions schema** - Next up
 - [ ] Executions context
 
@@ -50,6 +54,7 @@ Last updated: 2026-01-28
 - [ ] Worker Pool Manager (scales 2-20 workers)
 - [ ] Worker GenServer (claims with SKIP LOCKED)
 - [ ] HTTP Executor (Req library)
+- [ ] **Monthly execution limits** (Free: 5k/mo, Pro: 250k/mo)
 
 ### Phase 5: REST API (Not Started)
 - [ ] API routes for jobs CRUD
@@ -70,6 +75,8 @@ Last updated: 2026-01-28
 ### Phase 7: Notifications (Partial)
 - [x] Mailjet configured for production email
 - [x] Configurable from_email/from_name
+- [x] Branded HTML email templates (logo, emerald button, clean layout)
+- [x] Email deliverability (noreply@whitenoise.no, SPF/DKIM)
 - [ ] Notification worker (on job failure)
 - [ ] Webhook notifications
 - [ ] Slack/Discord auto-detection
@@ -77,7 +84,24 @@ Last updated: 2026-01-28
 ### Phase 8: Billing (Not Started)
 - [ ] Lemon Squeezy integration
 - [ ] Usage tracking (monthly executions)
-- [ ] Limit enforcement (jobs, requests)
+- [ ] Limit enforcement (requests per month)
+
+---
+
+## Tier Limits
+
+| | Free | Pro |
+|---|------|-----|
+| **Jobs** | 5 | Unlimited |
+| **Requests** | 5k/mo | 250k/mo |
+| **Min interval** | Hourly | 1 minute |
+| **History** | 7 days | 30 days |
+
+**Currently enforced:**
+- [x] Max jobs per organization
+- [x] Minimum cron interval
+- [ ] Monthly execution limit (needs executions table)
+- [ ] History retention (needs executions table)
 
 ---
 
@@ -105,6 +129,7 @@ end
 - Tick every 60 seconds
 - Query due jobs (cron: next_run <= now, once: scheduled_at <= now)
 - Insert pending executions
+- **Check monthly execution limit before scheduling**
 
 ### 3. Worker Pool
 - DynamicSupervisor with 2-20 workers
@@ -127,7 +152,7 @@ app/lib/app/
 ├── accounts/
 │   ├── user.ex
 │   ├── user_token.ex
-│   ├── user_notifier.ex
+│   ├── user_notifier.ex      # Branded HTML emails
 │   ├── organization.ex
 │   ├── membership.ex
 │   ├── organization_invite.ex
@@ -135,7 +160,7 @@ app/lib/app/
 ├── accounts.ex
 ├── jobs/
 │   └── job.ex
-├── jobs.ex
+├── jobs.ex                    # Includes tier limit enforcement
 ├── mailer.ex
 └── repo.ex
 
@@ -151,6 +176,10 @@ app/lib/app_web/
 │   │   ├── home.html.heex
 │   │   └── dashboard.html.heex
 │   ├── docs_controller.ex
+│   ├── error_html/
+│   │   ├── 403.html.heex
+│   │   ├── 404.html.heex
+│   │   └── 500.html.heex
 │   ├── user_*.ex               # Auth controllers
 │   └── organization_controller.ex
 ├── live/
@@ -175,7 +204,7 @@ cd app
 docker compose up -d          # Start PostgreSQL
 mix setup                     # Install deps, create DB, migrate
 mix phx.server               # Start server at localhost:4000
-mix test                     # Run tests (142 passing)
+mix test                     # Run tests (148 passing)
 ```
 
 ### Koyeb Production
@@ -190,7 +219,7 @@ Region: Frankfurt
 Environment variables:
 - DATABASE_URL (Koyeb managed Postgres)
 - SECRET_KEY_BASE
-- PHX_HOST=prikke.whitenoise.no
+- PHX_HOST=prikke.whitenoise.no (without https://)
 - MAILJET_API_KEY
 - MAILJET_SECRET_KEY
 ```
@@ -205,9 +234,9 @@ Environment variables:
 
 ## Test Coverage
 
-- **142 tests passing**
+- **148 tests passing**
 - Accounts: user auth, organizations, memberships, invites, API keys
-- Jobs: CRUD, validations, cron parsing
+- Jobs: CRUD, validations, cron parsing, tier limits
 - API Auth Plug: bearer token validation
 - LiveView: basic rendering tests
 
@@ -224,13 +253,18 @@ Environment variables:
 
 ## Known Issues / TODOs
 
-1. **Mailjet not configured in Koyeb** - Need to set MAILJET_API_KEY and MAILJET_SECRET_KEY
-2. **Fix email deliverability** - Currently sending from gmail.com which fails SPF
-   - Change from address to domain we control (e.g., `noreply@whitenoise.no`)
-   - Add SPF record: `v=spf1 include:spf.mailjet.com ~all`
-   - Set up DKIM in Mailjet dashboard
-   - Add DMARC record
-   - Verify domain in Mailjet
-3. **No actual job execution** - Scheduler and workers not built yet
-4. **Dashboard stats are placeholders** - Need executions table to show real data
-5. **No API endpoints** - Only LiveView UI currently
+1. **No actual job execution** - Scheduler and workers not built yet
+2. **Dashboard stats are placeholders** - Need executions table to show real data
+3. **No API endpoints** - Only LiveView UI currently
+4. **Monthly execution limits** - Enforce when scheduler is built (Free: 5k/mo, Pro: 250k/mo)
+
+---
+
+## Recently Completed
+
+- [x] Tier limits for jobs (max count, min interval)
+- [x] Branded HTML email templates
+- [x] Email deliverability (noreply@whitenoise.no)
+- [x] Session cookie secure flag for HTTPS
+- [x] 403 error page
+- [x] PHX_HOST protocol stripping safeguard
