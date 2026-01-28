@@ -238,6 +238,7 @@ defmodule PrikkeWeb.UserAuth do
   Fetches the current organization from session.
 
   If no organization is stored in session, it defaults to the user's first organization.
+  Also fetches pending invite count for the user.
   """
   def fetch_current_organization(conn, _opts) do
     user = conn.assigns[:current_scope] && conn.assigns.current_scope.user
@@ -245,6 +246,7 @@ defmodule PrikkeWeb.UserAuth do
     if user do
       org_id = get_session(conn, :current_organization_id)
       organizations = Accounts.list_user_organizations(user)
+      pending_invites = Accounts.list_pending_invites_for_email(user.email)
 
       current_org =
         if org_id do
@@ -257,11 +259,13 @@ defmodule PrikkeWeb.UserAuth do
       conn
       |> assign(:current_organization, current_org)
       |> assign(:organizations, organizations)
+      |> assign(:pending_invites_count, length(pending_invites))
       |> maybe_set_default_org(current_org)
     else
       conn
       |> assign(:current_organization, nil)
       |> assign(:organizations, [])
+      |> assign(:pending_invites_count, 0)
     end
   end
 
