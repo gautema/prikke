@@ -30,7 +30,7 @@
 | Database | Koyeb Managed Postgres | Same provider as compute, low latency |
 | Payments | Lemon Squeezy | Merchant of Record, handles EU VAT |
 | Email | Mailjet | French company, good free tier |
-| DNS/CDN | Cloudflare | Free tier, fine for DNS/CDN |
+| Domain + DNS | Porkbun | Cheap domains, free DNS hosting |
 
 ### Why Elixir?
 - BEAM VM designed for systems that run forever
@@ -165,14 +165,15 @@ Notes:
 
 ```
 ┌─────────────────────────────────────────┐
-│              Cloudflare                 │
-│              DNS + CDN                  │
+│    Porkbun (domain + DNS)               │
+│    prikke.dev or prikke.eu              │
 └─────────────────┬───────────────────────┘
                   │
 ┌─────────────────▼───────────────────────┐
 │        Koyeb (Frankfurt) 🇫🇷            │
 │  ┌─────────────────────────────────┐    │
-│  │  Container: Phoenix + Oban      │    │
+│  │  Container: Bun (landing)       │    │
+│  │  → later: Phoenix + Oban        │    │
 │  │  Small (1 vCPU, 1GB) - €10/mo   │    │
 │  └───────────────┬─────────────────┘    │
 │                  │ same network         │
@@ -187,13 +188,14 @@ Notes:
 
 | Service | Provider | Price |
 |---------|----------|-------|
+| Domain | Porkbun | ~€10/yr |
+| DNS | Porkbun | Free |
 | Container | Koyeb Small 🇫🇷 | ~€10/mo |
 | Database | Koyeb Postgres 🇫🇷 | ~€7/mo |
 | Email | Mailjet 🇫🇷 | Free tier (6k/mo) |
 | Payments | Lemon Squeezy | % of revenue |
-| DNS/CDN | Cloudflare | Free |
 | Monitoring | Better Stack | Free tier |
-| **Total** | | **~€17/mo** |
+| **Total** | | **~€18/mo** |
 
 ### Why Koyeb?
 - French company (EU data story)
