@@ -54,17 +54,17 @@
 - [ ] Cron expressions + simple intervals (hourly, daily, weekly)
 - [ ] One-time scheduled jobs (run once at specific time)
 - [ ] HTTP GET/POST webhook delivery
-- [ ] Automatic retries (3 attempts, exponential backoff)
+- [ ] Custom headers and request body for webhooks
 - [ ] Execution history with status, duration, response
-- [ ] Email alerts on failure
+- [ ] Project-level notifications (email + webhook URL)
+- [ ] Public status page for Prikke itself
 - [ ] Basic dashboard
 
 ### v2
 - [ ] Job queues (on-demand via API, immediate execution)
-- [ ] Slack/webhook alerts
-- [ ] Custom headers and auth for webhooks
-- [ ] Request body for POST
 - [ ] Team/organization support
+- [ ] Per-job notification overrides
+- [ ] Customer-facing status pages
 
 ### v3
 - [ ] Workflows (multi-step jobs)
@@ -346,15 +346,32 @@ prikke/
 │   ├── favicon.svg
 │   ├── logo.svg           # Light background
 │   └── logo-dark.svg      # Dark background
-├── site/                  # Landing page (Bun server)
+├── site/                  # Landing page + docs (Bun server)
 │   ├── Dockerfile         # For Koyeb deployment
 │   ├── package.json
-│   ├── server.ts          # Bun server (~80 lines)
-│   └── static/
-│       ├── index.html     # Landing page
-│       └── favicon.svg
+│   ├── server.ts          # Bun server with templating
+│   ├── static/
+│   │   ├── index.html     # Landing page (own design)
+│   │   └── favicon.svg
+│   ├── pages/             # Content-only HTML (uses layout template)
+│   │   ├── use-cases.html
+│   │   └── docs/
+│   │       ├── index.html
+│   │       ├── getting-started.html
+│   │       ├── api.html
+│   │       ├── cron.html
+│   │       └── webhooks.html
+│   └── templates/
+│       └── layout.html    # Shared layout (head, nav, footer, styles)
 └── app/                   # Main app (Phoenix - future)
 ```
+
+### Site Templating
+Simple string replacement templating:
+- `templates/layout.html` - shared HTML boilerplate, styles, nav, footer
+- `pages/*.html` - content only with `<!-- title: Page Title -->` comment
+- Server extracts title and injects content into layout at runtime
+- Landing page (`static/index.html`) has its own design, not templated
 
 ## Planned App Structure (Phoenix)
 
@@ -393,6 +410,10 @@ lib/
 7. **Two pricing tiers** - Simple: Free and Pro (€29/mo)
 8. **API keys over OAuth** - Simpler for users, OAuth later if enterprise needs it
 9. **Minute precision only** - No second-level scheduling (not needed, adds complexity)
+10. **Retries: one-time only** - One-time jobs retry (5x exponential backoff), cron jobs don't (next scheduled run is the retry)
+11. **Notifications: webhook-first** - Email (default) + webhook URL; auto-detect Slack/Discord URLs and format payloads accordingly
+12. **Project-level notifications** - Not per-job (simpler, covers 90% of use cases)
+13. **Status page** - Public status page for Prikke itself (builds trust); execution history IS user monitoring
 
 ## Competitors
 
