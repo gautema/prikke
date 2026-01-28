@@ -26,7 +26,11 @@
 | Frontend | Phoenix LiveView + Tailwind | Real-time dashboard with minimal JS |
 | HTTP Client | Req (uses Finch) | Modern, connection pooling |
 | Auth | phx.gen.auth + API keys | Sessions for dashboard, API keys for programmatic access |
-| Hosting | Hetzner or Scaleway | EU-based, affordable |
+| Hosting | Koyeb (Frankfurt) | French company, managed containers, EU region |
+| Database | Koyeb Managed Postgres | Same provider as compute, low latency |
+| Payments | Lemon Squeezy | Merchant of Record, handles EU VAT |
+| Email | Mailjet | French company, good free tier |
+| DNS/CDN | Cloudflare | Free tier, fine for DNS/CDN |
 
 ### Why Elixir?
 - BEAM VM designed for systems that run forever
@@ -155,14 +159,71 @@ Notes:
 - Free tier math: 5 jobs × hourly × 30 days = 3,600 requests, so 5k is comfortable
 - Add more tiers later based on real usage patterns
 
-## Billing
+## Infrastructure
 
-Using Stripe or Lemon Squeezy (simpler for solo founder, handles EU VAT).
+### Production Stack
 
-For MVP: Lemon Squeezy
-- No webhook complexity for basic use
-- They handle VAT
-- Just check subscription status via API
+```
+┌─────────────────────────────────────────┐
+│              Cloudflare                 │
+│              DNS + CDN                  │
+└─────────────────┬───────────────────────┘
+                  │
+┌─────────────────▼───────────────────────┐
+│        Koyeb (Frankfurt) 🇫🇷            │
+│  ┌─────────────────────────────────┐    │
+│  │  Container: Phoenix + Oban      │    │
+│  │  Small (1 vCPU, 1GB) - €10/mo   │    │
+│  └───────────────┬─────────────────┘    │
+│                  │ same network         │
+│  ┌───────────────▼─────────────────┐    │
+│  │  Managed Postgres               │    │
+│  │  Starter (1GB) - €7/mo          │    │
+│  └─────────────────────────────────┘    │
+└─────────────────────────────────────────┘
+```
+
+### Monthly Costs
+
+| Service | Provider | Price |
+|---------|----------|-------|
+| Container | Koyeb Small 🇫🇷 | ~€10/mo |
+| Database | Koyeb Postgres 🇫🇷 | ~€7/mo |
+| Email | Mailjet 🇫🇷 | Free tier (6k/mo) |
+| Payments | Lemon Squeezy | % of revenue |
+| DNS/CDN | Cloudflare | Free |
+| Monitoring | Better Stack | Free tier |
+| **Total** | | **~€17/mo** |
+
+### Why Koyeb?
+- French company (EU data story)
+- Container + Postgres on same network (low latency)
+- No server management (push to deploy)
+- Frankfurt region
+- Simple pricing
+
+### Deploy Flow
+```bash
+# Connect GitHub repo to Koyeb, auto-deploys on push
+# Or manually push Docker image:
+docker build -t prikke .
+docker push registry.koyeb.com/your-org/prikke
+```
+
+### Services Not Needed (Yet)
+- Redis (Oban uses Postgres)
+- SMS (email alerts are enough)
+- Object storage (until log archival needed)
+- Load balancer (Koyeb handles this)
+
+## Payments
+
+Using Lemon Squeezy (Merchant of Record):
+- They are the seller, handle EU VAT
+- No tax compliance headaches
+- Higher fees (~5-8%) but worth the simplicity
+- Simple checkout integration
+- Webhook for subscription status
 
 ## Architecture
 
@@ -355,9 +416,12 @@ lib/
 1. **Elixir over Kotlin/.NET** - Best fit for concurrent job execution
 2. **Oban Pro over OSS** - Need dynamic cron for user-defined schedules
 3. **No Redis** - Postgres handles everything, simpler infra
-4. **EU hosting only** - Key differentiator, Hetzner or Scaleway
-5. **Flat pricing first** - Simpler than usage-based, add later
-6. **API keys over OAuth** - Simpler for users, OAuth later if enterprise needs it
+4. **Koyeb over Scaleway/Hetzner** - Managed containers, no Linux management, EU company
+5. **Lemon Squeezy over Stripe** - MoR handles EU VAT, simpler for solo founder
+6. **Mailjet over Resend/Postmark** - French company, good free tier
+7. **Two pricing tiers** - Simple: Free and Pro (€29/mo)
+8. **API keys over OAuth** - Simpler for users, OAuth later if enterprise needs it
+9. **Minute precision only** - No second-level scheduling (not needed, adds complexity)
 
 ## Competitors
 
