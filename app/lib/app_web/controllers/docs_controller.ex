@@ -1,6 +1,13 @@
 defmodule PrikkeWeb.DocsController do
   use PrikkeWeb, :controller
 
+  plug :put_layout, false
+  plug :assign_hide_header
+
+  defp assign_hide_header(conn, _opts) do
+    assign(conn, :hide_header, true)
+  end
+
   def index(conn, _params) do
     render(conn, :index, page_title: "Documentation")
   end
