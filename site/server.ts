@@ -12,7 +12,10 @@ let pgPool: any = null;
 if (DATABASE_URL) {
   // Postgres for production (Koyeb)
   const { Pool } = await import("pg");
-  pgPool = new Pool({ connectionString: DATABASE_URL });
+  pgPool = new Pool({
+    connectionString: DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
   await pgPool.query(`
     CREATE TABLE IF NOT EXISTS waitlist (
       id SERIAL PRIMARY KEY,
