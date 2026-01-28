@@ -280,14 +280,14 @@ See `/brand/BRAND.md` for full guidelines.
 
 ## Landing Page + Waitlist (Bun)
 
-Location: `/app/`
+Location: `/site/`
 
 Minimal Bun server that serves the landing page and handles waitlist signups.
 Stores emails in Postgres (Koyeb) or SQLite (local dev).
 
 ### Local Development
 ```bash
-cd app
+cd site
 bun install
 bun run dev
 # Visit http://localhost:3000
@@ -295,11 +295,8 @@ bun run dev
 
 ### Production
 ```bash
-# Build and push Docker image
-docker build -t prikke-landing .
-docker push <koyeb-registry>/prikke-landing
-
-# Or connect GitHub repo to Koyeb for auto-deploy
+# Connect GitHub repo to Koyeb for auto-deploy
+# Set root directory to "site" in Koyeb
 ```
 
 ### Environment Variables
@@ -349,13 +346,14 @@ prikke/
 │   ├── favicon.svg
 │   ├── logo.svg           # Light background
 │   └── logo-dark.svg      # Dark background
-└── app/                   # Bun server (landing + waitlist)
-    ├── Dockerfile         # For Koyeb deployment
-    ├── package.json
-    ├── server.ts          # Bun server (~80 lines)
-    └── static/
-        ├── index.html     # Landing page
-        └── favicon.svg
+├── site/                  # Landing page (Bun server)
+│   ├── Dockerfile         # For Koyeb deployment
+│   ├── package.json
+│   ├── server.ts          # Bun server (~80 lines)
+│   └── static/
+│       ├── index.html     # Landing page
+│       └── favicon.svg
+└── app/                   # Main app (Phoenix - future)
 ```
 
 ## Planned App Structure (Phoenix)
