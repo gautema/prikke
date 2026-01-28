@@ -77,6 +77,11 @@ defmodule PrikkeWeb.Router do
       on_mount: [{PrikkeWeb.UserAuth, :ensure_authenticated}],
       session: {__MODULE__, :live_session_data, []} do
       live "/dashboard", DashboardLive
+
+      live "/jobs", JobLive.Index, :index
+      live "/jobs/new", JobLive.Index, :new
+      live "/jobs/:id", JobLive.Show, :show
+      live "/jobs/:id/edit", JobLive.Show, :edit
     end
 
     get "/users/settings", UserSettingsController, :edit

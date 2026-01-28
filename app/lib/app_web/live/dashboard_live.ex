@@ -2,6 +2,7 @@ defmodule PrikkeWeb.DashboardLive do
   use PrikkeWeb, :live_view
 
   alias Prikke.Accounts
+  alias Prikke.Jobs
 
   @impl true
   def mount(_params, session, socket) do
@@ -19,14 +20,45 @@ defmodule PrikkeWeb.DashboardLive do
 
     current_org = current_org || List.first(organizations)
 
+    # Subscribe to job updates if we have an organization
+    if current_org && connected?(socket) do
+      Jobs.subscribe_jobs(current_org)
+    end
+
     socket =
       socket
       |> assign(:current_organization, current_org)
       |> assign(:organizations, organizations)
       |> assign(:pending_invites_count, length(pending_invites))
       |> assign(:stats, load_stats(current_org))
+      |> assign(:recent_jobs, load_recent_jobs(current_org))
 
     {:ok, socket}
+  end
+
+  @impl true
+  def handle_info({:created, _job}, socket) do
+    org = socket.assigns.current_organization
+    {:noreply,
+     socket
+     |> assign(:stats, load_stats(org))
+     |> assign(:recent_jobs, load_recent_jobs(org))}
+  end
+
+  def handle_info({:updated, _job}, socket) do
+    org = socket.assigns.current_organization
+    {:noreply,
+     socket
+     |> assign(:stats, load_stats(org))
+     |> assign(:recent_jobs, load_recent_jobs(org))}
+  end
+
+  def handle_info({:deleted, _job}, socket) do
+    org = socket.assigns.current_organization
+    {:noreply,
+     socket
+     |> assign(:stats, load_stats(org))
+     |> assign(:recent_jobs, load_recent_jobs(org))}
   end
 
   @impl true
@@ -63,10 +95,10 @@ defmodule PrikkeWeb.DashboardLive do
       <%= if @current_organization do %>
         <!-- Quick Stats -->
         <div class="grid grid-cols-3 gap-4 mb-8">
-          <div class="bg-white border border-slate-200 rounded-lg p-6">
+          <.link navigate={~p"/jobs"} class="bg-white border border-slate-200 rounded-lg p-6 hover:border-slate-300 transition-colors">
             <div class="text-sm font-medium text-slate-500 mb-1">Active Jobs</div>
             <div class="text-3xl font-bold text-slate-900"><%= @stats.active_jobs %></div>
-          </div>
+          </.link>
           <div class="bg-white border border-slate-200 rounded-lg p-6">
             <div class="text-sm font-medium text-slate-500 mb-1">Executions Today</div>
             <div class="text-3xl font-bold text-slate-900"><%= @stats.executions_today %></div>
@@ -81,20 +113,64 @@ defmodule PrikkeWeb.DashboardLive do
         <div class="bg-white border border-slate-200 rounded-lg">
           <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
             <h2 class="text-lg font-semibold text-slate-900">Jobs</h2>
-            <a href="#" class="text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors no-underline">
+            <.link
+              navigate={~p"/jobs/new"}
+              class="text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors no-underline"
+            >
               New Job
-            </a>
+            </.link>
           </div>
-          <div class="p-12 text-center">
-            <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg class="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+          <%= if @recent_jobs == [] do %>
+            <div class="p-12 text-center">
+              <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 class="text-lg font-medium text-slate-900 mb-1">No jobs yet</h3>
+              <p class="text-slate-500 mb-4">Create your first scheduled job to get started.</p>
+              <.link navigate={~p"/jobs/new"} class="text-emerald-600 font-medium hover:underline">Create a job →</.link>
             </div>
-            <h3 class="text-lg font-medium text-slate-900 mb-1">No jobs yet</h3>
-            <p class="text-slate-500 mb-4">Create your first scheduled job to get started.</p>
-            <a href="#" class="text-emerald-600 font-medium hover:underline">Create a job →</a>
-          </div>
+          <% else %>
+            <div class="divide-y divide-slate-200">
+              <%= for job <- @recent_jobs do %>
+                <.link navigate={~p"/jobs/#{job.id}"} class="block px-6 py-4 hover:bg-slate-50 transition-colors">
+                  <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center gap-2">
+                        <span class="font-medium text-slate-900 truncate"><%= job.name %></span>
+                        <span class={[
+                          "text-xs font-medium px-2 py-0.5 rounded",
+                          job.enabled && "bg-emerald-100 text-emerald-700",
+                          !job.enabled && "bg-slate-100 text-slate-500"
+                        ]}>
+                          <%= if job.enabled, do: "Active", else: "Paused" %>
+                        </span>
+                      </div>
+                      <div class="text-sm text-slate-500 mt-0.5 flex items-center gap-2">
+                        <span class="font-mono text-xs"><%= job.method %></span>
+                        <span class="truncate"><%= job.url %></span>
+                      </div>
+                    </div>
+                    <div class="text-xs text-slate-400 ml-4">
+                      <%= if job.schedule_type == "cron" do %>
+                        <span class="font-mono"><%= job.cron_expression %></span>
+                      <% else %>
+                        One-time
+                      <% end %>
+                    </div>
+                  </div>
+                </.link>
+              <% end %>
+            </div>
+            <%= if @stats.total_jobs > 5 do %>
+              <div class="px-6 py-3 border-t border-slate-200 text-center">
+                <.link navigate={~p"/jobs"} class="text-sm text-emerald-600 hover:underline">
+                  View all <%= @stats.total_jobs %> jobs →
+                </.link>
+              </div>
+            <% end %>
+          <% end %>
         </div>
 
         <!-- Recent Executions -->
@@ -142,14 +218,22 @@ defmodule PrikkeWeb.DashboardLive do
     """
   end
 
-  defp load_stats(nil), do: %{active_jobs: 0, executions_today: 0, success_rate: "—"}
+  defp load_stats(nil), do: %{active_jobs: 0, total_jobs: 0, executions_today: 0, success_rate: "—"}
 
-  defp load_stats(_organization) do
-    # TODO: Load real stats from Jobs context when implemented
+  defp load_stats(organization) do
     %{
-      active_jobs: 0,
+      active_jobs: Jobs.count_enabled_jobs(organization),
+      total_jobs: Jobs.count_jobs(organization),
       executions_today: 0,
       success_rate: "—"
     }
+  end
+
+  defp load_recent_jobs(nil), do: []
+
+  defp load_recent_jobs(organization) do
+    organization
+    |> Jobs.list_jobs()
+    |> Enum.take(5)
   end
 end
