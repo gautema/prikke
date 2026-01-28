@@ -4,6 +4,8 @@ defmodule PrikkeWeb.UserRegistrationController do
   alias Prikke.Accounts
   alias Prikke.Accounts.User
 
+  plug :put_layout, false
+
   def new(conn, _params) do
     changeset = Accounts.change_user_email(%User{})
     render(conn, :new, changeset: changeset)

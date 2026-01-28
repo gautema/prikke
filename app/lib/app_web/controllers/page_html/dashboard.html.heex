@@ -1,0 +1,52 @@
+<div class="max-w-4xl mx-auto py-8">
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-slate-900">Dashboard</h1>
+    <p class="text-slate-500 mt-1">Welcome back, <%= @current_scope.user.email %></p>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="grid grid-cols-3 gap-4 mb-8">
+    <div class="bg-white border border-slate-200 rounded-lg p-6">
+      <div class="text-sm font-medium text-slate-500 mb-1">Active Jobs</div>
+      <div class="text-3xl font-bold text-slate-900">0</div>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-lg p-6">
+      <div class="text-sm font-medium text-slate-500 mb-1">Executions Today</div>
+      <div class="text-3xl font-bold text-slate-900">0</div>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-lg p-6">
+      <div class="text-sm font-medium text-slate-500 mb-1">Success Rate</div>
+      <div class="text-3xl font-bold text-emerald-500">—</div>
+    </div>
+  </div>
+
+  <!-- Jobs Section -->
+  <div class="bg-white border border-slate-200 rounded-lg">
+    <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+      <h2 class="text-lg font-semibold text-slate-900">Jobs</h2>
+      <a href="#" class="text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors no-underline">
+        New Job
+      </a>
+    </div>
+    <div class="p-12 text-center">
+      <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h3 class="text-lg font-medium text-slate-900 mb-1">No jobs yet</h3>
+      <p class="text-slate-500 mb-4">Create your first scheduled job to get started.</p>
+      <a href="#" class="text-emerald-600 font-medium hover:underline">Create a job →</a>
+    </div>
+  </div>
+
+  <!-- Recent Executions -->
+  <div class="bg-white border border-slate-200 rounded-lg mt-6">
+    <div class="px-6 py-4 border-b border-slate-200">
+      <h2 class="text-lg font-semibold text-slate-900">Recent Executions</h2>
+    </div>
+    <div class="p-8 text-center text-slate-500">
+      No executions yet. Jobs will appear here once they run.
+    </div>
+  </div>
+</div>

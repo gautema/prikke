@@ -1,31 +1,52 @@
-<Layouts.app flash={@flash} current_scope={@current_scope}>
-  <div class="mx-auto max-w-sm">
-    <div class="text-center">
-      <.header>
-        Register for an account
-        <:subtitle>
-          Already registered?
-          <.link navigate={~p"/users/log-in"} class="font-semibold text-brand hover:underline">
-            Log in
-          </.link>
-          to your account now.
-        </:subtitle>
-      </.header>
+<div class="min-h-screen bg-slate-50">
+  <div class="max-w-[400px] mx-auto px-6">
+    <!-- Header -->
+    <header class="py-6 flex justify-center">
+      <a href="/" class="flex items-center gap-2.5 text-xl font-semibold text-slate-900 no-underline">
+        <div class="w-4 h-4 bg-emerald-500 rounded-full"></div>
+        prikke
+      </a>
+    </header>
+
+    <!-- Register Form -->
+    <div class="py-12">
+      <div class="bg-white border border-slate-200 rounded-lg p-8">
+        <h1 class="text-2xl font-bold text-slate-900 text-center mb-2">Create your account</h1>
+        <p class="text-slate-500 text-center mb-8">Start scheduling jobs for free</p>
+
+        <.form :let={f} for={@changeset} action={~p"/users/register"} class="space-y-4">
+          <div>
+            <label for={f[:email].id} class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+            <input
+              type="email"
+              name={f[:email].name}
+              id={f[:email].id}
+              value={Phoenix.HTML.Form.normalize_value("email", f[:email].value)}
+              autocomplete="email"
+              required
+              phx-mounted={JS.focus()}
+              class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              placeholder="you@example.com"
+            />
+            <%= for msg <- Enum.map(f[:email].errors, &translate_error/1) do %>
+              <p class="mt-1 text-sm text-red-600"><%= msg %></p>
+            <% end %>
+          </div>
+
+          <button type="submit" class="w-full py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors">
+            Create account
+          </button>
+        </.form>
+
+        <p class="mt-6 text-center text-sm text-slate-500">
+          Already have an account?
+          <a href={~p"/users/log-in"} class="text-emerald-600 font-medium hover:underline">Log in</a>
+        </p>
+      </div>
+
+      <p class="mt-8 text-center text-xs text-slate-400">
+        By signing up, you agree to our terms of service.
+      </p>
     </div>
-
-    <.form :let={f} for={@changeset} action={~p"/users/register"}>
-      <.input
-        field={f[:email]}
-        type="email"
-        label="Email"
-        autocomplete="email"
-        required
-        phx-mounted={JS.focus()}
-      />
-
-      <.button phx-disable-with="Creating account..." class="btn btn-primary w-full">
-        Create an account
-      </.button>
-    </.form>
   </div>
-</Layouts.app>
+</div>

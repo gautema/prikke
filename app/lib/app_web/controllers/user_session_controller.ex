@@ -4,6 +4,8 @@ defmodule PrikkeWeb.UserSessionController do
   alias Prikke.Accounts
   alias PrikkeWeb.UserAuth
 
+  plug :put_layout, false when action in [:new, :confirm]
+
   def new(conn, _params) do
     email = get_in(conn.assigns, [:current_scope, Access.key(:user), Access.key(:email)])
     form = Phoenix.Component.to_form(%{"email" => email}, as: "user")
