@@ -1,0 +1,339 @@
+defmodule Prikke.JobsTest do
+  use Prikke.DataCase
+
+  alias Prikke.Jobs
+  alias Prikke.Jobs.Job
+
+  import Prikke.AccountsFixtures, only: [organization_fixture: 0]
+  import Prikke.JobsFixtures
+
+  describe "list_jobs/1" do
+    test "returns all jobs for an organization" do
+      org = organization_fixture()
+      other_org = organization_fixture()
+
+      job = job_fixture(org)
+      _other_job = job_fixture(other_org)
+
+      assert Jobs.list_jobs(org) == [job]
+    end
+
+    test "returns all jobs for an organization (multiple)" do
+      org = organization_fixture()
+      job1 = job_fixture(org, %{name: "First"})
+      job2 = job_fixture(org, %{name: "Second"})
+
+      jobs = Jobs.list_jobs(org)
+      assert length(jobs) == 2
+      assert Enum.any?(jobs, &(&1.id == job1.id))
+      assert Enum.any?(jobs, &(&1.id == job2.id))
+    end
+  end
+
+  describe "list_enabled_jobs/1" do
+    test "returns only enabled jobs" do
+      org = organization_fixture()
+      enabled_job = job_fixture(org, %{enabled: true})
+      _disabled_job = job_fixture(org, %{enabled: false})
+
+      assert Jobs.list_enabled_jobs(org) == [enabled_job]
+    end
+  end
+
+  describe "get_job!/2" do
+    test "returns the job with given id" do
+      org = organization_fixture()
+      job = job_fixture(org)
+      assert Jobs.get_job!(org, job.id) == job
+    end
+
+    test "raises for job from different organization" do
+      org = organization_fixture()
+      other_org = organization_fixture()
+      job = job_fixture(org)
+
+      assert_raise Ecto.NoResultsError, fn ->
+        Jobs.get_job!(other_org, job.id)
+      end
+    end
+  end
+
+  describe "get_job/2" do
+    test "returns the job with given id" do
+      org = organization_fixture()
+      job = job_fixture(org)
+      assert Jobs.get_job(org, job.id) == job
+    end
+
+    test "returns nil for job from different organization" do
+      org = organization_fixture()
+      other_org = organization_fixture()
+      job = job_fixture(org)
+
+      assert Jobs.get_job(other_org, job.id) == nil
+    end
+  end
+
+  describe "create_job/2" do
+    test "with valid cron data creates a job" do
+      org = organization_fixture()
+
+      valid_attrs = %{
+        name: "My Cron Job",
+        url: "https://example.com/webhook",
+        method: "POST",
+        headers: %{"Authorization" => "Bearer token"},
+        body: ~s({"key": "value"}),
+        schedule_type: "cron",
+        cron_expression: "*/5 * * * *",
+        timezone: "UTC"
+      }
+
+      assert {:ok, %Job{} = job} = Jobs.create_job(org, valid_attrs)
+      assert job.name == "My Cron Job"
+      assert job.url == "https://example.com/webhook"
+      assert job.method == "POST"
+      assert job.headers == %{"Authorization" => "Bearer token"}
+      assert job.schedule_type == "cron"
+      assert job.cron_expression == "*/5 * * * *"
+      assert job.organization_id == org.id
+      assert job.enabled == true
+      assert job.interval_minutes == 5
+    end
+
+    test "with valid once data creates a job" do
+      org = organization_fixture()
+      scheduled_at = DateTime.add(DateTime.utc_now(), 3600, :second)
+
+      valid_attrs = %{
+        name: "One-time Job",
+        url: "https://example.com/run-once",
+        schedule_type: "once",
+        scheduled_at: scheduled_at
+      }
+
+      assert {:ok, %Job{} = job} = Jobs.create_job(org, valid_attrs)
+      assert job.name == "One-time Job"
+      assert job.schedule_type == "once"
+      assert job.scheduled_at == DateTime.truncate(scheduled_at, :second)
+      assert job.interval_minutes == nil
+    end
+
+    test "with invalid URL returns error" do
+      org = organization_fixture()
+
+      invalid_attrs = %{
+        name: "Bad URL Job",
+        url: "not-a-url",
+        schedule_type: "cron",
+        cron_expression: "0 * * * *"
+      }
+
+      assert {:error, changeset} = Jobs.create_job(org, invalid_attrs)
+      assert "must be a valid HTTP or HTTPS URL" in errors_on(changeset).url
+    end
+
+    test "with invalid cron expression returns error" do
+      org = organization_fixture()
+
+      invalid_attrs = %{
+        name: "Bad Cron Job",
+        url: "https://example.com/webhook",
+        schedule_type: "cron",
+        cron_expression: "not valid cron"
+      }
+
+      assert {:error, changeset} = Jobs.create_job(org, invalid_attrs)
+      assert "is not a valid cron expression" in errors_on(changeset).cron_expression
+    end
+
+    test "with past scheduled_at returns error" do
+      org = organization_fixture()
+      past_time = DateTime.add(DateTime.utc_now(), -3600, :second)
+
+      invalid_attrs = %{
+        name: "Past Job",
+        url: "https://example.com/webhook",
+        schedule_type: "once",
+        scheduled_at: past_time
+      }
+
+      assert {:error, changeset} = Jobs.create_job(org, invalid_attrs)
+      assert "must be in the future" in errors_on(changeset).scheduled_at
+    end
+
+    test "cron job without cron_expression returns error" do
+      org = organization_fixture()
+
+      invalid_attrs = %{
+        name: "No Cron Expression",
+        url: "https://example.com/webhook",
+        schedule_type: "cron"
+      }
+
+      assert {:error, changeset} = Jobs.create_job(org, invalid_attrs)
+      assert "can't be blank" in errors_on(changeset).cron_expression
+    end
+
+    test "once job without scheduled_at returns error" do
+      org = organization_fixture()
+
+      invalid_attrs = %{
+        name: "No Scheduled Time",
+        url: "https://example.com/webhook",
+        schedule_type: "once"
+      }
+
+      assert {:error, changeset} = Jobs.create_job(org, invalid_attrs)
+      assert "can't be blank" in errors_on(changeset).scheduled_at
+    end
+
+    test "with missing required fields returns error" do
+      org = organization_fixture()
+
+      assert {:error, changeset} = Jobs.create_job(org, %{})
+      assert "can't be blank" in errors_on(changeset).name
+      assert "can't be blank" in errors_on(changeset).url
+      assert "can't be blank" in errors_on(changeset).schedule_type
+    end
+  end
+
+  describe "update_job/3" do
+    test "with valid data updates the job" do
+      org = organization_fixture()
+      job = job_fixture(org)
+
+      update_attrs = %{
+        name: "Updated Name",
+        enabled: false
+      }
+
+      assert {:ok, %Job{} = updated} = Jobs.update_job(org, job, update_attrs)
+      assert updated.name == "Updated Name"
+      assert updated.enabled == false
+    end
+
+    test "with invalid data returns error changeset" do
+      org = organization_fixture()
+      job = job_fixture(org)
+
+      assert {:error, changeset} = Jobs.update_job(org, job, %{url: "bad-url"})
+      assert "must be a valid HTTP or HTTPS URL" in errors_on(changeset).url
+
+      # Job should be unchanged
+      assert Jobs.get_job!(org, job.id) == job
+    end
+
+    test "with wrong organization raises" do
+      org = organization_fixture()
+      other_org = organization_fixture()
+      job = job_fixture(org)
+
+      assert_raise ArgumentError, "job does not belong to organization", fn ->
+        Jobs.update_job(other_org, job, %{name: "Hacked"})
+      end
+    end
+  end
+
+  describe "delete_job/2" do
+    test "deletes the job" do
+      org = organization_fixture()
+      job = job_fixture(org)
+
+      assert {:ok, %Job{}} = Jobs.delete_job(org, job)
+      assert_raise Ecto.NoResultsError, fn -> Jobs.get_job!(org, job.id) end
+    end
+
+    test "with wrong organization raises" do
+      org = organization_fixture()
+      other_org = organization_fixture()
+      job = job_fixture(org)
+
+      assert_raise ArgumentError, "job does not belong to organization", fn ->
+        Jobs.delete_job(other_org, job)
+      end
+    end
+  end
+
+  describe "toggle_job/2" do
+    test "toggles enabled to disabled" do
+      org = organization_fixture()
+      job = job_fixture(org, %{enabled: true})
+
+      assert {:ok, %Job{enabled: false}} = Jobs.toggle_job(org, job)
+    end
+
+    test "toggles disabled to enabled" do
+      org = organization_fixture()
+      job = job_fixture(org, %{enabled: false})
+
+      assert {:ok, %Job{enabled: true}} = Jobs.toggle_job(org, job)
+    end
+  end
+
+  describe "change_job/2" do
+    test "returns a job changeset" do
+      job = job_fixture()
+      assert %Ecto.Changeset{} = Jobs.change_job(job)
+    end
+  end
+
+  describe "count_jobs/1" do
+    test "counts all jobs for organization" do
+      org = organization_fixture()
+      assert Jobs.count_jobs(org) == 0
+
+      job_fixture(org)
+      job_fixture(org)
+      assert Jobs.count_jobs(org) == 2
+    end
+  end
+
+  describe "count_enabled_jobs/1" do
+    test "counts only enabled jobs" do
+      org = organization_fixture()
+      job_fixture(org, %{enabled: true})
+      job_fixture(org, %{enabled: false})
+
+      assert Jobs.count_enabled_jobs(org) == 1
+    end
+  end
+
+  describe "interval_minutes calculation" do
+    test "every minute cron" do
+      org = organization_fixture()
+      {:ok, job} = Jobs.create_job(org, %{
+        name: "Every Minute",
+        url: "https://example.com/webhook",
+        schedule_type: "cron",
+        cron_expression: "* * * * *"
+      })
+
+      assert job.interval_minutes == 1
+    end
+
+    test "hourly cron" do
+      org = organization_fixture()
+      {:ok, job} = Jobs.create_job(org, %{
+        name: "Hourly",
+        url: "https://example.com/webhook",
+        schedule_type: "cron",
+        cron_expression: "0 * * * *"
+      })
+
+      assert job.interval_minutes == 60
+    end
+
+    test "daily cron" do
+      org = organization_fixture()
+      {:ok, job} = Jobs.create_job(org, %{
+        name: "Daily",
+        url: "https://example.com/webhook",
+        schedule_type: "cron",
+        cron_expression: "0 9 * * *"
+      })
+
+      assert job.interval_minutes == 24 * 60
+    end
+  end
+end
