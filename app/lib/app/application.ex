@@ -7,21 +7,29 @@ defmodule Prikke.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [
-      PrikkeWeb.Telemetry,
-      Prikke.Repo,
-      {DNSCluster, query: Application.get_env(:app, :dns_cluster_query) || :ignore},
-      {Phoenix.PubSub, name: Prikke.PubSub},
-      # Start a worker by calling: Prikke.Worker.start_link(arg)
-      # {Prikke.Worker, arg},
-      # Start to serve requests, typically the last entry
-      PrikkeWeb.Endpoint
-    ]
+    children =
+      [
+        PrikkeWeb.Telemetry,
+        {DNSCluster, query: Application.get_env(:app, :dns_cluster_query) || :ignore},
+        {Phoenix.PubSub, name: Prikke.PubSub},
+        # Start to serve requests, typically the last entry
+        PrikkeWeb.Endpoint
+      ]
+      |> maybe_add_repo()
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Prikke.Supervisor]
     Supervisor.start_link(children, opts)
+  end
+
+  # Don't start Repo in CI mode (no database available)
+  defp maybe_add_repo(children) do
+    if Application.get_env(:app, :ci_mode, false) do
+      children
+    else
+      [Prikke.Repo | children]
+    end
   end
 
   # Tell Phoenix to update the endpoint configuration

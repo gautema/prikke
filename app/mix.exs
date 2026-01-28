@@ -90,7 +90,7 @@ defmodule Prikke.MixProject do
       setup: ["deps.get", "ecto.setup", "assets.setup", "assets.build"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
-      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
+      test: test_alias(),
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
       "assets.build": ["compile", "tailwind app", "esbuild app"],
       "assets.deploy": [
@@ -100,5 +100,14 @@ defmodule Prikke.MixProject do
       ],
       precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"]
     ]
+  end
+
+  # In CI mode, skip database setup (no Postgres available)
+  defp test_alias do
+    if System.get_env("CI") do
+      ["test"]
+    else
+      ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
+    end
   end
 end

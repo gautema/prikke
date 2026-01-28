@@ -32,7 +32,11 @@ defmodule PrikkeWeb.ConnCase do
   end
 
   setup tags do
-    Prikke.DataCase.setup_sandbox(tags)
+    # Skip sandbox setup in CI mode (no database)
+    unless Application.get_env(:app, :ci_mode, false) do
+      Prikke.DataCase.setup_sandbox(tags)
+    end
+
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
 end

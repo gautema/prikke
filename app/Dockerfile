@@ -39,7 +39,10 @@ COPY test test
 RUN mix compile
 
 # Run tests - build fails if tests fail (prevents broken code in production)
-RUN MIX_ENV=test mix deps.get && MIX_ENV=test mix test
+# CI=true skips database setup and Repo startup (no Postgres in Docker build)
+RUN MIX_ENV=test CI=true mix deps.get \
+    && MIX_ENV=test CI=true mix compile --warnings-as-errors \
+    && MIX_ENV=test CI=true mix test
 
 # Then compile assets
 RUN mix assets.deploy

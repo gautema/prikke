@@ -1,5 +1,8 @@
 import Config
 
+# CI mode - skip database for Docker builds
+config :app, :ci_mode, System.get_env("CI") == "true"
+
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used
