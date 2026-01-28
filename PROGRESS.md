@@ -225,6 +225,12 @@ Environment variables:
 ## Known Issues / TODOs
 
 1. **Mailjet not configured in Koyeb** - Need to set MAILJET_API_KEY and MAILJET_SECRET_KEY
-2. **No actual job execution** - Scheduler and workers not built yet
-3. **Dashboard stats are placeholders** - Need executions table to show real data
-4. **No API endpoints** - Only LiveView UI currently
+2. **Fix email deliverability** - Currently sending from gmail.com which fails SPF
+   - Change from address to domain we control (e.g., `noreply@whitenoise.no`)
+   - Add SPF record: `v=spf1 include:spf.mailjet.com ~all`
+   - Set up DKIM in Mailjet dashboard
+   - Add DMARC record
+   - Verify domain in Mailjet
+3. **No actual job execution** - Scheduler and workers not built yet
+4. **Dashboard stats are placeholders** - Need executions table to show real data
+5. **No API endpoints** - Only LiveView UI currently
