@@ -2,11 +2,11 @@ FROM oven/bun:1-alpine
 
 WORKDIR /app
 
-COPY package.json ./
+COPY site/package.json ./
 RUN bun install --production
 
-COPY server.ts ./
-COPY static ./static
+COPY site/server.ts ./
+COPY site/static ./static
 
 ENV PORT=8000
 EXPOSE 8000
