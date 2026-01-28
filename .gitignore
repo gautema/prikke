@@ -1,7 +1,7 @@
 # Dependencies
 /deps
 /_build
-/node_modules
+node_modules
 
 # Generated
 /priv/static/assets
@@ -28,4 +28,5 @@ erl_crash.dump
 
 # Database
 *.db
+*.sqlite
 *.sqlite3
