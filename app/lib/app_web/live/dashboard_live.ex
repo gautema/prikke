@@ -199,22 +199,7 @@ defmodule PrikkeWeb.DashboardLive do
       <% end %>
     </div>
 
-    <!-- Footer -->
-    <footer class="border-t border-slate-200 mt-12">
-      <div class="max-w-4xl mx-auto px-4 py-6">
-        <div class="flex justify-between items-center text-sm text-slate-500">
-          <div class="flex gap-6">
-            <a href="/docs" class="hover:text-slate-700">Docs</a>
-            <a href="/docs/api" class="hover:text-slate-700">API</a>
-            <a href="/docs/cron" class="hover:text-slate-700">Cron</a>
-            <a href="/docs/webhooks" class="hover:text-slate-700">Webhooks</a>
-          </div>
-          <div>
-            <a href="mailto:gaute.magnussen@gmail.com" class="hover:text-slate-700">Contact</a>
-          </div>
-        </div>
-      </div>
-    </footer>
+    <.footer />
     """
   end
 

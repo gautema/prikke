@@ -598,4 +598,43 @@ defmodule PrikkeWeb.CoreComponents do
   def translate_errors(errors, field) when is_list(errors) do
     for {^field, {msg, opts}} <- errors, do: translate_error({msg, opts})
   end
+
+  @doc """
+  Renders the app footer with documentation links.
+
+  ## Examples
+
+      <.footer />
+      <.footer variant="marketing" />
+  """
+  attr :variant, :string, default: "app", values: ["app", "marketing"]
+
+  def footer(assigns) do
+    ~H"""
+    <%= if @variant == "marketing" do %>
+      <footer class="py-10 border-t border-slate-200 text-center text-slate-500 text-sm">
+        <p>
+          Prikke · Made in Norway ·
+          <a href="mailto:gaute.magnussen@gmail.com" class="text-slate-600 no-underline hover:text-emerald-500">Contact</a>
+        </p>
+      </footer>
+    <% else %>
+      <footer class="border-t border-slate-200 mt-12">
+        <div class="max-w-4xl mx-auto px-4 py-6">
+          <div class="flex justify-between items-center text-sm text-slate-500">
+            <div class="flex gap-6">
+              <a href="/docs" class="hover:text-slate-700">Docs</a>
+              <a href="/docs/api" class="hover:text-slate-700">API</a>
+              <a href="/docs/cron" class="hover:text-slate-700">Cron</a>
+              <a href="/docs/webhooks" class="hover:text-slate-700">Webhooks</a>
+            </div>
+            <div>
+              <a href="mailto:gaute.magnussen@gmail.com" class="hover:text-slate-700">Contact</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    <% end %>
+    """
+  end
 end
