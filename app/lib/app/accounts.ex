@@ -374,6 +374,13 @@ defmodule Prikke.Accounts do
   end
 
   @doc """
+  Gets a membership by ID.
+  """
+  def get_membership_by_id(id) do
+    Repo.get(Membership, id)
+  end
+
+  @doc """
   Lists all members of an organization.
   """
   def list_organization_members(organization) do

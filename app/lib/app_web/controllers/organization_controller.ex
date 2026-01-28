@@ -75,15 +75,52 @@ defmodule PrikkeWeb.OrganizationController do
 
   def members(conn, _params) do
     organization = conn.assigns.current_organization
+    user = conn.assigns.current_scope.user
 
     if organization do
       members = Accounts.list_organization_members(organization)
       invites = Accounts.list_organization_invites(organization)
-      render(conn, :members, organization: organization, members: members, invites: invites)
+      current_membership = Accounts.get_membership(organization, user)
+
+      render(conn, :members,
+        organization: organization,
+        members: members,
+        invites: invites,
+        current_membership: current_membership
+      )
     else
       conn
       |> put_flash(:error, "No organization selected.")
       |> redirect(to: ~p"/")
+    end
+  end
+
+  def update_member_role(conn, %{"id" => membership_id, "role" => role}) do
+    organization = conn.assigns.current_organization
+    user = conn.assigns.current_scope.user
+
+    with true <- role in ["admin", "member"],
+         current_membership when not is_nil(current_membership) <- Accounts.get_membership(organization, user),
+         true <- current_membership.role in ["owner", "admin"],
+         membership when not is_nil(membership) <- Accounts.get_membership_by_id(membership_id),
+         true <- membership.organization_id == organization.id,
+         false <- membership.role == "owner" do
+      case Accounts.update_membership_role(membership, role) do
+        {:ok, _} ->
+          conn
+          |> put_flash(:info, "Role updated successfully.")
+          |> redirect(to: ~p"/organizations/members")
+
+        {:error, _} ->
+          conn
+          |> put_flash(:error, "Could not update role.")
+          |> redirect(to: ~p"/organizations/members")
+      end
+    else
+      _ ->
+        conn
+        |> put_flash(:error, "You don't have permission to change this role.")
+        |> redirect(to: ~p"/organizations/members")
     end
   end
 end

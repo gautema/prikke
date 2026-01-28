@@ -85,6 +85,7 @@ defmodule PrikkeWeb.Router do
     get "/organizations/settings", OrganizationController, :edit
     put "/organizations/settings", OrganizationController, :update
     get "/organizations/members", OrganizationController, :members
+    put "/organizations/members/:id/role", OrganizationController, :update_member_role
 
     # Invites (authenticated)
     get "/invites", InviteController, :index

@@ -49,13 +49,27 @@
         <%= for member <- @members do %>
           <div class="px-6 py-4 flex justify-between items-center">
             <div>
-              <div class="font-medium text-slate-900"><%= member.user.email %></div>
+              <div class="font-medium text-slate-900">
+                <%= member.user.email %>
+                <%= if member.user.id == @current_scope.user.id do %>
+                  <span class="text-slate-400 text-sm">(you)</span>
+                <% end %>
+              </div>
               <div class="text-sm text-slate-500">Joined <%= Calendar.strftime(member.inserted_at, "%b %d, %Y") %></div>
             </div>
             <div class="flex items-center gap-3">
-              <span class={"text-xs font-medium px-2 py-1 rounded #{role_badge_class(member.role)}"}>
-                <%= String.capitalize(member.role) %>
-              </span>
+              <%= if can_change_role?(@current_membership, member) do %>
+                <.form for={%{}} action={~p"/organizations/members/#{member.id}/role"} method="put" class="flex items-center gap-2">
+                  <select name="role" onchange="this.form.submit()" class="text-sm px-2 py-1 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <option value="member" selected={member.role == "member"}>Member</option>
+                    <option value="admin" selected={member.role == "admin"}>Admin</option>
+                  </select>
+                </.form>
+              <% else %>
+                <span class={"text-xs font-medium px-2 py-1 rounded #{role_badge_class(member.role)}"}>
+                  <%= String.capitalize(member.role) %>
+                </span>
+              <% end %>
             </div>
           </div>
         <% end %>
