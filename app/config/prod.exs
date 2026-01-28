@@ -7,15 +7,8 @@ import Config
 # before starting your production server.
 config :app, PrikkeWeb.Endpoint, cache_static_manifest: "priv/static/cache_manifest.json"
 
-# Force using SSL in production. This also sets the "strict-security-transport" header,
-# known as HSTS. Health check is excluded to allow Koyeb probes.
-# Note `:force_ssl` is required to be set at compile-time.
-config :app, PrikkeWeb.Endpoint,
-  force_ssl: [
-    rewrite_on: [:x_forwarded_proto],
-    exclude: ["localhost", "127.0.0.1"],
-    hsts: true
-  ]
+# Koyeb handles SSL termination at the edge, so we don't need force_ssl.
+# Internal health checks come over HTTP, so force_ssl would break them.
 
 # Configure Swoosh API Client
 config :swoosh, api_client: Swoosh.ApiClient.Req
