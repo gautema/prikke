@@ -88,7 +88,10 @@ app.post('/webhook', (req, res) => {
 </div>
 
 <h2>Automatic Retries</h2>
-<p>When a job fails (5xx or timeout), Prikke automatically retries with exponential backoff:</p>
+<p>Retry behavior depends on the job type:</p>
+
+<h3>One-time Jobs (run_at)</h3>
+<p>One-time jobs automatically retry with exponential backoff:</p>
 
 <table>
     <tr><th>Attempt</th><th>Delay</th></tr>
@@ -100,6 +103,15 @@ app.post('/webhook', (req, res) => {
 </table>
 
 <p>After 5 failed attempts, the job is marked as permanently failed and you'll receive an alert (if configured).</p>
+
+<h3>Recurring Jobs (cron)</h3>
+<p>Cron jobs do <strong>not</strong> retry. If a scheduled run fails, the next scheduled run will execute as normal. This prevents retry storms and duplicate executions.</p>
+
+<p>For example, if your hourly job fails at 06:00, it won't retry - it will simply run again at 07:00 as scheduled. You'll still receive a failure alert so you can investigate.</p>
+
+<div class="note">
+    <strong>Why no retries for cron?</strong> A minute-interval cron with 5 retries would create chaos - by the time retries finish, hundreds of scheduled runs would have stacked up. The next scheduled run is effectively your retry.
+</div>
 
 <h3>Retry Headers</h3>
 <p>On retry attempts, we include an additional header:</p>
