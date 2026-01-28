@@ -29,15 +29,24 @@ defmodule PrikkeWeb.UserAuth do
   @doc """
   Logs the user in.
 
-  Redirects to the session's `:user_return_to` path
+  Redirects to pending invite if one exists, then to the session's `:user_return_to` path,
   or falls back to the `signed_in_path/1`.
   """
   def log_in_user(conn, user, params \\ %{}) do
     user_return_to = get_session(conn, :user_return_to)
+    pending_invite_token = get_session(conn, :pending_invite_token)
+
+    redirect_to =
+      cond do
+        pending_invite_token -> ~p"/invites/#{pending_invite_token}/accept"
+        user_return_to -> user_return_to
+        true -> signed_in_path(conn)
+      end
 
     conn
     |> create_or_extend_session(user, params)
-    |> redirect(to: user_return_to || signed_in_path(conn))
+    |> delete_session(:pending_invite_token)
+    |> redirect(to: redirect_to)
   end
 
   @doc """
@@ -142,10 +151,18 @@ defmodule PrikkeWeb.UserAuth do
   #
   defp renew_session(conn, _user) do
     delete_csrf_token()
+    pending_invite_token = get_session(conn, :pending_invite_token)
 
     conn
     |> configure_session(renew: true)
     |> clear_session()
+    |> then(fn conn ->
+      if pending_invite_token do
+        put_session(conn, :pending_invite_token, pending_invite_token)
+      else
+        conn
+      end
+    end)
   end
 
   defp maybe_write_remember_me_cookie(conn, token, %{"remember_me" => "true"}, _),
