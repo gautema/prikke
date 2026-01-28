@@ -8,7 +8,8 @@ defmodule PrikkeWeb.Endpoint do
     store: :cookie,
     key: "_app_key",
     signing_salt: "Q85ZcgcC",
-    same_site: "Lax"
+    same_site: "Lax",
+    secure: Mix.env() == :prod
   ]
 
   socket "/live", Phoenix.LiveView.Socket,
