@@ -138,6 +138,85 @@ title: API Reference
 }</code></pre>
 </div>
 
+<h2>Notifications</h2>
+<p>Get alerted when jobs fail. Configure notifications at the project level.</p>
+
+<div class="endpoint">
+    <div class="endpoint-header">
+        <span class="method get">GET</span>
+        <span class="endpoint-path">/project/notifications</span>
+    </div>
+    <p>Get current notification settings.</p>
+</div>
+
+<div class="endpoint">
+    <div class="endpoint-header">
+        <span class="method patch">PATCH</span>
+        <span class="endpoint-path">/project/notifications</span>
+    </div>
+    <p>Update notification settings.</p>
+
+    <h4>Request Body</h4>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>email</code></td><td>string</td><td>Email address for alerts (null to disable)</td></tr>
+        <tr><td><code>webhook_url</code></td><td>string</td><td>Webhook URL for alerts (null to disable)</td></tr>
+    </table>
+
+    <h4>Example</h4>
+    <pre><code class="language-bash">curl -X PATCH https://api.prikke.io/project/notifications \
+  -H "Authorization: Bearer pk_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "alerts@myapp.com",
+    "webhook_url": "https://hooks.slack.com/services/xxx/yyy/zzz"
+  }'</code></pre>
+</div>
+
+<h3>Webhook Payload</h3>
+<p>When a job fails, we send a POST request to your webhook URL with this payload:</p>
+
+<pre><code class="language-json">{
+  "event": "job.failed",
+  "timestamp": "2025-01-28T06:00:15Z",
+  "job": {
+    "id": "job_abc123",
+    "name": "Daily backup",
+    "url": "https://myapp.com/api/backup"
+  },
+  "execution": {
+    "id": "exec_xyz789",
+    "status": "failed",
+    "status_code": 500,
+    "duration_ms": 1234,
+    "started_at": "2025-01-28T06:00:00Z",
+    "finished_at": "2025-01-28T06:00:01Z",
+    "error": "Internal Server Error"
+  }
+}</code></pre>
+
+<h3>Event Types</h3>
+<table>
+    <tr><th>Event</th><th>Description</th></tr>
+    <tr><td><code>job.failed</code></td><td>Job returned non-2xx status code</td></tr>
+    <tr><td><code>job.timeout</code></td><td>Job did not respond within 30 seconds</td></tr>
+    <tr><td><code>job.recovered</code></td><td>Job succeeded after previous failure</td></tr>
+</table>
+
+<h3>Slack Integration</h3>
+<p>To send alerts to Slack, use a Slack Incoming Webhook URL:</p>
+<ol>
+    <li>Go to <a href="https://api.slack.com/apps">api.slack.com/apps</a> and create an app</li>
+    <li>Enable Incoming Webhooks</li>
+    <li>Create a webhook for your channel</li>
+    <li>Use the webhook URL in your Prikke notification settings</li>
+</ol>
+
+<p>Prikke automatically formats the payload for Slack when it detects a <code>hooks.slack.com</code> URL.</p>
+
+<h3>Discord Integration</h3>
+<p>Discord webhooks work the same way. Create a webhook in your Discord channel settings and use the URL. Prikke detects <code>discord.com/api/webhooks</code> URLs and formats accordingly.</p>
+
 <h2>Errors</h2>
 <p>The API returns standard HTTP status codes:</p>
 <table>
