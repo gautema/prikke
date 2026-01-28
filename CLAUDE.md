@@ -21,8 +21,8 @@
 | Component | Technology | Rationale |
 |-----------|------------|-----------|
 | Backend | Elixir + Phoenix | Fault-tolerant, built for concurrent jobs |
-| Jobs | Oban Pro | Production-grade scheduling, clustering, dynamic cron |
-| Database | PostgreSQL | Oban uses it for coordination, no Redis needed |
+| Jobs | GenServer pool + Postgres | Custom scheduler, no external dependencies |
+| Database | PostgreSQL | FOR UPDATE SKIP LOCKED for job queue, advisory locks for clustering |
 | Frontend | Phoenix LiveView + Tailwind | Real-time dashboard with minimal JS |
 | HTTP Client | Req (uses Finch) | Modern, connection pooling |
 | Auth | phx.gen.auth + API keys | Sessions for dashboard, API keys for programmatic access |
@@ -36,15 +36,73 @@
 - BEAM VM designed for systems that run forever
 - Lightweight processes (millions concurrent)
 - Fault tolerance built-in (supervisors)
-- Oban handles the hard parts of job scheduling
+- GenServer + Postgres handles job scheduling natively
 - LiveView gives real-time UI for free
 - Developer has 2 years Elixir experience
 
-### Why Oban Pro?
-- Dynamic cron (users create schedules at runtime) - requires Pro
-- Clustering works out of the box via Postgres
-- Rate limiting, workflows, batching included
-- Worth €99/year vs building it yourself
+### Job Execution Architecture
+No external job libraries - just GenServers and Postgres:
+
+**Scheduler GenServer:**
+- Ticks every 60 seconds
+- Queries jobs table for due cron/one-time jobs
+- Inserts executions with `status = 'pending'`
+- Uses Postgres advisory lock so only one node schedules in cluster
+
+**Worker Pool (GenServer pool or Task.Supervisor):**
+- Workers claim pending executions: `FOR UPDATE SKIP LOCKED`
+- Execute HTTP request with Req
+- Update execution status (success/failed/timeout)
+- Handle retries for one-time jobs (re-insert with backoff delay)
+
+**Postgres Features Used:**
+- `FOR UPDATE SKIP LOCKED` - concurrent job claiming without conflicts
+- `pg_advisory_lock` - leader election for scheduler
+- `pg_notify` / LISTEN - optional: wake workers on new job
+
+```elixir
+# Claim next pending execution with priority
+SELECT e.* FROM executions e
+JOIN jobs j ON e.job_id = j.id
+JOIN users u ON j.user_id = u.id
+WHERE e.status = 'pending' AND e.scheduled_for <= now()
+ORDER BY
+  u.tier DESC,           -- Pro customers first
+  j.interval_minutes ASC, -- Minute crons before hourly/daily
+  e.scheduled_for ASC     -- Oldest first within same priority
+LIMIT 1
+FOR UPDATE SKIP LOCKED
+```
+
+**Priority logic:**
+- Pro tier jobs always run before Free tier
+- Minute-interval crons are more time-sensitive than hourly/daily
+- Within same priority: oldest (most overdue) first
+
+**Adaptive Worker Pool:**
+Workers scale based on queue depth - no thundering herd, no idle resources:
+
+```elixir
+# Pool Manager checks queue every 5 seconds:
+# - queue_depth = count pending executions
+# - active_workers = current worker count
+# - target = min(max_workers, queue_depth)
+# - spawn/terminate workers to match target
+
+# Bounds:
+# - min_workers: 2 (always ready)
+# - max_workers: 20 (limit concurrent HTTP)
+# - scale_up: spawn immediately when queue > workers
+# - scale_down: let idle workers terminate after 30s no work
+```
+
+Using `DynamicSupervisor`:
+- Spawn workers on demand with `start_child`
+- Workers exit normally when no work found (after idle timeout)
+- Supervisor handles crashes/restarts automatically
+- Each worker: claim → execute → loop → exit if idle
+
+Simple, no dependencies, full control.
 
 ## Features
 
@@ -79,6 +137,7 @@ create table users (
     id uuid primary key,
     email text unique not null,
     hashed_password text not null,
+    tier text default 'free',        -- 'free' or 'pro'
     confirmed_at timestamptz,
     inserted_at timestamptz not null,
     updated_at timestamptz not null
@@ -106,6 +165,7 @@ create table jobs (
     body text,
     schedule_type text not null,      -- 'cron' or 'once'
     cron_expression text,             -- for recurring jobs (null if once)
+    interval_minutes integer,         -- computed from cron (1, 60, 1440, etc.) for priority
     scheduled_at timestamptz,         -- for one-time jobs (null if cron)
     timezone text default 'UTC',
     enabled boolean default true,
@@ -173,7 +233,7 @@ Notes:
 │        Koyeb (Frankfurt) 🇫🇷            │
 │  ┌─────────────────────────────────┐    │
 │  │  Container: Bun (landing)       │    │
-│  │  → later: Phoenix + Oban        │    │
+│  │  → later: Phoenix app           │    │
 │  │  Small (1 vCPU, 1GB) - €10/mo   │    │
 │  └───────────────┬─────────────────┘    │
 │                  │ same network         │
@@ -213,7 +273,7 @@ docker push registry.koyeb.com/your-org/prikke
 ```
 
 ### Services Not Needed (Yet)
-- Redis (Oban uses Postgres)
+- Redis (Postgres handles job queue)
 - SMS (email alerts are enough)
 - Object storage (until log archival needed)
 - Load balancer (Koyeb handles this)
@@ -241,21 +301,25 @@ Using Lemon Squeezy (Merchant of Record):
 └─────────────────────┬───────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────┐
-│                   Oban                           │
-│  ┌─────────────┐  ┌─────────────┐               │
-│  │ Cron Plugin │  │   Queues    │               │
-│  │ (schedules) │  │ (webhooks)  │               │
-│  └─────────────┘  └─────────────┘               │
+│  Scheduler           Worker Pool                 │
+│  ┌─────────────┐     ┌─────────────────────┐    │
+│  │ GenServer   │     │ GenServer workers   │    │
+│  │ ticks/min   │     │ claim + execute     │    │
+│  │ (leader)    │     │ (SKIP LOCKED)       │    │
+│  └─────────────┘     └─────────────────────┘    │
+│       │                       │                  │
+│       └───────────────────────┘                  │
+│              advisory locks                      │
 └─────────────────────┬───────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────┐
 │               PostgreSQL                         │
-│  (Users, Jobs, Executions, Oban tables)         │
+│  (Users, Jobs, Executions - queue via SKIP LOCKED)│
 └─────────────────────────────────────────────────┘
 ```
 
 ### Clustering
-- Oban uses Postgres for coordination (no Redis)
+- Postgres SKIP LOCKED for job queue (no Redis)
 - Multiple nodes can run, jobs won't duplicate
 - Leader election via Postgres advisory locks
 
@@ -328,9 +392,6 @@ mix ecto.reset
 
 # Generate auth
 mix phx.gen.auth Accounts User users
-
-# Oban dashboard (if using Oban Web)
-# Available at /oban in dev
 ```
 
 ## Current Project Structure
@@ -384,9 +445,11 @@ lib/
 │   ├── jobs/               # Job management
 │   │   ├── job.ex
 │   │   └── execution.ex
-│   ├── workers/            # Oban workers
-│   │   ├── webhook_worker.ex
-│   │   └── cron_scheduler.ex
+│   ├── scheduler/          # Cron scheduler
+│   │   └── scheduler.ex    # GenServer, ticks every minute, uses advisory lock
+│   ├── workers/            # Webhook execution
+│   │   ├── worker_pool.ex  # Supervises worker GenServers
+│   │   └── worker.ex       # Claims and executes jobs (SKIP LOCKED)
 │   └── repo.ex
 ├── prikke_web/
 │   ├── live/               # LiveView pages
@@ -402,7 +465,7 @@ lib/
 ## Key Decisions
 
 1. **Elixir over Kotlin/.NET** - Best fit for concurrent job execution
-2. **Oban Pro over OSS** - Need dynamic cron for user-defined schedules
+2. **No Oban, custom GenServer pool** - Postgres SKIP LOCKED for queue, advisory locks for clustering, no dependencies
 3. **No Redis** - Postgres handles everything, simpler infra
 4. **Koyeb over Scaleway/Hetzner** - Managed containers, no Linux management, EU company
 5. **Lemon Squeezy over Stripe** - MoR handles EU VAT, simpler for solo founder
@@ -414,6 +477,7 @@ lib/
 11. **Notifications: webhook-first** - Email (default) + webhook URL; auto-detect Slack/Discord URLs and format payloads accordingly
 12. **Project-level notifications** - Not per-job (simpler, covers 90% of use cases)
 13. **Status page** - Public status page for Prikke itself (builds trust); execution history IS user monitoring
+14. **Job priority** - Pro tier before Free; minute-interval crons before hourly/daily (more time-sensitive)
 
 ## Competitors
 

@@ -35,7 +35,7 @@ The name comes from the Norwegian expression "til punkt og prikke" - meaning to 
 | Component | Technology |
 |-----------|------------|
 | Backend | Elixir + Phoenix |
-| Jobs | Oban Pro |
+| Jobs | GenServer pool + Postgres |
 | Database | PostgreSQL |
 | Frontend | Phoenix LiveView + Tailwind |
 | Hosting | Koyeb (Frankfurt) |
