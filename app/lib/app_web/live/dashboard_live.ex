@@ -210,7 +210,7 @@ defmodule PrikkeWeb.DashboardLive do
             <a href="/docs/webhooks" class="hover:text-slate-700">Webhooks</a>
           </div>
           <div>
-            <a href="mailto:gaute@whitenoise.no" class="hover:text-slate-700">Contact</a>
+            <a href="mailto:gaute.magnussen@gmail.com" class="hover:text-slate-700">Contact</a>
           </div>
         </div>
       </div>
