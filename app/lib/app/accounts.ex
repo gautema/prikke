@@ -577,6 +577,18 @@ defmodule Prikke.Accounts do
   end
 
   @doc """
+  Lists pending invites for a user by their email.
+  """
+  def list_pending_invites_for_email(email) do
+    from(i in OrganizationInvite,
+      where: i.email == ^email and is_nil(i.accepted_at),
+      order_by: [desc: i.inserted_at],
+      preload: [:organization, :invited_by]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Deletes a pending invite.
   """
   def delete_invite(invite) do

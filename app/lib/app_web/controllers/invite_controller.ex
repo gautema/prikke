@@ -3,6 +3,12 @@ defmodule PrikkeWeb.InviteController do
 
   alias Prikke.Accounts
 
+  def index(conn, _params) do
+    user = conn.assigns.current_scope.user
+    invites = Accounts.list_pending_invites_for_email(user.email)
+    render(conn, :index, invites: invites)
+  end
+
   def new(conn, _params) do
     render(conn, :new, changeset: %{})
   end
@@ -79,6 +85,20 @@ defmodule PrikkeWeb.InviteController do
       conn
       |> put_flash(:error, "Invitation not found.")
       |> redirect(to: ~p"/organizations/members")
+    end
+  end
+
+  def accept_direct(conn, %{"id" => id}) do
+    user = conn.assigns.current_scope.user
+    invites = Accounts.list_pending_invites_for_email(user.email)
+    invite = Enum.find(invites, &(&1.id == id))
+
+    if invite do
+      accept_invite(conn, invite, user)
+    else
+      conn
+      |> put_flash(:error, "Invite not found or you don't have permission to accept it.")
+      |> redirect(to: ~p"/invites")
     end
   end
 

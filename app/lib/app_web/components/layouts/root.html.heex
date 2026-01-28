@@ -75,6 +75,7 @@
               <% end %>
               <span class="w-px h-5 bg-slate-200"></span>
               <span class="text-sm text-slate-500">{@current_scope.user.email}</span>
+              <.link href={~p"/invites"} class="text-sm text-slate-600 hover:text-slate-900">Invites</.link>
               <.link href={~p"/users/settings"} class="text-sm text-slate-600 hover:text-slate-900">Settings</.link>
               <.link href={~p"/users/log-out"} method="delete" class="text-sm text-slate-600 hover:text-slate-900">Log out</.link>
             <% else %>

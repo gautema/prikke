@@ -86,8 +86,10 @@ defmodule PrikkeWeb.Router do
     put "/organizations/settings", OrganizationController, :update
     get "/organizations/members", OrganizationController, :members
 
-    # Invites (authenticated - for sending invites)
+    # Invites (authenticated)
+    get "/invites", InviteController, :index
     post "/invites", InviteController, :create
+    post "/invites/:id/accept-direct", InviteController, :accept_direct
     delete "/invites/:id", InviteController, :delete
   end
 
