@@ -1,0 +1,8 @@
+name = "prikke-waitlist"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "prikke-waitlist"
+database_id = "" # Fill in after: wrangler d1 create prikke-waitlist

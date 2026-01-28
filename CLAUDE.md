@@ -215,6 +215,41 @@ For MVP: Lemon Squeezy
 
 See `/brand/BRAND.md` for full guidelines.
 
+## Waitlist (Cloudflare Worker + D1)
+
+Location: `/worker/`
+
+Simple waitlist API using Cloudflare Worker and D1 database.
+
+### Setup
+```bash
+cd worker
+npm install
+
+# Create D1 database
+npm run db:create
+# Copy the database_id to wrangler.toml
+
+# Initialize schema
+npm run db:init
+
+# Deploy
+npm run deploy
+```
+
+### Usage
+```bash
+# List signups
+npm run db:list
+
+# Local development
+npm run db:init:local
+npm run dev
+```
+
+### Update Landing Page
+After deploying, update `WORKER_URL` in `site/index.html` with your worker URL.
+
 ## Landing Page
 
 Location: `/site/index.html`
@@ -277,9 +312,16 @@ prikke/
 │   ├── favicon.svg
 │   ├── logo.svg           # Light background
 │   └── logo-dark.svg      # Dark background
-└── site/
-    ├── index.html         # Landing page
-    └── favicon.svg
+├── site/
+│   ├── index.html         # Landing page
+│   └── favicon.svg
+└── worker/                # Cloudflare Worker (waitlist API)
+    ├── wrangler.toml      # Cloudflare config
+    ├── package.json
+    ├── schema.sql         # D1 database schema
+    ├── tsconfig.json
+    └── src/
+        └── index.ts       # Worker code
 ```
 
 ## Planned App Structure (Phoenix)

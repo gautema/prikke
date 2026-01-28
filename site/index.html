@@ -478,11 +478,56 @@ curl -X POST https://api.prikke.io/jobs \
         <section class="cta">
             <h2>Coming soon</h2>
             <p>Join the waitlist to get early access.</p>
-            <form class="email-form" action="#" method="POST">
-                <input type="email" name="email" placeholder="you@example.com" required>
-                <button type="submit">Join waitlist</button>
+            <form class="email-form" id="waitlist-form">
+                <input type="email" name="email" id="waitlist-email" placeholder="you@example.com" required>
+                <button type="submit" id="waitlist-button">Join waitlist</button>
             </form>
+            <p id="waitlist-message" style="margin-top: 16px; display: none;"></p>
         </section>
+
+        <script>
+            const form = document.getElementById('waitlist-form');
+            const button = document.getElementById('waitlist-button');
+            const message = document.getElementById('waitlist-message');
+            const emailInput = document.getElementById('waitlist-email');
+
+            // Update this after deploying the worker
+            const WORKER_URL = 'https://prikke-waitlist.YOUR_SUBDOMAIN.workers.dev';
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                button.disabled = true;
+                button.textContent = 'Joining...';
+                message.style.display = 'none';
+
+                try {
+                    const response = await fetch(WORKER_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: emailInput.value })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        message.textContent = "You're on the list! We'll be in touch.";
+                        message.style.color = '#10b981';
+                        form.style.display = 'none';
+                    } else {
+                        message.textContent = data.error || 'Something went wrong';
+                        message.style.color = '#ef4444';
+                    }
+                } catch (err) {
+                    message.textContent = 'Could not connect. Try again later.';
+                    message.style.color = '#ef4444';
+                }
+
+                message.style.display = 'block';
+                button.disabled = false;
+                button.textContent = 'Join waitlist';
+            });
+        </script>
 
         <footer>
             <p>
