@@ -6,10 +6,14 @@ defmodule Prikke.Accounts.UserNotifier do
 
   # Delivers the email using the application mailer.
   defp deliver(recipient, subject, body) do
+    config = Application.get_env(:app, Prikke.Mailer, [])
+    from_name = Keyword.get(config, :from_name, "Prikke")
+    from_email = Keyword.get(config, :from_email, "prikke@whitenoise.no")
+
     email =
       new()
       |> to(recipient)
-      |> from({"Prikke", "contact@example.com"})
+      |> from({from_name, from_email})
       |> subject(subject)
       |> text_body(body)
 

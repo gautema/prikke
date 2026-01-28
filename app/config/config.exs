@@ -43,7 +43,10 @@ config :app, PrikkeWeb.Endpoint,
 #
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
-config :app, Prikke.Mailer, adapter: Swoosh.Adapters.Local
+config :app, Prikke.Mailer,
+  adapter: Swoosh.Adapters.Local,
+  from_email: "prikke@whitenoise.no",
+  from_name: "Prikke"
 
 # Configure esbuild (the version is required)
 config :esbuild,
