@@ -46,6 +46,23 @@ liveSocket.connect()
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
 
+// Dropdown toggle
+document.addEventListener("click", (e) => {
+  const toggle = e.target.closest("[data-dropdown-toggle]")
+
+  if (toggle) {
+    e.preventDefault()
+    const dropdown = toggle.closest("[data-dropdown]")
+    const menu = dropdown.querySelector("[data-dropdown-menu]")
+    menu.classList.toggle("hidden")
+  } else {
+    // Close all dropdowns when clicking outside
+    document.querySelectorAll("[data-dropdown-menu]").forEach(menu => {
+      menu.classList.add("hidden")
+    })
+  }
+})
+
 // The lines below enable quality of life phoenix_live_reload
 // development features:
 //
