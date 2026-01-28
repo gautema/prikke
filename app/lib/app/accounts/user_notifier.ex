@@ -6,7 +6,7 @@ defmodule Prikke.Accounts.UserNotifier do
   alias Prikke.Accounts.User
 
   # Delivers the email using the application mailer.
-  defp deliver(recipient, subject, body) do
+  defp deliver(recipient, subject, text_body, html_body) do
     config = Application.get_env(:app, Prikke.Mailer, [])
     from_name = Keyword.get(config, :from_name, "Prikke")
     from_email = Keyword.get(config, :from_email, "noreply@whitenoise.no")
@@ -16,7 +16,8 @@ defmodule Prikke.Accounts.UserNotifier do
       |> to(recipient)
       |> from({from_name, from_email})
       |> subject(subject)
-      |> text_body(body)
+      |> text_body(text_body)
+      |> html_body(html_body)
 
     Logger.info("Sending email to #{recipient} from #{from_email}, subject: #{subject}")
 
@@ -31,24 +32,94 @@ defmodule Prikke.Accounts.UserNotifier do
     end
   end
 
+  defp email_template(content, button_text, button_url) do
+    """
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 480px; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <!-- Header -->
+              <tr>
+                <td style="padding: 32px 32px 24px 32px; text-align: center; border-bottom: 1px solid #e2e8f0;">
+                  <div style="display: inline-flex; align-items: center;">
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #10b981; border-radius: 50%; margin-right: 8px;"></span>
+                    <span style="font-size: 20px; font-weight: 600; color: #0f172a;">prikke</span>
+                  </div>
+                </td>
+              </tr>
+              <!-- Content -->
+              <tr>
+                <td style="padding: 32px;">
+                  #{content}
+                  <!-- Button -->
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 24px;">
+                    <tr>
+                      <td align="center">
+                        <a href="#{button_url}" style="display: inline-block; padding: 14px 32px; background-color: #10b981; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 14px;">#{button_text}</a>
+                      </td>
+                    </tr>
+                  </table>
+                  <!-- Link fallback -->
+                  <p style="margin-top: 24px; font-size: 12px; color: #94a3b8; text-align: center;">
+                    Or copy this link:<br>
+                    <a href="#{button_url}" style="color: #10b981; word-break: break-all;">#{button_url}</a>
+                  </p>
+                </td>
+              </tr>
+              <!-- Footer -->
+              <tr>
+                <td style="padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
+                  <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                    Prikke - Cron jobs, til punkt og prikke
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+    """
+  end
+
   @doc """
   Deliver instructions to update a user email.
   """
   def deliver_update_email_instructions(user, url) do
-    deliver(user.email, "Update email instructions", """
+    text = """
+    Hi,
 
-    ==============================
+    You requested to change your email address on Prikke.
 
-    Hi #{user.email},
-
-    You can change your email by visiting the URL below:
+    Click the link below to confirm the change:
 
     #{url}
 
-    If you didn't request this change, please ignore this.
+    If you didn't request this, you can safely ignore this email.
 
-    ==============================
-    """)
+    - The Prikke Team
+    """
+
+    html_content = """
+    <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #0f172a;">Change your email</h2>
+    <p style="margin: 0 0 8px 0; font-size: 14px; color: #475569; line-height: 1.6;">
+      You requested to change your email address on Prikke.
+    </p>
+    <p style="margin: 0; font-size: 14px; color: #475569; line-height: 1.6;">
+      Click the button below to confirm the change. If you didn't request this, you can safely ignore this email.
+    </p>
+    """
+
+    html = email_template(html_content, "Confirm email change", url)
+    deliver(user.email, "Confirm your new email - Prikke", text, html)
   end
 
   @doc """
@@ -62,37 +133,59 @@ defmodule Prikke.Accounts.UserNotifier do
   end
 
   defp deliver_magic_link_instructions(user, url) do
-    deliver(user.email, "Log in instructions", """
+    text = """
+    Hi,
 
-    ==============================
-
-    Hi #{user.email},
-
-    You can log into your account by visiting the URL below:
+    Click the link below to log in to Prikke:
 
     #{url}
 
-    If you didn't request this email, please ignore this.
+    This link expires in 10 minutes.
 
-    ==============================
-    """)
+    If you didn't request this, you can safely ignore this email.
+
+    - The Prikke Team
+    """
+
+    html_content = """
+    <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #0f172a;">Log in to Prikke</h2>
+    <p style="margin: 0 0 8px 0; font-size: 14px; color: #475569; line-height: 1.6;">
+      Click the button below to log in to your account.
+    </p>
+    <p style="margin: 0; font-size: 14px; color: #475569; line-height: 1.6;">
+      This link expires in 10 minutes. If you didn't request this, you can safely ignore this email.
+    </p>
+    """
+
+    html = email_template(html_content, "Log in to Prikke", url)
+    deliver(user.email, "Log in to Prikke", text, html)
   end
 
   defp deliver_confirmation_instructions(user, url) do
-    deliver(user.email, "Confirmation instructions", """
+    text = """
+    Hi,
 
-    ==============================
-
-    Hi #{user.email},
-
-    You can confirm your account by visiting the URL below:
+    Welcome to Prikke! Click the link below to confirm your account:
 
     #{url}
 
-    If you didn't create an account with us, please ignore this.
+    If you didn't create an account, you can safely ignore this email.
 
-    ==============================
-    """)
+    - The Prikke Team
+    """
+
+    html_content = """
+    <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #0f172a;">Welcome to Prikke!</h2>
+    <p style="margin: 0 0 8px 0; font-size: 14px; color: #475569; line-height: 1.6;">
+      Thanks for signing up. Click the button below to confirm your account and get started.
+    </p>
+    <p style="margin: 0; font-size: 14px; color: #475569; line-height: 1.6;">
+      If you didn't create an account, you can safely ignore this email.
+    </p>
+    """
+
+    html = email_template(html_content, "Confirm your account", url)
+    deliver(user.email, "Welcome to Prikke - Confirm your account", text, html)
   end
 
   @doc """
@@ -101,10 +194,7 @@ defmodule Prikke.Accounts.UserNotifier do
   def deliver_organization_invite(email, org_name, invited_by_email, url) do
     invited_by_text = if invited_by_email, do: " by #{invited_by_email}", else: ""
 
-    deliver(email, "You've been invited to #{org_name}", """
-
-    ==============================
-
+    text = """
     Hi,
 
     You've been invited#{invited_by_text} to join #{org_name} on Prikke.
@@ -115,7 +205,22 @@ defmodule Prikke.Accounts.UserNotifier do
 
     If you don't have a Prikke account yet, you'll be able to create one.
 
-    ==============================
-    """)
+    - The Prikke Team
+    """
+
+    invited_html = if invited_by_email, do: " by <strong>#{invited_by_email}</strong>", else: ""
+
+    html_content = """
+    <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #0f172a;">You're invited!</h2>
+    <p style="margin: 0 0 8px 0; font-size: 14px; color: #475569; line-height: 1.6;">
+      You've been invited#{invited_html} to join <strong>#{org_name}</strong> on Prikke.
+    </p>
+    <p style="margin: 0; font-size: 14px; color: #475569; line-height: 1.6;">
+      Click the button below to accept. If you don't have a Prikke account yet, you'll be able to create one.
+    </p>
+    """
+
+    html = email_template(html_content, "Accept invitation", url)
+    deliver(email, "You're invited to #{org_name} on Prikke", text, html)
   end
 end
