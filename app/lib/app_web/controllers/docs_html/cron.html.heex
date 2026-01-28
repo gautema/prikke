@@ -5,9 +5,9 @@
   <h2>Format</h2>
   <p>A cron expression has 5 fields:</p>
 
-  <div class="bg-white border border-slate-200 rounded-lg p-6 my-6 font-mono text-center">
-    <div class="text-2xl tracking-[8px] mb-4">* * * * *</div>
-    <div class="flex justify-center gap-4 text-xs text-slate-500">
+  <div class="bg-slate-900 rounded-lg p-8 my-6 text-center">
+    <div class="text-3xl font-mono tracking-[12px] mb-4 text-emerald-400">* * * * *</div>
+    <div class="flex justify-center gap-6 text-xs text-slate-400">
       <span>minute</span>
       <span>hour</span>
       <span>day</span>
@@ -16,68 +16,90 @@
     </div>
   </div>
 
-  <table>
-    <thead>
-      <tr><th>Field</th><th>Values</th><th>Description</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>Minute</td><td><code>0-59</code></td><td>Minute of the hour</td></tr>
-      <tr><td>Hour</td><td><code>0-23</code></td><td>Hour of the day (UTC)</td></tr>
-      <tr><td>Day</td><td><code>1-31</code></td><td>Day of the month</td></tr>
-      <tr><td>Month</td><td><code>1-12</code></td><td>Month of the year</td></tr>
-      <tr><td>Weekday</td><td><code>0-6</code></td><td>Day of the week (0 = Sunday)</td></tr>
-    </tbody>
-  </table>
+  <div class="overflow-x-auto my-6">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-slate-200">
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Field</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Values</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600">
+        <tr class="border-b border-slate-100"><td class="py-3 px-4">Minute</td><td class="py-3 px-4"><code class="text-emerald-600">0-59</code></td><td class="py-3 px-4">Minute of the hour</td></tr>
+        <tr class="border-b border-slate-100"><td class="py-3 px-4">Hour</td><td class="py-3 px-4"><code class="text-emerald-600">0-23</code></td><td class="py-3 px-4">Hour of the day (UTC)</td></tr>
+        <tr class="border-b border-slate-100"><td class="py-3 px-4">Day</td><td class="py-3 px-4"><code class="text-emerald-600">1-31</code></td><td class="py-3 px-4">Day of the month</td></tr>
+        <tr class="border-b border-slate-100"><td class="py-3 px-4">Month</td><td class="py-3 px-4"><code class="text-emerald-600">1-12</code></td><td class="py-3 px-4">Month of the year</td></tr>
+        <tr><td class="py-3 px-4">Weekday</td><td class="py-3 px-4"><code class="text-emerald-600">0-6</code></td><td class="py-3 px-4">Day of the week (0 = Sunday)</td></tr>
+      </tbody>
+    </table>
+  </div>
 
   <h2>Special Characters</h2>
-  <table>
-    <thead>
-      <tr><th>Character</th><th>Meaning</th><th>Example</th></tr>
-    </thead>
-    <tbody>
-      <tr><td><code>*</code></td><td>Any value</td><td><code>* * * * *</code> = every minute</td></tr>
-      <tr><td><code>,</code></td><td>List</td><td><code>0,30 * * * *</code> = at :00 and :30</td></tr>
-      <tr><td><code>-</code></td><td>Range</td><td><code>0 9-17 * * *</code> = every hour 9am-5pm</td></tr>
-      <tr><td><code>/</code></td><td>Step</td><td><code>*/15 * * * *</code> = every 15 minutes</td></tr>
-    </tbody>
-  </table>
+  <div class="overflow-x-auto my-6">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-slate-200">
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Character</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Meaning</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Example</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600">
+        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="text-purple-600 font-semibold">*</code></td><td class="py-3 px-4">Any value</td><td class="py-3 px-4"><code class="text-emerald-600">* * * * *</code> = every minute</td></tr>
+        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="text-purple-600 font-semibold">,</code></td><td class="py-3 px-4">List</td><td class="py-3 px-4"><code class="text-emerald-600">0,30 * * * *</code> = at :00 and :30</td></tr>
+        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="text-purple-600 font-semibold">-</code></td><td class="py-3 px-4">Range</td><td class="py-3 px-4"><code class="text-emerald-600">0 9-17 * * *</code> = every hour 9am-5pm</td></tr>
+        <tr><td class="py-3 px-4"><code class="text-purple-600 font-semibold">/</code></td><td class="py-3 px-4">Step</td><td class="py-3 px-4"><code class="text-emerald-600">*/15 * * * *</code> = every 15 minutes</td></tr>
+      </tbody>
+    </table>
+  </div>
 
   <h2>Common Examples</h2>
-  <table>
-    <thead>
-      <tr><th>Expression</th><th>Meaning</th></tr>
-    </thead>
-    <tbody>
-      <tr><td><code>* * * * *</code></td><td>Every minute</td></tr>
-      <tr><td><code>0 * * * *</code></td><td>Every hour</td></tr>
-      <tr><td><code>0 0 * * *</code></td><td>Every day at midnight UTC</td></tr>
-      <tr><td><code>0 6 * * *</code></td><td>Every day at 6:00 AM UTC</td></tr>
-      <tr><td><code>0 9 * * 1-5</code></td><td>Weekdays at 9:00 AM UTC</td></tr>
-      <tr><td><code>0 0 * * 0</code></td><td>Every Sunday at midnight</td></tr>
-      <tr><td><code>0 0 1 * *</code></td><td>First day of every month</td></tr>
-      <tr><td><code>*/15 * * * *</code></td><td>Every 15 minutes</td></tr>
-      <tr><td><code>0 */2 * * *</code></td><td>Every 2 hours</td></tr>
-      <tr><td><code>30 4 * * *</code></td><td>Every day at 4:30 AM UTC</td></tr>
-    </tbody>
-  </table>
+  <div class="overflow-x-auto my-6">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-slate-200">
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Expression</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Meaning</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600">
+        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="bg-slate-100 px-2 py-1 rounded text-emerald-600">* * * * *</code></td><td class="py-3 px-4">Every minute</td></tr>
+        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="bg-slate-100 px-2 py-1 rounded text-emerald-600">0 * * * *</code></td><td class="py-3 px-4">Every hour</td></tr>
+        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="bg-slate-100 px-2 py-1 rounded text-emerald-600">0 0 * * *</code></td><td class="py-3 px-4">Every day at midnight UTC</td></tr>
+        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="bg-slate-100 px-2 py-1 rounded text-emerald-600">0 6 * * *</code></td><td class="py-3 px-4">Every day at 6:00 AM UTC</td></tr>
+        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="bg-slate-100 px-2 py-1 rounded text-emerald-600">0 9 * * 1-5</code></td><td class="py-3 px-4">Weekdays at 9:00 AM UTC</td></tr>
+        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="bg-slate-100 px-2 py-1 rounded text-emerald-600">0 0 * * 0</code></td><td class="py-3 px-4">Every Sunday at midnight</td></tr>
+        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="bg-slate-100 px-2 py-1 rounded text-emerald-600">0 0 1 * *</code></td><td class="py-3 px-4">First day of every month</td></tr>
+        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="bg-slate-100 px-2 py-1 rounded text-emerald-600">*/15 * * * *</code></td><td class="py-3 px-4">Every 15 minutes</td></tr>
+        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="bg-slate-100 px-2 py-1 rounded text-emerald-600">0 */2 * * *</code></td><td class="py-3 px-4">Every 2 hours</td></tr>
+        <tr><td class="py-3 px-4"><code class="bg-slate-100 px-2 py-1 rounded text-emerald-600">30 4 * * *</code></td><td class="py-3 px-4">Every day at 4:30 AM UTC</td></tr>
+      </tbody>
+    </table>
+  </div>
 
   <h2>Timezone</h2>
   <p>All cron expressions run in <strong>UTC</strong>. Convert your local time to UTC when setting up jobs.</p>
   <p>For example, if you want a job to run at 9:00 AM CET (Central European Time):</p>
   <ul>
     <li>CET is UTC+1, so 9:00 AM CET = 8:00 AM UTC</li>
-    <li>Use: <code>0 8 * * *</code></li>
+    <li>Use: <code class="bg-slate-100 px-2 py-1 rounded text-emerald-600">0 8 * * *</code></li>
   </ul>
 
   <h2>Minimum Interval</h2>
   <p>The minimum interval depends on your plan:</p>
-  <table>
-    <thead>
-      <tr><th>Plan</th><th>Minimum</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>Free</td><td>Every hour (<code>0 * * * *</code>)</td></tr>
-      <tr><td>Pro</td><td>Every minute (<code>* * * * *</code>)</td></tr>
-    </tbody>
-  </table>
+  <div class="overflow-x-auto my-6">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-slate-200">
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Plan</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Minimum</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600">
+        <tr class="border-b border-slate-100"><td class="py-3 px-4">Free</td><td class="py-3 px-4">Every hour (<code class="text-emerald-600">0 * * * *</code>)</td></tr>
+        <tr><td class="py-3 px-4 font-semibold text-emerald-600">Pro</td><td class="py-3 px-4">Every minute (<code class="text-emerald-600">* * * * *</code>)</td></tr>
+      </tbody>
+    </table>
+  </div>
 </.docs_layout>

@@ -103,3 +103,19 @@
 [data-phx-session], [data-phx-teleported-src] { display: contents }
 
 /* This file is for your main application CSS */
+
+/* Documentation content styles */
+.docs-content h1 { @apply text-4xl font-bold text-slate-900 mb-4 leading-tight; }
+.docs-content h2 { @apply text-2xl font-semibold text-slate-900 mt-8 pt-6 border-t border-slate-200; }
+.docs-content h3 { @apply text-lg font-semibold text-slate-900 mt-4; }
+.docs-content p { @apply text-slate-700 leading-relaxed my-4; }
+.docs-content a { @apply text-emerald-500 no-underline hover:underline; }
+.docs-content code { @apply bg-slate-100 px-1.5 py-0.5 rounded text-sm font-mono; }
+.docs-content pre { @apply bg-slate-900 text-slate-100 rounded-lg p-5 overflow-x-auto my-6; }
+.docs-content pre code { @apply bg-transparent p-0 text-sm; }
+.docs-content ul, .docs-content ol { @apply my-4 pl-6 text-slate-700; }
+.docs-content li { @apply my-2 leading-relaxed; }
+.docs-content table { @apply w-full text-sm my-6; }
+.docs-content th { @apply text-left font-semibold text-slate-600 p-3 border-b border-slate-200; }
+.docs-content td { @apply p-3 border-b border-slate-100 text-slate-700; }
+.docs-content strong { @apply font-semibold text-slate-900; }
