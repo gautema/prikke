@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prikke - Background jobs, done right</title>
+    <meta name="description" content="European cron scheduling and webhook delivery. Simple, reliable, EU-hosted.">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-400: #94a3b8;
+            --slate-500: #64748b;
+            --slate-600: #475569;
+            --slate-900: #0f172a;
+            --emerald-500: #10b981;
+            --emerald-600: #059669;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            color: var(--slate-900);
+            line-height: 1.6;
+            background: var(--slate-50);
+        }
+
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            padding: 24px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 600;
+            text-decoration: none;
+            color: var(--slate-900);
+        }
+
+        .logo-dot {
+            width: 16px;
+            height: 16px;
+            background: var(--emerald-500);
+            border-radius: 50%;
+        }
+
+        /* Hero */
+        .hero {
+            padding: 80px 0 60px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            letter-spacing: -0.02em;
+        }
+
+        .hero .subtitle {
+            font-size: 20px;
+            color: var(--slate-600);
+            margin-bottom: 40px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tagline {
+            display: inline-block;
+            font-size: 14px;
+            color: var(--slate-500);
+            font-style: italic;
+            margin-top: 32px;
+        }
+
+        /* Features */
+        .features {
+            padding: 60px 0;
+            border-top: 1px solid var(--slate-200);
+        }
+
+        .features h2 {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--slate-400);
+            margin-bottom: 32px;
+        }
+
+        .feature-list {
+            display: grid;
+            gap: 24px;
+        }
+
+        .feature {
+            display: flex;
+            gap: 16px;
+        }
+
+        .feature-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            background: var(--emerald-500);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feature-icon svg {
+            width: 14px;
+            height: 14px;
+            stroke: white;
+            stroke-width: 2.5;
+            fill: none;
+        }
+
+        .feature-content h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .feature-content p {
+            font-size: 15px;
+            color: var(--slate-600);
+        }
+
+        /* How it works */
+        .how-it-works {
+            padding: 60px 0;
+            border-top: 1px solid var(--slate-200);
+        }
+
+        .how-it-works h2 {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--slate-400);
+            margin-bottom: 32px;
+        }
+
+        .code-block {
+            background: var(--slate-900);
+            color: var(--slate-100);
+            padding: 24px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+
+        .code-block .comment {
+            color: var(--slate-500);
+        }
+
+        .code-block .key {
+            color: #7dd3fc;
+        }
+
+        .code-block .string {
+            color: #86efac;
+        }
+
+        /* Pricing */
+        .pricing {
+            padding: 60px 0;
+            border-top: 1px solid var(--slate-200);
+        }
+
+        .pricing h2 {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--slate-400);
+            margin-bottom: 32px;
+        }
+
+        .pricing-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+
+        .pricing-card {
+            background: white;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            padding: 24px;
+        }
+
+        .pricing-card.featured {
+            border-color: var(--emerald-500);
+        }
+
+        .pricing-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .pricing-card .price {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .pricing-card .price span {
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--slate-500);
+        }
+
+        .pricing-card .description {
+            font-size: 14px;
+            color: var(--slate-500);
+        }
+
+        /* CTA */
+        .cta {
+            padding: 80px 0;
+            text-align: center;
+            border-top: 1px solid var(--slate-200);
+        }
+
+        .cta h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .cta p {
+            color: var(--slate-600);
+            margin-bottom: 32px;
+        }
+
+        .email-form {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .email-form input {
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 1px solid var(--slate-200);
+            border-radius: 6px;
+            width: 280px;
+            font-family: inherit;
+        }
+
+        .email-form input:focus {
+            outline: none;
+            border-color: var(--emerald-500);
+        }
+
+        .email-form button {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 500;
+            background: var(--emerald-500);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s;
+        }
+
+        .email-form button:hover {
+            background: var(--emerald-600);
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px 0;
+            border-top: 1px solid var(--slate-200);
+            text-align: center;
+            color: var(--slate-500);
+            font-size: 14px;
+        }
+
+        footer a {
+            color: var(--slate-600);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: var(--emerald-500);
+        }
+
+        /* EU Badge */
+        .eu-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: white;
+            border: 1px solid var(--slate-200);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 14px;
+            color: var(--slate-600);
+            margin-bottom: 24px;
+        }
+
+        .eu-badge svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .hero .subtitle {
+                font-size: 18px;
+            }
+
+            .email-form {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .email-form input {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="/" class="logo">
+                <div class="logo-dot"></div>
+                prikke
+            </a>
+        </header>
+
+        <section class="hero">
+            <div class="eu-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                </svg>
+                EU-hosted
+            </div>
+            <h1>Background jobs,<br>done right.</h1>
+            <p class="subtitle">
+                Cron scheduling and webhook delivery for developers who ship products, not infrastructure.
+            </p>
+            <span class="tagline">Jobs done, til punkt og prikke.</span>
+        </section>
+
+        <section class="features">
+            <h2>What you get</h2>
+            <div class="feature-list">
+                <div class="feature">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3>Cron & scheduled jobs</h3>
+                        <p>Recurring cron schedules or one-time jobs at a specific time. Run every minute, daily, or just once.</p>
+                    </div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3>Webhook delivery</h3>
+                        <p>We call your endpoint with automatic retries and exponential backoff. You focus on the logic.</p>
+                    </div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3>Execution history</h3>
+                        <p>See every run with status, duration, and response. Know exactly what happened and when.</p>
+                    </div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3>Failure alerts</h3>
+                        <p>Get notified via email or Slack when jobs fail. Fix issues before your users notice.</p>
+                    </div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3>EU-hosted</h3>
+                        <p>Your data stays in Europe. GDPR-native. No US cloud providers in the chain.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="how-it-works">
+            <h2>How it works</h2>
+            <div class="code-block">
+<span class="comment"># Recurring job - runs every day at 06:00 UTC</span>
+curl -X POST https://api.prikke.io/jobs \
+  -H "Authorization: Bearer pk_live_xxx" \
+  -d '{
+    <span class="key">"name"</span>: <span class="string">"Daily backup"</span>,
+    <span class="key">"url"</span>: <span class="string">"https://myapp.com/api/backup"</span>,
+    <span class="key">"cron"</span>: <span class="string">"0 6 * * *"</span>
+  }'
+
+<span class="comment"># One-time job - runs once at a specific time</span>
+curl -X POST https://api.prikke.io/jobs \
+  -H "Authorization: Bearer pk_live_xxx" \
+  -d '{
+    <span class="key">"name"</span>: <span class="string">"Send reminder"</span>,
+    <span class="key">"url"</span>: <span class="string">"https://myapp.com/api/remind"</span>,
+    <span class="key">"run_at"</span>: <span class="string">"2025-02-01T09:00:00Z"</span>
+  }'
+            </div>
+        </section>
+
+        <section class="pricing">
+            <h2>Simple pricing</h2>
+            <div class="pricing-cards" style="max-width: 480px; margin: 0 auto;">
+                <div class="pricing-card">
+                    <h3>Free</h3>
+                    <div class="price">€0</div>
+                    <p class="description">5 jobs, 5k requests/mo, hourly intervals, 7 day history</p>
+                </div>
+                <div class="pricing-card featured">
+                    <h3>Pro</h3>
+                    <div class="price">€29<span>/mo</span></div>
+                    <p class="description">Unlimited jobs, 250k requests/mo, per-minute intervals, 30 day history</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta">
+            <h2>Coming soon</h2>
+            <p>Join the waitlist to get early access.</p>
+            <form class="email-form" action="#" method="POST">
+                <input type="email" name="email" placeholder="you@example.com" required>
+                <button type="submit">Join waitlist</button>
+            </form>
+        </section>
+
+        <footer>
+            <p>
+                Prikke &middot; Made in Norway &middot;
+                <a href="mailto:hello@prikke.io">Contact</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

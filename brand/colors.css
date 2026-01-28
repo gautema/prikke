@@ -1,0 +1,29 @@
+/* Prikke Brand Colors */
+
+:root {
+  /* Primary */
+  --prikke-slate-900: #0f172a;    /* Primary text, dark UI */
+  --prikke-slate-800: #1e293b;    /* Secondary dark */
+  --prikke-slate-700: #334155;    /* Tertiary dark */
+  --prikke-slate-500: #64748b;    /* Secondary text */
+  --prikke-slate-400: #94a3b8;    /* Muted text */
+  --prikke-slate-200: #e2e8f0;    /* Borders */
+  --prikke-slate-100: #f1f5f9;    /* Light backgrounds */
+  --prikke-slate-50: #f8fafc;     /* Lightest background */
+
+  /* Accent - Emerald (the dot) */
+  --prikke-emerald-600: #059669;  /* Darker accent */
+  --prikke-emerald-500: #10b981;  /* Primary accent (the dot) */
+  --prikke-emerald-400: #34d399;  /* Lighter accent */
+  --prikke-emerald-100: #d1fae5;  /* Accent background */
+
+  /* Semantic */
+  --prikke-success: #10b981;      /* Success states */
+  --prikke-error: #ef4444;        /* Error states */
+  --prikke-warning: #f59e0b;      /* Warning states */
+
+  /* Backgrounds */
+  --prikke-bg-primary: #ffffff;
+  --prikke-bg-secondary: #f8fafc;
+  --prikke-bg-dark: #0f172a;
+}

@@ -1,0 +1,344 @@
+# CLAUDE.md - Prikke Project Guide
+
+## Product Overview
+
+**Prikke** is a European-hosted background jobs and cron scheduling service. The name comes from the Norwegian expression "til punkt og prikke" (to the letter, precisely).
+
+### Value Proposition
+- Simple cron scheduling and webhook delivery
+- EU-hosted (GDPR-native, data never leaves Europe)
+- No AI hype - just reliable job execution
+- Competitor gap: Inngest and Trigger.dev pivoted to AI, leaving simple use cases underserved
+
+### Target Customers
+- EU SaaS startups needing GDPR compliance
+- Developers who want simple cron without complexity
+- Agencies managing multiple client projects
+- Regulated industries (healthcare, finance, legal)
+
+## Tech Stack
+
+| Component | Technology | Rationale |
+|-----------|------------|-----------|
+| Backend | Elixir + Phoenix | Fault-tolerant, built for concurrent jobs |
+| Jobs | Oban Pro | Production-grade scheduling, clustering, dynamic cron |
+| Database | PostgreSQL | Oban uses it for coordination, no Redis needed |
+| Frontend | Phoenix LiveView + Tailwind | Real-time dashboard with minimal JS |
+| HTTP Client | Req (uses Finch) | Modern, connection pooling |
+| Auth | phx.gen.auth + API keys | Sessions for dashboard, API keys for programmatic access |
+| Hosting | Hetzner or Scaleway | EU-based, affordable |
+
+### Why Elixir?
+- BEAM VM designed for systems that run forever
+- Lightweight processes (millions concurrent)
+- Fault tolerance built-in (supervisors)
+- Oban handles the hard parts of job scheduling
+- LiveView gives real-time UI for free
+- Developer has 2 years Elixir experience
+
+### Why Oban Pro?
+- Dynamic cron (users create schedules at runtime) - requires Pro
+- Clustering works out of the box via Postgres
+- Rate limiting, workflows, batching included
+- Worth €99/year vs building it yourself
+
+## Features
+
+### MVP (v1)
+- [ ] User registration and login
+- [ ] Create/edit/delete scheduled jobs
+- [ ] Cron expressions + simple intervals (hourly, daily, weekly)
+- [ ] One-time scheduled jobs (run once at specific time)
+- [ ] HTTP GET/POST webhook delivery
+- [ ] Automatic retries (3 attempts, exponential backoff)
+- [ ] Execution history with status, duration, response
+- [ ] Email alerts on failure
+- [ ] Basic dashboard
+
+### v2
+- [ ] Job queues (on-demand via API, immediate execution)
+- [ ] Slack/webhook alerts
+- [ ] Custom headers and auth for webhooks
+- [ ] Request body for POST
+- [ ] Team/organization support
+
+### v3
+- [ ] Workflows (multi-step jobs)
+- [ ] Rate limiting per endpoint
+- [ ] Cron monitoring (expect ping, alert if missing)
+
+## Database Schema (Core)
+
+```sql
+-- Users
+create table users (
+    id uuid primary key,
+    email text unique not null,
+    hashed_password text not null,
+    confirmed_at timestamptz,
+    inserted_at timestamptz not null,
+    updated_at timestamptz not null
+);
+
+-- API Keys
+create table api_keys (
+    id uuid primary key,
+    user_id uuid references users(id) on delete cascade,
+    key_id text unique not null,      -- pk_live_xxx (public)
+    key_hash text not null,           -- hashed secret
+    name text,
+    last_used_at timestamptz,
+    inserted_at timestamptz not null
+);
+
+-- Jobs (user-defined scheduled jobs)
+create table jobs (
+    id uuid primary key,
+    user_id uuid references users(id) on delete cascade,
+    name text not null,
+    url text not null,
+    method text default 'GET',
+    headers jsonb default '{}',
+    body text,
+    schedule_type text not null,      -- 'cron' or 'once'
+    cron_expression text,             -- for recurring jobs (null if once)
+    scheduled_at timestamptz,         -- for one-time jobs (null if cron)
+    timezone text default 'UTC',
+    enabled boolean default true,
+    retry_attempts integer default 3,
+    timeout_ms integer default 30000,
+    inserted_at timestamptz not null,
+    updated_at timestamptz not null,
+
+    constraint valid_schedule check (
+        (schedule_type = 'cron' and cron_expression is not null) or
+        (schedule_type = 'once' and scheduled_at is not null)
+    )
+);
+
+-- Executions (job run history)
+create table executions (
+    id uuid primary key,
+    job_id uuid references jobs(id) on delete cascade,
+    started_at timestamptz not null,
+    finished_at timestamptz,
+    status text not null,             -- 'success', 'failed', 'timeout'
+    status_code integer,
+    duration_ms integer,
+    response_body text,
+    error_message text,
+    attempt integer default 1,
+    inserted_at timestamptz not null
+);
+
+create index executions_job_id_started_at_idx on executions(job_id, started_at desc);
+create index jobs_user_id_idx on jobs(user_id);
+create index jobs_enabled_idx on jobs(enabled) where enabled = true;
+```
+
+## Pricing Model
+
+Two simple tiers to start:
+
+| | Free | Pro |
+|---|------|-----|
+| **Price** | €0 | €29/mo |
+| **Jobs** | 5 | Unlimited |
+| **Requests** | 5k/mo | 250k/mo |
+| **Min interval** | Hourly | 1 minute |
+| **History** | 7 days | 30 days |
+| **One-time jobs** | Yes | Yes |
+| **Precision** | Minute | Minute |
+
+Notes:
+- Minute precision for all tiers (no second-level scheduling)
+- Free tier math: 5 jobs × hourly × 30 days = 3,600 requests, so 5k is comfortable
+- Add more tiers later based on real usage patterns
+
+## Billing
+
+Using Stripe or Lemon Squeezy (simpler for solo founder, handles EU VAT).
+
+For MVP: Lemon Squeezy
+- No webhook complexity for basic use
+- They handle VAT
+- Just check subscription status via API
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────┐
+│              Phoenix LiveView                    │
+│         (Dashboard, Job Management)              │
+└─────────────────────┬───────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────┐
+│              Phoenix API                         │
+│      (REST endpoints for programmatic access)    │
+└─────────────────────┬───────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────┐
+│                   Oban                           │
+│  ┌─────────────┐  ┌─────────────┐               │
+│  │ Cron Plugin │  │   Queues    │               │
+│  │ (schedules) │  │ (webhooks)  │               │
+│  └─────────────┘  └─────────────┘               │
+└─────────────────────┬───────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────┐
+│               PostgreSQL                         │
+│  (Users, Jobs, Executions, Oban tables)         │
+└─────────────────────────────────────────────────┘
+```
+
+### Clustering
+- Oban uses Postgres for coordination (no Redis)
+- Multiple nodes can run, jobs won't duplicate
+- Leader election via Postgres advisory locks
+
+### Scaling Reference
+| Jobs/minute | Nodes | Postgres |
+|-------------|-------|----------|
+| 1,000 | 1 | Basic |
+| 10,000 | 2-3 | Basic |
+| 100,000 | 5+ | Tune |
+
+## Brand
+
+- **Name:** Prikke
+- **Meaning:** Norwegian for "dot", from "til punkt og prikke" (precisely)
+- **Tagline:** "Jobs done, til punkt og prikke"
+- **Colors:** Slate 900 (#0f172a) + Emerald 500 (#10b981)
+- **Font:** Inter
+- **Logo:** Green dot + "prikke" wordmark
+- **Domains:** prikke.io (primary), prikke.eu (redirect)
+
+See `/brand/BRAND.md` for full guidelines.
+
+## Landing Page
+
+Location: `/site/index.html`
+
+Simple static one-pager with:
+- Hero with tagline
+- Feature list
+- Code example
+- Pricing tiers
+- Waitlist signup form
+
+```bash
+# Preview locally
+cd site && python3 -m http.server 8000
+# Then open http://localhost:8000
+```
+
+Deploy to Cloudflare Pages or any static host.
+
+## Development Commands
+
+```bash
+# Preview landing page
+cd site && python3 -m http.server 8000
+
+# Setup (after Phoenix is initialized)
+mix setup
+
+# Start server
+mix phx.server
+
+# Interactive console
+iex -S mix
+
+# Run tests
+mix test
+
+# Database
+mix ecto.create
+mix ecto.migrate
+mix ecto.reset
+
+# Generate auth
+mix phx.gen.auth Accounts User users
+
+# Oban dashboard (if using Oban Web)
+# Available at /oban in dev
+```
+
+## Current Project Structure
+
+```
+prikke/
+├── .gitignore
+├── CLAUDE.md              # This file
+├── README.md
+├── brand/
+│   ├── BRAND.md           # Brand guidelines
+│   ├── colors.css         # CSS variables
+│   ├── favicon.svg
+│   ├── logo.svg           # Light background
+│   └── logo-dark.svg      # Dark background
+└── site/
+    ├── index.html         # Landing page
+    └── favicon.svg
+```
+
+## Planned App Structure (Phoenix)
+
+```
+lib/
+├── prikke/
+│   ├── accounts/           # User management
+│   │   ├── user.ex
+│   │   └── api_key.ex
+│   ├── jobs/               # Job management
+│   │   ├── job.ex
+│   │   └── execution.ex
+│   ├── workers/            # Oban workers
+│   │   ├── webhook_worker.ex
+│   │   └── cron_scheduler.ex
+│   └── repo.ex
+├── prikke_web/
+│   ├── live/               # LiveView pages
+│   │   ├── dashboard_live.ex
+│   │   ├── jobs_live.ex
+│   │   └── job_detail_live.ex
+│   ├── controllers/        # API controllers
+│   │   └── api/
+│   │       └── job_controller.ex
+│   └── router.ex
+```
+
+## Key Decisions
+
+1. **Elixir over Kotlin/.NET** - Best fit for concurrent job execution
+2. **Oban Pro over OSS** - Need dynamic cron for user-defined schedules
+3. **No Redis** - Postgres handles everything, simpler infra
+4. **EU hosting only** - Key differentiator, Hetzner or Scaleway
+5. **Flat pricing first** - Simpler than usage-based, add later
+6. **API keys over OAuth** - Simpler for users, OAuth later if enterprise needs it
+
+## Competitors
+
+| Competitor | Status | Gap |
+|------------|--------|-----|
+| Inngest | Pivoted to AI | Simple use cases abandoned |
+| Trigger.dev | Pivoted to AI | Same |
+| QStash | Basic, US-based | No cron UI, not EU |
+| Zeplo | UK, minimal | Very basic |
+
+## Go-to-Market
+
+1. Launch on prikke.io with landing page
+2. Free tier to get users
+3. Dev communities (Reddit, HN, Twitter/X)
+4. Content: "EU alternative to Inngest"
+5. Target EU indie hackers, SaaS founders
+
+## Timeline (Rough)
+
+| Phase | Duration | Goal |
+|-------|----------|------|
+| MVP | 2 weeks | Working cron + webhooks |
+| Beta | 1 month | 10-20 free users |
+| Launch | Month 2-3 | Paid tiers live |
+| Iterate | Ongoing | Based on feedback |

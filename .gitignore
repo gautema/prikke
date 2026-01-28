@@ -1,0 +1,31 @@
+# Dependencies
+/deps
+/_build
+/node_modules
+
+# Generated
+/priv/static/assets
+erl_crash.dump
+*.ez
+
+# Elixir
+*.beam
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+.DS_Store
+
+# Test
+/cover
+
+# Database
+*.db
+*.sqlite3
