@@ -393,6 +393,17 @@ cd app && mix compile && mix test
 
 Never commit code without verifying it compiles and tests pass. This is especially important for HEEx templates where syntax errors are not caught until compilation.
 
+**CRITICAL: All features must have tests:**
+- Write tests for all new features and bug fixes
+- Tests prevent regressions and ensure code quality
+- Failing builds must NEVER reach production
+
+**CI/CD: Tests run in Docker build (Koyeb):**
+- The Dockerfile runs `mix test` during build
+- If tests fail, the Docker build fails
+- Koyeb only deploys successful builds
+- This prevents broken code from reaching production
+
 **HEEx Template Notes:**
 - Curly braces `{` and `}` in code blocks (e.g., JSON examples) must be escaped
 - Use HTML entities: `&#123;` for `{` and `&#125;` for `}`
