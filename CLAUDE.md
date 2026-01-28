@@ -107,20 +107,20 @@ Simple, no dependencies, full control.
 ## Features
 
 ### MVP (v1)
-- [ ] User registration and login
-- [ ] Create/edit/delete scheduled jobs
-- [ ] Cron expressions + simple intervals (hourly, daily, weekly)
-- [ ] One-time scheduled jobs (run once at specific time)
-- [ ] HTTP GET/POST webhook delivery
-- [ ] Custom headers and request body for webhooks
-- [ ] Execution history with status, duration, response
+- [x] User registration and login (magic link auth)
+- [x] Create/edit/delete scheduled jobs (LiveView UI)
+- [x] Cron expressions + simple intervals (hourly, daily, weekly)
+- [x] One-time scheduled jobs (run once at specific time)
+- [ ] HTTP GET/POST webhook delivery (needs scheduler/workers)
+- [x] Custom headers and request body for webhooks (UI done)
+- [ ] Execution history with status, duration, response (needs executions schema)
 - [ ] Project-level notifications (email + webhook URL)
 - [ ] Public status page for Prikke itself
-- [ ] Basic dashboard
+- [x] Basic dashboard
 
 ### v2
 - [ ] Job queues (on-demand via API, immediate execution)
-- [ ] Team/organization support
+- [x] Team/organization support (done early - orgs, memberships, invites)
 - [ ] Per-job notification overrides
 - [ ] Customer-facing status pages
 

@@ -1,90 +1,90 @@
 # Prikke Implementation Progress
 
-## Current Status: Phase 2 - Complete
+## Current Status: Phase 3 - In Progress
 
-### What's Done
+Last updated: 2026-01-28
 
-#### Phase 1: Project Setup (Complete)
-- Erlang 28.3, Elixir 1.19.5-otp-28, Phoenix 1.8.3
-- PostgreSQL 18 via Docker Compose
-- UUID primary keys, health check endpoint
-- Landing page and documentation pages
-- Deployed to Koyeb (Frankfurt)
+---
 
-#### Phase 2: Authentication & Organizations (Complete)
-- **User Auth** via `mix phx.gen.auth`
-  - Email/password registration and login
-  - Magic link authentication
-  - Session management
-  - Password reset flow
+## What's Done
 
-- **Organizations**
-  - Schema: name, slug (unique), tier (free/pro)
-  - Users create orgs and become owner
-  - Slug validation (lowercase, hyphens, numbers only)
+### Phase 1: Project Setup (Complete)
+- [x] Phoenix 1.8.3 with Elixir 1.19.5, Erlang 28.3
+- [x] PostgreSQL 18 via Docker Compose
+- [x] UUID primary keys throughout
+- [x] Health check endpoint `/health`
+- [x] Dockerfile for Koyeb deployment
+- [x] Landing page with pricing section
+- [x] Documentation pages (API, Cron, Webhooks, Getting Started)
+- [x] Deployed to Koyeb Frankfurt
 
-- **Memberships**
-  - Links users to organizations
-  - Roles: owner, admin, member
-  - Role hierarchy checking (`has_role?/3`)
+### Phase 2: Authentication & Organizations (Complete)
+- [x] User auth via `mix phx.gen.auth` (magic link)
+- [x] Organizations with name, slug, tier
+- [x] Memberships linking users to orgs (owner/admin/member roles)
+- [x] Organization invites via email
+- [x] Pending invites UI with accept/decline
+- [x] Organization switcher in header
+- [x] API Keys (`pk_live_xxx.sk_live_yyy` format)
+- [x] API Auth Plug for bearer token authentication
 
-- **API Keys**
-  - Format: `pk_live_xxx.sk_live_yyy`
-  - Public key_id + hashed secret
-  - Tracks created_by user and last_used_at
-  - Secure verification with timing-safe comparison
+### Phase 3: Core Domain (In Progress)
+- [x] Jobs schema with validations
+  - Organization-scoped
+  - Cron expression validation (via `crontab` library)
+  - One-time scheduled jobs support
+  - URL validation, method, headers, body, timeout
+  - `interval_minutes` computed from cron for priority
+- [x] Jobs context with CRUD operations
+- [x] Jobs UI (LiveView)
+  - List page with toggle, edit, delete
+  - Show page with job details
+  - New job full page form
+  - Edit job full page form
+  - Real-time updates via PubSub
+- [ ] **Executions schema** - Next up
+- [ ] Executions context
 
-- **API Auth Plug**
-  - Authenticates via `Authorization: Bearer` header
-  - Assigns `current_organization` to connection
-  - Returns 401 for invalid/missing keys
+### Phase 4: Job Execution Engine (Not Started)
+- [ ] Scheduler GenServer (ticks every 60s, advisory lock)
+- [ ] Worker Pool Manager (scales 2-20 workers)
+- [ ] Worker GenServer (claims with SKIP LOCKED)
+- [ ] HTTP Executor (Req library)
 
-- **Tests**: 114 passing
+### Phase 5: REST API (Not Started)
+- [ ] API routes for jobs CRUD
+- [ ] Declarative sync endpoint (`PUT /api/sync`)
+- [ ] Trigger endpoint (`POST /api/jobs/:id/trigger`)
+- [ ] Execution history endpoint
 
-### Files Created/Modified (Phase 2)
-```
-app/lib/app/accounts/
-├── user.ex                    # Added memberships/organizations relations
-├── organization.ex            # NEW: org schema
-├── membership.ex              # NEW: user-org link with role
-└── api_key.ex                 # NEW: API key schema with generation
+### Phase 6: Dashboard (Partial)
+- [x] Basic dashboard with stats cards
+- [x] Jobs list with real-time updates
+- [x] Job detail page
+- [x] Create/edit job forms
+- [x] Footer component (app + marketing variants)
+- [ ] Real execution stats (today's runs, success rate)
+- [ ] Recent executions list on dashboard
+- [ ] Execution history on job detail page
 
-app/lib/app/accounts.ex        # Added org, membership, API key functions
+### Phase 7: Notifications (Partial)
+- [x] Mailjet configured for production email
+- [x] Configurable from_email/from_name
+- [ ] Notification worker (on job failure)
+- [ ] Webhook notifications
+- [ ] Slack/Discord auto-detection
 
-app/lib/app_web/plugs/
-└── api_auth.ex                # NEW: API authentication plug
+### Phase 8: Billing (Not Started)
+- [ ] Lemon Squeezy integration
+- [ ] Usage tracking (monthly executions)
+- [ ] Limit enforcement (jobs, requests)
 
-app/priv/repo/migrations/
-├── *_create_users_auth_tables.exs
-└── *_create_organizations.exs  # orgs, memberships, api_keys
+---
 
-app/test/
-├── app/accounts_test.exs       # Added org, membership, API key tests
-└── app_web/plugs/api_auth_test.exs  # NEW: API auth tests
-```
+## Immediate Next Steps
 
-### Next: Phase 3 - Core Domain (Jobs & Executions)
-
-Create the Jobs and Executions schemas:
-
+### 1. Executions Schema & Context
 ```elixir
-# Jobs schema
-schema "jobs" do
-  belongs_to :organization, Organization
-  field :key, :string           # unique per org, for idempotent API
-  field :name, :string
-  field :url, :string
-  field :method, :string        # GET, POST
-  field :headers, :map
-  field :body, :string
-  field :schedule_type, :string # "cron" or "once"
-  field :cron_expression, :string
-  field :scheduled_at, :utc_datetime
-  field :enabled, :boolean
-  field :timeout_ms, :integer
-end
-
-# Executions schema
 schema "executions" do
   belongs_to :job, Job
   field :status, :string        # pending, running, success, failed, timeout
@@ -95,44 +95,136 @@ schema "executions" do
   field :duration_ms, :integer
   field :response_body, :string
   field :error_message, :string
-  field :attempt, :integer
+  field :attempt, :integer, default: 1
+  timestamps()
 end
 ```
 
-### Local Development Commands
-```bash
-# Start PostgreSQL
-cd app && docker compose up -d
+### 2. Scheduler GenServer
+- Acquire advisory lock (only one node schedules)
+- Tick every 60 seconds
+- Query due jobs (cron: next_run <= now, once: scheduled_at <= now)
+- Insert pending executions
 
-# Start Phoenix server
-cd app && mix phx.server
-# Visit http://localhost:4000
+### 3. Worker Pool
+- DynamicSupervisor with 2-20 workers
+- Workers claim executions: `FOR UPDATE SKIP LOCKED`
+- Execute HTTP request with Req
+- Update execution status
+- Handle retries (one-time jobs only)
 
-# Run tests
-cd app && mix test
+### 4. Dashboard Polish
+- Show real stats from executions table
+- Recent executions list
+- Execution history on job detail
 
-# Interactive console
-cd app && iex -S mix
+---
+
+## File Structure (Current)
+
+```
+app/lib/app/
+├── accounts/
+│   ├── user.ex
+│   ├── user_token.ex
+│   ├── user_notifier.ex
+│   ├── organization.ex
+│   ├── membership.ex
+│   ├── organization_invite.ex
+│   └── api_key.ex
+├── accounts.ex
+├── jobs/
+│   └── job.ex
+├── jobs.ex
+├── mailer.ex
+└── repo.ex
+
+app/lib/app_web/
+├── components/
+│   ├── core_components.ex      # Includes footer component
+│   └── layouts/
+│       ├── app.html.heex
+│       └── root.html.heex
+├── controllers/
+│   ├── page_controller.ex
+│   ├── page_html/
+│   │   ├── home.html.heex
+│   │   └── dashboard.html.heex
+│   ├── docs_controller.ex
+│   ├── user_*.ex               # Auth controllers
+│   └── organization_controller.ex
+├── live/
+│   ├── dashboard_live.ex
+│   └── job_live/
+│       ├── index.ex
+│       ├── show.ex
+│       ├── new.ex
+│       └── edit.ex
+├── plugs/
+│   └── api_auth.ex
+└── router.ex
 ```
 
-### Koyeb Configuration
+---
+
+## Environment & Deployment
+
+### Local Development
+```bash
+cd app
+docker compose up -d          # Start PostgreSQL
+mix setup                     # Install deps, create DB, migrate
+mix phx.server               # Start server at localhost:4000
+mix test                     # Run tests (142 passing)
+```
+
+### Koyeb Production
 ```
 GitHub repo: gautema/prikke
 Root directory: app
 Builder: Dockerfile
 Port: 8000
 Health check: /health
+Region: Frankfurt
 
 Environment variables:
-- DATABASE_URL (from Koyeb managed Postgres)
+- DATABASE_URL (Koyeb managed Postgres)
 - SECRET_KEY_BASE
 - PHX_HOST=prikke.whitenoise.no
+- MAILJET_API_KEY
+- MAILJET_SECRET_KEY
 ```
 
 ### URLs
-- App: https://prikke.whitenoise.no
-- API: https://prikke.whitenoise.no/api
+- Production: https://prikke.whitenoise.no
 - Register: https://prikke.whitenoise.no/users/register
+- Dashboard: https://prikke.whitenoise.no/dashboard
+- Jobs: https://prikke.whitenoise.no/jobs
 
 ---
-Last updated: 2026-01-28
+
+## Test Coverage
+
+- **142 tests passing**
+- Accounts: user auth, organizations, memberships, invites, API keys
+- Jobs: CRUD, validations, cron parsing
+- API Auth Plug: bearer token validation
+- LiveView: basic rendering tests
+
+---
+
+## Dependencies Added
+
+```elixir
+{:crontab, "~> 1.1"},      # Cron expression parsing
+{:req, "~> 0.5"},          # HTTP client (for job execution)
+```
+
+---
+
+## Known Issues / TODOs
+
+1. **Mailjet not configured in Koyeb** - Need to set MAILJET_API_KEY and MAILJET_SECRET_KEY
+2. **No actual job execution** - Scheduler and workers not built yet
+3. **Dashboard stats are placeholders** - Need executions table to show real data
+4. **No API endpoints** - Only LiveView UI currently
