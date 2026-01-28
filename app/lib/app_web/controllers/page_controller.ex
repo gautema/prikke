@@ -5,8 +5,8 @@ defmodule PrikkeWeb.PageController do
 
   def home(conn, _params) do
     if conn.assigns[:current_scope] do
-      # Logged in: show dashboard (uses root layout with header)
-      render(conn, :dashboard)
+      # Logged in: redirect to LiveView dashboard
+      redirect(conn, to: ~p"/dashboard")
     else
       # Not logged in: show landing page (has its own header)
       conn

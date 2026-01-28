@@ -73,6 +73,12 @@ defmodule PrikkeWeb.Router do
   scope "/", PrikkeWeb do
     pipe_through [:browser, :require_authenticated_user]
 
+    live_session :require_authenticated_user,
+      on_mount: [{PrikkeWeb.UserAuth, :ensure_authenticated}],
+      session: {__MODULE__, :live_session_data, []} do
+      live "/dashboard", DashboardLive
+    end
+
     get "/users/settings", UserSettingsController, :edit
     put "/users/settings", UserSettingsController, :update
     get "/users/settings/confirm-email/:token", UserSettingsController, :confirm_email
@@ -109,5 +115,15 @@ defmodule PrikkeWeb.Router do
     get "/users/log-in/:token", UserSessionController, :confirm
     post "/users/log-in", UserSessionController, :create
     delete "/users/log-out", UserSessionController, :delete
+  end
+
+  @doc """
+  Extracts session data for LiveView.
+  """
+  def live_session_data(conn) do
+    %{
+      "user_token" => Plug.Conn.get_session(conn, :user_token),
+      "current_organization_id" => Plug.Conn.get_session(conn, :current_organization_id)
+    }
   end
 end
