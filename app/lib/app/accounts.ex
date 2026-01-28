@@ -379,10 +379,8 @@ defmodule Prikke.Accounts do
   def list_organization_members(organization) do
     from(m in Membership,
       where: m.organization_id == ^organization.id,
-      join: u in User,
-      on: u.id == m.user_id,
-      select: {m, u},
-      order_by: [asc: u.email]
+      preload: [:user],
+      order_by: [asc: m.inserted_at]
     )
     |> Repo.all()
   end
