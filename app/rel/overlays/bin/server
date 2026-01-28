@@ -1,0 +1,9 @@
+#!/bin/sh
+set -eu
+
+cd -P -- "$(dirname -- "$0")"
+
+# Run migrations before starting
+./migrate
+
+PHX_SERVER=true exec ./app start
