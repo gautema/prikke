@@ -537,4 +537,148 @@ defmodule Prikke.AccountsTest do
       assert Accounts.list_organization_api_keys(org) == []
     end
   end
+
+  describe "organization invites - member limits" do
+    test "free tier enforces 2 member limit" do
+      owner = user_fixture()
+      {:ok, org} = Accounts.create_organization(owner, %{name: "Test", slug: "test"})
+
+      # Org starts with 1 member (owner). Free tier allows max 2.
+      # First invite should succeed
+      assert {:ok, _invite, _token} =
+               Accounts.create_organization_invite(org, owner, %{email: "user2@example.com", role: "member"})
+
+      # Second invite should fail (would make 3 total: owner + 1 pending + this one)
+      assert {:error, changeset} =
+               Accounts.create_organization_invite(org, owner, %{email: "user3@example.com", role: "member"})
+
+      assert "You've reached the maximum number of team members" <> _ = hd(errors_on(changeset).base)
+    end
+
+    test "free tier counts pending invites toward limit" do
+      owner = user_fixture()
+      {:ok, org} = Accounts.create_organization(owner, %{name: "Test", slug: "test"})
+
+      # Create one pending invite
+      {:ok, _invite, _token} =
+        Accounts.create_organization_invite(org, owner, %{email: "pending@example.com", role: "member"})
+
+      # Now we have 1 member + 1 pending = 2 total
+      # Next invite should fail
+      assert {:error, changeset} =
+               Accounts.create_organization_invite(org, owner, %{email: "another@example.com", role: "member"})
+
+      assert "You've reached the maximum number of team members" <> _ = hd(errors_on(changeset).base)
+    end
+
+    test "pro tier allows unlimited members" do
+      owner = user_fixture()
+      {:ok, org} = Accounts.create_organization(owner, %{name: "Test", slug: "test-pro"})
+
+      # Upgrade to pro tier
+      org = org |> Ecto.Changeset.change(tier: "pro") |> Prikke.Repo.update!()
+
+      # Should be able to invite many users
+      for i <- 1..5 do
+        assert {:ok, _invite, _token} =
+                 Accounts.create_organization_invite(org, owner, %{email: "user#{i}@example.com", role: "member"})
+      end
+    end
+
+    test "count_organization_members/1 counts correctly" do
+      owner = user_fixture()
+      {:ok, org} = Accounts.create_organization(owner, %{name: "Test", slug: "test-count"})
+
+      assert Accounts.count_organization_members(org) == 1
+
+      # Add another member directly
+      another_user = user_fixture()
+      {:ok, _} = Accounts.create_membership(org, another_user)
+
+      assert Accounts.count_organization_members(org) == 2
+    end
+
+    test "count_pending_invites/1 counts correctly" do
+      owner = user_fixture()
+      {:ok, org} = Accounts.create_organization(owner, %{name: "Test", slug: "test-pending"})
+
+      # Upgrade to pro to allow more invites for testing
+      org = org |> Ecto.Changeset.change(tier: "pro") |> Prikke.Repo.update!()
+
+      assert Accounts.count_pending_invites(org) == 0
+
+      {:ok, _invite, _token} =
+        Accounts.create_organization_invite(org, owner, %{email: "test1@example.com", role: "member"})
+
+      assert Accounts.count_pending_invites(org) == 1
+
+      {:ok, _invite, _token} =
+        Accounts.create_organization_invite(org, owner, %{email: "test2@example.com", role: "member"})
+
+      assert Accounts.count_pending_invites(org) == 2
+    end
+  end
+
+  describe "notification settings" do
+    test "update_notification_settings/2 updates notification fields" do
+      user = user_fixture()
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test", slug: "test-notify"})
+
+      assert org.notify_on_failure == true
+      assert org.notification_email == nil
+      assert org.notification_webhook_url == nil
+
+      {:ok, updated} = Accounts.update_notification_settings(org, %{
+        notify_on_failure: false,
+        notification_email: "alerts@example.com",
+        notification_webhook_url: "https://hooks.slack.com/services/xxx"
+      })
+
+      assert updated.notify_on_failure == false
+      assert updated.notification_email == "alerts@example.com"
+      assert updated.notification_webhook_url == "https://hooks.slack.com/services/xxx"
+    end
+
+    test "update_notification_settings/2 validates email format" do
+      user = user_fixture()
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test", slug: "test-email-valid"})
+
+      {:error, changeset} = Accounts.update_notification_settings(org, %{
+        notification_email: "not-an-email"
+      })
+
+      assert "must be a valid email" in errors_on(changeset).notification_email
+    end
+
+    test "update_notification_settings/2 validates webhook URL format" do
+      user = user_fixture()
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test", slug: "test-webhook-valid"})
+
+      {:error, changeset} = Accounts.update_notification_settings(org, %{
+        notification_webhook_url: "not-a-url"
+      })
+
+      assert "must be a valid HTTP or HTTPS URL" in errors_on(changeset).notification_webhook_url
+    end
+
+    test "update_notification_settings/2 allows empty/nil values" do
+      user = user_fixture()
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test", slug: "test-empty"})
+
+      # First set values
+      {:ok, org} = Accounts.update_notification_settings(org, %{
+        notification_email: "test@example.com",
+        notification_webhook_url: "https://example.com/hook"
+      })
+
+      # Then clear them (empty strings become nil in Ecto)
+      {:ok, updated} = Accounts.update_notification_settings(org, %{
+        notification_email: nil,
+        notification_webhook_url: nil
+      })
+
+      assert updated.notification_email == nil
+      assert updated.notification_webhook_url == nil
+    end
+  end
 end

@@ -5,6 +5,9 @@ defmodule PrikkeWeb.UserSessionController do
   alias PrikkeWeb.UserAuth
 
   plug :put_layout, false when action in [:new, :confirm]
+  plug :assign_hide_header when action in [:new, :confirm]
+
+  defp assign_hide_header(conn, _opts), do: assign(conn, :hide_header, true)
 
   def new(conn, _params) do
     email = get_in(conn.assigns, [:current_scope, Access.key(:user), Access.key(:email)])

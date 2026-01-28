@@ -5,6 +5,9 @@ defmodule PrikkeWeb.UserRegistrationController do
   alias Prikke.Accounts.User
 
   plug :put_layout, false
+  plug :assign_hide_header
+
+  defp assign_hide_header(conn, _opts), do: assign(conn, :hide_header, true)
 
   def new(conn, _params) do
     changeset = Accounts.change_user_email(%User{})

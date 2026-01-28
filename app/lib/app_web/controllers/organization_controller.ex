@@ -123,4 +123,31 @@ defmodule PrikkeWeb.OrganizationController do
         |> redirect(to: ~p"/organizations/members")
     end
   end
+
+  def notifications(conn, _params) do
+    organization = conn.assigns.current_organization
+
+    if organization do
+      changeset = Accounts.change_notification_settings(organization)
+      render(conn, :notifications, organization: organization, changeset: changeset)
+    else
+      conn
+      |> put_flash(:error, "No organization selected.")
+      |> redirect(to: ~p"/")
+    end
+  end
+
+  def update_notifications(conn, %{"organization" => notification_params}) do
+    organization = conn.assigns.current_organization
+
+    case Accounts.update_notification_settings(organization, notification_params) do
+      {:ok, _organization} ->
+        conn
+        |> put_flash(:info, "Notification settings updated.")
+        |> redirect(to: ~p"/organizations/notifications")
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        render(conn, :notifications, organization: organization, changeset: changeset)
+    end
+  end
 end

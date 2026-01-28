@@ -1,0 +1,84 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="max-w-[500px] mx-auto py-8">
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-slate-900">Organization Settings</h1>
+      <p class="text-slate-500 mt-1">Manage <%= @organization.name %></p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-4 mb-6 border-b border-slate-200">
+      <a href={~p"/organizations/settings"} class="pb-3 px-1 text-sm font-medium text-slate-500 hover:text-slate-700">
+        General
+      </a>
+      <a href={~p"/organizations/members"} class="pb-3 px-1 text-sm font-medium text-slate-500 hover:text-slate-700">
+        Members
+      </a>
+      <a href={~p"/organizations/notifications"} class="pb-3 px-1 text-sm font-medium text-emerald-600 border-b-2 border-emerald-500">
+        Notifications
+      </a>
+    </div>
+
+    <.form :let={f} for={@changeset} action={~p"/organizations/notifications"} class="space-y-6">
+      <div class="bg-white border border-slate-200 rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-4">Failure Alerts</h2>
+        <p class="text-sm text-slate-500 mb-4">Get notified when a job execution fails.</p>
+
+        <label class="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            name={f[:notify_on_failure].name}
+            value="true"
+            checked={Phoenix.HTML.Form.normalize_value("checkbox", f[:notify_on_failure].value)}
+            class="w-4 h-4 text-emerald-500 border-slate-300 rounded focus:ring-emerald-500"
+          />
+          <span class="text-sm text-slate-700">Enable failure notifications</span>
+        </label>
+        <input type="hidden" name={f[:notify_on_failure].name} value="false" />
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-4">Email Notifications</h2>
+        <p class="text-sm text-slate-500 mb-4">Send failure alerts to this email address. Leave empty to use the organization owner's email.</p>
+
+        <div>
+          <label for={f[:notification_email].id} class="block text-sm font-medium text-slate-700 mb-1">Notification Email</label>
+          <input
+            type="email"
+            name={f[:notification_email].name}
+            id={f[:notification_email].id}
+            value={Phoenix.HTML.Form.normalize_value("text", f[:notification_email].value)}
+            placeholder="alerts@example.com"
+            class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+          />
+          <%= for msg <- Enum.map(f[:notification_email].errors, &translate_error/1) do %>
+            <p class="mt-1 text-sm text-red-600"><%= msg %></p>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-4">Webhook Notifications</h2>
+        <p class="text-sm text-slate-500 mb-4">POST failure details to a webhook URL. Slack and Discord URLs are auto-detected and formatted accordingly.</p>
+
+        <div>
+          <label for={f[:notification_webhook_url].id} class="block text-sm font-medium text-slate-700 mb-1">Webhook URL</label>
+          <input
+            type="url"
+            name={f[:notification_webhook_url].name}
+            id={f[:notification_webhook_url].id}
+            value={Phoenix.HTML.Form.normalize_value("text", f[:notification_webhook_url].value)}
+            placeholder="https://hooks.slack.com/services/..."
+            class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+          />
+          <%= for msg <- Enum.map(f[:notification_webhook_url].errors, &translate_error/1) do %>
+            <p class="mt-1 text-sm text-red-600"><%= msg %></p>
+          <% end %>
+        </div>
+      </div>
+
+      <button type="submit" class="py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors">
+        Save Notification Settings
+      </button>
+    </.form>
+  </div>
+</Layouts.app>

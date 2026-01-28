@@ -8,6 +8,18 @@ defmodule Prikke.Accounts do
 
   alias Prikke.Accounts.{User, UserToken, UserNotifier, Organization, Membership, ApiKey}
 
+  # Tier limits for organizations
+  @tier_limits %{
+    "free" => %{max_members: 2},
+    "pro" => %{max_members: :unlimited}
+  }
+
+  def tier_limits, do: @tier_limits
+
+  def get_tier_limits(tier) do
+    Map.get(@tier_limits, tier, @tier_limits["free"])
+  end
+
   ## Database getters
 
   @doc """
@@ -355,6 +367,22 @@ defmodule Prikke.Accounts do
     Organization.changeset(organization, attrs)
   end
 
+  @doc """
+  Updates notification settings for an organization.
+  """
+  def update_notification_settings(organization, attrs) do
+    organization
+    |> Organization.notification_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking notification settings changes.
+  """
+  def change_notification_settings(organization, attrs \\ %{}) do
+    Organization.notification_changeset(organization, attrs)
+  end
+
   ## Memberships
 
   @doc """
@@ -390,6 +418,24 @@ defmodule Prikke.Accounts do
       order_by: [asc: m.inserted_at]
     )
     |> Repo.all()
+  end
+
+  @doc """
+  Counts members in an organization.
+  """
+  def count_organization_members(organization) do
+    from(m in Membership, where: m.organization_id == ^organization.id)
+    |> Repo.aggregate(:count)
+  end
+
+  @doc """
+  Counts pending invites for an organization.
+  """
+  def count_pending_invites(organization) do
+    from(i in Prikke.Accounts.OrganizationInvite,
+      where: i.organization_id == ^organization.id and is_nil(i.accepted_at)
+    )
+    |> Repo.aggregate(:count)
   end
 
   @doc """
@@ -509,22 +555,52 @@ defmodule Prikke.Accounts do
   @doc """
   Creates an invite for an organization.
   Returns {:ok, invite, token} on success where token is the raw token to send in email.
+
+  Enforces tier limits:
+  - Free: max 2 members (including pending invites)
+  - Pro: unlimited members
   """
   def create_organization_invite(organization, invited_by, attrs) do
-    {raw_token, hashed_token} = OrganizationInvite.build_token()
+    organization = Repo.preload(organization, [])
 
-    result =
-      %OrganizationInvite{}
-      |> OrganizationInvite.changeset(Map.merge(attrs, %{
-        token: hashed_token,
-        organization_id: organization.id,
-        invited_by_id: invited_by.id
-      }))
-      |> Repo.insert()
+    case check_member_limit(organization) do
+      :ok ->
+        {raw_token, hashed_token} = OrganizationInvite.build_token()
 
-    case result do
-      {:ok, invite} -> {:ok, invite, raw_token}
-      {:error, changeset} -> {:error, changeset}
+        result =
+          %OrganizationInvite{}
+          |> OrganizationInvite.changeset(Map.merge(attrs, %{
+            token: hashed_token,
+            organization_id: organization.id,
+            invited_by_id: invited_by.id
+          }))
+          |> Repo.insert()
+
+        case result do
+          {:ok, invite} -> {:ok, invite, raw_token}
+          {:error, changeset} -> {:error, changeset}
+        end
+
+      {:error, :member_limit_reached} ->
+        changeset =
+          %OrganizationInvite{}
+          |> OrganizationInvite.changeset(attrs)
+          |> Ecto.Changeset.add_error(:base, "You've reached the maximum number of team members for your plan (#{get_tier_limits(organization.tier).max_members}). Upgrade to Pro for unlimited team members.")
+
+        {:error, changeset}
+    end
+  end
+
+  defp check_member_limit(%Organization{tier: tier} = org) do
+    limits = get_tier_limits(tier)
+
+    case limits.max_members do
+      :unlimited ->
+        :ok
+
+      max when is_integer(max) ->
+        current_count = count_organization_members(org) + count_pending_invites(org)
+        if current_count < max, do: :ok, else: {:error, :member_limit_reached}
     end
   end
 

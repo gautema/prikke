@@ -27,6 +27,7 @@ Last updated: 2026-01-28
 - [x] Organization switcher in header
 - [x] API Keys (`pk_live_xxx.sk_live_yyy` format)
 - [x] API Auth Plug for bearer token authentication
+- [x] **Member limits enforcement** (Free: 2 members, Pro: unlimited)
 
 ### Phase 3: Core Domain (In Progress)
 - [x] Jobs schema with validations
@@ -77,14 +78,26 @@ Last updated: 2026-01-28
 - [x] Configurable from_email/from_name
 - [x] Branded HTML email templates (logo, emerald button, clean layout)
 - [x] Email deliverability (noreply@whitenoise.no, SPF/DKIM)
-- [ ] Notification worker (on job failure)
-- [ ] Webhook notifications
-- [ ] Slack/Discord auto-detection
+- [x] **Notification settings UI** (org settings → Notifications tab)
+  - Enable/disable failure notifications
+  - Custom notification email
+  - Webhook URL (Slack/Discord auto-detect ready)
+- [ ] Notification worker (on job failure) - uses settings above
+- [ ] Slack/Discord payload formatting
 
 ### Phase 8: Billing (Not Started)
 - [ ] Lemon Squeezy integration
 - [ ] Usage tracking (monthly executions)
 - [ ] Limit enforcement (requests per month)
+
+### Phase 9: Monitoring & Alerting (Not Started)
+- [ ] Application error tracking (Sentry or AppSignal)
+- [ ] Performance monitoring (response times, queue depth)
+- [ ] Infrastructure alerts (high CPU, memory, disk)
+- [ ] Public status page for Prikke itself
+- [ ] Uptime monitoring (external ping service)
+- [ ] Alert channels (email, Slack/Discord webhook)
+- [ ] Dashboard for system health metrics
 
 ---
 
@@ -96,10 +109,12 @@ Last updated: 2026-01-28
 | **Requests** | 5k/mo | 250k/mo |
 | **Min interval** | Hourly | 1 minute |
 | **History** | 7 days | 30 days |
+| **Team members** | 2 | Unlimited |
 
 **Currently enforced:**
 - [x] Max jobs per organization
 - [x] Minimum cron interval
+- [x] Max team members per organization (including pending invites)
 - [ ] Monthly execution limit (needs executions table)
 - [ ] History retention (needs executions table)
 
@@ -262,6 +277,8 @@ Environment variables:
 
 ## Recently Completed
 
+- [x] Notification settings (org settings → Notifications tab)
+- [x] Team member limits for organizations (Free: 2, Pro: unlimited)
 - [x] Tier limits for jobs (max count, min interval)
 - [x] Branded HTML email templates
 - [x] Email deliverability (noreply@whitenoise.no)

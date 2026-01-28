@@ -41,6 +41,7 @@
           </a>
           <div class="flex items-center gap-4">
             <%= if @current_scope do %>
+              <.link href={~p"/dashboard"} class="text-sm font-medium text-slate-700 hover:text-emerald-600">Dashboard</.link>
               <!-- Org Switcher -->
               <%= if assigns[:organizations] && length(@organizations) > 0 do %>
                 <div class="relative" data-dropdown>
@@ -75,12 +76,12 @@
               <% end %>
               <span class="w-px h-5 bg-slate-200"></span>
               <span class="text-sm text-slate-500">{@current_scope.user.email}</span>
-              <.link href={~p"/invites"} class="text-sm text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
-                Invites
-                <%= if assigns[:pending_invites_count] && @pending_invites_count > 0 do %>
+              <%= if assigns[:pending_invites_count] && @pending_invites_count > 0 do %>
+                <.link href={~p"/invites"} class="text-sm text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+                  Invites
                   <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-emerald-500 rounded-full"><%= @pending_invites_count %></span>
-                <% end %>
-              </.link>
+                </.link>
+              <% end %>
               <.link href={~p"/users/settings"} class="text-sm text-slate-600 hover:text-slate-900">Settings</.link>
               <.link href={~p"/users/log-out"} method="delete" class="text-sm text-slate-600 hover:text-slate-900">Log out</.link>
             <% else %>

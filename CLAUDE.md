@@ -64,10 +64,10 @@ No external job libraries - just GenServers and Postgres:
 # Claim next pending execution with priority
 SELECT e.* FROM executions e
 JOIN jobs j ON e.job_id = j.id
-JOIN users u ON j.user_id = u.id
+JOIN organizations o ON j.organization_id = o.id
 WHERE e.status = 'pending' AND e.scheduled_for <= now()
 ORDER BY
-  u.tier DESC,           -- Pro customers first
+  o.tier DESC,            -- Pro customers first
   j.interval_minutes ASC, -- Minute crons before hourly/daily
   e.scheduled_for ASC     -- Oldest first within same priority
 LIMIT 1
@@ -129,6 +129,13 @@ Simple, no dependencies, full control.
 - [ ] Rate limiting per endpoint
 - [ ] Cron monitoring (expect ping, alert if missing)
 
+### Ops & Monitoring
+- [ ] Error tracking (Sentry or AppSignal)
+- [ ] Performance monitoring (response times, queue depth)
+- [ ] Infrastructure alerts (CPU, memory, disk)
+- [ ] Uptime monitoring (external ping)
+- [ ] System health dashboard
+
 ## Database Schema (Core)
 
 ```sql
@@ -136,17 +143,17 @@ Simple, no dependencies, full control.
 create table users (
     id uuid primary key,
     email text unique not null,
-    hashed_password text not null,
-    tier text default 'free',        -- 'free' or 'pro'
+    hashed_password text,            -- nullable for magic link only users
     confirmed_at timestamptz,
     inserted_at timestamptz not null,
     updated_at timestamptz not null
 );
 
--- API Keys
+-- API Keys (organization-scoped)
 create table api_keys (
     id uuid primary key,
-    user_id uuid references users(id) on delete cascade,
+    organization_id uuid references organizations(id) on delete cascade,
+    created_by_id uuid references users(id),
     key_id text unique not null,      -- pk_live_xxx (public)
     key_hash text not null,           -- hashed secret
     name text,
@@ -154,10 +161,30 @@ create table api_keys (
     inserted_at timestamptz not null
 );
 
--- Jobs (user-defined scheduled jobs)
-create table jobs (
+-- Organizations
+create table organizations (
+    id uuid primary key,
+    name text not null,
+    slug text unique not null,
+    tier text default 'free',         -- 'free' or 'pro'
+    inserted_at timestamptz not null,
+    updated_at timestamptz not null
+);
+
+-- Memberships (users <-> organizations)
+create table memberships (
     id uuid primary key,
     user_id uuid references users(id) on delete cascade,
+    organization_id uuid references organizations(id) on delete cascade,
+    role text default 'member',       -- 'owner', 'admin', 'member'
+    inserted_at timestamptz not null,
+    updated_at timestamptz not null
+);
+
+-- Jobs (organization-scoped scheduled jobs)
+create table jobs (
+    id uuid primary key,
+    organization_id uuid references organizations(id) on delete cascade,
     name text not null,
     url text not null,
     method text default 'GET',
@@ -169,7 +196,6 @@ create table jobs (
     scheduled_at timestamptz,         -- for one-time jobs (null if cron)
     timezone text default 'UTC',
     enabled boolean default true,
-    retry_attempts integer default 3,
     timeout_ms integer default 30000,
     inserted_at timestamptz not null,
     updated_at timestamptz not null,
@@ -196,7 +222,7 @@ create table executions (
 );
 
 create index executions_job_id_started_at_idx on executions(job_id, started_at desc);
-create index jobs_user_id_idx on jobs(user_id);
+create index jobs_organization_id_idx on jobs(organization_id);
 create index jobs_enabled_idx on jobs(enabled) where enabled = true;
 ```
 
@@ -211,12 +237,14 @@ Two simple tiers to start:
 | **Requests** | 5k/mo | 250k/mo |
 | **Min interval** | Hourly | 1 minute |
 | **History** | 7 days | 30 days |
+| **Team members** | 2 | Unlimited |
 | **One-time jobs** | Yes | Yes |
 | **Precision** | Minute | Minute |
 
 Notes:
 - Minute precision for all tiers (no second-level scheduling)
 - Free tier math: 5 jobs × hourly × 30 days = 3,600 requests, so 5k is comfortable
+- Team member limit includes pending invites
 - Add more tiers later based on real usage patterns
 
 ## Infrastructure
@@ -226,14 +254,13 @@ Notes:
 ```
 ┌─────────────────────────────────────────┐
 │    Porkbun (domain + DNS)               │
-│    prikke.dev or prikke.eu              │
+│    prikke.whitenoise.no                 │
 └─────────────────┬───────────────────────┘
                   │
 ┌─────────────────▼───────────────────────┐
 │        Koyeb (Frankfurt) 🇫🇷            │
 │  ┌─────────────────────────────────┐    │
-│  │  Container: Bun (landing)       │    │
-│  │  → later: Phoenix app           │    │
+│  │  Container: Phoenix app         │    │
 │  │  Small (1 vCPU, 1GB) - €10/mo   │    │
 │  └───────────────┬─────────────────┘    │
 │                  │ same network         │
@@ -338,36 +365,20 @@ Using Lemon Squeezy (Merchant of Record):
 - **Colors:** Slate 900 (#0f172a) + Emerald 500 (#10b981)
 - **Font:** Inter
 - **Logo:** Green dot + "prikke" wordmark
-- **Domains:** prikke.io (primary), prikke.eu (redirect)
+- **Domain:** prikke.whitenoise.no
 
 See `/brand/BRAND.md` for full guidelines.
-
-## Landing Page & Documentation
-
-Location: `/app/lib/app_web/controllers/`
-
-Landing page and documentation are served by Phoenix:
-- Landing page: `/` (page_html/home.html.heex)
-- Docs index: `/docs` (docs_html/index.html.heex)
-- API docs: `/docs/api`
-- Cron docs: `/docs/cron`
-- Webhooks docs: `/docs/webhooks`
-- Getting started: `/docs/getting-started`
-- Use cases: `/use-cases`
-
-All templates use Tailwind CSS with Prikke brand colors (slate + emerald).
 
 ## Development Commands
 
 ```bash
-# Preview landing page
-cd site && python3 -m http.server 8000
+cd app
 
-# Setup (after Phoenix is initialized)
-mix setup
+# Setup
+mix setup                    # Install deps, create DB, migrate
 
 # Start server
-mix phx.server
+mix phx.server               # Runs at localhost:4000
 
 # Interactive console
 iex -S mix
@@ -379,9 +390,6 @@ mix test
 mix ecto.create
 mix ecto.migrate
 mix ecto.reset
-
-# Generate auth
-mix phx.gen.auth Accounts User users
 ```
 
 ## Development Rules
@@ -407,12 +415,12 @@ The pre-commit hook automatically runs `mix compile --warnings-as-errors` and `m
 **Future Enhancement (Phase 9+):**
 - Swagger/OpenAPI docs - Generate API documentation from code
 
-## Current Project Structure
+## Project Structure
 
 ```
 prikke/
-├── .gitignore
 ├── CLAUDE.md              # This file
+├── PROGRESS.md            # Implementation progress
 ├── README.md
 ├── brand/
 │   ├── BRAND.md           # Brand guidelines
@@ -420,66 +428,40 @@ prikke/
 │   ├── favicon.svg
 │   ├── logo.svg           # Light background
 │   └── logo-dark.svg      # Dark background
-└── app/                   # Main Phoenix app
+└── app/                   # Phoenix application
     ├── Dockerfile         # Production build
     ├── docker-compose.yml # Local PostgreSQL 18
-    ├── config/
-    │   ├── runtime.exs    # SSL for prod database
-    │   └── prod.exs       # Production config
-    ├── lib/app_web/
-    │   ├── router.ex      # Routes including /docs, /use-cases
-    │   └── controllers/
-    │       ├── page_html/home.html.heex      # Landing page
-    │       ├── docs_controller.ex             # Docs routes
-    │       ├── docs_html.ex                   # Docs layout component
-    │       ├── docs_html/                     # Doc templates
-    │       │   ├── index.html.heex
-    │       │   ├── getting_started.html.heex
-    │       │   ├── api.html.heex
-    │       │   ├── cron.html.heex
-    │       │   └── webhooks.html.heex
-    │       │   └── use_cases.html.heex
-    │       ├── error_html.ex                  # Error page module
-    │       └── error_html/                    # Custom error pages
-    │           ├── 404.html.heex
-    │           └── 500.html.heex
-    └── rel/overlays/bin/
-        └── server         # Runs migrations then starts app
+    ├── lib/
+    │   ├── app/           # Business logic
+    │   │   ├── accounts/  # Users, orgs, memberships, API keys
+    │   │   ├── accounts.ex
+    │   │   ├── jobs/      # Job schema
+    │   │   ├── jobs.ex    # Jobs context with tier limits
+    │   │   ├── mailer.ex
+    │   │   └── repo.ex
+    │   └── app_web/       # Web layer
+    │       ├── components/
+    │       │   ├── core_components.ex
+    │       │   └── layouts/
+    │       ├── controllers/
+    │       │   ├── page_html/home.html.heex  # Landing page
+    │       │   ├── docs_html/                # Documentation
+    │       │   └── ...
+    │       ├── live/
+    │       │   ├── dashboard_live.ex
+    │       │   └── job_live/
+    │       ├── plugs/
+    │       │   └── api_auth.ex
+    │       └── router.ex
+    └── test/
 ```
 
-### Site Templating
-Simple string replacement templating:
-- `templates/layout.html` - shared HTML boilerplate, styles, nav, footer
-- `pages/*.html` - content only with `<!-- title: Page Title -->` comment
-- Server extracts title and injects content into layout at runtime
-- Landing page (`static/index.html`) has its own design, not templated
-
-## Planned App Structure (Phoenix)
-
+### Planned additions (not yet built)
 ```
-lib/
-├── prikke/
-│   ├── accounts/           # User management
-│   │   ├── user.ex
-│   │   └── api_key.ex
-│   ├── jobs/               # Job management
-│   │   ├── job.ex
-│   │   └── execution.ex
-│   ├── scheduler/          # Cron scheduler
-│   │   └── scheduler.ex    # GenServer, ticks every minute, uses advisory lock
-│   ├── workers/            # Webhook execution
-│   │   ├── worker_pool.ex  # Supervises worker GenServers
-│   │   └── worker.ex       # Claims and executes jobs (SKIP LOCKED)
-│   └── repo.ex
-├── prikke_web/
-│   ├── live/               # LiveView pages
-│   │   ├── dashboard_live.ex
-│   │   ├── jobs_live.ex
-│   │   └── job_detail_live.ex
-│   ├── controllers/        # API controllers
-│   │   └── api/
-│   │       └── job_controller.ex
-│   └── router.ex
+lib/app/
+├── scheduler/          # Cron scheduler GenServer
+├── workers/            # Worker pool for job execution
+└── executions/         # Execution history
 ```
 
 ## Key Decisions
@@ -510,7 +492,7 @@ lib/
 
 ## Go-to-Market
 
-1. Launch on prikke.io with landing page
+1. Launch on prikke.whitenoise.no
 2. Free tier to get users
 3. Dev communities (Reddit, HN, Twitter/X)
 4. Content: "EU alternative to Inngest"
