@@ -9,7 +9,120 @@ title: API Reference
 <p>All API requests require an API key. Include it in the Authorization header:</p>
 <pre><code class="language-bash">Authorization: Bearer pk_live_xxx.sk_live_yyy</code></pre>
 
-<h2>Jobs</h2>
+<h2>Declarative API</h2>
+<p>Prikke supports a declarative, idempotent API. Push your entire configuration in one call and get back what changed. Perfect for infrastructure-as-code workflows.</p>
+
+<div class="endpoint">
+    <div class="endpoint-header">
+        <span class="method put">PUT</span>
+        <span class="endpoint-path">/sync</span>
+    </div>
+    <p>Sync your entire project configuration. This is idempotent - safe to call repeatedly with the same config.</p>
+
+    <h4>Request Body</h4>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>jobs</code></td><td>array</td><td>Array of job configurations</td></tr>
+        <tr><td><code>jobs[].key</code></td><td>string</td><td>Unique key for this job (your identifier)</td></tr>
+        <tr><td><code>jobs[].name</code></td><td>string</td><td>Display name for this job</td></tr>
+        <tr><td><code>jobs[].url</code></td><td>string</td><td>The URL to call</td></tr>
+        <tr><td><code>jobs[].method</code></td><td>string</td><td>HTTP method: GET or POST (default: POST)</td></tr>
+        <tr><td><code>jobs[].cron</code></td><td>string</td><td>Cron expression for recurring jobs</td></tr>
+        <tr><td><code>jobs[].headers</code></td><td>object</td><td>Custom headers to send (optional)</td></tr>
+        <tr><td><code>jobs[].body</code></td><td>string</td><td>Request body for POST requests (optional)</td></tr>
+        <tr><td><code>notifications</code></td><td>object</td><td>Notification settings (optional)</td></tr>
+        <tr><td><code>delete_removed</code></td><td>boolean</td><td>Delete jobs not in this config (default: false)</td></tr>
+    </table>
+
+    <h4>Example</h4>
+    <pre><code class="language-bash">curl -X PUT https://api.prikke.io/sync \
+  -H "Authorization: Bearer pk_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jobs": [
+      {
+        "key": "daily-backup",
+        "name": "Daily backup",
+        "url": "https://myapp.com/api/backup",
+        "cron": "0 6 * * *"
+      },
+      {
+        "key": "hourly-sync",
+        "name": "Hourly sync",
+        "url": "https://myapp.com/api/sync",
+        "cron": "0 * * * *",
+        "headers": {
+          "Authorization": "Bearer my-app-token"
+        }
+      }
+    ],
+    "notifications": {
+      "email": "alerts@myapp.com",
+      "webhook_url": "https://hooks.slack.com/services/xxx"
+    },
+    "delete_removed": true
+  }'</code></pre>
+
+    <h4>Response</h4>
+    <pre><code class="language-json">{
+  "created": ["daily-backup"],
+  "updated": ["hourly-sync"],
+  "deleted": ["old-job"],
+  "unchanged": [],
+  "jobs": [
+    {
+      "id": "job_abc123",
+      "key": "daily-backup",
+      "name": "Daily backup",
+      "url": "https://myapp.com/api/backup",
+      "cron": "0 6 * * *"
+    },
+    {
+      "id": "job_def456",
+      "key": "hourly-sync",
+      "name": "Hourly sync",
+      "url": "https://myapp.com/api/sync",
+      "cron": "0 * * * *"
+    }
+  ],
+  "notifications": {
+    "email": "alerts@myapp.com",
+    "webhook_url": "https://hooks.slack.com/services/xxx"
+  }
+}</code></pre>
+
+    <div class="note">
+        <strong>Tip:</strong> Store your config in version control and sync on deploy. The <code>key</code> field is your stable identifier - Prikke uses it to match existing jobs.
+    </div>
+</div>
+
+<h3>Infrastructure as Code</h3>
+<p>Keep your job configuration in a JSON file and sync it in CI/CD:</p>
+
+<pre><code class="language-json">// prikke.json
+{
+  "jobs": [
+    {
+      "key": "daily-backup",
+      "name": "Daily backup",
+      "url": "https://myapp.com/api/backup",
+      "cron": "0 6 * * *"
+    }
+  ],
+  "notifications": {
+    "email": "alerts@myapp.com"
+  },
+  "delete_removed": true
+}</code></pre>
+
+<pre><code class="language-bash"># In your deploy script
+curl -X PUT https://api.prikke.io/sync \
+  -H "Authorization: Bearer $PRIKKE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d @prikke.json</code></pre>
+
+<h2>Jobs API</h2>
+<p>You can also manage jobs individually using traditional REST endpoints.</p>
 
 <div class="endpoint">
     <div class="endpoint-header">
@@ -21,6 +134,7 @@ title: API Reference
     <h4>Request Body</h4>
     <table>
         <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>key</code></td><td>string</td><td>Unique key for this job (optional, auto-generated if not provided)</td></tr>
         <tr><td><code>name</code></td><td>string</td><td>A name for this job</td></tr>
         <tr><td><code>url</code></td><td>string</td><td>The URL to call</td></tr>
         <tr><td><code>method</code></td><td>string</td><td>HTTP method: GET or POST (default: POST)</td></tr>
@@ -37,6 +151,7 @@ title: API Reference
   -H "Authorization: Bearer pk_live_xxx" \
   -H "Content-Type: application/json" \
   -d '{
+    "key": "daily-backup",
     "name": "Daily backup",
     "url": "https://myapp.com/api/backup",
     "cron": "0 6 * * *"
@@ -55,16 +170,6 @@ title: API Reference
 
     <h4>Example: Run Immediately</h4>
     <p>Set <code>run_at</code> to the current time to execute a job right away:</p>
-    <pre><code class="language-bash">curl -X POST https://api.prikke.io/jobs \
-  -H "Authorization: Bearer pk_live_xxx" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Process upload",
-    "url": "https://myapp.com/api/process",
-    "run_at": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
-    "body": "{\"file_id\": \"abc123\"}"
-  }'</code></pre>
-    <p>In JavaScript:</p>
     <pre><code class="language-javascript">await fetch('https://api.prikke.io/jobs', {
   method: 'POST',
   headers: {
@@ -88,6 +193,23 @@ title: API Reference
     <p>List all your jobs.</p>
     <pre><code class="language-bash">curl https://api.prikke.io/jobs \
   -H "Authorization: Bearer pk_live_xxx"</code></pre>
+
+    <h4>Response</h4>
+    <pre><code class="language-json">{
+  "jobs": [
+    {
+      "id": "job_abc123",
+      "key": "daily-backup",
+      "name": "Daily backup",
+      "url": "https://myapp.com/api/backup",
+      "method": "POST",
+      "cron": "0 6 * * *",
+      "enabled": true,
+      "created_at": "2025-01-28T12:00:00Z",
+      "updated_at": "2025-01-28T12:00:00Z"
+    }
+  ]
+}</code></pre>
 </div>
 
 <div class="endpoint">
@@ -95,7 +217,14 @@ title: API Reference
         <span class="method get">GET</span>
         <span class="endpoint-path">/jobs/:id</span>
     </div>
-    <p>Get a specific job by ID.</p>
+    <p>Get a specific job by ID or key.</p>
+    <pre><code class="language-bash"># By ID
+curl https://api.prikke.io/jobs/job_abc123 \
+  -H "Authorization: Bearer pk_live_xxx"
+
+# By key
+curl https://api.prikke.io/jobs/key/daily-backup \
+  -H "Authorization: Bearer pk_live_xxx"</code></pre>
 </div>
 
 <div class="endpoint">
@@ -103,7 +232,30 @@ title: API Reference
         <span class="method patch">PATCH</span>
         <span class="endpoint-path">/jobs/:id</span>
     </div>
-    <p>Update a job. You can update any field.</p>
+    <p>Update a job. You can update any field. Returns the updated job.</p>
+    <pre><code class="language-bash">curl -X PATCH https://api.prikke.io/jobs/job_abc123 \
+  -H "Authorization: Bearer pk_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cron": "0 7 * * *"
+  }'</code></pre>
+
+    <h4>Response</h4>
+    <pre><code class="language-json">{
+  "job": {
+    "id": "job_abc123",
+    "key": "daily-backup",
+    "name": "Daily backup",
+    "cron": "0 7 * * *",
+    "updated_at": "2025-01-28T14:00:00Z"
+  },
+  "changes": {
+    "cron": {
+      "from": "0 6 * * *",
+      "to": "0 7 * * *"
+    }
+  }
+}</code></pre>
 </div>
 
 <div class="endpoint">
@@ -112,6 +264,18 @@ title: API Reference
         <span class="endpoint-path">/jobs/:id</span>
     </div>
     <p>Delete a job. This also cancels any pending executions.</p>
+    <pre><code class="language-bash">curl -X DELETE https://api.prikke.io/jobs/job_abc123 \
+  -H "Authorization: Bearer pk_live_xxx"</code></pre>
+
+    <h4>Response</h4>
+    <pre><code class="language-json">{
+  "deleted": true,
+  "job": {
+    "id": "job_abc123",
+    "key": "daily-backup",
+    "name": "Daily backup"
+  }
+}</code></pre>
 </div>
 
 <h2>Executions</h2>
@@ -138,40 +302,66 @@ title: API Reference
 }</code></pre>
 </div>
 
-<h2>Notifications</h2>
-<p>Get alerted when jobs fail. Configure notifications at the project level.</p>
+<h2>Project Settings</h2>
+<p>Configure project-level settings including notifications.</p>
 
 <div class="endpoint">
     <div class="endpoint-header">
         <span class="method get">GET</span>
-        <span class="endpoint-path">/project/notifications</span>
+        <span class="endpoint-path">/project</span>
     </div>
-    <p>Get current notification settings.</p>
+    <p>Get current project settings.</p>
+
+    <h4>Response</h4>
+    <pre><code class="language-json">{
+  "notifications": {
+    "email": "alerts@myapp.com",
+    "webhook_url": "https://hooks.slack.com/services/xxx"
+  }
+}</code></pre>
 </div>
 
 <div class="endpoint">
     <div class="endpoint-header">
-        <span class="method patch">PATCH</span>
-        <span class="endpoint-path">/project/notifications</span>
+        <span class="method put">PUT</span>
+        <span class="endpoint-path">/project</span>
     </div>
-    <p>Update notification settings.</p>
+    <p>Update project settings. Returns the updated settings and what changed.</p>
 
     <h4>Request Body</h4>
     <table>
         <tr><th>Field</th><th>Type</th><th>Description</th></tr>
-        <tr><td><code>email</code></td><td>string</td><td>Email address for alerts (null to disable)</td></tr>
-        <tr><td><code>webhook_url</code></td><td>string</td><td>Webhook URL for alerts (null to disable)</td></tr>
+        <tr><td><code>notifications.email</code></td><td>string</td><td>Email address for alerts (null to disable)</td></tr>
+        <tr><td><code>notifications.webhook_url</code></td><td>string</td><td>Webhook URL for alerts (null to disable)</td></tr>
     </table>
 
     <h4>Example</h4>
-    <pre><code class="language-bash">curl -X PATCH https://api.prikke.io/project/notifications \
+    <pre><code class="language-bash">curl -X PUT https://api.prikke.io/project \
   -H "Authorization: Bearer pk_live_xxx" \
   -H "Content-Type: application/json" \
   -d '{
+    "notifications": {
+      "email": "alerts@myapp.com",
+      "webhook_url": "https://hooks.slack.com/services/xxx/yyy/zzz"
+    }
+  }'</code></pre>
+
+    <h4>Response</h4>
+    <pre><code class="language-json">{
+  "notifications": {
     "email": "alerts@myapp.com",
     "webhook_url": "https://hooks.slack.com/services/xxx/yyy/zzz"
-  }'</code></pre>
+  },
+  "changes": {
+    "notifications.webhook_url": {
+      "from": null,
+      "to": "https://hooks.slack.com/services/xxx/yyy/zzz"
+    }
+  }
+}</code></pre>
 </div>
+
+<h2>Notifications</h2>
 
 <h3>Webhook Payload</h3>
 <p>When a job fails, we send a POST request to your webhook URL with this payload:</p>
@@ -181,6 +371,7 @@ title: API Reference
   "timestamp": "2025-01-28T06:00:15Z",
   "job": {
     "id": "job_abc123",
+    "key": "daily-backup",
     "name": "Daily backup",
     "url": "https://myapp.com/api/backup"
   },
@@ -204,18 +395,10 @@ title: API Reference
 </table>
 
 <h3>Slack Integration</h3>
-<p>To send alerts to Slack, use a Slack Incoming Webhook URL:</p>
-<ol>
-    <li>Go to <a href="https://api.slack.com/apps">api.slack.com/apps</a> and create an app</li>
-    <li>Enable Incoming Webhooks</li>
-    <li>Create a webhook for your channel</li>
-    <li>Use the webhook URL in your Prikke notification settings</li>
-</ol>
-
-<p>Prikke automatically formats the payload for Slack when it detects a <code>hooks.slack.com</code> URL.</p>
+<p>To send alerts to Slack, use a Slack Incoming Webhook URL. Prikke automatically formats the payload for Slack when it detects a <code>hooks.slack.com</code> URL.</p>
 
 <h3>Discord Integration</h3>
-<p>Discord webhooks work the same way. Create a webhook in your Discord channel settings and use the URL. Prikke detects <code>discord.com/api/webhooks</code> URLs and formats accordingly.</p>
+<p>Discord webhooks work the same way. Prikke detects <code>discord.com/api/webhooks</code> URLs and formats accordingly.</p>
 
 <h2>Errors</h2>
 <p>The API returns standard HTTP status codes:</p>
@@ -228,3 +411,11 @@ title: API Reference
     <tr><td><code>429</code></td><td>Rate limited - slow down</td></tr>
     <tr><td><code>500</code></td><td>Server error - try again</td></tr>
 </table>
+
+<p>Error responses include a message:</p>
+<pre><code class="language-json">{
+  "error": {
+    "code": "invalid_cron",
+    "message": "Invalid cron expression: '* * * *' (expected 5 fields)"
+  }
+}</code></pre>
