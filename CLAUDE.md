@@ -276,59 +276,33 @@ Using Lemon Squeezy (Merchant of Record):
 
 See `/brand/BRAND.md` for full guidelines.
 
-## Waitlist (Cloudflare Worker + D1)
+## Landing Page + Waitlist (Bun)
 
-Location: `/worker/`
+Location: `/app/`
 
-Simple waitlist API using Cloudflare Worker and D1 database.
+Minimal Bun server that serves the landing page and handles waitlist signups.
+Stores emails in Postgres (Koyeb) or SQLite (local dev).
 
-### Setup
+### Local Development
 ```bash
-cd worker
-npm install
-
-# Create D1 database
-npm run db:create
-# Copy the database_id to wrangler.toml
-
-# Initialize schema
-npm run db:init
-
-# Deploy
-npm run deploy
+cd app
+bun install
+bun run dev
+# Visit http://localhost:3000
 ```
 
-### Usage
+### Production
 ```bash
-# List signups
-npm run db:list
+# Build and push Docker image
+docker build -t prikke-landing .
+docker push <koyeb-registry>/prikke-landing
 
-# Local development
-npm run db:init:local
-npm run dev
+# Or connect GitHub repo to Koyeb for auto-deploy
 ```
 
-### Update Landing Page
-After deploying, update `WORKER_URL` in `site/index.html` with your worker URL.
-
-## Landing Page
-
-Location: `/site/index.html`
-
-Simple static one-pager with:
-- Hero with tagline
-- Feature list
-- Code example
-- Pricing tiers
-- Waitlist signup form
-
-```bash
-# Preview locally
-cd site && python3 -m http.server 8000
-# Then open http://localhost:8000
-```
-
-Deploy to Cloudflare Pages or any static host.
+### Environment Variables
+- `PORT` - Server port (default: 3000, Koyeb sets 8000)
+- `DATABASE_URL` - Postgres connection string (Koyeb provides this)
 
 ## Development Commands
 
@@ -373,16 +347,13 @@ prikke/
 │   ├── favicon.svg
 │   ├── logo.svg           # Light background
 │   └── logo-dark.svg      # Dark background
-├── site/
-│   ├── index.html         # Landing page
-│   └── favicon.svg
-└── worker/                # Cloudflare Worker (waitlist API)
-    ├── wrangler.toml      # Cloudflare config
+└── app/                   # Bun server (landing + waitlist)
+    ├── Dockerfile         # For Koyeb deployment
     ├── package.json
-    ├── schema.sql         # D1 database schema
-    ├── tsconfig.json
-    └── src/
-        └── index.ts       # Worker code
+    ├── server.ts          # Bun server (~80 lines)
+    └── static/
+        ├── index.html     # Landing page
+        └── favicon.svg
 ```
 
 ## Planned App Structure (Phoenix)

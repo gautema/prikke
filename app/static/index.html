@@ -491,9 +491,6 @@ curl -X POST https://api.prikke.io/jobs \
             const message = document.getElementById('waitlist-message');
             const emailInput = document.getElementById('waitlist-email');
 
-            // Update this after deploying the worker
-            const WORKER_URL = 'https://prikke-waitlist.YOUR_SUBDOMAIN.workers.dev';
-
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
 
@@ -502,7 +499,7 @@ curl -X POST https://api.prikke.io/jobs \
                 message.style.display = 'none';
 
                 try {
-                    const response = await fetch(WORKER_URL, {
+                    const response = await fetch('/waitlist', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email: emailInput.value })
