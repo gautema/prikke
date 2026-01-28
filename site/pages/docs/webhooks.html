@@ -19,7 +19,7 @@ title: Webhooks
 <h2>Request Format</h2>
 <p>Every webhook request includes these headers:</p>
 
-<pre><code>POST /your-endpoint HTTP/1.1
+<pre><code class="language-bash">POST /your-endpoint HTTP/1.1
 Host: your-app.com
 Content-Type: application/json
 User-Agent: Prikke/1.0
@@ -37,7 +37,7 @@ X-Prikke-Signature: sha256=abcdef...</code></pre>
 <h2>Verifying Signatures</h2>
 <p>To ensure requests come from Prikke, verify the signature using your webhook secret:</p>
 
-<pre><code>// Node.js example
+<pre><code class="language-javascript">// Node.js example
 const crypto = require('crypto');
 
 function verifySignature(payload, signature, secret) {
@@ -103,7 +103,7 @@ app.post('/webhook', (req, res) => {
 
 <h3>Retry Headers</h3>
 <p>On retry attempts, we include an additional header:</p>
-<pre><code>X-Prikke-Attempt: 2</code></pre>
+<pre><code class="language-bash">X-Prikke-Attempt: 2</code></pre>
 <p>You can use this to implement custom retry logic or logging.</p>
 
 <h2>Idempotency</h2>
@@ -116,7 +116,7 @@ app.post('/webhook', (req, res) => {
 
 <p>Use the <code>X-Prikke-Execution-Id</code> header to deduplicate:</p>
 
-<pre><code>// Track processed executions
+<pre><code class="language-javascript">// Track processed executions
 const processed = new Set(); // Use Redis in production
 
 app.post('/webhook', async (req, res) => {
@@ -136,7 +136,7 @@ app.post('/webhook', async (req, res) => {
 <h2>Custom Headers</h2>
 <p>You can configure custom headers when creating a job:</p>
 
-<pre><code>curl -X POST https://api.prikke.io/jobs \
+<pre><code class="language-bash">curl -X POST https://api.prikke.io/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
   -d '{
     "name": "My job",
@@ -150,7 +150,7 @@ app.post('/webhook', async (req, res) => {
 
 <h2>IP Allowlisting</h2>
 <p>If your firewall requires allowlisting, Prikke sends requests from these IP ranges:</p>
-<pre><code>Coming soon - contact us for current IPs</code></pre>
+<pre><code class="language-bash">Coming soon - contact us for current IPs</code></pre>
 
 <div class="note">
     <strong>Recommendation:</strong> Use signature verification instead of IP allowlisting when possible. It's more secure and doesn't break if our infrastructure changes.

@@ -7,7 +7,7 @@ title: API Reference
 
 <h2>Authentication</h2>
 <p>All API requests require an API key. Include it in the Authorization header:</p>
-<pre><code>Authorization: Bearer pk_live_xxx.sk_live_yyy</code></pre>
+<pre><code class="language-bash">Authorization: Bearer pk_live_xxx.sk_live_yyy</code></pre>
 
 <h2>Jobs</h2>
 
@@ -33,7 +33,7 @@ title: API Reference
     <p>Use either <code>cron</code> (recurring) or <code>run_at</code> (one-time), not both.</p>
 
     <h4>Example: Recurring Job</h4>
-    <pre><code>curl -X POST https://api.prikke.io/jobs \
+    <pre><code class="language-bash">curl -X POST https://api.prikke.io/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
   -H "Content-Type: application/json" \
   -d '{
@@ -43,7 +43,7 @@ title: API Reference
   }'</code></pre>
 
     <h4>Example: One-time Job</h4>
-    <pre><code>curl -X POST https://api.prikke.io/jobs \
+    <pre><code class="language-bash">curl -X POST https://api.prikke.io/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
   -H "Content-Type: application/json" \
   -d '{
@@ -55,7 +55,7 @@ title: API Reference
 
     <h4>Example: Run Immediately</h4>
     <p>Set <code>run_at</code> to the current time to execute a job right away:</p>
-    <pre><code>curl -X POST https://api.prikke.io/jobs \
+    <pre><code class="language-bash">curl -X POST https://api.prikke.io/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
   -H "Content-Type: application/json" \
   -d '{
@@ -65,7 +65,7 @@ title: API Reference
     "body": "{\"file_id\": \"abc123\"}"
   }'</code></pre>
     <p>In JavaScript:</p>
-    <pre><code>await fetch('https://api.prikke.io/jobs', {
+    <pre><code class="language-javascript">await fetch('https://api.prikke.io/jobs', {
   method: 'POST',
   headers: {
     'Authorization': 'Bearer pk_live_xxx',
@@ -86,7 +86,7 @@ title: API Reference
         <span class="endpoint-path">/jobs</span>
     </div>
     <p>List all your jobs.</p>
-    <pre><code>curl https://api.prikke.io/jobs \
+    <pre><code class="language-bash">curl https://api.prikke.io/jobs \
   -H "Authorization: Bearer pk_live_xxx"</code></pre>
 </div>
 
@@ -124,7 +124,7 @@ title: API Reference
     <p>Get execution history for a job.</p>
 
     <h4>Response</h4>
-    <pre><code>{
+    <pre><code class="language-json">{
   "executions": [
     {
       "id": "exec_123",

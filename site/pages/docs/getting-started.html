@@ -15,7 +15,7 @@ title: Getting Started
     <span class="step-number">2</span>
     <h3>Get your API key</h3>
     <p>Go to Settings → API Keys and create a new key. You'll get a key like:</p>
-    <pre><code>pk_live_abc123.sk_live_xyz789</code></pre>
+    <pre><code class="language-bash">pk_live_abc123.sk_live_xyz789</code></pre>
     <p>Keep this safe - the secret part is only shown once.</p>
 </div>
 
@@ -23,7 +23,7 @@ title: Getting Started
     <span class="step-number">3</span>
     <h3>Create your first job</h3>
     <p>Schedule a recurring job that calls your endpoint every hour:</p>
-    <pre><code>curl -X POST https://api.prikke.io/jobs \
+    <pre><code class="language-bash">curl -X POST https://api.prikke.io/jobs \
   -H "Authorization: Bearer pk_live_abc123.sk_live_xyz789" \
   -H "Content-Type: application/json" \
   -d '{
@@ -37,7 +37,7 @@ title: Getting Started
     <span class="step-number">4</span>
     <h3>Create your endpoint</h3>
     <p>Prikke will call your URL with a POST request. Your endpoint just needs to return a 2xx status:</p>
-    <pre><code>// Next.js API route example
+    <pre><code class="language-javascript">// Next.js API route example
 export async function POST(request) {
   // Do your work here
   await syncData();
