@@ -81,4 +81,28 @@ defmodule Prikke.Accounts.UserNotifier do
     ==============================
     """)
   end
+
+  @doc """
+  Deliver an organization invite email.
+  """
+  def deliver_organization_invite(email, org_name, invited_by_email, url) do
+    invited_by_text = if invited_by_email, do: " by #{invited_by_email}", else: ""
+
+    deliver(email, "You've been invited to #{org_name}", """
+
+    ==============================
+
+    Hi,
+
+    You've been invited#{invited_by_text} to join #{org_name} on Prikke.
+
+    Click the link below to accept the invitation:
+
+    #{url}
+
+    If you don't have a Prikke account yet, you'll be able to create one.
+
+    ==============================
+    """)
+  end
 end

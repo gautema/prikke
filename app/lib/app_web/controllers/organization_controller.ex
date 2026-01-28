@@ -72,4 +72,18 @@ defmodule PrikkeWeb.OrganizationController do
         render(conn, :edit, organization: organization, changeset: changeset)
     end
   end
+
+  def members(conn, _params) do
+    organization = conn.assigns.current_organization
+
+    if organization do
+      members = Accounts.list_organization_members(organization)
+      invites = Accounts.list_organization_invites(organization)
+      render(conn, :members, organization: organization, members: members, invites: invites)
+    else
+      conn
+      |> put_flash(:error, "No organization selected.")
+      |> redirect(to: ~p"/")
+    end
+  end
 end

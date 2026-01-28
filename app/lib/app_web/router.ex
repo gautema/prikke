@@ -84,6 +84,19 @@ defmodule PrikkeWeb.Router do
     post "/organizations/:id/switch", OrganizationController, :switch
     get "/organizations/settings", OrganizationController, :edit
     put "/organizations/settings", OrganizationController, :update
+    get "/organizations/members", OrganizationController, :members
+
+    # Invites (authenticated - for sending invites)
+    post "/invites", InviteController, :create
+    delete "/invites/:id", InviteController, :delete
+  end
+
+  # Invites (public - for viewing/accepting invites)
+  scope "/", PrikkeWeb do
+    pipe_through [:browser]
+
+    get "/invites/:token", InviteController, :show
+    post "/invites/:token/accept", InviteController, :accept
   end
 
   scope "/", PrikkeWeb do

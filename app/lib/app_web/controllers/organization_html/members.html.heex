@@ -1,0 +1,97 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="max-w-2xl mx-auto py-8">
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-slate-900">Organization Settings</h1>
+      <p class="text-slate-500 mt-1">Manage <%= @organization.name %></p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-4 mb-6 border-b border-slate-200">
+      <a href={~p"/organizations/settings"} class="pb-3 px-1 text-sm font-medium text-slate-500 hover:text-slate-700">
+        General
+      </a>
+      <a href={~p"/organizations/members"} class="pb-3 px-1 text-sm font-medium text-emerald-600 border-b-2 border-emerald-500">
+        Members
+      </a>
+    </div>
+
+    <!-- Invite Form -->
+    <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+      <h2 class="text-lg font-semibold text-slate-900 mb-4">Invite new member</h2>
+      <.form for={%{}} action={~p"/invites"} method="post" class="flex gap-3">
+        <div class="flex-1">
+          <input
+            type="email"
+            name="invite[email]"
+            placeholder="colleague@example.com"
+            required
+            class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+          />
+        </div>
+        <div>
+          <select name="invite[role]" class="px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+            <option value="member">Member</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <button type="submit" class="px-4 py-2.5 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors">
+          Send Invite
+        </button>
+      </.form>
+    </div>
+
+    <!-- Members List -->
+    <div class="bg-white border border-slate-200 rounded-lg mb-6">
+      <div class="px-6 py-4 border-b border-slate-200">
+        <h2 class="text-lg font-semibold text-slate-900">Team members</h2>
+      </div>
+      <div class="divide-y divide-slate-200">
+        <%= for member <- @members do %>
+          <div class="px-6 py-4 flex justify-between items-center">
+            <div>
+              <div class="font-medium text-slate-900"><%= member.user.email %></div>
+              <div class="text-sm text-slate-500">Joined <%= Calendar.strftime(member.inserted_at, "%b %d, %Y") %></div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class={"text-xs font-medium px-2 py-1 rounded #{role_badge_class(member.role)}"}>
+                <%= String.capitalize(member.role) %>
+              </span>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Pending Invites -->
+    <%= if @invites != [] do %>
+      <div class="bg-white border border-slate-200 rounded-lg">
+        <div class="px-6 py-4 border-b border-slate-200">
+          <h2 class="text-lg font-semibold text-slate-900">Pending invites</h2>
+        </div>
+        <div class="divide-y divide-slate-200">
+          <%= for invite <- @invites do %>
+            <div class="px-6 py-4 flex justify-between items-center">
+              <div>
+                <div class="font-medium text-slate-900"><%= invite.email %></div>
+                <div class="text-sm text-slate-500">
+                  Invited <%= Calendar.strftime(invite.inserted_at, "%b %d, %Y") %>
+                  <%= if invite.invited_by do %>
+                    by <%= invite.invited_by.email %>
+                  <% end %>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class={"text-xs font-medium px-2 py-1 rounded #{role_badge_class(invite.role)}"}>
+                  <%= String.capitalize(invite.role) %>
+                </span>
+                <.link href={~p"/invites/#{invite.id}"} method="delete" class="text-sm text-red-600 hover:text-red-700">
+                  Cancel
+                </.link>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</Layouts.app>

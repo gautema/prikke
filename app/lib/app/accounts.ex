@@ -496,4 +496,106 @@ defmodule Prikke.Accounts do
   def delete_api_key(api_key) do
     Repo.delete(api_key)
   end
+
+  ## Organization Invites
+
+  alias Prikke.Accounts.OrganizationInvite
+
+  @doc """
+  Creates an invite for an organization.
+  Returns {:ok, invite, token} on success where token is the raw token to send in email.
+  """
+  def create_organization_invite(organization, invited_by, attrs) do
+    {raw_token, hashed_token} = OrganizationInvite.build_token()
+
+    result =
+      %OrganizationInvite{}
+      |> OrganizationInvite.changeset(Map.merge(attrs, %{
+        token: hashed_token,
+        organization_id: organization.id,
+        invited_by_id: invited_by.id
+      }))
+      |> Repo.insert()
+
+    case result do
+      {:ok, invite} -> {:ok, invite, raw_token}
+      {:error, changeset} -> {:error, changeset}
+    end
+  end
+
+  @doc """
+  Gets an invite by its token.
+  """
+  def get_invite_by_token(token) do
+    case OrganizationInvite.hash_token(token) do
+      {:ok, hashed_token} ->
+        from(i in OrganizationInvite,
+          where: i.token == ^hashed_token and is_nil(i.accepted_at),
+          preload: [:organization]
+        )
+        |> Repo.one()
+
+      :error ->
+        nil
+    end
+  end
+
+  @doc """
+  Accepts an invite and creates a membership for the user.
+  """
+  def accept_invite(invite, user) do
+    Repo.transaction(fn ->
+      # Check if user is already a member
+      if get_membership(invite.organization, user) do
+        Repo.rollback(:already_member)
+      end
+
+      # Create membership
+      case create_membership(invite.organization, user, invite.role) do
+        {:ok, membership} ->
+          # Mark invite as accepted
+          invite
+          |> OrganizationInvite.accept_changeset()
+          |> Repo.update!()
+
+          membership
+
+        {:error, _} ->
+          Repo.rollback(:membership_failed)
+      end
+    end)
+  end
+
+  @doc """
+  Lists pending invites for an organization.
+  """
+  def list_organization_invites(organization) do
+    from(i in OrganizationInvite,
+      where: i.organization_id == ^organization.id and is_nil(i.accepted_at),
+      order_by: [desc: i.inserted_at],
+      preload: [:invited_by]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Deletes a pending invite.
+  """
+  def delete_invite(invite) do
+    Repo.delete(invite)
+  end
+
+  @doc """
+  Delivers an organization invite email.
+  """
+  def deliver_organization_invite(invite, raw_token, url_fn) do
+    invite = Repo.preload(invite, [:organization, :invited_by])
+
+    UserNotifier.deliver_organization_invite(
+      invite.email,
+      invite.organization.name,
+      invite.invited_by && invite.invited_by.email,
+      url_fn.(raw_token)
+    )
+  end
 end
