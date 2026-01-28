@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Getting Started - Prikke</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --slate-50: #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0;
+            --slate-400: #94a3b8; --slate-500: #64748b; --slate-600: #475569;
+            --slate-700: #334155; --slate-800: #1e293b; --slate-900: #0f172a;
+            --emerald-500: #10b981; --emerald-600: #059669;
+        }
+        body { font-family: 'Inter', system-ui, sans-serif; color: var(--slate-900); line-height: 1.6; background: var(--slate-50); }
+        .container { max-width: 800px; margin: 0 auto; padding: 0 24px; }
+        header { padding: 24px 0; border-bottom: 1px solid var(--slate-200); margin-bottom: 48px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 600; text-decoration: none; color: var(--slate-900); }
+        .logo-dot { width: 16px; height: 16px; background: var(--emerald-500); border-radius: 50%; }
+        nav a { color: var(--slate-600); text-decoration: none; margin-left: 24px; }
+        nav a:hover { color: var(--emerald-500); }
+        h1 { font-size: 36px; font-weight: 700; margin-bottom: 16px; }
+        h2 { font-size: 24px; font-weight: 600; margin: 48px 0 16px; padding-top: 24px; border-top: 1px solid var(--slate-200); }
+        h2:first-of-type { border-top: none; margin-top: 32px; }
+        h3 { font-size: 18px; font-weight: 600; margin: 32px 0 12px; }
+        p { margin-bottom: 16px; color: var(--slate-700); }
+        a { color: var(--emerald-600); }
+        ul, ol { margin: 0 0 16px 24px; color: var(--slate-700); }
+        li { margin-bottom: 8px; }
+        code { font-family: 'JetBrains Mono', monospace; background: var(--slate-100); padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+        pre { background: var(--slate-900); color: var(--slate-100); padding: 20px; border-radius: 8px; overflow-x: auto; margin: 16px 0; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.5; white-space: pre; }
+        pre code { background: none; padding: 0; }
+        .step { background: white; border: 1px solid var(--slate-200); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
+        .step-number { display: inline-block; width: 28px; height: 28px; background: var(--emerald-500); color: white; border-radius: 50%; text-align: center; line-height: 28px; font-weight: 600; font-size: 14px; margin-right: 12px; }
+        .step h3 { display: inline; margin: 0; }
+        .step p { margin-top: 16px; }
+        .subtitle { font-size: 20px; color: var(--slate-600); margin-bottom: 40px; }
+        .note { background: var(--slate-100); border-left: 4px solid var(--emerald-500); padding: 16px; margin: 16px 0; border-radius: 0 8px 8px 0; }
+        footer { margin-top: 80px; padding: 40px 0; border-top: 1px solid var(--slate-200); text-align: center; color: var(--slate-500); font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="/" class="logo"><div class="logo-dot"></div>prikke</a>
+            <nav>
+                <a href="/docs">Docs</a>
+                <a href="/docs/api">API</a>
+                <a href="/use-cases">Use Cases</a>
+            </nav>
+        </header>
+
+        <h1>Getting Started</h1>
+        <p class="subtitle">Create your first scheduled job in 5 minutes.</p>
+
+        <div class="step">
+            <span class="step-number">1</span>
+            <h3>Create an account</h3>
+            <p>Sign up at <a href="https://prikke.io">prikke.io</a> with your email. No credit card required for the free tier.</p>
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span>
+            <h3>Get your API key</h3>
+            <p>Go to Settings → API Keys and create a new key. You'll get a key like:</p>
+            <pre><code>pk_live_abc123.sk_live_xyz789</code></pre>
+            <p>Keep this safe - the secret part is only shown once.</p>
+        </div>
+
+        <div class="step">
+            <span class="step-number">3</span>
+            <h3>Create your first job</h3>
+            <p>Schedule a recurring job that calls your endpoint every hour:</p>
+            <pre><code>curl -X POST https://api.prikke.io/jobs \
+  -H "Authorization: Bearer pk_live_abc123.sk_live_xyz789" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Hourly sync",
+    "url": "https://myapp.com/api/sync",
+    "cron": "0 * * * *"
+  }'</code></pre>
+        </div>
+
+        <div class="step">
+            <span class="step-number">4</span>
+            <h3>Create your endpoint</h3>
+            <p>Prikke will call your URL with a POST request. Your endpoint just needs to return a 2xx status:</p>
+            <pre><code>// Next.js API route example
+export async function POST(request) {
+  // Do your work here
+  await syncData();
+
+  return Response.json({ ok: true });
+}</code></pre>
+        </div>
+
+        <div class="note">
+            <strong>That's it!</strong> Prikke will call your endpoint on schedule, retry on failures, and alert you if something goes wrong.
+        </div>
+
+        <h2>What's next?</h2>
+
+        <ul>
+            <li><a href="/docs/api">API Reference</a> - Full API documentation</li>
+            <li><a href="/docs/cron">Cron Syntax</a> - How to write cron expressions</li>
+            <li><a href="/docs/webhooks">Webhooks</a> - Retries, timeouts, authentication</li>
+            <li><a href="/use-cases">Use Cases</a> - Common patterns for web apps</li>
+        </ul>
+
+        <footer>
+            <p>Prikke &middot; Background jobs, made simple &middot; <a href="/">Home</a></p>
+        </footer>
+    </div>
+</body>
+</html>

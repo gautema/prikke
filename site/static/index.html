@@ -49,6 +49,20 @@
         /* Header */
         header {
             padding: 24px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--slate-600);
+            text-decoration: none;
+            margin-left: 24px;
+            font-size: 15px;
+        }
+
+        nav a:hover {
+            color: var(--emerald-500);
         }
 
         .logo {
@@ -370,6 +384,11 @@
                 <div class="logo-dot"></div>
                 prikke
             </a>
+            <nav>
+                <a href="/docs">Docs</a>
+                <a href="/docs/api">API</a>
+                <a href="/use-cases">Use Cases</a>
+            </nav>
         </header>
 
         <section class="hero">
