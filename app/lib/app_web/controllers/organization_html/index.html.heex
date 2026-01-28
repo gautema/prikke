@@ -1,0 +1,39 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="max-w-2xl mx-auto py-8">
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">Organizations</h1>
+        <p class="text-slate-500 mt-1">Manage your organizations</p>
+      </div>
+      <a href={~p"/organizations/new"} class="text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors no-underline">
+        New Organization
+      </a>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-lg divide-y divide-slate-200">
+      <%= for org <- @organizations do %>
+        <div class="p-4 flex justify-between items-center">
+          <div>
+            <div class="font-medium text-slate-900"><%= org.name %></div>
+            <div class="text-sm text-slate-500"><%= org.slug %> · <%= String.capitalize(org.tier) %></div>
+          </div>
+          <div class="flex items-center gap-3">
+            <%= if @current_organization && @current_organization.id == org.id do %>
+              <span class="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded">Current</span>
+            <% else %>
+              <.link href={~p"/organizations/#{org.id}/switch"} method="post" class="text-sm text-slate-600 hover:text-slate-900">
+                Switch
+              </.link>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <%= if @organizations == [] do %>
+        <div class="p-8 text-center text-slate-500">
+          No organizations yet. Create your first one to get started.
+        </div>
+      <% end %>
+    </div>
+  </div>
+</Layouts.app>

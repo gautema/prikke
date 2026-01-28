@@ -11,6 +11,7 @@ defmodule PrikkeWeb.Router do
     plug :protect_from_forgery
     plug :put_secure_browser_headers
     plug :fetch_current_scope_for_user
+    plug :fetch_current_organization
   end
 
   pipeline :api do
@@ -75,6 +76,14 @@ defmodule PrikkeWeb.Router do
     get "/users/settings", UserSettingsController, :edit
     put "/users/settings", UserSettingsController, :update
     get "/users/settings/confirm-email/:token", UserSettingsController, :confirm_email
+
+    # Organizations
+    get "/organizations", OrganizationController, :index
+    get "/organizations/new", OrganizationController, :new
+    post "/organizations", OrganizationController, :create
+    post "/organizations/:id/switch", OrganizationController, :switch
+    get "/organizations/settings", OrganizationController, :edit
+    put "/organizations/settings", OrganizationController, :update
   end
 
   scope "/", PrikkeWeb do

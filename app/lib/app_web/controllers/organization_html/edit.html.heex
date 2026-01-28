@@ -1,0 +1,57 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="max-w-[500px] mx-auto py-8">
+    <div class="mb-8">
+      <h1 class="text-2xl font-bold text-slate-900">Organization Settings</h1>
+      <p class="text-slate-500 mt-1">Manage <%= @organization.name %></p>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+      <h2 class="text-lg font-semibold text-slate-900 mb-4">General</h2>
+      <.form :let={f} for={@changeset} action={~p"/organizations/settings"} class="space-y-4">
+        <div>
+          <label for={f[:name].id} class="block text-sm font-medium text-slate-700 mb-1">Organization Name</label>
+          <input
+            type="text"
+            name={f[:name].name}
+            id={f[:name].id}
+            value={Phoenix.HTML.Form.normalize_value("text", f[:name].value)}
+            required
+            class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+          />
+          <%= for msg <- Enum.map(f[:name].errors, &translate_error/1) do %>
+            <p class="mt-1 text-sm text-red-600"><%= msg %></p>
+          <% end %>
+        </div>
+
+        <div>
+          <label for={f[:slug].id} class="block text-sm font-medium text-slate-700 mb-1">URL Slug</label>
+          <input
+            type="text"
+            name={f[:slug].name}
+            id={f[:slug].id}
+            value={Phoenix.HTML.Form.normalize_value("text", f[:slug].value)}
+            required
+            class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+          />
+          <%= for msg <- Enum.map(f[:slug].errors, &translate_error/1) do %>
+            <p class="mt-1 text-sm text-red-600"><%= msg %></p>
+          <% end %>
+        </div>
+
+        <button type="submit" class="py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors">
+          Save Changes
+        </button>
+      </.form>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-lg p-6">
+      <h2 class="text-lg font-semibold text-slate-900 mb-2">Plan</h2>
+      <p class="text-slate-600 mb-4">
+        Current plan: <span class="font-medium"><%= String.capitalize(@organization.tier) %></span>
+      </p>
+      <%= if @organization.tier == "free" do %>
+        <a href="#" class="text-emerald-600 font-medium hover:underline">Upgrade to Pro →</a>
+      <% end %>
+    </div>
+  </div>
+</Layouts.app>

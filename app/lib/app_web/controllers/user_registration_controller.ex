@@ -14,6 +14,10 @@ defmodule PrikkeWeb.UserRegistrationController do
   def create(conn, %{"user" => user_params}) do
     case Accounts.register_user(user_params) do
       {:ok, user} ->
+        # Create a personal organization for the new user
+        org_name = user.email |> String.split("@") |> hd() |> String.capitalize()
+        Accounts.create_organization(user, %{name: "#{org_name}'s Org"})
+
         {:ok, _} =
           Accounts.deliver_login_instructions(
             user,

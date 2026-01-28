@@ -216,4 +216,45 @@ defmodule PrikkeWeb.UserAuth do
   end
 
   defp maybe_store_return_to(conn), do: conn
+
+  @doc """
+  Fetches the current organization from session.
+
+  If no organization is stored in session, it defaults to the user's first organization.
+  """
+  def fetch_current_organization(conn, _opts) do
+    user = conn.assigns[:current_scope] && conn.assigns.current_scope.user
+
+    if user do
+      org_id = get_session(conn, :current_organization_id)
+      organizations = Accounts.list_user_organizations(user)
+
+      current_org =
+        if org_id do
+          Enum.find(organizations, &(&1.id == org_id))
+        end
+
+      # Fall back to first organization if none selected or invalid
+      current_org = current_org || List.first(organizations)
+
+      conn
+      |> assign(:current_organization, current_org)
+      |> assign(:organizations, organizations)
+      |> maybe_set_default_org(current_org)
+    else
+      conn
+      |> assign(:current_organization, nil)
+      |> assign(:organizations, [])
+    end
+  end
+
+  defp maybe_set_default_org(conn, nil), do: conn
+
+  defp maybe_set_default_org(conn, org) do
+    if get_session(conn, :current_organization_id) do
+      conn
+    else
+      put_session(conn, :current_organization_id, org.id)
+    end
+  end
 end
