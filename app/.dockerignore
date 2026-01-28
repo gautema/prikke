@@ -27,7 +27,7 @@
 # Common development/test artifacts
 /cover/
 /doc/
-/test/
+# /test/ - NOT excluded, needed for CI (tests run during Docker build)
 /tmp/
 .elixir_ls
 
