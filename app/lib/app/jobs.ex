@@ -9,6 +9,18 @@ defmodule Prikke.Jobs do
   alias Prikke.Jobs.Job
   alias Prikke.Accounts.Organization
 
+  # Tier limits
+  @tier_limits %{
+    "free" => %{max_jobs: 5, min_interval_minutes: 60},
+    "pro" => %{max_jobs: :unlimited, min_interval_minutes: 1}
+  }
+
+  def tier_limits, do: @tier_limits
+
+  def get_tier_limits(tier) do
+    Map.get(@tier_limits, tier, @tier_limits["free"])
+  end
+
   @doc """
   Subscribes to notifications about job changes for an organization.
 
@@ -86,6 +98,10 @@ defmodule Prikke.Jobs do
   @doc """
   Creates a job for an organization.
 
+  Enforces tier limits:
+  - Free: max 5 jobs, hourly minimum interval
+  - Pro: unlimited jobs, per-minute intervals
+
   ## Examples
 
       iex> create_job(organization, %{field: value})
@@ -96,17 +112,59 @@ defmodule Prikke.Jobs do
 
   """
   def create_job(%Organization{} = org, attrs) do
-    with {:ok, job} <-
-           %Job{}
-           |> Job.create_changeset(attrs, org.id)
-           |> Repo.insert() do
+    changeset = Job.create_changeset(%Job{}, attrs, org.id)
+
+    with :ok <- check_job_limit(org),
+         :ok <- check_interval_limit(org, changeset),
+         {:ok, job} <- Repo.insert(changeset) do
       broadcast(org, {:created, job})
       {:ok, job}
+    else
+      {:error, :job_limit_reached} ->
+        {:error,
+         changeset
+         |> Ecto.Changeset.add_error(:base, "You've reached the maximum number of jobs for your plan (#{get_tier_limits(org.tier).max_jobs}). Upgrade to Pro for unlimited jobs.")}
+
+      {:error, :interval_too_frequent} ->
+        {:error,
+         changeset
+         |> Ecto.Changeset.add_error(:cron_expression, "Free plan only allows hourly or less frequent schedules. Upgrade to Pro for per-minute scheduling.")}
+
+      {:error, %Ecto.Changeset{}} = error ->
+        error
+    end
+  end
+
+  defp check_job_limit(%Organization{tier: tier} = org) do
+    limits = get_tier_limits(tier)
+
+    case limits.max_jobs do
+      :unlimited -> :ok
+      max when is_integer(max) ->
+        if count_jobs(org) < max, do: :ok, else: {:error, :job_limit_reached}
+    end
+  end
+
+  defp check_interval_limit(%Organization{tier: tier}, changeset) do
+    limits = get_tier_limits(tier)
+    schedule_type = Ecto.Changeset.get_field(changeset, :schedule_type)
+    interval = Ecto.Changeset.get_field(changeset, :interval_minutes)
+
+    cond do
+      # One-time jobs are always allowed
+      schedule_type == "once" -> :ok
+      # No interval computed yet (validation will fail elsewhere)
+      is_nil(interval) -> :ok
+      # Check minimum interval
+      interval >= limits.min_interval_minutes -> :ok
+      true -> {:error, :interval_too_frequent}
     end
   end
 
   @doc """
   Updates a job.
+
+  Enforces tier limits on interval changes.
 
   ## Examples
 
@@ -122,12 +180,20 @@ defmodule Prikke.Jobs do
       raise ArgumentError, "job does not belong to organization"
     end
 
-    with {:ok, job} <-
-           job
-           |> Job.changeset(attrs)
-           |> Repo.update() do
+    changeset = Job.changeset(job, attrs)
+
+    with :ok <- check_interval_limit(org, changeset),
+         {:ok, job} <- Repo.update(changeset) do
       broadcast(org, {:updated, job})
       {:ok, job}
+    else
+      {:error, :interval_too_frequent} ->
+        {:error,
+         changeset
+         |> Ecto.Changeset.add_error(:cron_expression, "Free plan only allows hourly or less frequent schedules. Upgrade to Pro for per-minute scheduling.")}
+
+      {:error, %Ecto.Changeset{}} = error ->
+        error
     end
   end
 

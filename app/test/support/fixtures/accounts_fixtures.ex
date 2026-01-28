@@ -90,9 +90,11 @@ defmodule Prikke.AccountsFixtures do
   def unique_org_name, do: "Org #{System.unique_integer([:positive])}"
 
   def organization_fixture(attrs \\ %{}) do
+    attrs = Enum.into(attrs, %{})
     user = Map.get_lazy(attrs, :user, fn -> user_fixture() end)
     name = attrs[:name] || unique_org_name()
     slug = attrs[:slug] || Prikke.Accounts.Organization.generate_slug(name)
+    tier = attrs[:tier] || "free"
 
     {:ok, org} =
       Accounts.create_organization(user, %{
@@ -100,6 +102,13 @@ defmodule Prikke.AccountsFixtures do
         slug: slug
       })
 
-    org
+    # Update tier if not free (create_organization doesn't accept tier)
+    if tier != "free" do
+      org
+      |> Ecto.Changeset.change(tier: tier)
+      |> Prikke.Repo.update!()
+    else
+      org
+    end
   end
 end
