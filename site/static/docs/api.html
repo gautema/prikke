@@ -110,6 +110,32 @@
     "run_at": "2025-02-01T09:00:00Z",
     "body": "{\"user_id\": 123}"
   }'</code></pre>
+
+            <h4 style="margin: 16px 0 8px; font-size: 14px;">Example: Run Immediately</h4>
+            <p>Set <code>run_at</code> to the current time to execute a job right away:</p>
+            <pre><code>curl -X POST https://api.prikke.io/jobs \
+  -H "Authorization: Bearer pk_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Process upload",
+    "url": "https://myapp.com/api/process",
+    "run_at": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
+    "body": "{\"file_id\": \"abc123\"}"
+  }'</code></pre>
+            <p>In JavaScript:</p>
+            <pre><code>await fetch('https://api.prikke.io/jobs', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer pk_live_xxx',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    name: 'Process upload',
+    url: 'https://myapp.com/api/process',
+    run_at: new Date().toISOString(),
+    body: JSON.stringify({ file_id: 'abc123' })
+  })
+});</code></pre>
         </div>
 
         <div class="endpoint">
