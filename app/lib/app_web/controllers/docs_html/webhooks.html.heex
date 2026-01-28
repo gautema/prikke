@@ -38,17 +38,17 @@ X-Prikke-Signature: sha256=abcdef...</code></pre>
   <pre><code>// Node.js example
 const crypto = require('crypto');
 
-function verifySignature(payload, signature, secret) {
+function verifySignature(payload, signature, secret) &#123;
   const expected = crypto
     .createHmac('sha256', secret)
     .update(payload)
     .digest('hex');
 
-  return `sha256=${expected}` === signature;
-}
+  return `sha256=$&#123;expected&#125;` === signature;
+&#125;
 
 // In your handler
-app.post('/webhook', (req, res) => {
+app.post('/webhook', (req, res) =&gt; &#123;
   const signature = req.headers['x-prikke-signature'];
   const isValid = verifySignature(
     JSON.stringify(req.body),
@@ -56,12 +56,12 @@ app.post('/webhook', (req, res) => {
     process.env.PRIKKE_WEBHOOK_SECRET
   );
 
-  if (!isValid) {
-    return res.status(401).json({ error: 'Invalid signature' });
-  }
+  if (!isValid) &#123;
+    return res.status(401).json(&#123; error: 'Invalid signature' &#125;);
+  &#125;
 
   // Process the job...
-});</code></pre>
+&#125;);</code></pre>
 
   <h2>Response Handling</h2>
   <p>Prikke interprets your response status code:</p>
@@ -126,31 +126,23 @@ app.post('/webhook', (req, res) => {
   <pre><code>// Track processed executions
 const processed = new Set(); // Use Redis in production
 
-app.post('/webhook', async (req, res) => {
+app.post('/webhook', async (req, res) =&gt; &#123;
   const executionId = req.headers['x-prikke-execution-id'];
 
-  if (processed.has(executionId)) {
-    return res.json({ status: 'already_processed' });
-  }
+  if (processed.has(executionId)) &#123;
+    return res.json(&#123; status: 'already_processed' &#125;);
+  &#125;
 
   // Process the job...
   await doWork();
 
   processed.add(executionId);
-  res.json({ status: 'ok' });
-});</code></pre>
+  res.json(&#123; status: 'ok' &#125;);
+&#125;);</code></pre>
 
   <h2>Custom Headers</h2>
   <p>You can configure custom headers when creating a job:</p>
   <pre><code>curl -X POST https://api.prikke.whitenoise.no/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
-  -d '{
-    "name": "My job",
-    "url": "https://myapp.com/webhook",
-    "cron": "0 * * * *",
-    "headers": {
-      "Authorization": "Bearer my-app-token",
-      "X-Custom-Header": "some-value"
-    }
-  }'</code></pre>
+  -d '&#123;"name": "My job", "url": "https://myapp.com/webhook", "cron": "0 * * * *", "headers": &#123;"Authorization": "Bearer my-app-token"&#125;&#125;'</code></pre>
 </.docs_layout>

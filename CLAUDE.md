@@ -342,30 +342,20 @@ Using Lemon Squeezy (Merchant of Record):
 
 See `/brand/BRAND.md` for full guidelines.
 
-## Landing Page + Waitlist (Bun)
+## Landing Page & Documentation
 
-Location: `/site/`
+Location: `/app/lib/app_web/controllers/`
 
-Minimal Bun server that serves the landing page and handles waitlist signups.
-Stores emails in Postgres (Koyeb) or SQLite (local dev).
+Landing page and documentation are served by Phoenix:
+- Landing page: `/` (page_html/home.html.heex)
+- Docs index: `/docs` (docs_html/index.html.heex)
+- API docs: `/docs/api`
+- Cron docs: `/docs/cron`
+- Webhooks docs: `/docs/webhooks`
+- Getting started: `/docs/getting-started`
+- Use cases: `/use-cases`
 
-### Local Development
-```bash
-cd site
-bun install
-bun run dev
-# Visit http://localhost:3000
-```
-
-### Production
-```bash
-# Connect GitHub repo to Koyeb for auto-deploy
-# Set root directory to "site" in Koyeb
-```
-
-### Environment Variables
-- `PORT` - Server port (default: 3000, Koyeb sets 8000)
-- `DATABASE_URL` - Postgres connection string (Koyeb provides this)
+All templates use Tailwind CSS with Prikke brand colors (slate + emerald).
 
 ## Development Commands
 
@@ -394,6 +384,23 @@ mix ecto.reset
 mix phx.gen.auth Accounts User users
 ```
 
+## Development Rules
+
+**CRITICAL: Always compile and run tests before committing:**
+```bash
+cd app && mix compile && mix test
+```
+
+Never commit code without verifying it compiles and tests pass. This is especially important for HEEx templates where syntax errors are not caught until compilation.
+
+**HEEx Template Notes:**
+- Curly braces `{` and `}` in code blocks (e.g., JSON examples) must be escaped
+- Use HTML entities: `&#123;` for `{` and `&#125;` for `}`
+- This applies to all `<pre><code>` blocks containing JSON or JavaScript
+
+**Future Enhancement (Phase 9+):**
+- Swagger/OpenAPI docs - Generate API documentation from code
+
 ## Current Project Structure
 
 ```
@@ -407,24 +414,31 @@ prikke/
 │   ├── favicon.svg
 │   ├── logo.svg           # Light background
 │   └── logo-dark.svg      # Dark background
-├── site/                  # Landing page + docs (Bun server)
-│   ├── Dockerfile         # For Koyeb deployment
-│   ├── package.json
-│   ├── server.ts          # Bun server with templating
-│   ├── static/
-│   │   ├── index.html     # Landing page (own design)
-│   │   └── favicon.svg
-│   ├── pages/             # Content-only HTML (uses layout template)
-│   │   ├── use-cases.html
-│   │   └── docs/
-│   │       ├── index.html
-│   │       ├── getting-started.html
-│   │       ├── api.html
-│   │       ├── cron.html
-│   │       └── webhooks.html
-│   └── templates/
-│       └── layout.html    # Shared layout (head, nav, footer, styles)
-└── app/                   # Main app (Phoenix - future)
+└── app/                   # Main Phoenix app
+    ├── Dockerfile         # Production build
+    ├── docker-compose.yml # Local PostgreSQL 18
+    ├── config/
+    │   ├── runtime.exs    # SSL for prod database
+    │   └── prod.exs       # Production config
+    ├── lib/app_web/
+    │   ├── router.ex      # Routes including /docs, /use-cases
+    │   └── controllers/
+    │       ├── page_html/home.html.heex      # Landing page
+    │       ├── docs_controller.ex             # Docs routes
+    │       ├── docs_html.ex                   # Docs layout component
+    │       ├── docs_html/                     # Doc templates
+    │       │   ├── index.html.heex
+    │       │   ├── getting_started.html.heex
+    │       │   ├── api.html.heex
+    │       │   ├── cron.html.heex
+    │       │   └── webhooks.html.heex
+    │       │   └── use_cases.html.heex
+    │       ├── error_html.ex                  # Error page module
+    │       └── error_html/                    # Custom error pages
+    │           ├── 404.html.heex
+    │           └── 500.html.heex
+    └── rel/overlays/bin/
+        └── server         # Runs migrations then starts app
 ```
 
 ### Site Templating

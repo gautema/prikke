@@ -12,19 +12,19 @@
     <h3 class="mt-0">Email Sequences</h3>
     <p>Schedule follow-up emails without managing queues or workers. Perfect for serverless platforms where you can't run background processes.</p>
     <pre><code>// When user signs up, schedule welcome sequence
-await fetch('https://api.prikke.whitenoise.no/jobs', {
+await fetch('https://api.prikke.whitenoise.no/jobs', &#123;
   method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${PRIKKE_API_KEY}`,
+  headers: &#123;
+    'Authorization': `Bearer $&#123;PRIKKE_API_KEY&#125;`,
     'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    name: `welcome-email-${userId}`,
+  &#125;,
+  body: JSON.stringify(&#123;
+    name: `welcome-email-$&#123;userId&#125;`,
     url: `https://myapp.com/api/send-welcome`,
     run_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-    body: JSON.stringify({ userId, step: 1 })
-  })
-});</code></pre>
+    body: JSON.stringify(&#123; userId, step: 1 &#125;)
+  &#125;)
+&#125;);</code></pre>
   </div>
 
   <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
@@ -33,22 +33,22 @@ await fetch('https://api.prikke.whitenoise.no/jobs', {
     <h3 class="mt-0">Report Generation</h3>
     <p>Generate PDFs, exports, or analytics reports without timing out. Return immediately to the user and process in the background.</p>
     <pre><code>// API route that triggers report generation
-export async function POST(request) {
-  const { reportId, userId } = await request.json();
+export async function POST(request) &#123;
+  const &#123; reportId, userId &#125; = await request.json();
 
   // Schedule the heavy work
-  await prikke.createJob({
-    name: `report-${reportId}`,
-    url: `${process.env.APP_URL}/api/generate-report`,
+  await prikke.createJob(&#123;
+    name: `report-$&#123;reportId&#125;`,
+    url: `$&#123;process.env.APP_URL&#125;/api/generate-report`,
     run_at: new Date().toISOString(), // Run immediately
-    body: JSON.stringify({ reportId, userId })
-  });
+    body: JSON.stringify(&#123; reportId, userId &#125;)
+  &#125;);
 
-  return Response.json({
+  return Response.json(&#123;
     status: 'processing',
     message: "We'll email you when it's ready"
-  });
-}</code></pre>
+  &#125;);
+&#125;</code></pre>
   </div>
 
   <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
@@ -57,22 +57,22 @@ export async function POST(request) {
     <h3 class="mt-0">Webhook Relay</h3>
     <p>Receive webhooks from third-party services and process them reliably. Don't lose events when your server is slow or down.</p>
     <pre><code>// Stripe webhook handler - acknowledge fast, process later
-export async function POST(request) {
+export async function POST(request) &#123;
   const event = await request.json();
 
   // Store event and schedule processing
   await db.webhookEvents.insert(event);
 
-  await prikke.createJob({
-    name: `stripe-${event.id}`,
-    url: `${process.env.APP_URL}/api/process-stripe`,
+  await prikke.createJob(&#123;
+    name: `stripe-$&#123;event.id&#125;`,
+    url: `$&#123;process.env.APP_URL&#125;/api/process-stripe`,
     run_at: new Date().toISOString(),
-    body: JSON.stringify({ eventId: event.id })
-  });
+    body: JSON.stringify(&#123; eventId: event.id &#125;)
+  &#125;);
 
   // Return 200 immediately so Stripe doesn't retry
-  return Response.json({ received: true });
-}</code></pre>
+  return Response.json(&#123; received: true &#125;);
+&#125;</code></pre>
   </div>
 
   <h2>Scheduled Tasks</h2>
@@ -84,11 +84,7 @@ export async function POST(request) {
     <h3 class="mt-0">Subscription Renewals</h3>
     <p>Process recurring billing, send renewal reminders, and handle failed payments automatically.</p>
     <pre><code>// Run daily at 6 AM UTC
-{
-  "name": "process-renewals",
-  "url": "https://myapp.com/api/billing/renewals",
-  "cron": "0 6 * * *"
-}</code></pre>
+&#123;"name": "process-renewals", "url": "https://myapp.com/api/billing/renewals", "cron": "0 6 * * *"&#125;</code></pre>
   </div>
 
   <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
@@ -97,18 +93,7 @@ export async function POST(request) {
     <h3 class="mt-0">Database Maintenance</h3>
     <p>Clean up old records, aggregate analytics, update materialized views, or sync data between systems.</p>
     <pre><code>// Cleanup old sessions every night at 2 AM
-{
-  "name": "cleanup-sessions",
-  "url": "https://myapp.com/api/maintenance/sessions",
-  "cron": "0 2 * * *"
-}
-
-// Aggregate daily stats every hour
-{
-  "name": "hourly-stats",
-  "url": "https://myapp.com/api/analytics/aggregate",
-  "cron": "0 * * * *"
-}</code></pre>
+&#123;"name": "cleanup-sessions", "url": "https://myapp.com/api/maintenance/sessions", "cron": "0 2 * * *"&#125;</code></pre>
   </div>
 
   <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
@@ -117,22 +102,22 @@ export async function POST(request) {
     <h3 class="mt-0">Health Checks</h3>
     <p>Monitor your services and external dependencies. Get alerted when something breaks.</p>
     <pre><code>// Check external APIs every 15 minutes
-const job = {
+const job = &#123;
   name: "healthcheck-stripe",
   url: "https://myapp.com/api/health/stripe",
   cron: "*/15 * * * *"
-};
+&#125;;
 
 // Your endpoint checks and alerts
-export async function POST(request) {
+export async function POST(request) &#123;
   const stripeHealth = await checkStripe();
 
-  if (!stripeHealth.ok) {
+  if (!stripeHealth.ok) &#123;
     await sendSlackAlert('Stripe API is down');
-  }
+  &#125;
 
-  return Response.json({ ok: stripeHealth.ok });
-}</code></pre>
+  return Response.json(&#123; ok: stripeHealth.ok &#125;);
+&#125;</code></pre>
   </div>
 
   <h2>Why Not Just Use...</h2>

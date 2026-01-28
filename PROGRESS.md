@@ -5,23 +5,26 @@
 ### What's Done
 
 #### Local Development Environment
-- ✅ Erlang 28.3 installed via asdf
-- ✅ Elixir 1.19.5-otp-28 installed via asdf
-- ✅ Phoenix 1.8.3 installed
-- ✅ PostgreSQL 18 running via Docker Compose
+- Erlang 28.3 installed via asdf
+- Elixir 1.19.5-otp-28 installed via asdf
+- Phoenix 1.8.3 installed
+- PostgreSQL 18 running via Docker Compose
 
 #### Phoenix App (`/app`)
-- ✅ Created with `Prikke`/`PrikkeWeb` modules
-- ✅ UUID primary keys configured
-- ✅ Health check endpoint at `/health`
-- ✅ Dependencies added: crontab, tz, bypass, mox
-- ✅ Release scripts generated (`bin/server`, `bin/migrate`)
+- Created with `Prikke`/`PrikkeWeb` modules
+- UUID primary keys configured
+- Health check endpoint at `/health`
+- Dependencies added: crontab, tz, bypass, mox, req
+- Release scripts generated (`bin/server`, `bin/migrate`)
+- Landing page migrated from Bun to Phoenix
+- Documentation pages (API, cron, webhooks, getting started, use cases)
+- Custom branded 404 and 500 error pages
 
 #### Koyeb Deployment
-- ✅ Dockerfile using `hexpm/elixir:1.19.5-erlang-28.3.1-alpine-3.23.3`
-- ✅ Build order fixed: `mix compile` before `mix assets.deploy`
-- ✅ SSL enabled for database connection
-- ⏳ **Waiting for deploy to complete** - last push enabled SSL
+- Dockerfile using `hexpm/elixir:1.19.5-erlang-28.3.1-alpine-3.23.3`
+- Build order fixed: `mix compile` before `mix assets.deploy`
+- SSL enabled for database connection
+- force_ssl disabled (Koyeb handles SSL termination)
 
 ### Koyeb Configuration
 ```
@@ -34,14 +37,8 @@ Health check: /health
 Environment variables needed:
 - DATABASE_URL (from Koyeb managed Postgres)
 - SECRET_KEY_BASE=ShPV82PMvUep1obgsdOyPE9r+UwV7lWcViOscZ9MyNKfODVOQc3PgTz/nyAEDWaV
-- PHX_HOST=<your-app>.koyeb.app
+- PHX_HOST=prikke.whitenoise.no
 ```
-
-### Recent Commits
-1. `803e2d1` - Add Phoenix app with Elixir 1.19.5
-2. `524b8e4` - Fix Dockerfile: compile before assets.deploy
-3. `ddf91ad` - Use Erlang 28.3.1 in Docker build
-4. `53fc202` - Enable SSL for production database connection
 
 ### Local Development Commands
 ```bash
@@ -52,8 +49,8 @@ cd app && docker compose up -d
 cd app && mix phx.server
 # Visit http://localhost:4000
 
-# Run tests
-cd app && mix test
+# Run tests (ALWAYS do this before committing!)
+cd app && mix compile && mix test
 
 # Interactive console
 cd app && iex -S mix
@@ -67,11 +64,26 @@ app/
 ├── docker-compose.yml      # Local PostgreSQL 18
 ├── config/
 │   ├── runtime.exs         # SSL enabled for prod database
-│   └── prod.exs            # Force SSL, exclude health check
+│   └── prod.exs            # force_ssl disabled (Koyeb handles it)
 ├── lib/app_web/
-│   ├── router.ex           # Added /health endpoint
+│   ├── router.ex           # Routes: /health, /docs/*, /use-cases
 │   └── controllers/
-│       └── health_controller.ex  # Database connectivity check
+│       ├── health_controller.ex  # Database connectivity check
+│       ├── page_html/
+│       │   └── home.html.heex    # Landing page
+│       ├── docs_controller.ex    # Docs routes
+│       ├── docs_html.ex          # Docs layout component
+│       ├── docs_html/            # Doc templates
+│       │   ├── index.html.heex
+│       │   ├── api.html.heex
+│       │   ├── cron.html.heex
+│       │   ├── webhooks.html.heex
+│       │   ├── getting_started.html.heex
+│       │   └── use_cases.html.heex
+│       ├── error_html.ex         # Error page module
+│       └── error_html/           # Custom error pages
+│           ├── 404.html.heex
+│           └── 500.html.heex
 └── rel/overlays/bin/
     └── server              # Runs migrations then starts app
 ```
@@ -117,6 +129,10 @@ Local Dev:
 ### URL Configuration
 - App URL: `prikke.whitenoise.no`
 - API URL: `api.prikke.whitenoise.no`
+
+### Important Development Notes
+- **ALWAYS compile and run tests before committing**: `mix compile && mix test`
+- **HEEx template escaping**: Use HTML entities `&#123;` and `&#125;` for curly braces in code blocks
 
 ---
 Last updated: 2026-01-28

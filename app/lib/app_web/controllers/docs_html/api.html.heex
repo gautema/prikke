@@ -35,20 +35,7 @@
     <pre><code>curl -X PUT https://api.prikke.whitenoise.no/sync \
   -H "Authorization: Bearer pk_live_xxx" \
   -H "Content-Type: application/json" \
-  -d '{
-    "jobs": [
-      {
-        "key": "daily-backup",
-        "name": "Daily backup",
-        "url": "https://myapp.com/api/backup",
-        "cron": "0 6 * * *"
-      }
-    ],
-    "notifications": {
-      "email": "alerts@myapp.com"
-    },
-    "delete_removed": true
-  }'</code></pre>
+  -d '&#123;"jobs": [&#123;"key": "daily-backup", "name": "Daily backup", "url": "https://myapp.com/api/backup", "cron": "0 6 * * *"&#125;], "notifications": &#123;"email": "alerts@myapp.com"&#125;, "delete_removed": true&#125;'</code></pre>
   </div>
 
   <h2>Jobs API</h2>
@@ -80,22 +67,13 @@
     <pre><code>curl -X POST https://api.prikke.whitenoise.no/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
   -H "Content-Type: application/json" \
-  -d '{
-    "key": "daily-backup",
-    "name": "Daily backup",
-    "url": "https://myapp.com/api/backup",
-    "cron": "0 6 * * *"
-  }'</code></pre>
+  -d '&#123;"key": "daily-backup", "name": "Daily backup", "url": "https://myapp.com/api/backup", "cron": "0 6 * * *"&#125;'</code></pre>
 
     <h4 class="text-sm mt-4 mb-2">Example: One-time Job</h4>
     <pre><code>curl -X POST https://api.prikke.whitenoise.no/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
   -H "Content-Type: application/json" \
-  -d '{
-    "name": "Send reminder",
-    "url": "https://myapp.com/api/remind",
-    "run_at": "2025-02-01T09:00:00Z"
-  }'</code></pre>
+  -d '&#123;"name": "Send reminder", "url": "https://myapp.com/api/remind", "run_at": "2025-02-01T09:00:00Z"&#125;'</code></pre>
   </div>
 
   <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
@@ -117,7 +95,7 @@
     <pre><code>curl -X PATCH https://api.prikke.whitenoise.no/jobs/job_abc123 \
   -H "Authorization: Bearer pk_live_xxx" \
   -H "Content-Type: application/json" \
-  -d '{"cron": "0 7 * * *"}'</code></pre>
+  -d '&#123;"cron": "0 7 * * *"&#125;'</code></pre>
   </div>
 
   <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
@@ -138,18 +116,7 @@
       <span class="font-mono text-sm">/jobs/:id/executions</span>
     </div>
     <p>Get execution history for a job.</p>
-    <pre><code>{
-  "executions": [
-    {
-      "id": "exec_123",
-      "status": "success",
-      "status_code": 200,
-      "duration_ms": 145,
-      "started_at": "2025-01-28T06:00:00Z",
-      "finished_at": "2025-01-28T06:00:00Z"
-    }
-  ]
-}</code></pre>
+    <pre><code>&#123;"executions": [&#123;"id": "exec_123", "status": "success", "status_code": 200, "duration_ms": 145&#125;]&#125;</code></pre>
   </div>
 
   <h2>Errors</h2>
@@ -169,10 +136,5 @@
   </table>
 
   <p>Error responses include a message:</p>
-  <pre><code>{
-  "error": {
-    "code": "invalid_cron",
-    "message": "Invalid cron expression: '* * * *' (expected 5 fields)"
-  }
-}</code></pre>
+  <pre><code>&#123;"error": &#123;"code": "invalid_cron", "message": "Invalid cron expression"&#125;&#125;</code></pre>
 </.docs_layout>

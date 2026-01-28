@@ -23,11 +23,7 @@
     <pre><code>curl -X POST https://api.prikke.whitenoise.no/jobs \
   -H "Authorization: Bearer pk_live_abc123.sk_live_xyz789" \
   -H "Content-Type: application/json" \
-  -d '{
-    "name": "Hourly sync",
-    "url": "https://myapp.com/api/sync",
-    "cron": "0 * * * *"
-  }'</code></pre>
+  -d '&#123;"name": "Hourly sync", "url": "https://myapp.com/api/sync", "cron": "0 * * * *"&#125;'</code></pre>
   </div>
 
   <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
@@ -35,12 +31,12 @@
     <h3 class="inline m-0">Create your endpoint</h3>
     <p class="mt-4">Prikke will call your URL with a POST request. Your endpoint just needs to return a 2xx status:</p>
     <pre><code>// Next.js API route example
-export async function POST(request) {
+export async function POST(request) &#123;
   // Do your work here
   await syncData();
 
-  return Response.json({ ok: true });
-}</code></pre>
+  return Response.json(&#123; ok: true &#125;);
+&#125;</code></pre>
   </div>
 
   <div class="bg-slate-100 border-l-4 border-emerald-500 p-4 rounded-r-lg my-6">
