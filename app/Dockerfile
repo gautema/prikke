@@ -1,6 +1,6 @@
-# Build stage - Elixir 1.19.5 with Erlang 27
+# Build stage - Elixir 1.19.5 with Erlang 28
 ARG ELIXIR_VERSION=1.19.5
-ARG OTP_VERSION=27.1.2
+ARG OTP_VERSION=28.3.1
 ARG ALPINE_VERSION=3.23.3
 
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-alpine-${ALPINE_VERSION}"
