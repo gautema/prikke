@@ -45,7 +45,7 @@ config :app, PrikkeWeb.Endpoint,
 # at the `config/runtime.exs`.
 config :app, Prikke.Mailer,
   adapter: Swoosh.Adapters.Local,
-  from_email: "prikke@whitenoise.no",
+  from_email: "gaute.magnussen@gmail.com",
   from_name: "Prikke"
 
 # Configure esbuild (the version is required)
