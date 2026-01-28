@@ -93,8 +93,18 @@ const server = Bun.serve({
 
     // Static files
     let filepath = join(staticDir, url.pathname);
+
+    // Handle root
     if (url.pathname === "/") {
       filepath = join(staticDir, "index.html");
+    }
+    // Try adding .html extension
+    else if (!url.pathname.includes(".") && existsSync(filepath + ".html")) {
+      filepath = filepath + ".html";
+    }
+    // Try index.html for directories
+    else if (!url.pathname.includes(".") && existsSync(join(filepath, "index.html"))) {
+      filepath = join(filepath, "index.html");
     }
 
     if (existsSync(filepath)) {
