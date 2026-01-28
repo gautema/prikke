@@ -2,7 +2,6 @@ defmodule PrikkeWeb.JobLive.Index do
   use PrikkeWeb, :live_view
 
   alias Prikke.Jobs
-  alias Prikke.Jobs.Job
 
   @impl true
   def mount(_params, session, socket) do
@@ -14,6 +13,7 @@ defmodule PrikkeWeb.JobLive.Index do
       {:ok,
        socket
        |> assign(:organization, org)
+       |> assign(:page_title, "Jobs")
        |> assign(:jobs, Jobs.list_jobs(org))}
     else
       {:ok,
@@ -21,31 +21,6 @@ defmodule PrikkeWeb.JobLive.Index do
        |> put_flash(:error, "Please select an organization first")
        |> redirect(to: ~p"/organizations")}
     end
-  end
-
-  @impl true
-  def handle_params(params, _url, socket) do
-    {:noreply, apply_action(socket, socket.assigns.live_action, params)}
-  end
-
-  defp apply_action(socket, :edit, %{"id" => id}) do
-    job = Jobs.get_job!(socket.assigns.organization, id)
-
-    socket
-    |> assign(:page_title, "Edit Job")
-    |> assign(:job, job)
-  end
-
-  defp apply_action(socket, :new, _params) do
-    socket
-    |> assign(:page_title, "New Job")
-    |> assign(:job, %Job{})
-  end
-
-  defp apply_action(socket, :index, _params) do
-    socket
-    |> assign(:page_title, "Jobs")
-    |> assign(:job, nil)
   end
 
   @impl true
@@ -107,7 +82,7 @@ defmodule PrikkeWeb.JobLive.Index do
         </div>
         <.link
           navigate={~p"/jobs/new"}
-          class="text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors"
+          class="font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors"
         >
           New Job
         </.link>
@@ -120,8 +95,8 @@ defmodule PrikkeWeb.JobLive.Index do
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h3 class="text-lg font-medium text-slate-900 mb-1">No jobs yet</h3>
-          <p class="text-slate-500 mb-4">Create your first scheduled job to get started.</p>
+          <h3 class="text-lg font-medium text-slate-900 mb-2">No jobs yet</h3>
+          <p class="text-slate-500 mb-6">Create your first scheduled job to get started.</p>
           <.link navigate={~p"/jobs/new"} class="text-emerald-600 font-medium hover:underline">
             Create a job →
           </.link>
@@ -147,7 +122,7 @@ defmodule PrikkeWeb.JobLive.Index do
                   <span class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded"><%= job.method %></span>
                   <span class="truncate"><%= job.url %></span>
                 </div>
-                <div class="text-xs text-slate-400 mt-1">
+                <div class="text-sm text-slate-400 mt-1">
                   <%= if job.schedule_type == "cron" do %>
                     <span class="font-mono"><%= job.cron_expression %></span>
                   <% else %>
@@ -155,7 +130,7 @@ defmodule PrikkeWeb.JobLive.Index do
                   <% end %>
                 </div>
               </div>
-              <div class="flex items-center gap-2 ml-4">
+              <div class="flex items-center gap-3 ml-4">
                 <button
                   phx-click="toggle"
                   phx-value-id={job.id}
@@ -192,18 +167,6 @@ defmodule PrikkeWeb.JobLive.Index do
         </div>
       <% end %>
     </div>
-
-    <.modal :if={@live_action in [:new, :edit]} id="job-modal" show on_cancel={JS.patch(~p"/jobs")}>
-      <.live_component
-        module={PrikkeWeb.JobLive.FormComponent}
-        id={@job.id || :new}
-        title={@page_title}
-        action={@live_action}
-        job={@job}
-        organization={@organization}
-        patch={~p"/jobs"}
-      />
-    </.modal>
     """
   end
 end

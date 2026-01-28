@@ -19,6 +19,9 @@ defmodule Prikke.Jobs.Job do
     field :retry_attempts, :integer, default: 3
     field :timeout_ms, :integer, default: 30000
 
+    # Virtual field for form editing
+    field :headers_json, :string, virtual: true
+
     belongs_to :organization, Prikke.Accounts.Organization
 
     timestamps(type: :utc_datetime)
@@ -35,6 +38,7 @@ defmodule Prikke.Jobs.Job do
       :url,
       :method,
       :headers,
+      :headers_json,
       :body,
       :schedule_type,
       :cron_expression,

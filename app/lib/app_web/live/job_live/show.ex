@@ -25,19 +25,6 @@ defmodule PrikkeWeb.JobLive.Show do
   end
 
   @impl true
-  def handle_params(params, _url, socket) do
-    {:noreply, apply_action(socket, socket.assigns.live_action, params)}
-  end
-
-  defp apply_action(socket, :edit, _params) do
-    assign(socket, :page_title, "Edit: #{socket.assigns.job.name}")
-  end
-
-  defp apply_action(socket, :show, _params) do
-    assign(socket, :page_title, socket.assigns.job.name)
-  end
-
-  @impl true
   def handle_info({:updated, job}, socket) do
     if job.id == socket.assigns.job.id do
       {:noreply, assign(socket, :job, job)}
@@ -213,18 +200,6 @@ defmodule PrikkeWeb.JobLive.Show do
         </div>
       </div>
     </div>
-
-    <.modal :if={@live_action == :edit} id="job-modal" show on_cancel={JS.patch(~p"/jobs/#{@job.id}")}>
-      <.live_component
-        module={PrikkeWeb.JobLive.FormComponent}
-        id={@job.id}
-        title="Edit Job"
-        action={:edit}
-        job={@job}
-        organization={@organization}
-        patch={~p"/jobs/#{@job.id}"}
-      />
-    </.modal>
     """
   end
 

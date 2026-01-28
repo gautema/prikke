@@ -79,9 +79,9 @@ defmodule PrikkeWeb.Router do
       live "/dashboard", DashboardLive
 
       live "/jobs", JobLive.Index, :index
-      live "/jobs/new", JobLive.Index, :new
+      live "/jobs/new", JobLive.New, :new
       live "/jobs/:id", JobLive.Show, :show
-      live "/jobs/:id/edit", JobLive.Show, :edit
+      live "/jobs/:id/edit", JobLive.Edit, :edit
     end
 
     get "/users/settings", UserSettingsController, :edit

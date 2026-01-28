@@ -205,8 +205,8 @@ defmodule PrikkeWeb.CoreComponents do
       end)
 
     ~H"""
-    <div class="fieldset mb-2">
-      <label>
+    <div class="mb-4">
+      <label class="flex items-center gap-3 cursor-pointer">
         <input
           type="hidden"
           name={@name}
@@ -214,17 +214,16 @@ defmodule PrikkeWeb.CoreComponents do
           disabled={@rest[:disabled]}
           form={@rest[:form]}
         />
-        <span class="label">
-          <input
-            type="checkbox"
-            id={@id}
-            name={@name}
-            value="true"
-            checked={@checked}
-            class={@class || "checkbox checkbox-sm"}
-            {@rest}
-          />{@label}
-        </span>
+        <input
+          type="checkbox"
+          id={@id}
+          name={@name}
+          value="true"
+          checked={@checked}
+          class={@class || "w-5 h-5 rounded border-slate-300 text-emerald-500 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-4"}
+          {@rest}
+        />
+        <span :if={@label} class="text-base text-slate-700">{@label}</span>
       </label>
       <.error :for={msg <- @errors}>{msg}</.error>
     </div>
@@ -233,13 +232,17 @@ defmodule PrikkeWeb.CoreComponents do
 
   def input(%{type: "select"} = assigns) do
     ~H"""
-    <div class="fieldset mb-2">
+    <div class="mb-4">
       <label>
-        <span :if={@label} class="label mb-1">{@label}</span>
+        <span :if={@label} class="block text-base font-medium text-slate-700 mb-2">{@label}</span>
         <select
           id={@id}
           name={@name}
-          class={[@class || "w-full select", @errors != [] && (@error_class || "select-error")]}
+          class={[
+            @class || "w-full px-4 py-3 text-base border border-slate-300 rounded-md bg-white text-slate-900",
+            "focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-4",
+            @errors != [] && "border-red-500"
+          ]}
           multiple={@multiple}
           {@rest}
         >
@@ -254,15 +257,16 @@ defmodule PrikkeWeb.CoreComponents do
 
   def input(%{type: "textarea"} = assigns) do
     ~H"""
-    <div class="fieldset mb-2">
+    <div class="mb-4">
       <label>
-        <span :if={@label} class="label mb-1">{@label}</span>
+        <span :if={@label} class="block text-base font-medium text-slate-700 mb-2">{@label}</span>
         <textarea
           id={@id}
           name={@name}
           class={[
-            @class || "w-full textarea",
-            @errors != [] && (@error_class || "textarea-error")
+            @class || "w-full px-4 py-3 text-base border border-slate-300 rounded-md text-slate-900 placeholder-slate-400",
+            "focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-4",
+            @errors != [] && "border-red-500"
           ]}
           {@rest}
         >{Phoenix.HTML.Form.normalize_value("textarea", @value)}</textarea>
@@ -275,17 +279,18 @@ defmodule PrikkeWeb.CoreComponents do
   # All other inputs text, datetime-local, url, password, etc. are handled here...
   def input(assigns) do
     ~H"""
-    <div class="fieldset mb-2">
+    <div class="mb-4">
       <label>
-        <span :if={@label} class="label mb-1">{@label}</span>
+        <span :if={@label} class="block text-base font-medium text-slate-700 mb-2">{@label}</span>
         <input
           type={@type}
           name={@name}
           id={@id}
           value={Phoenix.HTML.Form.normalize_value(@type, @value)}
           class={[
-            @class || "w-full input",
-            @errors != [] && (@error_class || "input-error")
+            @class || "w-full px-4 py-3 text-base border border-slate-300 rounded-md text-slate-900 placeholder-slate-400",
+            "focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-4",
+            @errors != [] && "border-red-500"
           ]}
           {@rest}
         />
