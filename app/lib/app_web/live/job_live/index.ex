@@ -91,22 +91,22 @@ defmodule PrikkeWeb.JobLive.Index do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-4xl mx-auto py-8 px-4">
-      <div class="flex justify-between items-center mb-8">
+    <div class="max-w-4xl mx-auto py-6 sm:py-8 px-4">
+      <div class="flex justify-between items-center mb-6 sm:mb-8">
         <div>
-          <h1 class="text-2xl font-bold text-slate-900">Jobs</h1>
-          <p class="text-slate-500 mt-1"><%= @organization.name %></p>
+          <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Jobs</h1>
+          <p class="text-slate-500 mt-1 text-sm sm:text-base"><%= @organization.name %></p>
         </div>
         <.link
           navigate={~p"/jobs/new"}
-          class="font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors"
+          class="font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-3 sm:px-4 py-2 rounded-md transition-colors text-sm sm:text-base"
         >
           New Job
         </.link>
       </div>
 
       <%= if @jobs == [] do %>
-        <div class="bg-white border border-slate-200 rounded-lg p-12 text-center">
+        <div class="bg-white border border-slate-200 rounded-lg p-8 sm:p-12 text-center">
           <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <.icon name="hero-clock" class="w-6 h-6 text-slate-400" />
           </div>
@@ -119,55 +119,59 @@ defmodule PrikkeWeb.JobLive.Index do
       <% else %>
         <div class="bg-white border border-slate-200 rounded-lg divide-y divide-slate-200">
           <%= for job <- @jobs do %>
-            <div class="px-6 py-4 flex items-center justify-between">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-3">
-                  <.link navigate={~p"/jobs/#{job.id}"} class="font-medium text-slate-900 hover:text-emerald-600 truncate">
-                    <%= job.name %>
-                  </.link>
-                  <.job_status_badge job={job} />
+            <div class="px-4 sm:px-6 py-4">
+              <div class="flex items-start sm:items-center justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                    <.link navigate={~p"/jobs/#{job.id}"} class="font-medium text-slate-900 hover:text-emerald-600 break-all sm:truncate">
+                      <%= job.name %>
+                    </.link>
+                    <.job_status_badge job={job} />
+                  </div>
+                  <div class="text-sm text-slate-500 mt-1 flex items-center gap-2">
+                    <span class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded shrink-0"><%= job.method %></span>
+                    <span class="truncate text-xs sm:text-sm"><%= job.url %></span>
+                  </div>
+                  <div class="text-xs sm:text-sm text-slate-400 mt-1">
+                    <%= if job.schedule_type == "cron" do %>
+                      <span class="font-mono"><%= job.cron_expression %></span>
+                    <% else %>
+                      <span class="hidden sm:inline">One-time: </span><%= Calendar.strftime(job.scheduled_at, "%b %d, %Y %H:%M") %>
+                    <% end %>
+                  </div>
                 </div>
-                <div class="text-sm text-slate-500 mt-1 flex items-center gap-2">
-                  <span class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded"><%= job.method %></span>
-                  <span class="truncate"><%= job.url %></span>
-                </div>
-                <div class="text-sm text-slate-400 mt-1">
-                  <%= if job.schedule_type == "cron" do %>
-                    <span class="font-mono"><%= job.cron_expression %></span>
-                  <% else %>
-                    One-time: <%= Calendar.strftime(job.scheduled_at, "%b %d, %Y at %H:%M UTC") %>
+                <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                  <%= unless job_completed?(job) do %>
+                    <button
+                      type="button"
+                      phx-click="toggle"
+                      phx-value-id={job.id}
+                      class={[
+                        "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2",
+                        job.enabled && "bg-emerald-500",
+                        !job.enabled && "bg-slate-200"
+                      ]}
+                    >
+                      <span class={[
+                        "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                        job.enabled && "translate-x-5",
+                        !job.enabled && "translate-x-0"
+                      ]}></span>
+                    </button>
                   <% end %>
-                </div>
-              </div>
-              <div class="flex items-center gap-3 ml-4">
-                <%= unless job_completed?(job) do %>
+                  <.link navigate={~p"/jobs/#{job.id}/edit"} class="text-slate-400 hover:text-slate-600 p-1">
+                    <.icon name="hero-pencil-square" class="w-5 h-5" />
+                  </.link>
                   <button
-                    phx-click="toggle"
+                    type="button"
+                    phx-click="delete"
                     phx-value-id={job.id}
-                    class={[
-                      "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2",
-                      job.enabled && "bg-emerald-500",
-                      !job.enabled && "bg-slate-200"
-                    ]}
+                    data-confirm="Are you sure you want to delete this job?"
+                    class="text-slate-400 hover:text-red-600 p-1"
                   >
-                    <span class={[
-                      "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                      job.enabled && "translate-x-5",
-                      !job.enabled && "translate-x-0"
-                    ]}></span>
+                    <.icon name="hero-trash" class="w-5 h-5" />
                   </button>
-                <% end %>
-                <.link navigate={~p"/jobs/#{job.id}/edit"} class="text-slate-400 hover:text-slate-600 p-1">
-                  <.icon name="hero-pencil-square" class="w-5 h-5" />
-                </.link>
-                <button
-                  phx-click="delete"
-                  phx-value-id={job.id}
-                  data-confirm="Are you sure you want to delete this job?"
-                  class="text-slate-400 hover:text-red-600 p-1"
-                >
-                  <.icon name="hero-trash" class="w-5 h-5" />
-                </button>
+                </div>
               </div>
             </div>
           <% end %>

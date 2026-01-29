@@ -89,8 +89,8 @@ defmodule PrikkeWeb.JobLive.Show do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-4xl mx-auto py-8 px-4">
-      <div class="mb-6">
+    <div class="max-w-4xl mx-auto py-6 sm:py-8 px-4">
+      <div class="mb-4 sm:mb-6">
         <.link navigate={~p"/jobs"} class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1">
           <.icon name="hero-chevron-left" class="w-4 h-4" />
           Back to Jobs
@@ -98,50 +98,54 @@ defmodule PrikkeWeb.JobLive.Show do
       </div>
 
       <div class="bg-white border border-slate-200 rounded-lg">
-        <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-start">
-          <div>
-            <div class="flex items-center gap-3">
-              <h1 class="text-xl font-bold text-slate-900"><%= @job.name %></h1>
-              <.job_status_badge job={@job} />
+        <div class="px-4 sm:px-6 py-4 border-b border-slate-200">
+          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+            <div>
+              <div class="flex items-center gap-3 flex-wrap">
+                <h1 class="text-lg sm:text-xl font-bold text-slate-900"><%= @job.name %></h1>
+                <.job_status_badge job={@job} />
+              </div>
+              <p class="text-sm text-slate-500 mt-1">Created <%= Calendar.strftime(@job.inserted_at, "%b %d, %Y") %></p>
             </div>
-            <p class="text-sm text-slate-500 mt-1">Created <%= Calendar.strftime(@job.inserted_at, "%b %d, %Y") %></p>
-          </div>
-          <div class="flex items-center gap-2">
-            <%= unless job_completed?(@job) do %>
-              <button
-                phx-click="toggle"
-                class={[
-                  "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
-                  @job.enabled && "text-slate-600 bg-slate-100 hover:bg-slate-200",
-                  !@job.enabled && "text-emerald-600 bg-emerald-100 hover:bg-emerald-200"
-                ]}
+            <div class="flex items-center gap-2 flex-wrap">
+              <%= unless job_completed?(@job) do %>
+                <button
+                  type="button"
+                  phx-click="toggle"
+                  class={[
+                    "px-3 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer",
+                    @job.enabled && "text-slate-600 bg-slate-100 hover:bg-slate-200",
+                    !@job.enabled && "text-emerald-600 bg-emerald-100 hover:bg-emerald-200"
+                  ]}
+                >
+                  <%= if @job.enabled, do: "Pause", else: "Enable" %>
+                </button>
+              <% end %>
+              <.link
+                navigate={~p"/jobs/#{@job.id}/edit"}
+                class="px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
               >
-                <%= if @job.enabled, do: "Pause", else: "Enable" %>
+                Edit
+              </.link>
+              <button
+                type="button"
+                phx-click="delete"
+                data-confirm="Are you sure you want to delete this job? This cannot be undone."
+                class="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors cursor-pointer"
+              >
+                Delete
               </button>
-            <% end %>
-            <.link
-              navigate={~p"/jobs/#{@job.id}/edit"}
-              class="px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
-            >
-              Edit
-            </.link>
-            <button
-              phx-click="delete"
-              data-confirm="Are you sure you want to delete this job? This cannot be undone."
-              class="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
-            >
-              Delete
-            </button>
+            </div>
           </div>
         </div>
 
-        <div class="p-6 space-y-6">
+        <div class="p-4 sm:p-6 space-y-6">
           <!-- Webhook Details -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Webhook</h3>
-            <div class="bg-slate-50 rounded-lg p-4 space-y-3">
-              <div class="flex items-center gap-2">
-                <span class="font-mono text-sm bg-slate-200 px-2 py-1 rounded font-medium"><%= @job.method %></span>
+            <div class="bg-slate-50 rounded-lg p-3 sm:p-4 space-y-3">
+              <div class="flex items-start sm:items-center gap-2 flex-col sm:flex-row">
+                <span class="font-mono text-sm bg-slate-200 px-2 py-1 rounded font-medium shrink-0"><%= @job.method %></span>
                 <code class="text-sm text-slate-700 break-all"><%= @job.url %></code>
               </div>
               <%= if @job.headers && @job.headers != %{} do %>
@@ -162,10 +166,10 @@ defmodule PrikkeWeb.JobLive.Show do
           <!-- Schedule -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Schedule</h3>
-            <div class="bg-slate-50 rounded-lg p-4">
+            <div class="bg-slate-50 rounded-lg p-3 sm:p-4">
               <%= if @job.schedule_type == "cron" do %>
-                <div class="flex items-center gap-3">
-                  <span class="font-mono text-lg bg-slate-200 px-3 py-1 rounded"><%= @job.cron_expression %></span>
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                  <span class="font-mono text-base sm:text-lg bg-slate-200 px-3 py-1 rounded w-fit"><%= @job.cron_expression %></span>
                   <span class="text-slate-600"><%= describe_cron(@job.cron_expression) %></span>
                 </div>
                 <p class="text-sm text-slate-500 mt-2">Timezone: <%= @job.timezone %></p>
@@ -183,7 +187,7 @@ defmodule PrikkeWeb.JobLive.Show do
           <!-- Settings -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Settings</h3>
-            <div class="bg-slate-50 rounded-lg p-4 grid grid-cols-2 gap-4">
+            <div class="bg-slate-50 rounded-lg p-3 sm:p-4 grid grid-cols-2 gap-4">
               <div>
                 <span class="text-xs text-slate-500 uppercase">Timeout</span>
                 <p class="text-slate-900"><%= format_timeout(@job.timeout_ms) %></p>
@@ -199,7 +203,7 @@ defmodule PrikkeWeb.JobLive.Show do
           <%= if @stats.total > 0 do %>
             <div>
               <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Last 24 Hours</h3>
-              <div class="bg-slate-50 rounded-lg p-4 grid grid-cols-4 gap-4">
+              <div class="bg-slate-50 rounded-lg p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div>
                   <span class="text-xs text-slate-500 uppercase">Total</span>
                   <p class="text-xl font-bold text-slate-900"><%= @stats.total %></p>
@@ -224,11 +228,32 @@ defmodule PrikkeWeb.JobLive.Show do
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Recent Executions</h3>
             <%= if @executions == [] do %>
-              <div class="bg-slate-50 rounded-lg p-8 text-center text-slate-500">
+              <div class="bg-slate-50 rounded-lg p-6 sm:p-8 text-center text-slate-500">
                 No executions yet. This job will run according to its schedule.
               </div>
             <% else %>
-              <div class="bg-slate-50 rounded-lg overflow-hidden">
+              <!-- Mobile: Card layout -->
+              <div class="sm:hidden space-y-3">
+                <%= for exec <- @executions do %>
+                  <div class="bg-slate-50 rounded-lg p-3">
+                    <div class="flex items-center justify-between mb-2">
+                      <.status_badge status={exec.status} />
+                      <span class="text-xs text-slate-500"><%= format_execution_time(exec.scheduled_for) %></span>
+                    </div>
+                    <div class="flex items-center gap-4 text-sm text-slate-600">
+                      <span><%= format_duration(exec.duration_ms) %></span>
+                      <%= if exec.status_code do %>
+                        <span class="font-mono"><%= exec.status_code %></span>
+                      <% end %>
+                    </div>
+                    <%= if exec.error_message do %>
+                      <p class="text-red-600 text-xs mt-2"><%= truncate(exec.error_message, 80) %></p>
+                    <% end %>
+                  </div>
+                <% end %>
+              </div>
+              <!-- Desktop: Table layout -->
+              <div class="hidden sm:block bg-slate-50 rounded-lg overflow-hidden">
                 <table class="w-full text-sm">
                   <thead>
                     <tr class="border-b border-slate-200 text-left">
