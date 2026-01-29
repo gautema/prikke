@@ -1,7 +1,9 @@
 import Config
 
 # Only in tests, remove the complexity from the password hashing algorithm
-config :bcrypt_elixir, :log_rounds, 1
+config :argon2_elixir,
+  t_cost: 1,
+  m_cost: 8
 
 # CI mode - skip database for Docker builds
 config :app, :ci_mode, System.get_env("CI") == "true"
