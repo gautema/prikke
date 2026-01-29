@@ -53,16 +53,21 @@ defmodule PrikkeWeb.JobLive.Edit do
   end
 
   def handle_event("save", %{"job" => job_params}, socket) do
+    require Logger
+    Logger.info("[JobLive.Edit] Save event received with params: #{inspect(job_params)}")
+
     job_params = parse_headers(job_params)
 
     case Jobs.update_job(socket.assigns.organization, socket.assigns.job, job_params) do
       {:ok, job} ->
+        Logger.info("[JobLive.Edit] Job updated successfully, redirecting to #{~p"/jobs/#{job.id}"}")
         {:noreply,
          socket
          |> put_flash(:info, "Job updated successfully")
          |> redirect(to: ~p"/jobs/#{job.id}")}
 
       {:error, %Ecto.Changeset{} = changeset} ->
+        Logger.warning("[JobLive.Edit] Job update failed: #{inspect(changeset.errors)}")
         {:noreply, assign_form(socket, changeset)}
     end
   end

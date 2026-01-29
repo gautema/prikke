@@ -59,8 +59,19 @@ defmodule PrikkeWeb.JobLive.Show do
 
   @impl true
   def handle_event("toggle", _, socket) do
-    {:ok, job} = Jobs.toggle_job(socket.assigns.organization, socket.assigns.job)
-    {:noreply, assign(socket, :job, job)}
+    require Logger
+    job = socket.assigns.job
+    Logger.info("[JobLive.Show] Toggle event for job #{job.id}, currently enabled=#{job.enabled}")
+
+    case Jobs.toggle_job(socket.assigns.organization, job) do
+      {:ok, updated_job} ->
+        Logger.info("[JobLive.Show] Toggle succeeded, now enabled=#{updated_job.enabled}")
+        {:noreply, assign(socket, :job, updated_job)}
+
+      {:error, changeset} ->
+        Logger.warning("[JobLive.Show] Toggle failed: #{inspect(changeset.errors)}")
+        {:noreply, put_flash(socket, :error, "Failed to toggle job")}
+    end
   end
 
   def handle_event("delete", _, socket) do
