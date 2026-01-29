@@ -225,6 +225,7 @@ defmodule Prikke.Notifications do
   end
 
   defp format_datetime(nil), do: "N/A"
+
   defp format_datetime(datetime) do
     Calendar.strftime(datetime, "%Y-%m-%d %H:%M:%S UTC")
   end

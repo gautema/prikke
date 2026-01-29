@@ -55,7 +55,10 @@ defmodule Prikke.Jobs.Job do
     |> validate_inclusion(:schedule_type, @schedule_types)
     |> validate_url(:url)
     |> validate_number(:retry_attempts, greater_than_or_equal_to: 0, less_than_or_equal_to: 10)
-    |> validate_number(:timeout_ms, greater_than_or_equal_to: 1000, less_than_or_equal_to: 300_000)
+    |> validate_number(:timeout_ms,
+      greater_than_or_equal_to: 1000,
+      less_than_or_equal_to: 300_000
+    )
     |> validate_schedule()
     |> compute_interval_minutes()
     |> compute_next_run_at()
@@ -150,23 +153,34 @@ defmodule Prikke.Jobs.Job do
 
     cond do
       # Every N minutes
-      minute_interval < 60 -> minute_interval
+      minute_interval < 60 ->
+        minute_interval
+
       # Hourly (minute is fixed, hour is *)
-      cron.hour == [:*] -> 60
+      cron.hour == [:*] ->
+        60
+
       # Step hours like */2
       match?([{:/, :*, step}] when is_integer(step), cron.hour) ->
         [{:/, :*, step}] = cron.hour
         step * 60
+
       # Multiple times per day
-      is_list(cron.hour) and length(cron.hour) > 1 -> div(24 * 60, length(cron.hour))
+      is_list(cron.hour) and length(cron.hour) > 1 ->
+        div(24 * 60, length(cron.hour))
+
       # Daily or less frequent
-      true -> 24 * 60
+      true ->
+        24 * 60
     end
   end
 
   defp estimate_minute_interval([:*]), do: 1
   defp estimate_minute_interval([{:/, :*, step}]) when is_integer(step), do: step
-  defp estimate_minute_interval(list) when is_list(list) and length(list) > 1, do: div(60, length(list))
+
+  defp estimate_minute_interval(list) when is_list(list) and length(list) > 1,
+    do: div(60, length(list))
+
   defp estimate_minute_interval(_), do: 60
 
   defp compute_next_run_at(changeset) do
@@ -226,19 +240,26 @@ defmodule Prikke.Jobs.Job do
           {:ok, cron} ->
             # Get next run after the current next_run_at (or now if nil)
             reference = job.next_run_at || DateTime.utc_now()
+
             case Crontab.Scheduler.get_next_run_date(cron, DateTime.to_naive(reference)) do
               {:ok, naive_next} ->
                 next_run = DateTime.from_naive!(naive_next, "Etc/UTC")
                 # If next_run equals current, add 1 minute and recalculate
-                next_run = if DateTime.compare(next_run, reference) != :gt do
-                  reference_plus_one = DateTime.add(reference, 60, :second)
-                  case Crontab.Scheduler.get_next_run_date(cron, DateTime.to_naive(reference_plus_one)) do
-                    {:ok, naive} -> DateTime.from_naive!(naive, "Etc/UTC")
-                    _ -> next_run
+                next_run =
+                  if DateTime.compare(next_run, reference) != :gt do
+                    reference_plus_one = DateTime.add(reference, 60, :second)
+
+                    case Crontab.Scheduler.get_next_run_date(
+                           cron,
+                           DateTime.to_naive(reference_plus_one)
+                         ) do
+                      {:ok, naive} -> DateTime.from_naive!(naive, "Etc/UTC")
+                      _ -> next_run
+                    end
+                  else
+                    next_run
                   end
-                else
-                  next_run
-                end
+
                 change(job, next_run_at: next_run)
 
               {:error, _} ->

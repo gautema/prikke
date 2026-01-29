@@ -16,7 +16,8 @@ defmodule Prikke.StatusMonitor do
 
   alias Prikke.Status
 
-  @check_interval 60_000  # 1 minute
+  # 1 minute
+  @check_interval 60_000
 
   ## Client API
 
@@ -41,7 +42,9 @@ defmodule Prikke.StatusMonitor do
       # Detect any downtime that occurred while the app wasn't running
       case Status.detect_and_record_downtime() do
         {:recorded, incident} ->
-          Logger.info("[StatusMonitor] Recorded downtime incident from #{incident.started_at} to #{incident.resolved_at}")
+          Logger.info(
+            "[StatusMonitor] Recorded downtime incident from #{incident.started_at} to #{incident.resolved_at}"
+          )
 
         :ok ->
           :ok
@@ -131,7 +134,9 @@ defmodule Prikke.StatusMonitor do
         :ok
 
       {:error, reason} ->
-        Logger.error("[StatusMonitor] Failed to update check for #{component}: #{inspect(reason)}")
+        Logger.error(
+          "[StatusMonitor] Failed to update check for #{component}: #{inspect(reason)}"
+        )
     end
   end
 
@@ -140,6 +145,7 @@ defmodule Prikke.StatusMonitor do
       "up" ->
         # Component recovered - resolve any open incident
         Logger.info("[StatusMonitor] #{component} recovered: #{message}")
+
         case Status.get_open_incident(component) do
           nil -> :ok
           incident -> Status.resolve_incident(incident)

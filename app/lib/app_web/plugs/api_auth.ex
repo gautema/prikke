@@ -21,7 +21,9 @@ defmodule PrikkeWeb.Plugs.ApiAuth do
       {:error, _reason} ->
         conn
         |> put_status(:unauthorized)
-        |> Phoenix.Controller.json(%{error: %{code: "unauthorized", message: "Invalid or missing API key"}})
+        |> Phoenix.Controller.json(%{
+          error: %{code: "unauthorized", message: "Invalid or missing API key"}
+        })
         |> halt()
     end
   end

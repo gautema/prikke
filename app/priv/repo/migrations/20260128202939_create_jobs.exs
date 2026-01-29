@@ -4,7 +4,10 @@ defmodule Prikke.Repo.Migrations.CreateJobs do
   def change do
     create table(:jobs, primary_key: false) do
       add :id, :binary_id, primary_key: true
-      add :organization_id, references(:organizations, on_delete: :delete_all, type: :binary_id), null: false
+
+      add :organization_id, references(:organizations, on_delete: :delete_all, type: :binary_id),
+        null: false
+
       add :name, :string, null: false
       add :url, :string, null: false
       add :method, :string, default: "GET", null: false
@@ -28,10 +31,10 @@ defmodule Prikke.Repo.Migrations.CreateJobs do
 
     # Constraint: cron jobs need cron_expression, once jobs need scheduled_at
     create constraint(:jobs, :valid_schedule,
-      check: """
-      (schedule_type = 'cron' AND cron_expression IS NOT NULL) OR
-      (schedule_type = 'once' AND scheduled_at IS NOT NULL)
-      """
-    )
+             check: """
+             (schedule_type = 'cron' AND cron_expression IS NOT NULL) OR
+             (schedule_type = 'once' AND scheduled_at IS NOT NULL)
+             """
+           )
   end
 end

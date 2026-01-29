@@ -8,9 +8,11 @@ defmodule Prikke.Repo.Migrations.CreateStatusTables do
       add :component, :string, null: false
       add :status, :string, null: false, default: "up"
       add :message, :string
-      add :started_at, :utc_datetime, null: false  # When monitoring started
+      # When monitoring started
+      add :started_at, :utc_datetime, null: false
       add :last_checked_at, :utc_datetime, null: false
-      add :last_status_change_at, :utc_datetime  # When status last changed
+      # When status last changed
+      add :last_status_change_at, :utc_datetime
 
       timestamps(type: :utc_datetime)
     end

@@ -37,6 +37,7 @@ defmodule PrikkeWeb.JobLive.Show do
       executions = Executions.list_job_executions(job, limit: 20)
       stats = Executions.get_job_stats(job)
       latest_info = get_latest_info(executions)
+
       {:noreply,
        socket
        |> assign(:job, job)
@@ -132,9 +133,11 @@ defmodule PrikkeWeb.JobLive.Show do
     ~H"""
     <div class="max-w-4xl mx-auto py-6 sm:py-8 px-4">
       <div class="mb-4 sm:mb-6">
-        <.link navigate={~p"/dashboard"} class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1">
-          <.icon name="hero-chevron-left" class="w-4 h-4" />
-          Back to Dashboard
+        <.link
+          navigate={~p"/dashboard"}
+          class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
+        >
+          <.icon name="hero-chevron-left" class="w-4 h-4" /> Back to Dashboard
         </.link>
       </div>
 
@@ -143,10 +146,12 @@ defmodule PrikkeWeb.JobLive.Show do
           <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
             <div>
               <div class="flex items-center gap-3 flex-wrap">
-                <h1 class="text-lg sm:text-xl font-bold text-slate-900"><%= @job.name %></h1>
+                <h1 class="text-lg sm:text-xl font-bold text-slate-900">{@job.name}</h1>
                 <.job_status_badge job={@job} latest_info={@latest_info} />
               </div>
-              <p class="text-sm text-slate-500 mt-1">Created <%= Calendar.strftime(@job.inserted_at, "%d %b %Y") %></p>
+              <p class="text-sm text-slate-500 mt-1">
+                Created {Calendar.strftime(@job.inserted_at, "%d %b %Y")}
+              </p>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
               <button
@@ -154,8 +159,7 @@ defmodule PrikkeWeb.JobLive.Show do
                 phx-click="run_now"
                 class="px-3 py-1.5 text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 rounded-md transition-colors cursor-pointer flex items-center gap-1.5"
               >
-                <.icon name="hero-play" class="w-4 h-4" />
-                Run Now
+                <.icon name="hero-play" class="w-4 h-4" /> Run Now
               </button>
               <%= if @job.schedule_type == "cron" do %>
                 <button
@@ -167,7 +171,7 @@ defmodule PrikkeWeb.JobLive.Show do
                     !@job.enabled && "text-emerald-600 bg-emerald-100 hover:bg-emerald-200"
                   ]}
                 >
-                  <%= if @job.enabled, do: "Pause", else: "Enable" %>
+                  {if @job.enabled, do: "Pause", else: "Enable"}
                 </button>
               <% end %>
               <.link
@@ -194,8 +198,10 @@ defmodule PrikkeWeb.JobLive.Show do
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Webhook</h3>
             <div class="bg-slate-50 rounded-lg p-3 sm:p-4 space-y-3">
               <div class="flex items-start sm:items-center gap-2 flex-col sm:flex-row">
-                <span class="font-mono text-sm bg-slate-200 px-2 py-1 rounded font-medium shrink-0"><%= @job.method %></span>
-                <code class="text-sm text-slate-700 break-all"><%= @job.url %></code>
+                <span class="font-mono text-sm bg-slate-200 px-2 py-1 rounded font-medium shrink-0">
+                  {@job.method}
+                </span>
+                <code class="text-sm text-slate-700 break-all">{@job.url}</code>
               </div>
               <%= if @job.headers && @job.headers != %{} do %>
                 <div>
@@ -211,71 +217,79 @@ defmodule PrikkeWeb.JobLive.Show do
               <% end %>
             </div>
           </div>
-
-          <!-- Schedule -->
+          
+    <!-- Schedule -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Schedule</h3>
             <div class="bg-slate-50 rounded-lg p-3 sm:p-4">
               <%= if @job.schedule_type == "cron" do %>
                 <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                  <span class="font-mono text-base sm:text-lg bg-slate-200 px-3 py-1 rounded w-fit"><%= @job.cron_expression %></span>
-                  <span class="text-slate-600"><%= describe_cron(@job.cron_expression) %></span>
+                  <span class="font-mono text-base sm:text-lg bg-slate-200 px-3 py-1 rounded w-fit">
+                    {@job.cron_expression}
+                  </span>
+                  <span class="text-slate-600">{describe_cron(@job.cron_expression)}</span>
                 </div>
-                <p class="text-sm text-slate-500 mt-2">Timezone: <%= @job.timezone %></p>
+                <p class="text-sm text-slate-500 mt-2">Timezone: {@job.timezone}</p>
               <% else %>
                 <div>
                   <span class="text-slate-900 font-medium">One-time execution</span>
                   <p class="text-slate-600 mt-1">
-                    Scheduled for <%= Calendar.strftime(@job.scheduled_at, "%d %B %Y at %H:%M") %> UTC
+                    Scheduled for {Calendar.strftime(@job.scheduled_at, "%d %B %Y at %H:%M")} UTC
                   </p>
                 </div>
               <% end %>
             </div>
           </div>
-
-          <!-- Settings -->
+          
+    <!-- Settings -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Settings</h3>
             <div class="bg-slate-50 rounded-lg p-3 sm:p-4 grid grid-cols-2 gap-4">
               <div>
                 <span class="text-xs text-slate-500 uppercase">Timeout</span>
-                <p class="text-slate-900"><%= format_timeout(@job.timeout_ms) %></p>
+                <p class="text-slate-900">{format_timeout(@job.timeout_ms)}</p>
               </div>
               <div>
                 <span class="text-xs text-slate-500 uppercase">Retry Attempts</span>
-                <p class="text-slate-900"><%= @job.retry_attempts %></p>
+                <p class="text-slate-900">{@job.retry_attempts}</p>
               </div>
             </div>
           </div>
-
-          <!-- Stats (24h) -->
+          
+    <!-- Stats (24h) -->
           <%= if @stats.total > 0 do %>
             <div>
-              <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Last 24 Hours</h3>
+              <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">
+                Last 24 Hours
+              </h3>
               <div class="bg-slate-50 rounded-lg p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div>
                   <span class="text-xs text-slate-500 uppercase">Total</span>
-                  <p class="text-xl font-bold text-slate-900"><%= @stats.total %></p>
+                  <p class="text-xl font-bold text-slate-900">{@stats.total}</p>
                 </div>
                 <div>
                   <span class="text-xs text-slate-500 uppercase">Success</span>
-                  <p class="text-xl font-bold text-emerald-600"><%= @stats.success %></p>
+                  <p class="text-xl font-bold text-emerald-600">{@stats.success}</p>
                 </div>
                 <div>
                   <span class="text-xs text-slate-500 uppercase">Failed</span>
-                  <p class="text-xl font-bold text-red-600"><%= @stats.failed + @stats.timeout %></p>
+                  <p class="text-xl font-bold text-red-600">{@stats.failed + @stats.timeout}</p>
                 </div>
                 <div>
                   <span class="text-xs text-slate-500 uppercase">Avg Duration</span>
-                  <p class="text-xl font-bold text-slate-900"><%= format_avg_duration(@stats.avg_duration_ms) %></p>
+                  <p class="text-xl font-bold text-slate-900">
+                    {format_avg_duration(@stats.avg_duration_ms)}
+                  </p>
                 </div>
               </div>
             </div>
           <% end %>
-
-          <!-- Recent Executions -->
+          
+    <!-- Recent Executions -->
           <div>
-            <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Recent Executions</h3>
+            <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">
+              Recent Executions
+            </h3>
             <%= if @executions == [] do %>
               <div class="bg-slate-50 rounded-lg p-6 sm:p-8 text-center text-slate-500">
                 No executions yet. This job will run according to its schedule.
@@ -283,25 +297,34 @@ defmodule PrikkeWeb.JobLive.Show do
             <% else %>
               <div class="bg-slate-50 rounded-lg overflow-hidden divide-y divide-slate-200">
                 <%= for exec <- @executions do %>
-                  <.link navigate={~p"/jobs/#{@job.id}/executions/#{exec.id}"} class="block px-4 py-3 hover:bg-slate-100 transition-colors">
+                  <.link
+                    navigate={~p"/jobs/#{@job.id}/executions/#{exec.id}"}
+                    class="block px-4 py-3 hover:bg-slate-100 transition-colors"
+                  >
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-3">
                         <.status_badge status={exec.status} />
-                        <span class="text-sm text-slate-600"><%= format_execution_time(exec.scheduled_for) %></span>
+                        <span class="text-sm text-slate-600">
+                          {format_execution_time(exec.scheduled_for)}
+                        </span>
                       </div>
                       <div class="flex items-center gap-4 text-sm text-slate-500">
-                        <span><%= format_duration(exec.duration_ms) %></span>
+                        <span>{format_duration(exec.duration_ms)}</span>
                         <%= if exec.status_code do %>
                           <span class={[
                             "font-mono",
                             status_code_color(exec.status_code)
-                          ]}><%= exec.status_code %></span>
+                          ]}>
+                            {exec.status_code}
+                          </span>
                         <% end %>
                         <.icon name="hero-chevron-right" class="w-4 h-4 text-slate-400" />
                       </div>
                     </div>
                     <%= if exec.error_message do %>
-                      <p class="text-red-600 text-xs mt-1 pl-0 sm:pl-16"><%= truncate(exec.error_message, 60) %></p>
+                      <p class="text-red-600 text-xs mt-1 pl-0 sm:pl-16">
+                        {truncate(exec.error_message, 60)}
+                      </p>
                     <% end %>
                   </.link>
                 <% end %>
@@ -350,7 +373,8 @@ defmodule PrikkeWeb.JobLive.Show do
   defp get_attempt(%{attempt: attempt}), do: attempt
 
   defp job_completed?(job, latest_info) do
-    job.schedule_type == "once" and is_nil(job.next_run_at) and get_status(latest_info) == "success"
+    job.schedule_type == "once" and is_nil(job.next_run_at) and
+      get_status(latest_info) == "success"
   end
 
   defp job_status_badge(assigns) do
@@ -362,17 +386,25 @@ defmodule PrikkeWeb.JobLive.Show do
     ~H"""
     <%= cond do %>
       <% job_completed?(@job, @latest_info) -> %>
-        <span class="text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600">Completed</span>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+          Completed
+        </span>
       <% @job.schedule_type == "once" and @status in ["failed", "timeout"] -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-red-100 text-red-700">Failed</span>
       <% @job.schedule_type == "once" and @status in ["pending", "running"] and @attempt > 1 -> %>
-        <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">Retrying (<%= @attempt %>/<%= @job.retry_attempts %>)</span>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">
+          Retrying ({@attempt}/{@job.retry_attempts})
+        </span>
       <% @job.schedule_type == "once" and @status in ["pending", "running"] -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-blue-100 text-blue-700">Running</span>
       <% @job.enabled -> %>
-        <span class="text-xs font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">Active</span>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
+          Active
+        </span>
       <% true -> %>
-        <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">Paused</span>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">
+          Paused
+        </span>
     <% end %>
     """
   end
@@ -383,7 +415,7 @@ defmodule PrikkeWeb.JobLive.Show do
       "text-xs font-medium px-2 py-0.5 rounded",
       status_badge_class(@status)
     ]}>
-      <%= status_label(@status) %>
+      {status_label(@status)}
     </span>
     """
   end
@@ -415,12 +447,14 @@ defmodule PrikkeWeb.JobLive.Show do
   defp format_duration(ms), do: "#{Float.round(ms / 60_000, 1)}m"
 
   defp format_avg_duration(nil), do: "—"
+
   defp format_avg_duration(ms) do
     ms = Decimal.to_float(ms)
     format_duration(round(ms))
   end
 
   defp format_execution_time(nil), do: "—"
+
   defp format_execution_time(datetime) do
     Calendar.strftime(datetime, "%d %b, %H:%M:%S")
   end

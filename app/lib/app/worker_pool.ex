@@ -119,6 +119,7 @@ defmodule Prikke.WorkerPool do
       min_workers: @min_workers,
       max_workers: @max_workers
     }
+
     {:reply, stats, state}
   end
 
@@ -129,20 +130,24 @@ defmodule Prikke.WorkerPool do
     current_workers = WorkerSupervisor.worker_count()
 
     # Target: at least min_workers, at most max_workers, scale with queue
-    target = queue_depth
-             |> max(@min_workers)
-             |> min(@max_workers)
+    target =
+      queue_depth
+      |> max(@min_workers)
+      |> min(@max_workers)
 
-    spawned = if current_workers < target do
-      to_spawn = target - current_workers
-      spawn_workers(to_spawn)
-      to_spawn
-    else
-      0
-    end
+    spawned =
+      if current_workers < target do
+        to_spawn = target - current_workers
+        spawn_workers(to_spawn)
+        to_spawn
+      else
+        0
+      end
 
     if spawned > 0 do
-      Logger.info("[WorkerPool] Queue: #{queue_depth}, Workers: #{current_workers} -> #{current_workers + spawned}")
+      Logger.info(
+        "[WorkerPool] Queue: #{queue_depth}, Workers: #{current_workers} -> #{current_workers + spawned}"
+      )
     end
 
     %{queue: queue_depth, workers: current_workers, spawned: spawned}
@@ -151,7 +156,9 @@ defmodule Prikke.WorkerPool do
   defp spawn_workers(count) when count > 0 do
     Enum.each(1..count, fn _ ->
       case WorkerSupervisor.start_worker() do
-        {:ok, _pid} -> :ok
+        {:ok, _pid} ->
+          :ok
+
         {:error, reason} ->
           Logger.error("[WorkerPool] Failed to spawn worker: #{inspect(reason)}")
       end

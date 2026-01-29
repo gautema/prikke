@@ -26,17 +26,20 @@ defmodule Prikke.SchedulerTest do
 
     test "schedules due cron jobs", %{organization: org} do
       # Create a job with next_run_at in the past
-      {:ok, job} = Jobs.create_job(org, %{
-        name: "Test Cron",
-        url: "https://example.com/webhook",
-        schedule_type: "cron",
-        cron_expression: "* * * * *"  # Every minute
-      })
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Test Cron",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          # Every minute
+          cron_expression: "* * * * *"
+        })
 
       # Manually set next_run_at to just past (within grace period of 30s)
       # and inserted_at to earlier (simulates existing job)
       past = DateTime.utc_now() |> DateTime.add(-10, :second) |> DateTime.truncate(:second)
       created_at = DateTime.utc_now() |> DateTime.add(-300, :second) |> DateTime.truncate(:second)
+
       job =
         job
         |> Ecto.Changeset.change(next_run_at: past, inserted_at: created_at)
@@ -62,17 +65,19 @@ defmodule Prikke.SchedulerTest do
       # Create a one-time job scheduled in the future first
       future = DateTime.utc_now() |> DateTime.add(3600, :second) |> DateTime.truncate(:second)
 
-      {:ok, job} = Jobs.create_job(org, %{
-        name: "Test Once",
-        url: "https://example.com/webhook",
-        schedule_type: "once",
-        scheduled_at: future
-      })
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Test Once",
+          url: "https://example.com/webhook",
+          schedule_type: "once",
+          scheduled_at: future
+        })
 
       # Then set it to the past to simulate a due job
       # Also backdate inserted_at to simulate job that existed before
       past = DateTime.utc_now() |> DateTime.add(-30, :second) |> DateTime.truncate(:second)
       created_at = DateTime.utc_now() |> DateTime.add(-120, :second) |> DateTime.truncate(:second)
+
       job =
         job
         |> Ecto.Changeset.change(scheduled_at: past, next_run_at: past, inserted_at: created_at)
@@ -92,15 +97,17 @@ defmodule Prikke.SchedulerTest do
     end
 
     test "skips disabled jobs", %{organization: org} do
-      {:ok, job} = Jobs.create_job(org, %{
-        name: "Disabled Job",
-        url: "https://example.com/webhook",
-        schedule_type: "cron",
-        cron_expression: "* * * * *"
-      })
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Disabled Job",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "* * * * *"
+        })
 
       # Disable and set next_run_at to past
       past = DateTime.utc_now() |> DateTime.add(-60, :second) |> DateTime.truncate(:second)
+
       job
       |> Ecto.Changeset.change(enabled: false, next_run_at: past)
       |> Prikke.Repo.update!()
@@ -111,12 +118,14 @@ defmodule Prikke.SchedulerTest do
     end
 
     test "skips jobs with future next_run_at", %{organization: org} do
-      {:ok, _job} = Jobs.create_job(org, %{
-        name: "Future Job",
-        url: "https://example.com/webhook",
-        schedule_type: "cron",
-        cron_expression: "0 0 * * *"  # Daily at midnight
-      })
+      {:ok, _job} =
+        Jobs.create_job(org, %{
+          name: "Future Job",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          # Daily at midnight
+          cron_expression: "0 0 * * *"
+        })
 
       # Job should have next_run_at in the future
       {:ok, count} = Scheduler.tick()
@@ -125,16 +134,18 @@ defmodule Prikke.SchedulerTest do
     end
 
     test "advances next_run_at for cron jobs after scheduling", %{organization: org} do
-      {:ok, job} = Jobs.create_job(org, %{
-        name: "Cron Job",
-        url: "https://example.com/webhook",
-        schedule_type: "cron",
-        cron_expression: "* * * * *"
-      })
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Cron Job",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "* * * * *"
+        })
 
       # Set next_run_at and inserted_at to past (simulate existing job)
       past = DateTime.utc_now() |> DateTime.add(-60, :second) |> DateTime.truncate(:second)
       created_at = DateTime.utc_now() |> DateTime.add(-300, :second) |> DateTime.truncate(:second)
+
       job
       |> Ecto.Changeset.change(next_run_at: past, inserted_at: created_at)
       |> Prikke.Repo.update!()
@@ -151,16 +162,18 @@ defmodule Prikke.SchedulerTest do
       # org is on Pro tier (upgraded in setup)
       # We'll verify the job schedules since we're under limit
 
-      {:ok, job} = Jobs.create_job(org, %{
-        name: "Limited Job",
-        url: "https://example.com/webhook",
-        schedule_type: "cron",
-        cron_expression: "* * * * *"
-      })
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Limited Job",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "* * * * *"
+        })
 
       # Set next_run_at and inserted_at to past (simulate existing job)
       past = DateTime.utc_now() |> DateTime.add(-20, :second) |> DateTime.truncate(:second)
       created_at = DateTime.utc_now() |> DateTime.add(-120, :second) |> DateTime.truncate(:second)
+
       job
       |> Ecto.Changeset.change(next_run_at: past, inserted_at: created_at)
       |> Prikke.Repo.update!()
@@ -171,12 +184,14 @@ defmodule Prikke.SchedulerTest do
     end
 
     test "creates missed executions when scheduler was down", %{organization: org} do
-      {:ok, job} = Jobs.create_job(org, %{
-        name: "Missed Job",
-        url: "https://example.com/webhook",
-        schedule_type: "cron",
-        cron_expression: "* * * * *"  # Every minute
-      })
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Missed Job",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          # Every minute
+          cron_expression: "* * * * *"
+        })
 
       # Simulate scheduler down for 3 minutes:
       # - Job created 5 minutes ago
@@ -210,12 +225,13 @@ defmodule Prikke.SchedulerTest do
 
     test "does not create missed executions for newly created jobs", %{organization: org} do
       # Create a cron job - it will have next_run_at in the future
-      {:ok, job} = Jobs.create_job(org, %{
-        name: "New Job",
-        url: "https://example.com/webhook",
-        schedule_type: "cron",
-        cron_expression: "* * * * *"
-      })
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "New Job",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "* * * * *"
+        })
 
       # Job's next_run_at should be in the future (next minute)
       # Even if we manually set it to the past, no missed executions
@@ -223,6 +239,7 @@ defmodule Prikke.SchedulerTest do
 
       # Set next_run_at to before inserted_at (edge case)
       way_past = DateTime.utc_now() |> DateTime.add(-600, :second) |> DateTime.truncate(:second)
+
       job =
         job
         |> Ecto.Changeset.change(next_run_at: way_past)

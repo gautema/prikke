@@ -1,9 +1,13 @@
 <.docs_layout>
   <h1>Use Cases</h1>
-  <p class="text-xl text-slate-600 mb-10">Common patterns for web apps that need background processing.</p>
+  <p class="text-xl text-slate-600 mb-10">
+    Common patterns for web apps that need background processing.
+  </p>
 
   <h2>Async Processing</h2>
-  <p>Offload slow tasks from your request-response cycle. Return immediately to users while work happens in the background.</p>
+  <p>
+    Offload slow tasks from your request-response cycle. Return immediately to users while work happens in the background.
+  </p>
 
   <div class="space-y-6 my-8">
     <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
@@ -13,9 +17,14 @@
           <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">Vercel</span>
         </div>
         <h3 class="text-lg font-semibold text-slate-900 m-0">Email Sequences</h3>
-        <p class="text-slate-600 text-sm mt-1 mb-0">Schedule follow-up emails without managing queues or workers.</p>
+        <p class="text-slate-600 text-sm mt-1 mb-0">
+          Schedule follow-up emails without managing queues or workers.
+        </p>
       </div>
-      <pre phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500">// Schedule welcome email 24 hours after signup</span>
+      <pre
+        phx-no-curly-interpolation
+        class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+      ><span class="text-slate-500">// Schedule welcome email 24 hours after signup</span>
 <span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://prikke.whitenoise.no/api/jobs'</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">'POST'</span>,
   <span class="text-sky-300">headers</span>: { <span class="text-sky-300">'Authorization'</span>: <span class="text-green-300">'Bearer YOUR_API_KEY'</span> },
@@ -34,9 +43,14 @@
           <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">Reports</span>
         </div>
         <h3 class="text-lg font-semibold text-slate-900 m-0">Report Generation</h3>
-        <p class="text-slate-600 text-sm mt-1 mb-0">Generate PDFs or exports without timing out. Email when ready.</p>
+        <p class="text-slate-600 text-sm mt-1 mb-0">
+          Generate PDFs or exports without timing out. Email when ready.
+        </p>
       </div>
-      <pre phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500">// Return immediately, process in background</span>
+      <pre
+        phx-no-curly-interpolation
+        class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+      ><span class="text-slate-500">// Return immediately, process in background</span>
 <span class="text-purple-300">await</span> prikke.createJob({
   <span class="text-sky-300">name</span>: <span class="text-green-300">'generate-report'</span>,
   <span class="text-sky-300">url</span>: <span class="text-green-300">'https://myapp.com/api/reports/generate'</span>,
@@ -53,9 +67,14 @@
           <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">Stripe</span>
         </div>
         <h3 class="text-lg font-semibold text-slate-900 m-0">Webhook Relay</h3>
-        <p class="text-slate-600 text-sm mt-1 mb-0">Acknowledge webhooks fast, process reliably later.</p>
+        <p class="text-slate-600 text-sm mt-1 mb-0">
+          Acknowledge webhooks fast, process reliably later.
+        </p>
       </div>
-      <pre phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500">// Stripe webhook - return 200 immediately</span>
+      <pre
+        phx-no-curly-interpolation
+        class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+      ><span class="text-slate-500">// Stripe webhook - return 200 immediately</span>
 <span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(req) {
   <span class="text-purple-300">const</span> event = <span class="text-purple-300">await</span> req.json();
   <span class="text-purple-300">await</span> prikke.createJob({
@@ -78,9 +97,14 @@
           <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">Billing</span>
         </div>
         <h3 class="text-lg font-semibold text-slate-900 m-0">Subscription Renewals</h3>
-        <p class="text-slate-600 text-sm mt-1 mb-0">Process recurring billing daily at 6 AM UTC.</p>
+        <p class="text-slate-600 text-sm mt-1 mb-0">
+          Process recurring billing daily at 6 AM UTC.
+        </p>
       </div>
-      <pre phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed">{
+      <pre
+        phx-no-curly-interpolation
+        class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+      >{
   <span class="text-sky-300">"name"</span>: <span class="text-green-300">"process-renewals"</span>,
   <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/billing/renewals"</span>,
   <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 6 * * *"</span>
@@ -95,7 +119,10 @@
         <h3 class="text-lg font-semibold text-slate-900 m-0">Database Cleanup</h3>
         <p class="text-slate-600 text-sm mt-1 mb-0">Clean up old sessions every night at 2 AM.</p>
       </div>
-      <pre phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed">{
+      <pre
+        phx-no-curly-interpolation
+        class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+      >{
   <span class="text-sky-300">"name"</span>: <span class="text-green-300">"cleanup-sessions"</span>,
   <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/maintenance/cleanup"</span>,
   <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 2 * * *"</span>
@@ -110,7 +137,10 @@
         <h3 class="text-lg font-semibold text-slate-900 m-0">Health Checks</h3>
         <p class="text-slate-600 text-sm mt-1 mb-0">Monitor external APIs every 15 minutes.</p>
       </div>
-      <pre phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed">{
+      <pre
+        phx-no-curly-interpolation
+        class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+      >{
   <span class="text-sky-300">"name"</span>: <span class="text-green-300">"healthcheck-stripe"</span>,
   <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/health/stripe"</span>,
   <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"*/15 * * * *"</span>
@@ -127,7 +157,9 @@
       </div>
       <div>
         <div class="font-semibold text-slate-900">No infrastructure</div>
-        <p class="text-slate-600 text-sm mt-1 mb-0">Just HTTP endpoints. Works with any stack, any platform.</p>
+        <p class="text-slate-600 text-sm mt-1 mb-0">
+          Just HTTP endpoints. Works with any stack, any platform.
+        </p>
       </div>
     </div>
     <div class="flex gap-4 items-start">
@@ -136,7 +168,9 @@
       </div>
       <div>
         <div class="font-semibold text-slate-900">Cron + one-time jobs</div>
-        <p class="text-slate-600 text-sm mt-1 mb-0">Recurring schedules and delayed jobs in one simple API.</p>
+        <p class="text-slate-600 text-sm mt-1 mb-0">
+          Recurring schedules and delayed jobs in one simple API.
+        </p>
       </div>
     </div>
     <div class="flex gap-4 items-start">
@@ -145,7 +179,9 @@
       </div>
       <div>
         <div class="font-semibold text-slate-900">Built-in retries</div>
-        <p class="text-slate-600 text-sm mt-1 mb-0">Automatic exponential backoff. No retry logic to build.</p>
+        <p class="text-slate-600 text-sm mt-1 mb-0">
+          Automatic exponential backoff. No retry logic to build.
+        </p>
       </div>
     </div>
     <div class="flex gap-4 items-start">
@@ -154,7 +190,9 @@
       </div>
       <div>
         <div class="font-semibold text-slate-900">EU-hosted</div>
-        <p class="text-slate-600 text-sm mt-1 mb-0">Your data stays in Europe. GDPR-friendly by design.</p>
+        <p class="text-slate-600 text-sm mt-1 mb-0">
+          Your data stays in Europe. GDPR-friendly by design.
+        </p>
       </div>
     </div>
   </div>

@@ -64,18 +64,29 @@ defmodule PrikkeWeb.CoreComponents do
         @kind == :info && "bg-emerald-50 border-emerald-200 text-emerald-800",
         @kind == :error && "bg-red-50 border-red-200 text-red-800"
       ]}>
-        <.icon :if={@kind == :info} name="hero-check-circle" class={["size-5 shrink-0", "text-emerald-500"]} />
-        <.icon :if={@kind == :error} name="hero-exclamation-circle" class={["size-5 shrink-0", "text-red-500"]} />
+        <.icon
+          :if={@kind == :info}
+          name="hero-check-circle"
+          class={["size-5 shrink-0", "text-emerald-500"]}
+        />
+        <.icon
+          :if={@kind == :error}
+          name="hero-exclamation-circle"
+          class={["size-5 shrink-0", "text-red-500"]}
+        />
         <div class="flex-1">
           <p :if={@title} class="font-semibold">{@title}</p>
           <p>{msg}</p>
         </div>
         <button type="button" class="group cursor-pointer" aria-label={gettext("close")}>
-          <.icon name="hero-x-mark" class={[
-            "size-5",
-            @kind == :info && "text-emerald-400 group-hover:text-emerald-600",
-            @kind == :error && "text-red-400 group-hover:text-red-600"
-          ]} />
+          <.icon
+            name="hero-x-mark"
+            class={[
+              "size-5",
+              @kind == :info && "text-emerald-400 group-hover:text-emerald-600",
+              @kind == :error && "text-red-400 group-hover:text-red-600"
+            ]}
+          />
         </button>
       </div>
     </div>
@@ -223,7 +234,10 @@ defmodule PrikkeWeb.CoreComponents do
           name={@name}
           value="true"
           checked={@checked}
-          class={@class || "w-5 h-5 rounded border-slate-300 text-emerald-500 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-4"}
+          class={
+            @class ||
+              "w-5 h-5 rounded border-slate-300 text-emerald-500 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-4"
+          }
           {@rest}
         />
         <span :if={@label} class="text-base text-slate-700">{@label}</span>
@@ -242,7 +256,8 @@ defmodule PrikkeWeb.CoreComponents do
           id={@id}
           name={@name}
           class={[
-            @class || "w-full px-4 py-3 text-base border border-slate-300 rounded-md bg-white text-slate-900",
+            @class ||
+              "w-full px-4 py-3 text-base border border-slate-300 rounded-md bg-white text-slate-900",
             "focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-4",
             @errors != [] && "border-red-500"
           ]}
@@ -267,7 +282,8 @@ defmodule PrikkeWeb.CoreComponents do
           id={@id}
           name={@name}
           class={[
-            @class || "w-full px-4 py-3 text-base border border-slate-300 rounded-md text-slate-900 placeholder-slate-400",
+            @class ||
+              "w-full px-4 py-3 text-base border border-slate-300 rounded-md text-slate-900 placeholder-slate-400",
             "focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-4",
             @errors != [] && "border-red-500"
           ]}
@@ -291,7 +307,8 @@ defmodule PrikkeWeb.CoreComponents do
           id={@id}
           value={Phoenix.HTML.Form.normalize_value(@type, @value)}
           class={[
-            @class || "w-full px-4 py-3 text-base border border-slate-300 rounded-md text-slate-900 placeholder-slate-400",
+            @class ||
+              "w-full px-4 py-3 text-base border border-slate-300 rounded-md text-slate-900 placeholder-slate-400",
             "focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-4",
             @errors != [] && "border-red-500"
           ]}
@@ -484,7 +501,11 @@ defmodule PrikkeWeb.CoreComponents do
       data-cancel={JS.exec(@on_cancel, "phx-remove")}
       class="relative z-50 hidden"
     >
-      <div id={"#{@id}-bg"} class="bg-slate-900/50 fixed inset-0 transition-opacity" aria-hidden="true" />
+      <div
+        id={"#{@id}-bg"}
+        class="bg-slate-900/50 fixed inset-0 transition-opacity"
+        aria-hidden="true"
+      />
       <div
         class="fixed inset-0 overflow-y-auto"
         aria-labelledby={"#{@id}-title"}
@@ -509,13 +530,19 @@ defmodule PrikkeWeb.CoreComponents do
                   class="flex-none p-2 text-slate-400 hover:text-slate-500"
                   aria-label="close"
                 >
-                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <svg
+                    class="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
               <div id={"#{@id}-content"} class="p-6">
-                <%= render_slot(@inner_block) %>
+                {render_slot(@inner_block)}
               </div>
             </.focus_wrap>
           </div>
@@ -618,9 +645,16 @@ defmodule PrikkeWeb.CoreComponents do
       <footer class="py-10 border-t border-slate-200 text-center text-slate-500 text-sm">
         <div class="flex flex-wrap justify-center gap-4 mb-3">
           <a href="/docs" class="text-slate-600 no-underline hover:text-emerald-500">Docs</a>
-          <a href="/api/docs" class="text-slate-600 no-underline hover:text-emerald-500">API Reference</a>
+          <a href="/api/docs" class="text-slate-600 no-underline hover:text-emerald-500">
+            API Reference
+          </a>
           <a href="/status" class="text-slate-600 no-underline hover:text-emerald-500">Status</a>
-          <a href="mailto:gaute.magnussen@gmail.com" class="text-slate-600 no-underline hover:text-emerald-500">Contact</a>
+          <a
+            href="mailto:gaute.magnussen@gmail.com"
+            class="text-slate-600 no-underline hover:text-emerald-500"
+          >
+            Contact
+          </a>
         </div>
         <p class="text-slate-400">Prikke · Made in Norway</p>
       </footer>

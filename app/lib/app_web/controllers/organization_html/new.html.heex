@@ -8,7 +8,9 @@
     <div class="bg-white border border-slate-200 rounded-lg p-6">
       <.form for={@form} action={~p"/organizations"} id="org-form" class="space-y-4">
         <div>
-          <label for={@form[:name].id} class="block text-sm font-medium text-slate-700 mb-1">Organization Name</label>
+          <label for={@form[:name].id} class="block text-sm font-medium text-slate-700 mb-1">
+            Organization Name
+          </label>
           <input
             type="text"
             name={@form[:name].name}
@@ -25,7 +27,9 @@
         </div>
 
         <div>
-          <label for={@form[:slug].id} class="block text-sm font-medium text-slate-700 mb-1">URL Slug</label>
+          <label for={@form[:slug].id} class="block text-sm font-medium text-slate-700 mb-1">
+            URL Slug
+          </label>
           <input
             type="text"
             name={@form[:slug].name}
@@ -42,10 +46,16 @@
         </div>
 
         <div class="flex gap-3 pt-2">
-          <button type="submit" class="flex-1 py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors">
+          <button
+            type="submit"
+            class="flex-1 py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors"
+          >
             Create Organization
           </button>
-          <a href={~p"/organizations"} class="py-2.5 px-4 bg-white text-slate-700 font-medium rounded-md border border-slate-300 hover:bg-slate-50 transition-colors no-underline text-center">
+          <a
+            href={~p"/organizations"}
+            class="py-2.5 px-4 bg-white text-slate-700 font-medium rounded-md border border-slate-300 hover:bg-slate-50 transition-colors no-underline text-center"
+          >
             Cancel
           </a>
         </div>

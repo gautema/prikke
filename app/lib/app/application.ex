@@ -43,13 +43,14 @@ defmodule Prikke.Application do
     if Application.get_env(:app, :ci_mode, false) or not @start_scheduler do
       children
     else
-      children ++ [
-        Prikke.Scheduler,
-        Prikke.WorkerSupervisor,
-        Prikke.WorkerPool,
-        Prikke.Cleanup,
-        Prikke.StatusMonitor
-      ]
+      children ++
+        [
+          Prikke.Scheduler,
+          Prikke.WorkerSupervisor,
+          Prikke.WorkerPool,
+          Prikke.Cleanup,
+          Prikke.StatusMonitor
+        ]
     end
   end
 

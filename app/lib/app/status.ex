@@ -222,11 +222,12 @@ defmodule Prikke.Status do
       )
       |> Repo.one()
 
-    monitoring_start_date = if earliest_check do
-      DateTime.to_date(earliest_check)
-    else
-      nil
-    end
+    monitoring_start_date =
+      if earliest_check do
+        DateTime.to_date(earliest_check)
+      else
+        nil
+      end
 
     # Get all incidents in the date range
     incidents =
@@ -241,11 +242,14 @@ defmodule Prikke.Status do
       incidents
       |> Enum.flat_map(fn incident ->
         incident_start = DateTime.to_date(incident.started_at)
-        incident_end = if incident.resolved_at do
-          DateTime.to_date(incident.resolved_at)
-        else
-          today
-        end
+
+        incident_end =
+          if incident.resolved_at do
+            DateTime.to_date(incident.resolved_at)
+          else
+            today
+          end
+
         Date.range(incident_start, incident_end) |> Enum.to_list()
       end)
       |> MapSet.new()
@@ -253,23 +257,24 @@ defmodule Prikke.Status do
     # Generate status for each day
     Date.range(start_date, today)
     |> Enum.map(fn date ->
-      status = cond do
-        # No monitoring data yet
-        is_nil(monitoring_start_date) ->
-          :unknown
+      status =
+        cond do
+          # No monitoring data yet
+          is_nil(monitoring_start_date) ->
+            :unknown
 
-        # Before monitoring started
-        Date.compare(date, monitoring_start_date) == :lt ->
-          :unknown
+          # Before monitoring started
+          Date.compare(date, monitoring_start_date) == :lt ->
+            :unknown
 
-        # Had an incident
-        MapSet.member?(incident_dates, date) ->
-          :down
+          # Had an incident
+          MapSet.member?(incident_dates, date) ->
+            :down
 
-        # No incident, monitoring was active
-        true ->
-          :up
-      end
+          # No incident, monitoring was active
+          true ->
+            :up
+        end
 
       {date, status}
     end)

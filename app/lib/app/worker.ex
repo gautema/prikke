@@ -96,7 +96,9 @@ defmodule Prikke.Worker do
           # Exponential backoff: double interval each time, up to max
           next_interval = min(state.poll_interval * 2, @poll_interval_max)
           Process.send_after(self(), :work, state.poll_interval)
-          {:noreply, %{state | idle_since: idle_since, poll_interval: next_interval, working: false}}
+
+          {:noreply,
+           %{state | idle_since: idle_since, poll_interval: next_interval, working: false}}
         end
 
       {:ok, execution} ->
@@ -134,6 +136,7 @@ defmodule Prikke.Worker do
     unless state.working do
       send(self(), :work)
     end
+
     {:noreply, state}
   end
 
@@ -185,7 +188,8 @@ defmodule Prikke.Worker do
       headers: headers,
       receive_timeout: job.timeout_ms,
       connect_options: [timeout: 10_000],
-      retry: false  # We handle retries ourselves
+      # We handle retries ourselves
+      retry: false
     ]
 
     # Add body for methods that support it
@@ -200,6 +204,7 @@ defmodule Prikke.Worker do
   end
 
   defp build_headers(nil), do: []
+
   defp build_headers(headers) when is_map(headers) do
     Enum.map(headers, fn {k, v} -> {to_string(k), to_string(v)} end)
   end
@@ -218,12 +223,13 @@ defmodule Prikke.Worker do
       # Non-2xx is treated as failure
       Logger.warning("[Worker] Job failed with status #{response.status} in #{duration_ms}ms")
 
-      {:ok, updated_execution} = Executions.fail_execution(execution, %{
-        status_code: response.status,
-        response_body: truncate_body(response.body),
-        error_message: "HTTP #{response.status}",
-        duration_ms: duration_ms
-      })
+      {:ok, updated_execution} =
+        Executions.fail_execution(execution, %{
+          status_code: response.status,
+          response_body: truncate_body(response.body),
+          error_message: "HTTP #{response.status}",
+          duration_ms: duration_ms
+        })
 
       # Send failure notification (async)
       notify_failure(updated_execution)
@@ -247,10 +253,11 @@ defmodule Prikke.Worker do
     error_message = format_error(error)
     Logger.warning("[Worker] Job failed: #{error_message} after #{duration_ms}ms")
 
-    {:ok, updated_execution} = Executions.fail_execution(execution, %{
-      error_message: error_message,
-      duration_ms: duration_ms
-    })
+    {:ok, updated_execution} =
+      Executions.fail_execution(execution, %{
+        error_message: error_message,
+        duration_ms: duration_ms
+      })
 
     # Send failure notification (async)
     notify_failure(updated_execution)
@@ -266,6 +273,7 @@ defmodule Prikke.Worker do
   end
 
   defp return_error(nil), do: :ok
+
   defp return_error(execution) do
     Executions.fail_execution(execution, %{
       error_message: "Internal error: execution or job not found"
@@ -284,7 +292,9 @@ defmodule Prikke.Worker do
 
       scheduled_for = DateTime.add(DateTime.utc_now(), delay_ms, :millisecond)
 
-      Logger.info("[Worker] Scheduling retry #{execution.attempt + 1}/#{job.retry_attempts} in #{delay_ms}ms")
+      Logger.info(
+        "[Worker] Scheduling retry #{execution.attempt + 1}/#{job.retry_attempts} in #{delay_ms}ms"
+      )
 
       case Executions.create_execution_for_job(job, scheduled_for, execution.attempt + 1) do
         {:ok, _retry_execution} ->
@@ -302,6 +312,7 @@ defmodule Prikke.Worker do
   end
 
   defp truncate_body(nil), do: nil
+
   defp truncate_body(body) when is_binary(body) do
     if byte_size(body) > 10_000 do
       String.slice(body, 0, 10_000) <> "... [truncated]"
@@ -309,9 +320,12 @@ defmodule Prikke.Worker do
       body
     end
   end
+
   defp truncate_body(body), do: inspect(body) |> truncate_body()
 
-  defp format_error(%Req.TransportError{reason: reason}), do: "Transport error: #{inspect(reason)}"
+  defp format_error(%Req.TransportError{reason: reason}),
+    do: "Transport error: #{inspect(reason)}"
+
   defp format_error(%{message: message}), do: message
   defp format_error(error), do: inspect(error)
 end

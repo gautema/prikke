@@ -112,7 +112,8 @@ defmodule PrikkeWeb.OrganizationController do
     user = conn.assigns.current_scope.user
 
     with true <- role in ["admin", "member"],
-         current_membership when not is_nil(current_membership) <- Accounts.get_membership(organization, user),
+         current_membership when not is_nil(current_membership) <-
+           Accounts.get_membership(organization, user),
          true <- current_membership.role in ["owner", "admin"],
          membership when not is_nil(membership) <- Accounts.get_membership_by_id(membership_id),
          true <- membership.organization_id == organization.id,
@@ -170,7 +171,10 @@ defmodule PrikkeWeb.OrganizationController do
       case Accounts.upgrade_organization_to_pro(organization) do
         {:ok, _organization} ->
           conn
-          |> put_flash(:info, "You've been upgraded to Pro! Our team will reach out to set up billing.")
+          |> put_flash(
+            :info,
+            "You've been upgraded to Pro! Our team will reach out to set up billing."
+          )
           |> redirect(to: ~p"/organizations/settings")
 
         {:error, _} ->
@@ -190,6 +194,7 @@ defmodule PrikkeWeb.OrganizationController do
 
     if organization do
       api_keys = Accounts.list_organization_api_keys(organization)
+
       render(conn, :api_keys,
         organization: organization,
         api_keys: api_keys,

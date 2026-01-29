@@ -95,7 +95,8 @@ defmodule PrikkeWeb.JobLive.Index do
   defp get_attempt(%{attempt: attempt}), do: attempt
 
   defp job_completed?(job, latest_info) do
-    job.schedule_type == "once" and is_nil(job.next_run_at) and get_status(latest_info) == "success"
+    job.schedule_type == "once" and is_nil(job.next_run_at) and
+      get_status(latest_info) == "success"
   end
 
   defp job_status_badge(assigns) do
@@ -107,17 +108,25 @@ defmodule PrikkeWeb.JobLive.Index do
     ~H"""
     <%= cond do %>
       <% job_completed?(@job, @latest_info) -> %>
-        <span class="text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600">Completed</span>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+          Completed
+        </span>
       <% @job.schedule_type == "once" and @status in ["failed", "timeout"] -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-red-100 text-red-700">Failed</span>
       <% @job.schedule_type == "once" and @status in ["pending", "running"] and @attempt > 1 -> %>
-        <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">Retrying (<%= @attempt %>/<%= @job.retry_attempts %>)</span>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">
+          Retrying ({@attempt}/{@job.retry_attempts})
+        </span>
       <% @job.schedule_type == "once" and @status in ["pending", "running"] -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-blue-100 text-blue-700">Running</span>
       <% @job.enabled -> %>
-        <span class="text-xs font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">Active</span>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
+          Active
+        </span>
       <% true -> %>
-        <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">Paused</span>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">
+          Paused
+        </span>
     <% end %>
     """
   end
@@ -154,24 +163,25 @@ defmodule PrikkeWeb.JobLive.Index do
     ~H"""
     <div class="max-w-4xl mx-auto py-6 sm:py-8 px-4">
       <div class="mb-4">
-        <.link navigate={~p"/dashboard"} class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1">
-          <.icon name="hero-chevron-left" class="w-4 h-4" />
-          Back to Dashboard
+        <.link
+          navigate={~p"/dashboard"}
+          class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
+        >
+          <.icon name="hero-chevron-left" class="w-4 h-4" /> Back to Dashboard
         </.link>
       </div>
 
       <div class="flex justify-between items-center mb-6 sm:mb-8">
         <div>
           <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Jobs</h1>
-          <p class="text-slate-500 mt-1 text-sm sm:text-base"><%= @organization.name %></p>
+          <p class="text-slate-500 mt-1 text-sm sm:text-base">{@organization.name}</p>
         </div>
         <div class="flex gap-2">
           <.link
             navigate={~p"/queue"}
             class="font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 sm:px-4 py-2 rounded-md transition-colors text-sm sm:text-base flex items-center gap-1.5"
           >
-            <.icon name="hero-bolt" class="w-4 h-4" />
-            Queue
+            <.icon name="hero-bolt" class="w-4 h-4" /> Queue
           </.link>
           <.link
             navigate={~p"/jobs/new"}
@@ -201,20 +211,28 @@ defmodule PrikkeWeb.JobLive.Index do
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
                     <.execution_status_dot status={get_status(@latest_statuses[job.id])} />
-                    <.link navigate={~p"/jobs/#{job.id}"} class="font-medium text-slate-900 hover:text-emerald-600 break-all sm:truncate">
-                      <%= job.name %>
+                    <.link
+                      navigate={~p"/jobs/#{job.id}"}
+                      class="font-medium text-slate-900 hover:text-emerald-600 break-all sm:truncate"
+                    >
+                      {job.name}
                     </.link>
                     <.job_status_badge job={job} latest_info={@latest_statuses[job.id]} />
                   </div>
                   <div class="text-sm text-slate-500 mt-1 flex items-center gap-2">
-                    <span class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded shrink-0"><%= job.method %></span>
-                    <span class="truncate text-xs sm:text-sm"><%= job.url %></span>
+                    <span class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded shrink-0">
+                      {job.method}
+                    </span>
+                    <span class="truncate text-xs sm:text-sm">{job.url}</span>
                   </div>
                   <div class="text-xs sm:text-sm text-slate-400 mt-1">
                     <%= if job.schedule_type == "cron" do %>
-                      <span class="font-mono"><%= job.cron_expression %></span>
+                      <span class="font-mono">{job.cron_expression}</span>
                     <% else %>
-                      <span class="hidden sm:inline">One-time: </span><%= Calendar.strftime(job.scheduled_at, "%d %b %Y, %H:%M") %>
+                      <span class="hidden sm:inline">One-time: </span>{Calendar.strftime(
+                        job.scheduled_at,
+                        "%d %b %Y, %H:%M"
+                      )}
                     <% end %>
                   </div>
                 </div>
@@ -234,10 +252,14 @@ defmodule PrikkeWeb.JobLive.Index do
                         "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
                         job.enabled && "translate-x-5",
                         !job.enabled && "translate-x-0"
-                      ]}></span>
+                      ]}>
+                      </span>
                     </button>
                   <% end %>
-                  <.link navigate={~p"/jobs/#{job.id}/edit"} class="text-slate-400 hover:text-slate-600 p-1">
+                  <.link
+                    navigate={~p"/jobs/#{job.id}/edit"}
+                    class="text-slate-400 hover:text-slate-600 p-1"
+                  >
                     <.icon name="hero-pencil-square" class="w-5 h-5" />
                   </.link>
                   <button

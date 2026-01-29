@@ -2,29 +2,32 @@
   <div class="max-w-[400px] mx-auto px-6">
     <!-- Header -->
     <header class="py-6 flex justify-center">
-      <a href="/" class="flex items-center gap-2.5 text-xl font-semibold text-slate-900 no-underline">
+      <a
+        href="/"
+        class="flex items-center gap-2.5 text-xl font-semibold text-slate-900 no-underline"
+      >
         <div class="w-4 h-4 bg-emerald-500 rounded-full"></div>
         prikke
       </a>
     </header>
-
-    <!-- Flash Messages -->
+    
+<!-- Flash Messages -->
     <%= if Phoenix.Flash.get(@flash, :info) do %>
       <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-700">
-        <%= Phoenix.Flash.get(@flash, :info) %>
+        {Phoenix.Flash.get(@flash, :info)}
       </div>
     <% end %>
     <%= if Phoenix.Flash.get(@flash, :error) do %>
       <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-        <%= Phoenix.Flash.get(@flash, :error) %>
+        {Phoenix.Flash.get(@flash, :error)}
       </div>
     <% end %>
-
-    <!-- Login Form -->
+    
+<!-- Login Form -->
     <div class="py-12">
       <div class="bg-white border border-slate-200 rounded-lg p-8">
         <h1 class="text-2xl font-bold text-slate-900 text-center mb-2">
-          <%= if @current_scope, do: "Confirm your identity", else: "Welcome back" %>
+          {if @current_scope, do: "Confirm your identity", else: "Welcome back"}
         </h1>
         <p class="text-slate-500 text-center mb-8">
           <%= if @current_scope do %>
@@ -33,11 +36,20 @@
             Log in to your account
           <% end %>
         </p>
-
-        <!-- Magic Link Login -->
-        <.form :let={f} for={@form} as={:user} id="login_form_magic" action={~p"/users/log-in"} class="space-y-4">
+        
+<!-- Magic Link Login -->
+        <.form
+          :let={f}
+          for={@form}
+          as={:user}
+          id="login_form_magic"
+          action={~p"/users/log-in"}
+          class="space-y-4"
+        >
           <div>
-            <label for="magic_email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+            <label for="magic_email" class="block text-sm font-medium text-slate-700 mb-1">
+              Email
+            </label>
             <input
               type="email"
               name={f[:email].name}
@@ -52,7 +64,10 @@
             />
           </div>
 
-          <button type="submit" class="w-full py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors">
+          <button
+            type="submit"
+            class="w-full py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors"
+          >
             Send magic link
           </button>
         </.form>
@@ -65,11 +80,20 @@
             <span class="px-4 bg-white text-slate-400">or continue with password</span>
           </div>
         </div>
-
-        <!-- Password Login -->
-        <.form :let={f} for={@form} as={:user} id="login_form_password" action={~p"/users/log-in"} class="space-y-4">
+        
+<!-- Password Login -->
+        <.form
+          :let={f}
+          for={@form}
+          as={:user}
+          id="login_form_password"
+          action={~p"/users/log-in"}
+          class="space-y-4"
+        >
           <div>
-            <label for="password_email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+            <label for="password_email" class="block text-sm font-medium text-slate-700 mb-1">
+              Email
+            </label>
             <input
               type="email"
               name={f[:email].name}
@@ -84,7 +108,9 @@
           </div>
 
           <div>
-            <label for={f[:password].id} class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+            <label for={f[:password].id} class="block text-sm font-medium text-slate-700 mb-1">
+              Password
+            </label>
             <input
               type="password"
               name={f[:password].name}
@@ -95,10 +121,18 @@
           </div>
 
           <div class="flex gap-3">
-            <button type="submit" name={f[:remember_me].name} value="true" class="flex-1 py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors text-sm">
+            <button
+              type="submit"
+              name={f[:remember_me].name}
+              value="true"
+              class="flex-1 py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors text-sm"
+            >
               Log in & remember
             </button>
-            <button type="submit" class="flex-1 py-2.5 px-4 bg-white text-slate-700 font-medium rounded-md border border-slate-300 hover:bg-slate-50 transition-colors text-sm">
+            <button
+              type="submit"
+              class="flex-1 py-2.5 px-4 bg-white text-slate-700 font-medium rounded-md border border-slate-300 hover:bg-slate-50 transition-colors text-sm"
+            >
               Log in once
             </button>
           </div>
@@ -107,7 +141,9 @@
         <%= if !@current_scope do %>
           <p class="mt-6 text-center text-sm text-slate-500">
             Don't have an account?
-            <a href={~p"/users/register"} class="text-emerald-600 font-medium hover:underline">Sign up</a>
+            <a href={~p"/users/register"} class="text-emerald-600 font-medium hover:underline">
+              Sign up
+            </a>
           </p>
         <% end %>
       </div>
@@ -115,8 +151,8 @@
       <%= if local_mail_adapter?() do %>
         <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p class="text-sm text-blue-700">
-            <strong>Dev mode:</strong> View sent emails at
-            <a href="/dev/mailbox" class="underline">/dev/mailbox</a>
+            <strong>Dev mode:</strong>
+            View sent emails at <a href="/dev/mailbox" class="underline">/dev/mailbox</a>
           </p>
         </div>
       <% end %>

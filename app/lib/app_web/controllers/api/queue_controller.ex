@@ -14,10 +14,10 @@ defmodule PrikkeWeb.Api.QueueController do
 
   action_fallback PrikkeWeb.Api.FallbackController
 
-  tags ["Queue"]
-  security [%{"bearerAuth" => []}]
+  tags(["Queue"])
+  security([%{"bearerAuth" => []}])
 
-  operation :push,
+  operation(:push,
     summary: "Queue a request for immediate execution",
     description: """
     Queues an HTTP request for immediate execution. This is the simplest way to
@@ -31,6 +31,7 @@ defmodule PrikkeWeb.Api.QueueController do
       bad_request: {"Invalid request", "application/json", Schemas.ErrorResponse},
       unprocessable_entity: {"Validation error", "application/json", Schemas.ErrorResponse}
     ]
+  )
 
   def push(conn, params) do
     org = conn.assigns.current_organization

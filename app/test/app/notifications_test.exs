@@ -16,22 +16,25 @@ defmodule Prikke.NotificationsTest do
 
       {:ok, org} = Accounts.create_organization(user, %{name: "Test Org", slug: "test-org"})
 
-      {:ok, job} = Jobs.create_job(org, %{
-        name: "Test Job",
-        url: "https://example.com/webhook",
-        schedule_type: "cron",
-        cron_expression: "0 * * * *"
-      })
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Test Job",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *"
+        })
 
-      {:ok, execution} = Executions.create_execution(%{
-        job_id: job.id,
-        scheduled_for: DateTime.utc_now()
-      })
+      {:ok, execution} =
+        Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: DateTime.utc_now()
+        })
 
-      {:ok, execution} = Executions.fail_execution(execution, %{
-        status_code: 500,
-        error_message: "Internal Server Error"
-      })
+      {:ok, execution} =
+        Executions.fail_execution(execution, %{
+          status_code: 500,
+          error_message: "Internal Server Error"
+        })
 
       execution = Executions.get_execution_with_job(execution.id)
 
@@ -44,9 +47,11 @@ defmodule Prikke.NotificationsTest do
 
       # Find the failure email
       emails = collect_emails()
-      failure_email = Enum.find(emails, fn email ->
-        String.contains?(email.subject, "Job failed")
-      end)
+
+      failure_email =
+        Enum.find(emails, fn email ->
+          String.contains?(email.subject, "Job failed")
+        end)
 
       assert failure_email != nil, "Expected failure email to be sent"
       assert failure_email.to == [{"", to_email}]
@@ -63,22 +68,25 @@ defmodule Prikke.NotificationsTest do
 
       {:ok, org} = Accounts.create_organization(user, %{name: "Test Org", slug: "test-org"})
 
-      {:ok, job} = Jobs.create_job(org, %{
-        name: "Test Job",
-        url: "https://example.com/webhook",
-        schedule_type: "cron",
-        cron_expression: "0 * * * *"
-      })
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Test Job",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *"
+        })
 
-      {:ok, execution} = Executions.create_execution(%{
-        job_id: job.id,
-        scheduled_for: DateTime.utc_now()
-      })
+      {:ok, execution} =
+        Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: DateTime.utc_now()
+        })
 
-      {:ok, execution} = Executions.fail_execution(execution, %{
-        status_code: 500,
-        error_message: "Internal Server Error"
-      })
+      {:ok, execution} =
+        Executions.fail_execution(execution, %{
+          status_code: 500,
+          error_message: "Internal Server Error"
+        })
 
       execution = Executions.get_execution_with_job(execution.id)
 
@@ -127,27 +135,31 @@ defmodule Prikke.NotificationsTest do
 
       {:ok, org} = Accounts.create_organization(user, %{name: "Test Org", slug: "test-org"})
 
-      {:ok, org} = Accounts.update_notification_settings(org, %{
-        notify_on_failure: true,
-        notification_email: "alerts@example.com"
-      })
+      {:ok, org} =
+        Accounts.update_notification_settings(org, %{
+          notify_on_failure: true,
+          notification_email: "alerts@example.com"
+        })
 
-      {:ok, job} = Jobs.create_job(org, %{
-        name: "Notified Job",
-        url: "https://example.com/webhook",
-        schedule_type: "cron",
-        cron_expression: "0 * * * *"
-      })
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Notified Job",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *"
+        })
 
-      {:ok, execution} = Executions.create_execution(%{
-        job_id: job.id,
-        scheduled_for: DateTime.utc_now()
-      })
+      {:ok, execution} =
+        Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: DateTime.utc_now()
+        })
 
-      {:ok, execution} = Executions.fail_execution(execution, %{
-        status_code: 503,
-        error_message: "Service Unavailable"
-      })
+      {:ok, execution} =
+        Executions.fail_execution(execution, %{
+          status_code: 503,
+          error_message: "Service Unavailable"
+        })
 
       execution = Executions.get_execution_with_job(execution.id)
 
@@ -159,9 +171,11 @@ defmodule Prikke.NotificationsTest do
       Process.sleep(100)
 
       emails = collect_emails()
-      failure_email = Enum.find(emails, fn email ->
-        String.contains?(email.subject, "Job failed")
-      end)
+
+      failure_email =
+        Enum.find(emails, fn email ->
+          String.contains?(email.subject, "Job failed")
+        end)
 
       assert failure_email != nil, "Expected failure email to be sent"
       assert failure_email.to == [{"", "alerts@example.com"}]
@@ -169,19 +183,22 @@ defmodule Prikke.NotificationsTest do
     end
 
     test "does not send notification when disabled", %{org: org, job: job} do
-      {:ok, _org} = Accounts.update_notification_settings(org, %{
-        notify_on_failure: false
-      })
+      {:ok, _org} =
+        Accounts.update_notification_settings(org, %{
+          notify_on_failure: false
+        })
 
-      {:ok, execution} = Executions.create_execution(%{
-        job_id: job.id,
-        scheduled_for: DateTime.utc_now()
-      })
+      {:ok, execution} =
+        Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: DateTime.utc_now()
+        })
 
-      {:ok, execution} = Executions.fail_execution(execution, %{
-        status_code: 500,
-        error_message: "Error"
-      })
+      {:ok, execution} =
+        Executions.fail_execution(execution, %{
+          status_code: 500,
+          error_message: "Error"
+        })
 
       execution = Executions.get_execution_with_job(execution.id)
 
@@ -189,11 +206,14 @@ defmodule Prikke.NotificationsTest do
       Process.sleep(100)
 
       emails = collect_emails()
-      failure_emails = Enum.filter(emails, fn email ->
-        String.contains?(email.subject, "Job failed")
-      end)
 
-      assert failure_emails == [], "Expected no failure emails, but got: #{length(failure_emails)}"
+      failure_emails =
+        Enum.filter(emails, fn email ->
+          String.contains?(email.subject, "Job failed")
+        end)
+
+      assert failure_emails == [],
+             "Expected no failure emails, but got: #{length(failure_emails)}"
     end
   end
 

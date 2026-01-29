@@ -71,9 +71,11 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
     ~H"""
     <div class="max-w-4xl mx-auto py-6 sm:py-8 px-4">
       <div class="mb-4 sm:mb-6">
-        <.link navigate={~p"/jobs/#{@job.id}"} class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1">
-          <.icon name="hero-chevron-left" class="w-4 h-4" />
-          Back to <%= @job.name %>
+        <.link
+          navigate={~p"/jobs/#{@job.id}"}
+          class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
+        >
+          <.icon name="hero-chevron-left" class="w-4 h-4" /> Back to {@job.name}
         </.link>
       </div>
 
@@ -86,7 +88,7 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
                 <.status_badge status={@execution.status} />
               </div>
               <p class="text-sm text-slate-500 mt-1">
-                Scheduled for <%= format_datetime(@execution.scheduled_for) %>
+                Scheduled for {format_datetime(@execution.scheduled_for)}
               </p>
             </div>
             <%= if @execution.status in ["failed", "timeout", "missed"] do %>
@@ -94,8 +96,7 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
                 phx-click="retry"
                 class="px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-md hover:bg-emerald-600 transition-colors flex items-center gap-2"
               >
-                <.icon name="hero-arrow-path" class="w-4 h-4" />
-                Retry Now
+                <.icon name="hero-arrow-path" class="w-4 h-4" /> Retry Now
               </button>
             <% end %>
           </div>
@@ -108,30 +109,40 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
             <div class="bg-slate-50 rounded-lg p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
                 <span class="text-xs text-slate-500 uppercase">Scheduled For</span>
-                <p class="text-slate-900 text-sm font-mono"><%= format_datetime(@execution.scheduled_for) %></p>
+                <p class="text-slate-900 text-sm font-mono">
+                  {format_datetime(@execution.scheduled_for)}
+                </p>
               </div>
               <div>
                 <span class="text-xs text-slate-500 uppercase">Started At</span>
-                <p class="text-slate-900 text-sm font-mono"><%= format_datetime(@execution.started_at) %></p>
+                <p class="text-slate-900 text-sm font-mono">
+                  {format_datetime(@execution.started_at)}
+                </p>
               </div>
               <div>
                 <span class="text-xs text-slate-500 uppercase">Finished At</span>
-                <p class="text-slate-900 text-sm font-mono"><%= format_datetime(@execution.finished_at) %></p>
+                <p class="text-slate-900 text-sm font-mono">
+                  {format_datetime(@execution.finished_at)}
+                </p>
               </div>
               <div>
                 <span class="text-xs text-slate-500 uppercase">Duration</span>
-                <p class="text-slate-900 text-sm font-medium"><%= format_duration(@execution.duration_ms) %></p>
+                <p class="text-slate-900 text-sm font-medium">
+                  {format_duration(@execution.duration_ms)}
+                </p>
               </div>
             </div>
           </div>
-
-          <!-- Request Details -->
+          
+    <!-- Request Details -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Request</h3>
             <div class="bg-slate-50 rounded-lg p-3 sm:p-4 space-y-3">
               <div class="flex items-start sm:items-center gap-2 flex-col sm:flex-row">
-                <span class="font-mono text-sm bg-slate-200 px-2 py-1 rounded font-medium shrink-0"><%= @job.method %></span>
-                <code class="text-sm text-slate-700 break-all"><%= @job.url %></code>
+                <span class="font-mono text-sm bg-slate-200 px-2 py-1 rounded font-medium shrink-0">
+                  {@job.method}
+                </span>
+                <code class="text-sm text-slate-700 break-all">{@job.url}</code>
               </div>
               <%= if @job.headers && @job.headers != %{} do %>
                 <div>
@@ -147,8 +158,8 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
               <% end %>
             </div>
           </div>
-
-          <!-- Response Details -->
+          
+    <!-- Response Details -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Response</h3>
             <div class="bg-slate-50 rounded-lg p-3 sm:p-4 space-y-3">
@@ -160,13 +171,13 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
                       "text-lg font-mono font-bold",
                       status_code_color(@execution.status_code)
                     ]}>
-                      <%= @execution.status_code %>
+                      {@execution.status_code}
                     </p>
                   </div>
                 <% end %>
                 <div>
                   <span class="text-xs text-slate-500 uppercase">Attempt</span>
-                  <p class="text-lg font-medium text-slate-900"><%= @execution.attempt %></p>
+                  <p class="text-lg font-medium text-slate-900">{@execution.attempt}</p>
                 </div>
               </div>
 
@@ -174,7 +185,7 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
                 <div>
                   <span class="text-xs text-slate-500 uppercase">Error Message</span>
                   <div class="bg-red-50 border border-red-200 rounded p-3 mt-1">
-                    <p class="text-red-700 text-sm"><%= @execution.error_message %></p>
+                    <p class="text-red-700 text-sm">{@execution.error_message}</p>
                   </div>
                 </div>
               <% end %>
@@ -192,26 +203,26 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
               <% end %>
             </div>
           </div>
-
-          <!-- Metadata -->
+          
+    <!-- Metadata -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Metadata</h3>
             <div class="bg-slate-50 rounded-lg p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
                 <span class="text-xs text-slate-500 uppercase">Execution ID</span>
-                <p class="font-mono text-slate-700 text-xs break-all"><%= @execution.id %></p>
+                <p class="font-mono text-slate-700 text-xs break-all">{@execution.id}</p>
               </div>
               <div>
                 <span class="text-xs text-slate-500 uppercase">Job ID</span>
-                <p class="font-mono text-slate-700 text-xs break-all"><%= @job.id %></p>
+                <p class="font-mono text-slate-700 text-xs break-all">{@job.id}</p>
               </div>
               <div>
                 <span class="text-xs text-slate-500 uppercase">Created At</span>
-                <p class="text-slate-700"><%= format_datetime(@execution.inserted_at) %></p>
+                <p class="text-slate-700">{format_datetime(@execution.inserted_at)}</p>
               </div>
               <div>
                 <span class="text-xs text-slate-500 uppercase">Job Name</span>
-                <p class="text-slate-700"><%= @job.name %></p>
+                <p class="text-slate-700">{@job.name}</p>
               </div>
             </div>
           </div>
@@ -227,7 +238,7 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
       "text-xs font-medium px-2 py-0.5 rounded",
       status_badge_class(@status)
     ]}>
-      <%= status_label(@status) %>
+      {status_label(@status)}
     </span>
     """
   end
@@ -254,6 +265,7 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
   defp status_code_color(_), do: "text-red-600"
 
   defp format_datetime(nil), do: "—"
+
   defp format_datetime(datetime) do
     Calendar.strftime(datetime, "%Y-%m-%d %H:%M:%S UTC")
   end
@@ -270,5 +282,6 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
       {:error, _} -> body
     end
   end
+
   defp format_response_body(_), do: ""
 end

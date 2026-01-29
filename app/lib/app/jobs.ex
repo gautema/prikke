@@ -11,8 +11,18 @@ defmodule Prikke.Jobs do
 
   # Tier limits
   @tier_limits %{
-    "free" => %{max_jobs: 5, min_interval_minutes: 60, max_monthly_executions: 5_000, retention_days: 7},
-    "pro" => %{max_jobs: :unlimited, min_interval_minutes: 1, max_monthly_executions: 250_000, retention_days: 30}
+    "free" => %{
+      max_jobs: 5,
+      min_interval_minutes: 60,
+      max_monthly_executions: 5_000,
+      retention_days: 7
+    },
+    "pro" => %{
+      max_jobs: :unlimited,
+      min_interval_minutes: 1,
+      max_monthly_executions: 250_000,
+      retention_days: 30
+    }
   }
 
   def tier_limits, do: @tier_limits
@@ -150,12 +160,18 @@ defmodule Prikke.Jobs do
       {:error, :job_limit_reached} ->
         {:error,
          changeset
-         |> Ecto.Changeset.add_error(:base, "You've reached the maximum number of jobs for your plan (#{get_tier_limits(org.tier).max_jobs}). Upgrade to Pro for unlimited jobs.")}
+         |> Ecto.Changeset.add_error(
+           :base,
+           "You've reached the maximum number of jobs for your plan (#{get_tier_limits(org.tier).max_jobs}). Upgrade to Pro for unlimited jobs."
+         )}
 
       {:error, :interval_too_frequent} ->
         {:error,
          changeset
-         |> Ecto.Changeset.add_error(:cron_expression, "Free plan only allows hourly or less frequent schedules. Upgrade to Pro for per-minute scheduling.")}
+         |> Ecto.Changeset.add_error(
+           :cron_expression,
+           "Free plan only allows hourly or less frequent schedules. Upgrade to Pro for per-minute scheduling."
+         )}
 
       {:error, %Ecto.Changeset{}} = error ->
         error
@@ -166,7 +182,9 @@ defmodule Prikke.Jobs do
     limits = get_tier_limits(tier)
 
     case limits.max_jobs do
-      :unlimited -> :ok
+      :unlimited ->
+        :ok
+
       max when is_integer(max) ->
         if count_jobs(org) < max, do: :ok, else: {:error, :job_limit_reached}
     end
@@ -220,12 +238,16 @@ defmodule Prikke.Jobs do
         due_soon = DateTime.diff(job.next_run_at, DateTime.utc_now()) <= 60
         if just_enabled || due_soon, do: notify_scheduler()
       end
+
       {:ok, job}
     else
       {:error, :interval_too_frequent} ->
         {:error,
          changeset
-         |> Ecto.Changeset.add_error(:cron_expression, "Free plan only allows hourly or less frequent schedules. Upgrade to Pro for per-minute scheduling.")}
+         |> Ecto.Changeset.add_error(
+           :cron_expression,
+           "Free plan only allows hourly or less frequent schedules. Upgrade to Pro for per-minute scheduling."
+         )}
 
       {:error, %Ecto.Changeset{}} = error ->
         error

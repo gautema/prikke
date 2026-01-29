@@ -655,11 +655,13 @@ defmodule Prikke.Accounts do
 
         result =
           %OrganizationInvite{}
-          |> OrganizationInvite.changeset(Map.merge(attrs, %{
-            token: hashed_token,
-            organization_id: organization.id,
-            invited_by_id: invited_by.id
-          }))
+          |> OrganizationInvite.changeset(
+            Map.merge(attrs, %{
+              token: hashed_token,
+              organization_id: organization.id,
+              invited_by_id: invited_by.id
+            })
+          )
           |> Repo.insert()
 
         case result do
@@ -671,7 +673,10 @@ defmodule Prikke.Accounts do
         changeset =
           %OrganizationInvite{}
           |> OrganizationInvite.changeset(attrs)
-          |> Ecto.Changeset.add_error(:base, "You've reached the maximum number of team members for your plan (#{get_tier_limits(organization.tier).max_members}). Upgrade to Pro for unlimited team members.")
+          |> Ecto.Changeset.add_error(
+            :base,
+            "You've reached the maximum number of team members for your plan (#{get_tier_limits(organization.tier).max_members}). Upgrade to Pro for unlimited team members."
+          )
 
         {:error, changeset}
     end

@@ -80,18 +80,23 @@ defmodule PrikkeWeb.DashboardLive do
           <h1 class="text-2xl font-bold text-slate-900">Dashboard</h1>
           <%= if @current_organization do %>
             <div class="flex items-center gap-2 mt-1">
-              <span class="text-slate-500"><%= @current_organization.name %></span>
+              <span class="text-slate-500">{@current_organization.name}</span>
               <span class="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
-                <%= String.capitalize(@current_organization.tier) %>
+                {String.capitalize(@current_organization.tier)}
               </span>
               <%= if length(@organizations) > 1 do %>
                 <span class="text-slate-300">·</span>
-                <a href={~p"/organizations"} class="text-sm text-emerald-600 hover:underline">Switch</a>
+                <a href={~p"/organizations"} class="text-sm text-emerald-600 hover:underline">
+                  Switch
+                </a>
               <% end %>
             </div>
           <% else %>
             <p class="text-slate-500 mt-1">
-              <a href={~p"/organizations/new"} class="text-emerald-600 hover:underline">Create an organization</a> to get started
+              <a href={~p"/organizations/new"} class="text-emerald-600 hover:underline">
+                Create an organization
+              </a>
+              to get started
             </p>
           <% end %>
         </div>
@@ -105,26 +110,29 @@ defmodule PrikkeWeb.DashboardLive do
       <%= if @current_organization do %>
         <!-- Quick Stats -->
         <div class="grid grid-cols-3 gap-4 mb-4">
-          <.link navigate={~p"/jobs"} class="bg-white border border-slate-200 rounded-lg p-6 hover:border-slate-300 transition-colors">
+          <.link
+            navigate={~p"/jobs"}
+            class="bg-white border border-slate-200 rounded-lg p-6 hover:border-slate-300 transition-colors"
+          >
             <div class="text-sm font-medium text-slate-500 mb-1">Active Jobs</div>
-            <div class="text-3xl font-bold text-slate-900"><%= @stats.active_jobs %></div>
+            <div class="text-3xl font-bold text-slate-900">{@stats.active_jobs}</div>
           </.link>
           <div class="bg-white border border-slate-200 rounded-lg p-6">
             <div class="text-sm font-medium text-slate-500 mb-1">Executions Today</div>
-            <div class="text-3xl font-bold text-slate-900"><%= @stats.executions_today %></div>
+            <div class="text-3xl font-bold text-slate-900">{@stats.executions_today}</div>
           </div>
           <div class="bg-white border border-slate-200 rounded-lg p-6">
             <div class="text-sm font-medium text-slate-500 mb-1">Success Rate</div>
-            <div class="text-3xl font-bold text-emerald-500"><%= @stats.success_rate %></div>
+            <div class="text-3xl font-bold text-emerald-500">{@stats.success_rate}</div>
           </div>
         </div>
-
-        <!-- Monthly Usage -->
+        
+    <!-- Monthly Usage -->
         <div class="bg-white border border-slate-200 rounded-lg p-4 mb-8">
           <div class="flex justify-between items-center mb-2">
             <span class="text-sm font-medium text-slate-600">Monthly Executions</span>
             <span class="text-sm text-slate-500">
-              <%= format_number(@stats.monthly_executions) %> / <%= format_number(@stats.monthly_limit) %>
+              {format_number(@stats.monthly_executions)} / {format_number(@stats.monthly_limit)}
             </span>
           </div>
           <div class="w-full bg-slate-100 rounded-full h-2">
@@ -140,20 +148,24 @@ defmodule PrikkeWeb.DashboardLive do
           <%= if usage_percent(@stats.monthly_executions, @stats.monthly_limit) >= 80 do %>
             <p class={[
               "text-xs mt-2",
-              if(usage_percent(@stats.monthly_executions, @stats.monthly_limit) >= 100, do: "text-red-600", else: "text-amber-600")
+              if(usage_percent(@stats.monthly_executions, @stats.monthly_limit) >= 100,
+                do: "text-red-600",
+                else: "text-amber-600"
+              )
             ]}>
               <%= if usage_percent(@stats.monthly_executions, @stats.monthly_limit) >= 100 do %>
                 Monthly limit reached. Jobs will be skipped until next month.
                 <.link navigate={~p"/organizations/settings"} class="underline">Upgrade to Pro</.link>
               <% else %>
                 Approaching monthly limit.
-                <.link navigate={~p"/organizations/settings"} class="underline">Upgrade to Pro</.link> for 250k executions.
+                <.link navigate={~p"/organizations/settings"} class="underline">Upgrade to Pro</.link>
+                for 250k executions.
               <% end %>
             </p>
           <% end %>
         </div>
-
-        <!-- Jobs Section -->
+        
+    <!-- Jobs Section -->
         <div class="bg-white border border-slate-200 rounded-lg">
           <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
             <h2 class="text-lg font-semibold text-slate-900">Jobs</h2>
@@ -162,8 +174,7 @@ defmodule PrikkeWeb.DashboardLive do
                 navigate={~p"/queue"}
                 class="text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-md transition-colors no-underline flex items-center gap-1.5"
               >
-                <.icon name="hero-bolt" class="w-4 h-4" />
-                Queue
+                <.icon name="hero-bolt" class="w-4 h-4" /> Queue
               </.link>
               <.link
                 navigate={~p"/jobs/new"}
@@ -180,27 +191,32 @@ defmodule PrikkeWeb.DashboardLive do
               </div>
               <h3 class="text-lg font-medium text-slate-900 mb-1">No jobs yet</h3>
               <p class="text-slate-500 mb-4">Create your first scheduled job to get started.</p>
-              <.link navigate={~p"/jobs/new"} class="text-emerald-600 font-medium hover:underline">Create a job →</.link>
+              <.link navigate={~p"/jobs/new"} class="text-emerald-600 font-medium hover:underline">
+                Create a job →
+              </.link>
             </div>
           <% else %>
             <div class="divide-y divide-slate-200">
               <%= for job <- @recent_jobs do %>
-                <.link navigate={~p"/jobs/#{job.id}"} class="block px-6 py-4 hover:bg-slate-50 transition-colors">
+                <.link
+                  navigate={~p"/jobs/#{job.id}"}
+                  class="block px-6 py-4 hover:bg-slate-50 transition-colors"
+                >
                   <div class="flex items-center justify-between">
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-2">
                         <.execution_status_dot status={get_status(@latest_statuses[job.id])} />
-                        <span class="font-medium text-slate-900 truncate"><%= job.name %></span>
+                        <span class="font-medium text-slate-900 truncate">{job.name}</span>
                         <.job_status_badge job={job} latest_info={@latest_statuses[job.id]} />
                       </div>
                       <div class="text-sm text-slate-500 mt-0.5 flex items-center gap-2">
-                        <span class="font-mono text-xs"><%= job.method %></span>
-                        <span class="truncate"><%= job.url %></span>
+                        <span class="font-mono text-xs">{job.method}</span>
+                        <span class="truncate">{job.url}</span>
                       </div>
                     </div>
                     <div class="text-xs text-slate-400 ml-4">
                       <%= if job.schedule_type == "cron" do %>
-                        <span class="font-mono"><%= job.cron_expression %></span>
+                        <span class="font-mono">{job.cron_expression}</span>
                       <% else %>
                         One-time
                       <% end %>
@@ -212,14 +228,14 @@ defmodule PrikkeWeb.DashboardLive do
             <%= if @stats.total_jobs > 5 do %>
               <div class="px-6 py-3 border-t border-slate-200 text-center">
                 <.link navigate={~p"/jobs"} class="text-sm text-emerald-600 hover:underline">
-                  View all <%= @stats.total_jobs %> jobs →
+                  View all {@stats.total_jobs} jobs →
                 </.link>
               </div>
             <% end %>
           <% end %>
         </div>
-
-        <!-- Recent Executions -->
+        
+    <!-- Recent Executions -->
         <div class="bg-white border border-slate-200 rounded-lg mt-6">
           <div class="px-6 py-4 border-b border-slate-200">
             <h2 class="text-lg font-semibold text-slate-900">Recent Executions</h2>
@@ -231,23 +247,26 @@ defmodule PrikkeWeb.DashboardLive do
           <% else %>
             <div class="divide-y divide-slate-200">
               <%= for execution <- @recent_executions do %>
-                <.link navigate={~p"/jobs/#{execution.job_id}"} class="block px-6 py-3 hover:bg-slate-50 transition-colors">
+                <.link
+                  navigate={~p"/jobs/#{execution.job_id}"}
+                  class="block px-6 py-3 hover:bg-slate-50 transition-colors"
+                >
                   <div class="flex items-center justify-between">
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-2">
                         <.status_badge status={execution.status} />
-                        <span class="font-medium text-slate-900 truncate"><%= execution.job.name %></span>
+                        <span class="font-medium text-slate-900 truncate">{execution.job.name}</span>
                       </div>
                       <div class="text-sm text-slate-500 mt-0.5">
                         <%= if execution.duration_ms do %>
-                          <span><%= format_duration(execution.duration_ms) %></span>
+                          <span>{format_duration(execution.duration_ms)}</span>
                           <span class="mx-1">·</span>
                         <% end %>
                         <%= if execution.status_code do %>
-                          <span class="font-mono text-xs"><%= execution.status_code %></span>
+                          <span class="font-mono text-xs">{execution.status_code}</span>
                           <span class="mx-1">·</span>
                         <% end %>
-                        <span><%= format_time(execution.scheduled_for) %></span>
+                        <span>{format_time(execution.scheduled_for)}</span>
                       </div>
                     </div>
                   </div>
@@ -264,7 +283,10 @@ defmodule PrikkeWeb.DashboardLive do
           </div>
           <h3 class="text-lg font-medium text-slate-900 mb-1">Create your first organization</h3>
           <p class="text-slate-500 mb-6">Organizations help you manage jobs and team members.</p>
-          <a href={~p"/organizations/new"} class="inline-block px-6 py-3 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors no-underline">
+          <a
+            href={~p"/organizations/new"}
+            class="inline-block px-6 py-3 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors no-underline"
+          >
             Create Organization
           </a>
         </div>
@@ -275,7 +297,15 @@ defmodule PrikkeWeb.DashboardLive do
     """
   end
 
-  defp load_stats(nil), do: %{active_jobs: 0, total_jobs: 0, executions_today: 0, success_rate: "—", monthly_executions: 0, monthly_limit: 0}
+  defp load_stats(nil),
+    do: %{
+      active_jobs: 0,
+      total_jobs: 0,
+      executions_today: 0,
+      success_rate: "—",
+      monthly_executions: 0,
+      monthly_limit: 0
+    }
 
   defp load_stats(organization) do
     exec_stats = Executions.get_today_stats(organization)
@@ -295,6 +325,7 @@ defmodule PrikkeWeb.DashboardLive do
   end
 
   defp calculate_success_rate(%{total: 0}), do: "—"
+
   defp calculate_success_rate(%{total: total, success: success}) do
     rate = round(success / total * 100)
     "#{rate}%"
@@ -309,6 +340,7 @@ defmodule PrikkeWeb.DashboardLive do
 
   defp usage_bar_color(current, limit) do
     percent = usage_percent(current, limit)
+
     cond do
       percent >= 100 -> "bg-red-500"
       percent >= 80 -> "bg-amber-500"
@@ -337,7 +369,8 @@ defmodule PrikkeWeb.DashboardLive do
   defp get_attempt(%{attempt: attempt}), do: attempt
 
   defp job_completed?(job, latest_info) do
-    job.schedule_type == "once" and is_nil(job.next_run_at) and get_status(latest_info) == "success"
+    job.schedule_type == "once" and is_nil(job.next_run_at) and
+      get_status(latest_info) == "success"
   end
 
   defp job_status_badge(assigns) do
@@ -349,17 +382,25 @@ defmodule PrikkeWeb.DashboardLive do
     ~H"""
     <%= cond do %>
       <% job_completed?(@job, @latest_info) -> %>
-        <span class="text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600">Completed</span>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+          Completed
+        </span>
       <% @job.schedule_type == "once" and @status in ["failed", "timeout"] -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-red-100 text-red-700">Failed</span>
       <% @job.schedule_type == "once" and @status in ["pending", "running"] and @attempt > 1 -> %>
-        <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">Retrying (<%= @attempt %>/<%= @job.retry_attempts %>)</span>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">
+          Retrying ({@attempt}/{@job.retry_attempts})
+        </span>
       <% @job.schedule_type == "once" and @status in ["pending", "running"] -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-blue-100 text-blue-700">Running</span>
       <% @job.enabled -> %>
-        <span class="text-xs font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">Active</span>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
+          Active
+        </span>
       <% true -> %>
-        <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">Paused</span>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">
+          Paused
+        </span>
     <% end %>
     """
   end
@@ -397,7 +438,7 @@ defmodule PrikkeWeb.DashboardLive do
       "text-xs font-medium px-2 py-0.5 rounded",
       status_badge_class(@status)
     ]}>
-      <%= status_label(@status) %>
+      {status_label(@status)}
     </span>
     """
   end
@@ -424,6 +465,7 @@ defmodule PrikkeWeb.DashboardLive do
   defp format_duration(ms), do: "#{Float.round(ms / 60_000, 1)}m"
 
   defp format_time(nil), do: ""
+
   defp format_time(datetime) do
     now = DateTime.utc_now()
     diff = DateTime.diff(now, datetime, :second)

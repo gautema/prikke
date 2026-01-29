@@ -4,16 +4,23 @@
       <h1 class="text-2xl font-bold text-slate-900">Dashboard</h1>
       <%= if @current_organization do %>
         <div class="flex items-center gap-2 mt-1">
-          <span class="text-slate-500"><%= @current_organization.name %></span>
-          <span class="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded"><%= String.capitalize(@current_organization.tier) %></span>
+          <span class="text-slate-500">{@current_organization.name}</span>
+          <span class="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
+            {String.capitalize(@current_organization.tier)}
+          </span>
           <%= if length(@organizations) > 1 do %>
             <span class="text-slate-300">·</span>
-            <a href={~p"/organizations"} class="text-sm text-emerald-600 hover:underline">Switch</a>
+            <a href={~p"/organizations"} class="text-sm text-emerald-600 hover:underline">
+              Switch
+            </a>
           <% end %>
         </div>
       <% else %>
         <p class="text-slate-500 mt-1">
-          <a href={~p"/organizations/new"} class="text-emerald-600 hover:underline">Create an organization</a> to get started
+          <a href={~p"/organizations/new"} class="text-emerald-600 hover:underline">
+            Create an organization
+          </a>
+          to get started
         </p>
       <% end %>
     </div>
@@ -40,12 +47,15 @@
         <div class="text-3xl font-bold text-emerald-500">—</div>
       </div>
     </div>
-
-    <!-- Jobs Section -->
+    
+<!-- Jobs Section -->
     <div class="bg-white border border-slate-200 rounded-lg">
       <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
         <h2 class="text-lg font-semibold text-slate-900">Jobs</h2>
-        <a href="#" class="text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors no-underline">
+        <a
+          href="#"
+          class="text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors no-underline"
+        >
           New Job
         </a>
       </div>
@@ -58,8 +68,8 @@
         <a href="#" class="text-emerald-600 font-medium hover:underline">Create a job →</a>
       </div>
     </div>
-
-    <!-- Recent Executions -->
+    
+<!-- Recent Executions -->
     <div class="bg-white border border-slate-200 rounded-lg mt-6">
       <div class="px-6 py-4 border-b border-slate-200">
         <h2 class="text-lg font-semibold text-slate-900">Recent Executions</h2>
@@ -76,7 +86,10 @@
       </div>
       <h3 class="text-lg font-medium text-slate-900 mb-1">Create your first organization</h3>
       <p class="text-slate-500 mb-6">Organizations help you manage jobs and team members.</p>
-      <a href={~p"/organizations/new"} class="inline-block px-6 py-3 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors no-underline">
+      <a
+        href={~p"/organizations/new"}
+        class="inline-block px-6 py-3 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors no-underline"
+      >
         Create Organization
       </a>
     </div>

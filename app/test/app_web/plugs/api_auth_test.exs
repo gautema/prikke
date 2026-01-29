@@ -31,9 +31,10 @@ defmodule PrikkeWeb.Plugs.ApiAuthTest do
 
       assert conn.status == 401
       assert conn.halted
+
       assert Jason.decode!(conn.resp_body) == %{
-        "error" => %{"code" => "unauthorized", "message" => "Invalid or missing API key"}
-      }
+               "error" => %{"code" => "unauthorized", "message" => "Invalid or missing API key"}
+             }
     end
 
     test "returns 401 with invalid API key format", %{conn: conn} do

@@ -92,5 +92,4 @@ config :phoenix_live_view,
 config :swoosh, :api_client, false
 
 # Configure mailer for development (admin notifications go to Swoosh mailbox)
-config :app, Prikke.Mailer,
-  admin_email: "admin@localhost"
+config :app, Prikke.Mailer, admin_email: "admin@localhost"

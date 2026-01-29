@@ -134,7 +134,9 @@ defmodule Prikke.Cleanup do
       end)
 
     if total_executions > 0 or total_jobs > 0 do
-      Logger.info("[Cleanup] Deleted #{total_executions} executions, #{total_jobs} completed one-time jobs")
+      Logger.info(
+        "[Cleanup] Deleted #{total_executions} executions, #{total_jobs} completed one-time jobs"
+      )
     else
       Logger.info("[Cleanup] Nothing to clean up")
     end

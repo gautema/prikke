@@ -5,10 +5,18 @@
   <div class="space-y-6">
     <div class="bg-white border border-slate-200 rounded-lg p-6">
       <div class="flex items-start gap-4">
-        <span class="flex-shrink-0 w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-semibold text-sm">1</span>
+        <span class="flex-shrink-0 w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-semibold text-sm">
+          1
+        </span>
         <div class="flex-1">
           <h3 class="text-lg font-semibold text-slate-900 m-0">Create an account</h3>
-          <p class="text-slate-600 mt-2 mb-0">Sign up at <a href="https://prikke.whitenoise.no" class="text-emerald-600 hover:underline">prikke.whitenoise.no</a> with your email. No credit card required for the free tier.</p>
+          <p class="text-slate-600 mt-2 mb-0">
+            Sign up at
+            <a href="https://prikke.whitenoise.no" class="text-emerald-600 hover:underline">
+              prikke.whitenoise.no
+            </a>
+            with your email. No credit card required for the free tier.
+          </p>
         </div>
       </div>
     </div>
@@ -16,10 +24,14 @@
     <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
       <div class="p-6">
         <div class="flex items-start gap-4">
-          <span class="flex-shrink-0 w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-semibold text-sm">2</span>
+          <span class="flex-shrink-0 w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-semibold text-sm">
+            2
+          </span>
           <div class="flex-1">
             <h3 class="text-lg font-semibold text-slate-900 m-0">Get your API key</h3>
-            <p class="text-slate-600 mt-2 mb-0">Go to Settings → API Keys and create a new key. Keep this safe - the secret part is only shown once.</p>
+            <p class="text-slate-600 mt-2 mb-0">
+              Go to Settings → API Keys and create a new key. Keep this safe - the secret part is only shown once.
+            </p>
           </div>
         </div>
       </div>
@@ -29,14 +41,21 @@
     <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
       <div class="p-6">
         <div class="flex items-start gap-4">
-          <span class="flex-shrink-0 w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-semibold text-sm">3</span>
+          <span class="flex-shrink-0 w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-semibold text-sm">
+            3
+          </span>
           <div class="flex-1">
             <h3 class="text-lg font-semibold text-slate-900 m-0">Create your first job</h3>
-            <p class="text-slate-600 mt-2 mb-0">Schedule a recurring job that calls your endpoint every hour:</p>
+            <p class="text-slate-600 mt-2 mb-0">
+              Schedule a recurring job that calls your endpoint every hour:
+            </p>
           </div>
         </div>
       </div>
-      <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://prikke.whitenoise.no/api/jobs \
+      <pre
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl -X POST https://prikke.whitenoise.no/api/jobs \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
@@ -49,14 +68,21 @@
     <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
       <div class="p-6">
         <div class="flex items-start gap-4">
-          <span class="flex-shrink-0 w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-semibold text-sm">4</span>
+          <span class="flex-shrink-0 w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-semibold text-sm">
+            4
+          </span>
           <div class="flex-1">
             <h3 class="text-lg font-semibold text-slate-900 m-0">Create your endpoint</h3>
-            <p class="text-slate-600 mt-2 mb-0">Prikke will POST to your URL. Just return a 2xx status:</p>
+            <p class="text-slate-600 mt-2 mb-0">
+              Prikke will POST to your URL. Just return a 2xx status:
+            </p>
           </div>
         </div>
       </div>
-      <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-slate-500">// Next.js API route example</span>
+      <pre
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-slate-500">// Next.js API route example</span>
 <span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(request) {
   <span class="text-slate-500">// Do your work here</span>
   <span class="text-purple-300">await</span> syncData();
@@ -68,7 +94,9 @@
 
   <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg my-8">
     <strong class="text-emerald-800">That's it!</strong>
-    <span class="text-emerald-700">Prikke will call your endpoint on schedule, retry on failures, and alert you if something goes wrong.</span>
+    <span class="text-emerald-700">
+      Prikke will call your endpoint on schedule, retry on failures, and alert you if something goes wrong.
+    </span>
   </div>
 
   <h2>What's next?</h2>

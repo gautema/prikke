@@ -34,6 +34,7 @@ defmodule Prikke.WorkerSupervisor do
       restart: :transient,
       shutdown: @shutdown_timeout
     }
+
     DynamicSupervisor.start_child(__MODULE__, child_spec)
   end
 

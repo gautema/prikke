@@ -16,19 +16,69 @@ defmodule PrikkeWeb.Schemas do
         id: %Schema{type: :string, format: :uuid, description: "Job ID"},
         name: %Schema{type: :string, description: "Job name"},
         url: %Schema{type: :string, format: :uri, description: "Webhook URL to call"},
-        method: %Schema{type: :string, enum: ["GET", "POST", "PUT", "PATCH", "DELETE"], default: "GET"},
-        headers: %Schema{type: :object, additionalProperties: %Schema{type: :string}, description: "HTTP headers"},
-        body: %Schema{type: :string, nullable: true, description: "Request body (for POST/PUT/PATCH)"},
-        schedule_type: %Schema{type: :string, enum: ["cron", "once"], description: "Schedule type"},
-        cron_expression: %Schema{type: :string, nullable: true, description: "Cron expression (for cron jobs)"},
-        scheduled_at: %Schema{type: :string, format: :"date-time", nullable: true, description: "Scheduled time (for one-time jobs)"},
-        timezone: %Schema{type: :string, default: "UTC", description: "Timezone for cron expression"},
+        method: %Schema{
+          type: :string,
+          enum: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+          default: "GET"
+        },
+        headers: %Schema{
+          type: :object,
+          additionalProperties: %Schema{type: :string},
+          description: "HTTP headers"
+        },
+        body: %Schema{
+          type: :string,
+          nullable: true,
+          description: "Request body (for POST/PUT/PATCH)"
+        },
+        schedule_type: %Schema{
+          type: :string,
+          enum: ["cron", "once"],
+          description: "Schedule type"
+        },
+        cron_expression: %Schema{
+          type: :string,
+          nullable: true,
+          description: "Cron expression (for cron jobs)"
+        },
+        scheduled_at: %Schema{
+          type: :string,
+          format: :"date-time",
+          nullable: true,
+          description: "Scheduled time (for one-time jobs)"
+        },
+        timezone: %Schema{
+          type: :string,
+          default: "UTC",
+          description: "Timezone for cron expression"
+        },
         enabled: %Schema{type: :boolean, default: true, description: "Whether the job is enabled"},
-        timeout_ms: %Schema{type: :integer, default: 30000, description: "Request timeout in milliseconds"},
-        retry_attempts: %Schema{type: :integer, default: 3, description: "Number of retry attempts for one-time jobs"},
-        next_run_at: %Schema{type: :string, format: :"date-time", nullable: true, description: "Next scheduled run time"},
-        inserted_at: %Schema{type: :string, format: :"date-time", description: "Creation timestamp"},
-        updated_at: %Schema{type: :string, format: :"date-time", description: "Last update timestamp"}
+        timeout_ms: %Schema{
+          type: :integer,
+          default: 30000,
+          description: "Request timeout in milliseconds"
+        },
+        retry_attempts: %Schema{
+          type: :integer,
+          default: 3,
+          description: "Number of retry attempts for one-time jobs"
+        },
+        next_run_at: %Schema{
+          type: :string,
+          format: :"date-time",
+          nullable: true,
+          description: "Next scheduled run time"
+        },
+        inserted_at: %Schema{
+          type: :string,
+          format: :"date-time",
+          description: "Creation timestamp"
+        },
+        updated_at: %Schema{
+          type: :string,
+          format: :"date-time",
+          description: "Last update timestamp"
+        }
       },
       example: %{
         id: "019c0123-4567-7890-abcd-ef1234567890",
@@ -61,12 +111,25 @@ defmodule PrikkeWeb.Schemas do
       properties: %{
         name: %Schema{type: :string, description: "Job name"},
         url: %Schema{type: :string, format: :uri, description: "Webhook URL to call"},
-        method: %Schema{type: :string, enum: ["GET", "POST", "PUT", "PATCH", "DELETE"], default: "GET"},
+        method: %Schema{
+          type: :string,
+          enum: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+          default: "GET"
+        },
         headers: %Schema{type: :object, additionalProperties: %Schema{type: :string}},
         body: %Schema{type: :string, nullable: true},
         schedule_type: %Schema{type: :string, enum: ["cron", "once"]},
-        cron_expression: %Schema{type: :string, nullable: true, description: "Required for cron jobs"},
-        scheduled_at: %Schema{type: :string, format: :"date-time", nullable: true, description: "Required for one-time jobs"},
+        cron_expression: %Schema{
+          type: :string,
+          nullable: true,
+          description: "Required for cron jobs"
+        },
+        scheduled_at: %Schema{
+          type: :string,
+          format: :"date-time",
+          nullable: true,
+          description: "Required for one-time jobs"
+        },
         timezone: %Schema{type: :string, default: "UTC"},
         enabled: %Schema{type: :boolean, default: true},
         timeout_ms: %Schema{type: :integer, default: 30000},
@@ -117,7 +180,10 @@ defmodule PrikkeWeb.Schemas do
       type: :object,
       properties: %{
         id: %Schema{type: :string, format: :uuid},
-        status: %Schema{type: :string, enum: ["pending", "running", "success", "failed", "timeout"]},
+        status: %Schema{
+          type: :string,
+          enum: ["pending", "running", "success", "failed", "timeout"]
+        },
         scheduled_for: %Schema{type: :string, format: :"date-time"},
         started_at: %Schema{type: :string, format: :"date-time", nullable: true},
         finished_at: %Schema{type: :string, format: :"date-time", nullable: true},
@@ -173,12 +239,26 @@ defmodule PrikkeWeb.Schemas do
       required: [:jobs],
       properties: %{
         jobs: %Schema{type: :array, items: JobRequest, description: "List of jobs to sync"},
-        delete_removed: %Schema{type: :boolean, default: false, description: "Delete jobs not in the list"}
+        delete_removed: %Schema{
+          type: :boolean,
+          default: false,
+          description: "Delete jobs not in the list"
+        }
       },
       example: %{
         jobs: [
-          %{name: "Job A", url: "https://example.com/a", schedule_type: "cron", cron_expression: "0 * * * *"},
-          %{name: "Job B", url: "https://example.com/b", schedule_type: "cron", cron_expression: "0 0 * * *"}
+          %{
+            name: "Job A",
+            url: "https://example.com/a",
+            schedule_type: "cron",
+            cron_expression: "0 * * * *"
+          },
+          %{
+            name: "Job B",
+            url: "https://example.com/b",
+            schedule_type: "cron",
+            cron_expression: "0 0 * * *"
+          }
         ],
         delete_removed: false
       }
@@ -219,11 +299,24 @@ defmodule PrikkeWeb.Schemas do
       required: [:url],
       properties: %{
         url: %Schema{type: :string, format: :uri, description: "Webhook URL to call"},
-        method: %Schema{type: :string, enum: ["GET", "POST", "PUT", "PATCH", "DELETE"], default: "POST", description: "HTTP method"},
-        headers: %Schema{type: :object, additionalProperties: %Schema{type: :string}, description: "HTTP headers"},
+        method: %Schema{
+          type: :string,
+          enum: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+          default: "POST",
+          description: "HTTP method"
+        },
+        headers: %Schema{
+          type: :object,
+          additionalProperties: %Schema{type: :string},
+          description: "HTTP headers"
+        },
         body: %Schema{type: :string, nullable: true, description: "Request body"},
         name: %Schema{type: :string, nullable: true, description: "Optional name for the job"},
-        timeout_ms: %Schema{type: :integer, default: 30000, description: "Request timeout in milliseconds"}
+        timeout_ms: %Schema{
+          type: :integer,
+          default: 30000,
+          description: "Request timeout in milliseconds"
+        }
       },
       example: %{
         url: "https://example.com/api/webhook",
@@ -246,9 +339,17 @@ defmodule PrikkeWeb.Schemas do
           type: :object,
           properties: %{
             job_id: %Schema{type: :string, format: :uuid, description: "Created job ID"},
-            execution_id: %Schema{type: :string, format: :uuid, description: "Pending execution ID"},
+            execution_id: %Schema{
+              type: :string,
+              format: :uuid,
+              description: "Pending execution ID"
+            },
             status: %Schema{type: :string, description: "Execution status (pending)"},
-            scheduled_for: %Schema{type: :string, format: :"date-time", description: "Scheduled execution time"}
+            scheduled_for: %Schema{
+              type: :string,
+              format: :"date-time",
+              description: "Scheduled execution time"
+            }
           }
         },
         message: %Schema{type: :string}

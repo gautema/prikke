@@ -4,15 +4,20 @@
       <h1 class="text-2xl font-bold text-slate-900">Account Settings</h1>
       <p class="text-slate-500 mt-1">Manage your account email address and password settings</p>
     </div>
-
-    <!-- Change Email -->
+    
+<!-- Change Email -->
     <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
       <h2 class="text-lg font-semibold text-slate-900 mb-4">Email</h2>
       <.form for={@email_form} action={~p"/users/settings"} id="update_email" class="space-y-4">
         <input type="hidden" name="action" value="update_email" />
 
         <div>
-          <label for={@email_form[:email].id} class="block text-sm font-medium text-slate-700 mb-1">Email address</label>
+          <label
+            for={@email_form[:email].id}
+            class="block text-sm font-medium text-slate-700 mb-1"
+          >
+            Email address
+          </label>
           <input
             type="email"
             name={@email_form[:email].name}
@@ -27,20 +32,33 @@
           <% end %>
         </div>
 
-        <button type="submit" class="py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors">
+        <button
+          type="submit"
+          class="py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors"
+        >
           Change Email
         </button>
       </.form>
     </div>
-
-    <!-- Change Password -->
+    
+<!-- Change Password -->
     <div class="bg-white border border-slate-200 rounded-lg p-6">
       <h2 class="text-lg font-semibold text-slate-900 mb-4">Password</h2>
-      <.form for={@password_form} action={~p"/users/settings"} id="update_password" class="space-y-4">
+      <.form
+        for={@password_form}
+        action={~p"/users/settings"}
+        id="update_password"
+        class="space-y-4"
+      >
         <input type="hidden" name="action" value="update_password" />
 
         <div>
-          <label for={@password_form[:password].id} class="block text-sm font-medium text-slate-700 mb-1">New password</label>
+          <label
+            for={@password_form[:password].id}
+            class="block text-sm font-medium text-slate-700 mb-1"
+          >
+            New password
+          </label>
           <input
             type="password"
             name={@password_form[:password].name}
@@ -55,7 +73,12 @@
         </div>
 
         <div>
-          <label for={@password_form[:password_confirmation].id} class="block text-sm font-medium text-slate-700 mb-1">Confirm new password</label>
+          <label
+            for={@password_form[:password_confirmation].id}
+            class="block text-sm font-medium text-slate-700 mb-1"
+          >
+            Confirm new password
+          </label>
           <input
             type="password"
             name={@password_form[:password_confirmation].name}
@@ -69,7 +92,10 @@
           <% end %>
         </div>
 
-        <button type="submit" class="py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors">
+        <button
+          type="submit"
+          class="py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors"
+        >
           Save Password
         </button>
       </.form>

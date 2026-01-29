@@ -11,12 +11,14 @@ defmodule Prikke.ExecutionsTest do
     setup do
       user = user_fixture()
       {:ok, org} = Accounts.create_organization(user, %{name: "Test Org", slug: "test-org"})
-      {:ok, job} = Jobs.create_job(org, %{
-        name: "Test Job",
-        url: "https://example.com/webhook",
-        schedule_type: "cron",
-        cron_expression: "0 * * * *"
-      })
+
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Test Job",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *"
+        })
 
       %{user: user, organization: org, job: job}
     end
@@ -24,10 +26,11 @@ defmodule Prikke.ExecutionsTest do
     test "create_execution/1 creates a pending execution", %{job: job} do
       scheduled_for = DateTime.utc_now()
 
-      assert {:ok, execution} = Executions.create_execution(%{
-        job_id: job.id,
-        scheduled_for: scheduled_for
-      })
+      assert {:ok, execution} =
+               Executions.create_execution(%{
+                 job_id: job.id,
+                 scheduled_for: scheduled_for
+               })
 
       assert execution.job_id == job.id
       assert execution.status == "pending"
@@ -83,11 +86,12 @@ defmodule Prikke.ExecutionsTest do
       {:ok, _execution} = Executions.create_execution_for_job(job, past)
       {:ok, running} = Executions.claim_next_execution()
 
-      assert {:ok, completed} = Executions.complete_execution(running, %{
-        status_code: 200,
-        response_body: "OK",
-        duration_ms: 150
-      })
+      assert {:ok, completed} =
+               Executions.complete_execution(running, %{
+                 status_code: 200,
+                 response_body: "OK",
+                 duration_ms: 150
+               })
 
       assert completed.status == "success"
       assert completed.status_code == 200
@@ -100,10 +104,11 @@ defmodule Prikke.ExecutionsTest do
       {:ok, _execution} = Executions.create_execution_for_job(job, past)
       {:ok, running} = Executions.claim_next_execution()
 
-      assert {:ok, failed} = Executions.fail_execution(running, %{
-        status_code: 500,
-        error_message: "Internal Server Error"
-      })
+      assert {:ok, failed} =
+               Executions.fail_execution(running, %{
+                 status_code: 500,
+                 error_message: "Internal Server Error"
+               })
 
       assert failed.status == "failed"
       assert failed.status_code == 500
@@ -129,7 +134,10 @@ defmodule Prikke.ExecutionsTest do
       assert length(executions) == 2
     end
 
-    test "list_organization_executions/2 returns executions for org", %{organization: org, job: job} do
+    test "list_organization_executions/2 returns executions for org", %{
+      organization: org,
+      job: job
+    } do
       {:ok, _exec} = Executions.create_execution_for_job(job, DateTime.utc_now())
 
       executions = Executions.list_organization_executions(org)
@@ -158,7 +166,10 @@ defmodule Prikke.ExecutionsTest do
       assert stats.pending == 1
     end
 
-    test "get_organization_stats/2 returns org execution statistics", %{organization: org, job: job} do
+    test "get_organization_stats/2 returns org execution statistics", %{
+      organization: org,
+      job: job
+    } do
       past = DateTime.add(DateTime.utc_now(), -60, :second)
       {:ok, _exec} = Executions.create_execution_for_job(job, past)
       {:ok, running} = Executions.claim_next_execution()
@@ -169,7 +180,10 @@ defmodule Prikke.ExecutionsTest do
       assert stats.success == 1
     end
 
-    test "count_monthly_executions/3 counts completed executions in a month", %{organization: org, job: job} do
+    test "count_monthly_executions/3 counts completed executions in a month", %{
+      organization: org,
+      job: job
+    } do
       now = DateTime.utc_now()
       past = DateTime.add(now, -60, :second)
 

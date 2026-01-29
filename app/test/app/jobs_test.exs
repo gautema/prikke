@@ -224,7 +224,9 @@ defmodule Prikke.JobsTest do
       }
 
       assert {:error, changeset} = Jobs.create_job(org, attrs)
-      assert "Free plan only allows hourly or less frequent schedules" <> _ = hd(errors_on(changeset).cron_expression)
+
+      assert "Free plan only allows hourly or less frequent schedules" <> _ =
+               hd(errors_on(changeset).cron_expression)
     end
 
     test "free tier allows hourly cron jobs" do
@@ -247,12 +249,13 @@ defmodule Prikke.JobsTest do
 
       # Create max number of jobs
       for i <- 1..limits.max_jobs do
-        {:ok, _} = Jobs.create_job(org, %{
-          name: "Job #{i}",
-          url: "https://example.com/webhook",
-          schedule_type: "cron",
-          cron_expression: "0 * * * *"
-        })
+        {:ok, _} =
+          Jobs.create_job(org, %{
+            name: "Job #{i}",
+            url: "https://example.com/webhook",
+            schedule_type: "cron",
+            cron_expression: "0 * * * *"
+          })
       end
 
       # Next job should fail
@@ -286,12 +289,13 @@ defmodule Prikke.JobsTest do
 
       # Create more than free tier limit
       for i <- 1..7 do
-        {:ok, _} = Jobs.create_job(org, %{
-          name: "Job #{i}",
-          url: "https://example.com/webhook",
-          schedule_type: "cron",
-          cron_expression: "* * * * *"
-        })
+        {:ok, _} =
+          Jobs.create_job(org, %{
+            name: "Job #{i}",
+            url: "https://example.com/webhook",
+            schedule_type: "cron",
+            cron_expression: "* * * * *"
+          })
       end
 
       assert Jobs.count_jobs(org) == 7
@@ -340,7 +344,9 @@ defmodule Prikke.JobsTest do
 
       # Try to update to per-minute cron
       assert {:error, changeset} = Jobs.update_job(org, job, %{cron_expression: "* * * * *"})
-      assert "Free plan only allows hourly or less frequent schedules" <> _ = hd(errors_on(changeset).cron_expression)
+
+      assert "Free plan only allows hourly or less frequent schedules" <> _ =
+               hd(errors_on(changeset).cron_expression)
 
       # Job should be unchanged
       unchanged_job = Jobs.get_job!(org, job.id)
@@ -415,36 +421,42 @@ defmodule Prikke.JobsTest do
   describe "interval_minutes calculation" do
     test "every minute cron (pro tier)" do
       org = organization_fixture(tier: "pro")
-      {:ok, job} = Jobs.create_job(org, %{
-        name: "Every Minute",
-        url: "https://example.com/webhook",
-        schedule_type: "cron",
-        cron_expression: "* * * * *"
-      })
+
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Every Minute",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "* * * * *"
+        })
 
       assert job.interval_minutes == 1
     end
 
     test "hourly cron" do
       org = organization_fixture()
-      {:ok, job} = Jobs.create_job(org, %{
-        name: "Hourly",
-        url: "https://example.com/webhook",
-        schedule_type: "cron",
-        cron_expression: "0 * * * *"
-      })
+
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Hourly",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *"
+        })
 
       assert job.interval_minutes == 60
     end
 
     test "daily cron" do
       org = organization_fixture()
-      {:ok, job} = Jobs.create_job(org, %{
-        name: "Daily",
-        url: "https://example.com/webhook",
-        schedule_type: "cron",
-        cron_expression: "0 9 * * *"
-      })
+
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Daily",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 9 * * *"
+        })
 
       assert job.interval_minutes == 24 * 60
     end

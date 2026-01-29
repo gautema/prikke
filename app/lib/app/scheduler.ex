@@ -185,11 +185,12 @@ defmodule Prikke.Scheduler do
   def handle_call(:tick, _from, state) do
     state = maybe_acquire_lock(state)
 
-    result = if state.has_lock do
-      schedule_due_jobs()
-    else
-      {:ok, 0}
-    end
+    result =
+      if state.has_lock do
+        schedule_due_jobs()
+      else
+        {:ok, 0}
+      end
 
     {:reply, result, state}
   end
@@ -295,21 +296,22 @@ defmodule Prikke.Scheduler do
   # For one-time jobs, this is just the single scheduled time.
   # Only includes times AFTER the job was created (no backfill for new jobs).
   defp compute_missed_run_times(job, now) do
-    times = case job.schedule_type do
-      "cron" ->
-        compute_missed_cron_times(job, now, [])
+    times =
+      case job.schedule_type do
+        "cron" ->
+          compute_missed_cron_times(job, now, [])
 
-      "once" ->
-        # One-time jobs have only one run time
-        if job.next_run_at && DateTime.compare(job.next_run_at, now) != :gt do
-          [job.next_run_at]
-        else
+        "once" ->
+          # One-time jobs have only one run time
+          if job.next_run_at && DateTime.compare(job.next_run_at, now) != :gt do
+            [job.next_run_at]
+          else
+            []
+          end
+
+        _ ->
           []
-        end
-
-      _ ->
-        []
-    end
+      end
 
     # Filter out any times before the job was created
     # This prevents backfilling missed executions for newly created jobs
@@ -377,16 +379,24 @@ defmodule Prikke.Scheduler do
       scheduled_for ->
         if within_grace_period?(job, scheduled_for, now) and within_monthly_limit?(job) do
           case Executions.create_execution_for_job(job, scheduled_for) do
-            {:ok, _} -> :ok
+            {:ok, _} ->
+              :ok
+
             {:error, reason} ->
-              Logger.error("[Scheduler] Failed to create execution for job #{job.id}: #{inspect(reason)}")
+              Logger.error(
+                "[Scheduler] Failed to create execution for job #{job.id}: #{inspect(reason)}"
+              )
+
               :error
           end
         else
           # Past grace period or over monthly limit - mark as missed
           if not within_monthly_limit?(job) do
-            Logger.warning("[Scheduler] Job #{job.id} skipped - monthly limit reached for org #{job.organization_id}")
+            Logger.warning(
+              "[Scheduler] Job #{job.id} skipped - monthly limit reached for org #{job.organization_id}"
+            )
           end
+
           Executions.create_missed_execution(job, scheduled_for)
           :skipped
         end
@@ -395,6 +405,7 @@ defmodule Prikke.Scheduler do
 
   # Splits a list into all elements except the last, and the last element.
   defp split_last([]), do: {[], nil}
+
   defp split_last(list) do
     {Enum.drop(list, -1), List.last(list)}
   end
@@ -418,9 +429,12 @@ defmodule Prikke.Scheduler do
   # Computes grace period in seconds based on job interval.
   # 50% of interval, minimum 30 seconds, maximum 1 hour.
   defp compute_grace_period_seconds(interval_minutes) do
-    grace = interval_minutes * 30  # 50% of interval in seconds
-    grace = max(grace, 30)          # Minimum 30 seconds
-    min(grace, 3600)                # Maximum 1 hour
+    # 50% of interval in seconds
+    grace = interval_minutes * 30
+    # Minimum 30 seconds
+    grace = max(grace, 30)
+    # Maximum 1 hour
+    min(grace, 3600)
   end
 
   # Advances the job's next_run_at past all missed times.

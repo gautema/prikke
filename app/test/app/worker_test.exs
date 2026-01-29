@@ -82,11 +82,12 @@ defmodule Prikke.WorkerTest do
       {:ok, claimed} = Executions.claim_next_execution()
 
       # Then complete it
-      {:ok, completed} = Executions.complete_execution(claimed, %{
-        status_code: 200,
-        response_body: "OK",
-        duration_ms: 250
-      })
+      {:ok, completed} =
+        Executions.complete_execution(claimed, %{
+          status_code: 200,
+          response_body: "OK",
+          duration_ms: 250
+        })
 
       assert completed.status == "success"
       assert completed.status_code == 200
@@ -97,10 +98,11 @@ defmodule Prikke.WorkerTest do
     test "fail_execution sets failed status" do
       {:ok, claimed} = Executions.claim_next_execution()
 
-      {:ok, failed} = Executions.fail_execution(claimed, %{
-        status_code: 500,
-        error_message: "Server error"
-      })
+      {:ok, failed} =
+        Executions.fail_execution(claimed, %{
+          status_code: 500,
+          error_message: "Server error"
+        })
 
       assert failed.status == "failed"
       assert failed.status_code == 500

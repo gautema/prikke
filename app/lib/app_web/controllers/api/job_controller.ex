@@ -9,16 +9,17 @@ defmodule PrikkeWeb.Api.JobController do
 
   action_fallback PrikkeWeb.Api.FallbackController
 
-  tags ["Jobs"]
-  security [%{"bearerAuth" => []}]
+  tags(["Jobs"])
+  security([%{"bearerAuth" => []}])
 
-  operation :index,
+  operation(:index,
     summary: "List all jobs",
     description: "Returns all jobs for the authenticated organization",
     responses: [
       ok: {"Jobs list", "application/json", Schemas.JobsResponse},
       unauthorized: {"Unauthorized", "application/json", Schemas.ErrorResponse}
     ]
+  )
 
   def index(conn, _params) do
     org = conn.assigns.current_organization
@@ -26,7 +27,7 @@ defmodule PrikkeWeb.Api.JobController do
     json(conn, %{data: Enum.map(jobs, &job_json/1)})
   end
 
-  operation :show,
+  operation(:show,
     summary: "Get a job",
     description: "Returns a single job by ID",
     parameters: [
@@ -36,6 +37,7 @@ defmodule PrikkeWeb.Api.JobController do
       ok: {"Job", "application/json", Schemas.JobResponse},
       not_found: {"Not found", "application/json", Schemas.ErrorResponse}
     ]
+  )
 
   def show(conn, %{"id" => id}) do
     org = conn.assigns.current_organization
@@ -46,7 +48,7 @@ defmodule PrikkeWeb.Api.JobController do
     end
   end
 
-  operation :create,
+  operation(:create,
     summary: "Create a job",
     description: "Creates a new scheduled job",
     request_body: {"Job parameters", "application/json", Schemas.JobRequest},
@@ -54,6 +56,7 @@ defmodule PrikkeWeb.Api.JobController do
       created: {"Job created", "application/json", Schemas.JobResponse},
       unprocessable_entity: {"Validation error", "application/json", Schemas.ErrorResponse}
     ]
+  )
 
   def create(conn, %{"job" => job_params}) do
     org = conn.assigns.current_organization
@@ -74,11 +77,11 @@ defmodule PrikkeWeb.Api.JobController do
     create(conn, %{"job" => params})
   end
 
-  operation :update,
+  operation(:update,
     summary: "Update a job",
     description: "Updates an existing job",
     parameters: [
-      id: [in: :path, type: :string,  description: "Job ID", required: true]
+      id: [in: :path, type: :string, description: "Job ID", required: true]
     ],
     request_body: {"Job parameters", "application/json", Schemas.JobRequest},
     responses: [
@@ -86,6 +89,7 @@ defmodule PrikkeWeb.Api.JobController do
       not_found: {"Not found", "application/json", Schemas.ErrorResponse},
       unprocessable_entity: {"Validation error", "application/json", Schemas.ErrorResponse}
     ]
+  )
 
   def update(conn, %{"id" => id, "job" => job_params}) do
     org = conn.assigns.current_organization
@@ -108,16 +112,17 @@ defmodule PrikkeWeb.Api.JobController do
     update(conn, %{"id" => id, "job" => job_params})
   end
 
-  operation :delete,
+  operation(:delete,
     summary: "Delete a job",
     description: "Deletes a job and all its execution history",
     parameters: [
-      id: [in: :path, type: :string,  description: "Job ID", required: true]
+      id: [in: :path, type: :string, description: "Job ID", required: true]
     ],
     responses: [
       no_content: "Job deleted",
       not_found: {"Not found", "application/json", Schemas.ErrorResponse}
     ]
+  )
 
   def delete(conn, %{"id" => id}) do
     org = conn.assigns.current_organization
@@ -134,16 +139,17 @@ defmodule PrikkeWeb.Api.JobController do
     end
   end
 
-  operation :trigger,
+  operation(:trigger,
     summary: "Trigger a job",
     description: "Triggers a job to run immediately, creating a pending execution",
     parameters: [
-      job_id: [in: :path, type: :string,  description: "Job ID", required: true]
+      job_id: [in: :path, type: :string, description: "Job ID", required: true]
     ],
     responses: [
       accepted: {"Job triggered", "application/json", Schemas.TriggerResponse},
       not_found: {"Not found", "application/json", Schemas.ErrorResponse}
     ]
+  )
 
   def trigger(conn, params) do
     id = params["id"] || params["job_id"]
@@ -179,17 +185,18 @@ defmodule PrikkeWeb.Api.JobController do
     end
   end
 
-  operation :executions,
+  operation(:executions,
     summary: "Get execution history",
     description: "Returns the execution history for a job",
     parameters: [
-      job_id: [in: :path, type: :string,  description: "Job ID", required: true],
+      job_id: [in: :path, type: :string, description: "Job ID", required: true],
       limit: [in: :query, type: :integer, description: "Maximum results (1-100, default 50)"]
     ],
     responses: [
       ok: {"Executions", "application/json", Schemas.ExecutionsResponse},
       not_found: {"Not found", "application/json", Schemas.ErrorResponse}
     ]
+  )
 
   def executions(conn, params) do
     org = conn.assigns.current_organization
@@ -244,11 +251,13 @@ defmodule PrikkeWeb.Api.JobController do
   end
 
   defp parse_limit(nil, default), do: default
+
   defp parse_limit(val, default) when is_binary(val) do
     case Integer.parse(val) do
       {n, _} when n > 0 and n <= 100 -> n
       _ -> default
     end
   end
+
   defp parse_limit(_, default), do: default
 end

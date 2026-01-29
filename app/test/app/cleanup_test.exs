@@ -19,12 +19,16 @@ defmodule Prikke.CleanupTest do
 
       # Create an old execution (8 days ago - older than free tier's 7 days)
       old_time = DateTime.utc_now() |> DateTime.add(-8, :day) |> DateTime.truncate(:second)
-      {:ok, old_exec} = Executions.create_execution(%{
-        job_id: job.id,
-        scheduled_for: old_time
-      })
+
+      {:ok, old_exec} =
+        Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: old_time
+        })
+
       # Mark it as completed so it has a finished_at
-      {:ok, old_exec} = old_exec
+      {:ok, old_exec} =
+        old_exec
         |> Ecto.Changeset.change(%{
           status: "success",
           started_at: old_time,
@@ -34,11 +38,15 @@ defmodule Prikke.CleanupTest do
 
       # Create a recent execution (1 day ago - within retention)
       recent_time = DateTime.utc_now() |> DateTime.add(-1, :day) |> DateTime.truncate(:second)
-      {:ok, recent_exec} = Executions.create_execution(%{
-        job_id: job.id,
-        scheduled_for: recent_time
-      })
-      {:ok, _recent_exec} = recent_exec
+
+      {:ok, recent_exec} =
+        Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: recent_time
+        })
+
+      {:ok, _recent_exec} =
+        recent_exec
         |> Ecto.Changeset.change(%{
           status: "success",
           started_at: recent_time,
@@ -67,14 +75,20 @@ defmodule Prikke.CleanupTest do
 
       # Create and then backdate to simulate an old completed one-time job
       old_job = job_fixture(org, %{schedule_type: "once", scheduled_at: future})
+
       old_job
       |> Ecto.Changeset.change(%{next_run_at: nil, updated_at: old_time, scheduled_at: old_time})
       |> Prikke.Repo.update!()
 
       # Create and then backdate to simulate a recent completed one-time job
       recent_job = job_fixture(org, %{schedule_type: "once", scheduled_at: future})
+
       recent_job
-      |> Ecto.Changeset.change(%{next_run_at: nil, updated_at: recent_time, scheduled_at: recent_time})
+      |> Ecto.Changeset.change(%{
+        next_run_at: nil,
+        updated_at: recent_time,
+        scheduled_at: recent_time
+      })
       |> Prikke.Repo.update!()
 
       # Create a cron job (should not be deleted)
@@ -96,11 +110,15 @@ defmodule Prikke.CleanupTest do
 
       # Create an execution 15 days ago (within pro's 30 days)
       old_time = DateTime.utc_now() |> DateTime.add(-15, :day) |> DateTime.truncate(:second)
-      {:ok, exec} = Executions.create_execution(%{
-        job_id: job.id,
-        scheduled_for: old_time
-      })
-      {:ok, exec} = exec
+
+      {:ok, exec} =
+        Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: old_time
+        })
+
+      {:ok, exec} =
+        exec
         |> Ecto.Changeset.change(%{
           status: "success",
           started_at: old_time,

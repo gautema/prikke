@@ -19,7 +19,14 @@ defmodule Prikke.Status.StatusCheck do
 
   def changeset(check, attrs) do
     check
-    |> cast(attrs, [:component, :status, :message, :started_at, :last_checked_at, :last_status_change_at])
+    |> cast(attrs, [
+      :component,
+      :status,
+      :message,
+      :started_at,
+      :last_checked_at,
+      :last_status_change_at
+    ])
     |> validate_required([:component, :status, :started_at, :last_checked_at])
     |> validate_inclusion(:component, @components)
     |> validate_inclusion(:status, @statuses)

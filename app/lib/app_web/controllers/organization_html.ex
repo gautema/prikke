@@ -33,6 +33,7 @@ defmodule PrikkeWeb.OrganizationHTML do
 
   def usage_bar_color(current, limit) do
     percent = usage_percent(current, limit)
+
     cond do
       percent >= 100 -> "bg-red-500"
       percent >= 80 -> "bg-amber-500"

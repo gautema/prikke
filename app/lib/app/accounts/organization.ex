@@ -27,7 +27,9 @@ defmodule Prikke.Accounts.Organization do
     |> cast(attrs, [:name, :slug, :tier])
     |> validate_required([:name, :slug])
     |> validate_inclusion(:tier, ["free", "pro"])
-    |> validate_format(:slug, ~r/^[a-z0-9-]+$/, message: "must be lowercase letters, numbers, and hyphens only")
+    |> validate_format(:slug, ~r/^[a-z0-9-]+$/,
+      message: "must be lowercase letters, numbers, and hyphens only"
+    )
     |> validate_length(:slug, min: 3, max: 50)
     |> unique_constraint(:slug, message: "has already been taken")
   end
@@ -44,10 +46,15 @@ defmodule Prikke.Accounts.Organization do
 
   defp validate_webhook_url(changeset) do
     case get_change(changeset, :notification_webhook_url) do
-      nil -> changeset
-      "" -> changeset
+      nil ->
+        changeset
+
+      "" ->
+        changeset
+
       url ->
         uri = URI.parse(url)
+
         if uri.scheme in ["http", "https"] and uri.host do
           changeset
         else

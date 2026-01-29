@@ -23,6 +23,10 @@ defmodule Prikke.Repo.Migrations.CreateExecutions do
     create index(:executions, [:job_id])
     create index(:executions, [:job_id, :scheduled_for])
     create index(:executions, [:status, :scheduled_for])
-    create index(:executions, [:status], where: "status = 'pending'", name: :executions_pending_status_idx)
+
+    create index(:executions, [:status],
+             where: "status = 'pending'",
+             name: :executions_pending_status_idx
+           )
   end
 end

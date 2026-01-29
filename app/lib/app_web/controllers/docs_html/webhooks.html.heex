@@ -1,9 +1,13 @@
 <.docs_layout>
   <h1>Webhooks</h1>
-  <p class="text-xl text-slate-600 mb-10">How we call your endpoints, handle failures, and keep things reliable.</p>
+  <p class="text-xl text-slate-600 mb-10">
+    How we call your endpoints, handle failures, and keep things reliable.
+  </p>
 
   <h2>How It Works</h2>
-  <p>When a job triggers, Prikke makes an HTTP request to your configured URL. Your endpoint processes the request and returns a response.</p>
+  <p>
+    When a job triggers, Prikke makes an HTTP request to your configured URL. Your endpoint processes the request and returns a response.
+  </p>
   <ol>
     <li>Job triggers (cron schedule or one-time)</li>
     <li>Prikke sends HTTP request to your URL</li>
@@ -31,9 +35,18 @@
         </tr>
       </thead>
       <tbody class="text-slate-600">
-        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="text-sky-600">X-Prikke-Job-Id</code></td><td class="py-3 px-4">The ID of the job being executed</td></tr>
-        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="text-sky-600">X-Prikke-Execution-Id</code></td><td class="py-3 px-4">Unique ID for this execution attempt</td></tr>
-        <tr><td class="py-3 px-4"><code class="text-sky-600">X-Prikke-Signature</code></td><td class="py-3 px-4">HMAC signature for verifying authenticity</td></tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-sky-600">X-Prikke-Job-Id</code></td>
+          <td class="py-3 px-4">The ID of the job being executed</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-sky-600">X-Prikke-Execution-Id</code></td>
+          <td class="py-3 px-4">Unique ID for this execution attempt</td>
+        </tr>
+        <tr>
+          <td class="py-3 px-4"><code class="text-sky-600">X-Prikke-Signature</code></td>
+          <td class="py-3 px-4">HMAC signature for verifying authenticity</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -41,8 +54,13 @@
   <h2>Verifying Signatures</h2>
   <p>To ensure requests come from Prikke, verify the signature using your webhook secret:</p>
   <div class="bg-white border border-slate-200 rounded-lg overflow-hidden my-6">
-    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">Node.js</div>
-    <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">const</span> crypto = <span class="text-purple-300">require</span>(<span class="text-green-300">'crypto'</span>);
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      Node.js
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-purple-300">const</span> crypto = <span class="text-purple-300">require</span>(<span class="text-green-300">'crypto'</span>);
 
 <span class="text-purple-300">function</span> <span class="text-sky-300">verifySignature</span>(payload, signature, secret) {
   <span class="text-purple-300">const</span> expected = crypto
@@ -82,23 +100,48 @@ app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; {
         </tr>
       </thead>
       <tbody class="text-slate-600">
-        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="text-emerald-600">2xx</code></td><td class="py-3 px-4">Success</td><td class="py-3 px-4">Job marked complete</td></tr>
-        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="text-amber-600">4xx</code></td><td class="py-3 px-4">Client error</td><td class="py-3 px-4">Job marked failed (no retry)</td></tr>
-        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="text-red-600">5xx</code></td><td class="py-3 px-4">Server error</td><td class="py-3 px-4">Job retried with backoff</td></tr>
-        <tr><td class="py-3 px-4"><code class="text-slate-500">Timeout</code></td><td class="py-3 px-4">Timeout</td><td class="py-3 px-4">Job retried with backoff</td></tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-emerald-600">2xx</code></td>
+          <td class="py-3 px-4">Success</td>
+          <td class="py-3 px-4">Job marked complete</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-amber-600">4xx</code></td>
+          <td class="py-3 px-4">Client error</td>
+          <td class="py-3 px-4">Job marked failed (no retry)</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-red-600">5xx</code></td>
+          <td class="py-3 px-4">Server error</td>
+          <td class="py-3 px-4">Job retried with backoff</td>
+        </tr>
+        <tr>
+          <td class="py-3 px-4"><code class="text-slate-500">Timeout</code></td>
+          <td class="py-3 px-4">Timeout</td>
+          <td class="py-3 px-4">Job retried with backoff</td>
+        </tr>
       </tbody>
     </table>
   </div>
 
   <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg my-6">
-    <strong class="text-emerald-800">Tip:</strong> <span class="text-emerald-700">Return 4xx for permanent failures (bad data, validation errors) and 5xx for temporary failures (database down, external service unavailable).</span>
+    <strong class="text-emerald-800">Tip:</strong>
+    <span class="text-emerald-700">
+      Return 4xx for permanent failures (bad data, validation errors) and 5xx for temporary failures (database down, external service unavailable).
+    </span>
   </div>
 
   <h2>Timeouts</h2>
-  <p>Your endpoint has <strong>30 seconds</strong> to respond. If no response is received within this time, the execution is marked as a timeout and scheduled for retry.</p>
+  <p>
+    Your endpoint has <strong>30 seconds</strong>
+    to respond. If no response is received within this time, the execution is marked as a timeout and scheduled for retry.
+  </p>
 
   <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg my-6">
-    <strong class="text-amber-800">Long-running tasks:</strong> <span class="text-amber-700">If your job takes longer than 30 seconds, acknowledge the request immediately and process asynchronously. Return 200 to indicate the job was accepted.</span>
+    <strong class="text-amber-800">Long-running tasks:</strong>
+    <span class="text-amber-700">
+      If your job takes longer than 30 seconds, acknowledge the request immediately and process asynchronously. Return 200 to indicate the job was accepted.
+    </span>
   </div>
 
   <h2>Automatic Retries</h2>
@@ -115,35 +158,69 @@ app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; {
         </tr>
       </thead>
       <tbody class="text-slate-600">
-        <tr class="border-b border-slate-100"><td class="py-3 px-4">1st retry</td><td class="py-3 px-4">1 minute</td></tr>
-        <tr class="border-b border-slate-100"><td class="py-3 px-4">2nd retry</td><td class="py-3 px-4">5 minutes</td></tr>
-        <tr class="border-b border-slate-100"><td class="py-3 px-4">3rd retry</td><td class="py-3 px-4">30 minutes</td></tr>
-        <tr class="border-b border-slate-100"><td class="py-3 px-4">4th retry</td><td class="py-3 px-4">2 hours</td></tr>
-        <tr><td class="py-3 px-4">5th retry</td><td class="py-3 px-4">8 hours</td></tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4">1st retry</td>
+          <td class="py-3 px-4">1 minute</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4">2nd retry</td>
+          <td class="py-3 px-4">5 minutes</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4">3rd retry</td>
+          <td class="py-3 px-4">30 minutes</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4">4th retry</td>
+          <td class="py-3 px-4">2 hours</td>
+        </tr>
+        <tr>
+          <td class="py-3 px-4">5th retry</td>
+          <td class="py-3 px-4">8 hours</td>
+        </tr>
       </tbody>
     </table>
   </div>
-  <p>After 5 failed attempts, the job is marked as permanently failed and you'll receive an alert (if configured).</p>
+  <p>
+    After 5 failed attempts, the job is marked as permanently failed and you'll receive an alert (if configured).
+  </p>
 
   <h3>Recurring Jobs (cron)</h3>
-  <p>Cron jobs do <strong>not</strong> retry. If a scheduled run fails, the next scheduled run will execute as normal. This prevents retry storms and duplicate executions.</p>
+  <p>
+    Cron jobs do <strong>not</strong>
+    retry. If a scheduled run fails, the next scheduled run will execute as normal. This prevents retry storms and duplicate executions.
+  </p>
 
   <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg my-6">
-    <strong class="text-emerald-800">Why no retries for cron?</strong> <span class="text-emerald-700">A minute-interval cron with 5 retries would create chaos - by the time retries finish, hundreds of scheduled runs would have stacked up. The next scheduled run is effectively your retry.</span>
+    <strong class="text-emerald-800">Why no retries for cron?</strong>
+    <span class="text-emerald-700">
+      A minute-interval cron with 5 retries would create chaos - by the time retries finish, hundreds of scheduled runs would have stacked up. The next scheduled run is effectively your retry.
+    </span>
   </div>
 
   <h2>Idempotency</h2>
-  <p>Your webhook handler should be <strong>idempotent</strong> - safe to call multiple times with the same data. This is important because:</p>
+  <p>
+    Your webhook handler should be <strong>idempotent</strong>
+    - safe to call multiple times with the same data. This is important because:
+  </p>
   <ul>
     <li>Network issues may cause duplicate deliveries</li>
     <li>Retries will re-send the same request</li>
     <li>A timeout might occur after your server processed the request</li>
   </ul>
 
-  <p>Use the <code class="bg-slate-100 px-2 py-1 rounded text-sm">X-Prikke-Execution-Id</code> header to deduplicate:</p>
+  <p>
+    Use the <code class="bg-slate-100 px-2 py-1 rounded text-sm">X-Prikke-Execution-Id</code>
+    header to deduplicate:
+  </p>
   <div class="bg-white border border-slate-200 rounded-lg overflow-hidden my-6">
-    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">Deduplication Example</div>
-    <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-slate-500">// Track processed executions</span>
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      Deduplication Example
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500">// Track processed executions</span>
 <span class="text-purple-300">const</span> processed = <span class="text-purple-300">new</span> Set(); <span class="text-slate-500">// Use Redis in production</span>
 
 app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purple-300">async</span> (req, res) =&gt; {
@@ -163,7 +240,10 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
 
   <h2>Custom Headers</h2>
   <p>You can configure custom headers when creating a job:</p>
-  <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://prikke.whitenoise.no/api/jobs \
+  <pre
+    phx-no-curly-interpolation
+    class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto"
+  >curl -X POST https://prikke.whitenoise.no/api/jobs \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{

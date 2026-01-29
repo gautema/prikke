@@ -4,28 +4,47 @@
       <h1 class="text-2xl font-bold text-slate-900">Organization Settings</h1>
       <p class="text-slate-500 mt-1">Manage {@organization.name}</p>
     </div>
-
-    <!-- Tabs -->
+    
+<!-- Tabs -->
     <div class="flex gap-4 mb-6 border-b border-slate-200">
-      <a href={~p"/organizations/settings"} class="pb-3 px-1 text-sm font-medium text-emerald-600 border-b-2 border-emerald-500">
+      <a
+        href={~p"/organizations/settings"}
+        class="pb-3 px-1 text-sm font-medium text-emerald-600 border-b-2 border-emerald-500"
+      >
         General
       </a>
-      <a href={~p"/organizations/members"} class="pb-3 px-1 text-sm font-medium text-slate-500 hover:text-slate-700">
+      <a
+        href={~p"/organizations/members"}
+        class="pb-3 px-1 text-sm font-medium text-slate-500 hover:text-slate-700"
+      >
         Members
       </a>
-      <a href={~p"/organizations/notifications"} class="pb-3 px-1 text-sm font-medium text-slate-500 hover:text-slate-700">
+      <a
+        href={~p"/organizations/notifications"}
+        class="pb-3 px-1 text-sm font-medium text-slate-500 hover:text-slate-700"
+      >
         Notifications
       </a>
-      <a href={~p"/organizations/api-keys"} class="pb-3 px-1 text-sm font-medium text-slate-500 hover:text-slate-700">
+      <a
+        href={~p"/organizations/api-keys"}
+        class="pb-3 px-1 text-sm font-medium text-slate-500 hover:text-slate-700"
+      >
         API Keys
       </a>
     </div>
 
     <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
       <h2 class="text-lg font-semibold text-slate-900 mb-4">General</h2>
-      <.form for={@form} action={~p"/organizations/settings"} id="org-settings-form" class="space-y-4">
+      <.form
+        for={@form}
+        action={~p"/organizations/settings"}
+        id="org-settings-form"
+        class="space-y-4"
+      >
         <div>
-          <label for={@form[:name].id} class="block text-sm font-medium text-slate-700 mb-1">Organization Name</label>
+          <label for={@form[:name].id} class="block text-sm font-medium text-slate-700 mb-1">
+            Organization Name
+          </label>
           <input
             type="text"
             name={@form[:name].name}
@@ -40,7 +59,9 @@
         </div>
 
         <div>
-          <label for={@form[:slug].id} class="block text-sm font-medium text-slate-700 mb-1">URL Slug</label>
+          <label for={@form[:slug].id} class="block text-sm font-medium text-slate-700 mb-1">
+            URL Slug
+          </label>
           <input
             type="text"
             name={@form[:slug].name}
@@ -54,7 +75,10 @@
           <% end %>
         </div>
 
-        <button type="submit" class="py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors">
+        <button
+          type="submit"
+          class="py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors"
+        >
           Save Changes
         </button>
       </.form>
@@ -65,12 +89,14 @@
       <p class="text-slate-600 mb-4">
         Current plan: <span class="font-medium">{String.capitalize(@organization.tier)}</span>
       </p>
-
-      <!-- Usage -->
+      
+<!-- Usage -->
       <div class="mb-4">
         <div class="flex justify-between items-center text-sm mb-1">
           <span class="text-slate-600">Monthly Executions</span>
-          <span class="text-slate-500">{format_number(@monthly_executions)} / {format_number(@monthly_limit)}</span>
+          <span class="text-slate-500">
+            {format_number(@monthly_executions)} / {format_number(@monthly_limit)}
+          </span>
         </div>
         <div class="w-full bg-slate-100 rounded-full h-2">
           <div
@@ -83,7 +109,9 @@
           </div>
         </div>
         <%= if usage_percent(@monthly_executions, @monthly_limit) >= 100 do %>
-          <p class="text-xs text-red-600 mt-1">Monthly limit reached. Jobs will be skipped until next month.</p>
+          <p class="text-xs text-red-600 mt-1">
+            Monthly limit reached. Jobs will be skipped until next month.
+          </p>
         <% end %>
       </div>
 

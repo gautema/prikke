@@ -42,10 +42,10 @@ defmodule PrikkeWeb.Api.SyncController do
 
   action_fallback PrikkeWeb.Api.FallbackController
 
-  tags ["Sync"]
-  security [%{"bearerAuth" => []}]
+  tags(["Sync"])
+  security([%{"bearerAuth" => []}])
 
-  operation :sync,
+  operation(:sync,
     summary: "Sync jobs declaratively",
     description: """
     Declarative job synchronization. Jobs are matched by name:
@@ -61,14 +61,16 @@ defmodule PrikkeWeb.Api.SyncController do
       bad_request: {"Bad request", "application/json", Schemas.ErrorResponse},
       unprocessable_entity: {"Validation error", "application/json", Schemas.ErrorResponse}
     ]
+  )
 
   def sync(conn, %{"jobs" => jobs_params} = params) when is_list(jobs_params) do
     org = conn.assigns.current_organization
     delete_removed = params["delete_removed"] == true
 
-    result = Repo.transaction(fn ->
-      sync_jobs(org, jobs_params, delete_removed)
-    end)
+    result =
+      Repo.transaction(fn ->
+        sync_jobs(org, jobs_params, delete_removed)
+      end)
 
     case result do
       {:ok, summary} ->
@@ -104,15 +106,23 @@ defmodule PrikkeWeb.Api.SyncController do
             nil ->
               # Create new job
               case Jobs.create_job(org, job_params) do
-                {:ok, job} -> {[job.name | created], updated, errors}
-                {:error, changeset} -> {created, updated, [%{name: name, error: format_changeset_error(changeset)} | errors]}
+                {:ok, job} ->
+                  {[job.name | created], updated, errors}
+
+                {:error, changeset} ->
+                  {created, updated,
+                   [%{name: name, error: format_changeset_error(changeset)} | errors]}
               end
 
             existing_job ->
               # Update existing job
               case Jobs.update_job(org, existing_job, job_params) do
-                {:ok, _job} -> {created, [name | updated], errors}
-                {:error, changeset} -> {created, updated, [%{name: name, error: format_changeset_error(changeset)} | errors]}
+                {:ok, _job} ->
+                  {created, [name | updated], errors}
+
+                {:error, changeset} ->
+                  {created, updated,
+                   [%{name: name, error: format_changeset_error(changeset)} | errors]}
               end
           end
         end
@@ -160,9 +170,15 @@ defmodule PrikkeWeb.Api.SyncController do
 
   defp format_summary_message(summary) do
     parts = []
-    parts = if summary.created_count > 0, do: ["#{summary.created_count} created" | parts], else: parts
-    parts = if summary.updated_count > 0, do: ["#{summary.updated_count} updated" | parts], else: parts
-    parts = if summary.deleted_count > 0, do: ["#{summary.deleted_count} deleted" | parts], else: parts
+
+    parts =
+      if summary.created_count > 0, do: ["#{summary.created_count} created" | parts], else: parts
+
+    parts =
+      if summary.updated_count > 0, do: ["#{summary.updated_count} updated" | parts], else: parts
+
+    parts =
+      if summary.deleted_count > 0, do: ["#{summary.deleted_count} deleted" | parts], else: parts
 
     case parts do
       [] -> "No changes"

@@ -97,6 +97,7 @@ defmodule PrikkeWeb.QueueLive do
 
       {:error, %Ecto.Changeset{} = changeset} ->
         errors = format_errors(changeset)
+
         {:noreply,
          socket
          |> put_flash(:error, "Could not queue request: #{errors}")}
@@ -143,9 +144,11 @@ defmodule PrikkeWeb.QueueLive do
     ~H"""
     <div class="max-w-2xl mx-auto py-8 px-4">
       <div class="mb-6">
-        <.link navigate={~p"/dashboard"} class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1">
-          <.icon name="hero-chevron-left" class="w-4 h-4" />
-          Back to Dashboard
+        <.link
+          navigate={~p"/dashboard"}
+          class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
+        >
+          <.icon name="hero-chevron-left" class="w-4 h-4" /> Back to Dashboard
         </.link>
       </div>
 
@@ -160,15 +163,21 @@ defmodule PrikkeWeb.QueueLive do
             <.icon name="hero-check-circle" class="w-6 h-6 text-emerald-500 mt-0.5" />
             <div class="flex-1">
               <h3 class="font-semibold text-emerald-800">Request Queued</h3>
-              <p class="text-sm text-emerald-700 mt-1">Your request has been queued and will execute within seconds.</p>
+              <p class="text-sm text-emerald-700 mt-1">
+                Your request has been queued and will execute within seconds.
+              </p>
               <div class="mt-4 space-y-2 text-sm">
                 <div class="flex gap-2">
                   <span class="text-emerald-600 font-medium">Job ID:</span>
-                  <code class="text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded text-xs"><%= @result.job.id %></code>
+                  <code class="text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded text-xs">
+                    {@result.job.id}
+                  </code>
                 </div>
                 <div class="flex gap-2">
                   <span class="text-emerald-600 font-medium">Execution ID:</span>
-                  <code class="text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded text-xs"><%= @result.execution.id %></code>
+                  <code class="text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded text-xs">
+                    {@result.execution.id}
+                  </code>
                 </div>
               </div>
               <div class="mt-4 flex gap-3">
@@ -209,8 +218,14 @@ defmodule PrikkeWeb.QueueLive do
             </div>
 
             <div>
-              <label for="queue_method" class="block text-sm font-medium text-slate-700 mb-1">Method</label>
-              <.input field={@form[:method]} type="select" options={["GET", "POST", "PUT", "PATCH", "DELETE"]} />
+              <label for="queue_method" class="block text-sm font-medium text-slate-700 mb-1">
+                Method
+              </label>
+              <.input
+                field={@form[:method]}
+                type="select"
+                options={["GET", "POST", "PUT", "PATCH", "DELETE"]}
+              />
             </div>
 
             <div>
@@ -248,7 +263,9 @@ defmodule PrikkeWeb.QueueLive do
                 type="text"
                 placeholder="My webhook test"
               />
-              <p class="text-xs text-slate-500 mt-1">Optional label for easier identification in history.</p>
+              <p class="text-xs text-slate-500 mt-1">
+                Optional label for easier identification in history.
+              </p>
             </div>
           </div>
 
@@ -257,8 +274,7 @@ defmodule PrikkeWeb.QueueLive do
               type="submit"
               class="px-6 py-2.5 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors flex items-center gap-2"
             >
-              <.icon name="hero-bolt" class="w-5 h-5" />
-              Queue Now
+              <.icon name="hero-bolt" class="w-5 h-5" /> Queue Now
             </button>
           </div>
         </.form>

@@ -17,7 +17,9 @@ defmodule Prikke.Repo.Migrations.CreateOrganizations do
       add :id, :binary_id, primary_key: true
       add :role, :string, null: false, default: "member"
       add :user_id, references(:users, type: :binary_id, on_delete: :delete_all), null: false
-      add :organization_id, references(:organizations, type: :binary_id, on_delete: :delete_all), null: false
+
+      add :organization_id, references(:organizations, type: :binary_id, on_delete: :delete_all),
+        null: false
 
       timestamps(type: :utc_datetime)
     end
@@ -32,7 +34,10 @@ defmodule Prikke.Repo.Migrations.CreateOrganizations do
       add :key_id, :string, null: false
       add :key_hash, :string, null: false
       add :last_used_at, :utc_datetime
-      add :organization_id, references(:organizations, type: :binary_id, on_delete: :delete_all), null: false
+
+      add :organization_id, references(:organizations, type: :binary_id, on_delete: :delete_all),
+        null: false
+
       add :created_by_id, references(:users, type: :binary_id, on_delete: :nilify_all)
 
       timestamps(type: :utc_datetime)

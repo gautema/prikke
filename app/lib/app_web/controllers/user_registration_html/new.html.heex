@@ -2,13 +2,16 @@
   <div class="max-w-[400px] mx-auto px-6">
     <!-- Header -->
     <header class="py-6 flex justify-center">
-      <a href="/" class="flex items-center gap-2.5 text-xl font-semibold text-slate-900 no-underline">
+      <a
+        href="/"
+        class="flex items-center gap-2.5 text-xl font-semibold text-slate-900 no-underline"
+      >
         <div class="w-4 h-4 bg-emerald-500 rounded-full"></div>
         prikke
       </a>
     </header>
-
-    <!-- Register Form -->
+    
+<!-- Register Form -->
     <div class="py-12">
       <div class="bg-white border border-slate-200 rounded-lg p-8">
         <h1 class="text-2xl font-bold text-slate-900 text-center mb-2">Create your account</h1>
@@ -16,7 +19,9 @@
 
         <.form for={@form} action={~p"/users/register"} id="registration-form" class="space-y-4">
           <div>
-            <label for={@form[:email].id} class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+            <label for={@form[:email].id} class="block text-sm font-medium text-slate-700 mb-1">
+              Email
+            </label>
             <input
               type="email"
               name={@form[:email].name}
@@ -33,14 +38,19 @@
             <% end %>
           </div>
 
-          <button type="submit" class="w-full py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors">
+          <button
+            type="submit"
+            class="w-full py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors"
+          >
             Create account
           </button>
         </.form>
 
         <p class="mt-6 text-center text-sm text-slate-500">
           Already have an account?
-          <a href={~p"/users/log-in"} class="text-emerald-600 font-medium hover:underline">Log in</a>
+          <a href={~p"/users/log-in"} class="text-emerald-600 font-medium hover:underline">
+            Log in
+          </a>
         </p>
       </div>
 

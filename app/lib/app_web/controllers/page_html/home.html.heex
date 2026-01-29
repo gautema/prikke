@@ -3,7 +3,10 @@
     <%= unless @current_scope do %>
       <!-- Header (landing page only) -->
       <header class="py-6 flex justify-between items-center">
-        <a href="/" class="flex items-center gap-2.5 text-xl font-semibold text-slate-900 no-underline">
+        <a
+          href="/"
+          class="flex items-center gap-2.5 text-xl font-semibold text-slate-900 no-underline"
+        >
           <div class="w-4 h-4 bg-emerald-500 rounded-full"></div>
           prikke
         </a>
@@ -13,44 +16,70 @@
         </button>
         <!-- Desktop nav -->
         <nav class="hidden sm:flex items-center gap-6">
-          <a href="/docs" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">Docs</a>
-          <a href="/status" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">Status</a>
+          <a href="/docs" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">
+            Docs
+          </a>
+          <a href="/status" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">
+            Status
+          </a>
           <span class="w-px h-4 bg-slate-300"></span>
-          <a href="/users/register" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">Register</a>
-          <a href="/users/log-in" class="text-[15px] font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors no-underline">Log in</a>
+          <a
+            href="/users/register"
+            class="text-slate-600 no-underline text-[15px] hover:text-emerald-500"
+          >
+            Register
+          </a>
+          <a
+            href="/users/log-in"
+            class="text-[15px] font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors no-underline"
+          >
+            Log in
+          </a>
         </nav>
       </header>
       <!-- Mobile menu -->
       <div class="hidden sm:hidden pb-4" data-mobile-menu>
         <nav class="flex flex-col gap-3">
-          <a href="/docs" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">Docs</a>
-          <a href="/status" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">Status</a>
+          <a href="/docs" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">
+            Docs
+          </a>
+          <a href="/status" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">
+            Status
+          </a>
           <div class="border-t border-slate-200 pt-3 mt-1 flex flex-col gap-3">
-            <a href="/users/register" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">Register</a>
-            <a href="/users/log-in" class="text-[15px] font-medium text-emerald-600 no-underline">Log in</a>
+            <a
+              href="/users/register"
+              class="text-slate-600 no-underline text-[15px] hover:text-emerald-500"
+            >
+              Register
+            </a>
+            <a href="/users/log-in" class="text-[15px] font-medium text-emerald-600 no-underline">
+              Log in
+            </a>
           </div>
         </nav>
       </div>
     <% end %>
-
-    <!-- Hero -->
+    
+<!-- Hero -->
     <section class="py-12 sm:py-20 text-center">
       <div class="inline-flex items-center gap-1.5 bg-white border border-slate-200 px-4 py-2 rounded-full text-sm text-slate-600 mb-6">
-        <.icon name="hero-clock" class="w-[18px] h-[18px]" />
-        EU-hosted
+        <.icon name="hero-clock" class="w-[18px] h-[18px]" /> EU-hosted
       </div>
       <h1 class="text-3xl sm:text-5xl font-bold leading-tight tracking-tight mb-6 text-slate-900">
-        Background jobs,<br>made simple.
+        Background jobs,<br />made simple.
       </h1>
       <p class="text-lg sm:text-xl text-slate-600 mb-10 max-w-[500px] mx-auto">
         Cron scheduling and webhook delivery for developers who ship products, not infrastructure.
       </p>
       <span class="text-sm text-slate-500 italic">Jobs done, til punkt og prikke.</span>
     </section>
-
-    <!-- Features -->
+    
+<!-- Features -->
     <section class="py-14 border-t border-slate-200">
-      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">What you get</h2>
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
+        What you get
+      </h2>
       <div class="grid gap-6">
         <div class="flex gap-4">
           <div class="flex-shrink-0 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
@@ -58,7 +87,9 @@
           </div>
           <div>
             <h3 class="text-base font-semibold mb-1 text-slate-900">Cron & scheduled jobs</h3>
-            <p class="text-[15px] text-slate-600 m-0">Recurring cron schedules or one-time jobs at a specific time. Run every minute, daily, or just once.</p>
+            <p class="text-[15px] text-slate-600 m-0">
+              Recurring cron schedules or one-time jobs at a specific time. Run every minute, daily, or just once.
+            </p>
           </div>
         </div>
         <div class="flex gap-4">
@@ -67,7 +98,9 @@
           </div>
           <div>
             <h3 class="text-base font-semibold mb-1 text-slate-900">Webhook delivery</h3>
-            <p class="text-[15px] text-slate-600 m-0">We call your endpoint with automatic retries and exponential backoff. You focus on the logic.</p>
+            <p class="text-[15px] text-slate-600 m-0">
+              We call your endpoint with automatic retries and exponential backoff. You focus on the logic.
+            </p>
           </div>
         </div>
         <div class="flex gap-4">
@@ -76,7 +109,9 @@
           </div>
           <div>
             <h3 class="text-base font-semibold mb-1 text-slate-900">Execution history</h3>
-            <p class="text-[15px] text-slate-600 m-0">See every run with status, duration, and response. Know exactly what happened and when.</p>
+            <p class="text-[15px] text-slate-600 m-0">
+              See every run with status, duration, and response. Know exactly what happened and when.
+            </p>
           </div>
         </div>
         <div class="flex gap-4">
@@ -85,7 +120,9 @@
           </div>
           <div>
             <h3 class="text-base font-semibold mb-1 text-slate-900">Failure alerts</h3>
-            <p class="text-[15px] text-slate-600 m-0">Get notified via email or Slack when jobs fail. Fix issues before your users notice.</p>
+            <p class="text-[15px] text-slate-600 m-0">
+              Get notified via email or Slack when jobs fail. Fix issues before your users notice.
+            </p>
           </div>
         </div>
         <div class="flex gap-4">
@@ -94,16 +131,23 @@
           </div>
           <div>
             <h3 class="text-base font-semibold mb-1 text-slate-900">EU-hosted</h3>
-            <p class="text-[15px] text-slate-600 m-0">Your data stays in Europe. GDPR-native. No US cloud providers in the chain.</p>
+            <p class="text-[15px] text-slate-600 m-0">
+              Your data stays in Europe. GDPR-native. No US cloud providers in the chain.
+            </p>
           </div>
         </div>
       </div>
     </section>
-
-    <!-- How it works -->
+    
+<!-- How it works -->
     <section class="py-14 border-t border-slate-200">
-      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">How it works</h2>
-      <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-4 sm:p-6 rounded-lg font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto"><span class="text-slate-500"># Recurring job - runs every day at 06:00 UTC</span>
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
+        How it works
+      </h2>
+      <pre
+        phx-no-curly-interpolation
+        class="bg-slate-900 text-slate-100 p-4 sm:p-6 rounded-lg font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto"
+      ><span class="text-slate-500"># Recurring job - runs every day at 06:00 UTC</span>
 curl -X POST https://prikke.whitenoise.no/api/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
   -d '{
@@ -121,29 +165,40 @@ curl -X POST https://prikke.whitenoise.no/api/jobs \
     <span class="text-sky-300">"run_at"</span>: <span class="text-green-300">"2025-02-01T09:00:00Z"</span>
   }'</pre>
     </section>
-
-    <!-- Pricing -->
+    
+<!-- Pricing -->
     <section class="py-14 border-t border-slate-200 text-center">
-      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">Simple pricing</h2>
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
+        Simple pricing
+      </h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-[480px] mx-auto text-left">
         <div class="bg-white border border-slate-200 rounded-lg p-6">
           <h3 class="text-base font-semibold mb-2 text-slate-900">Free</h3>
           <div class="text-3xl font-bold mb-1 text-slate-900">€0</div>
-          <p class="text-sm text-slate-500 m-0">5 jobs, 2 users, 5k requests/mo, hourly intervals</p>
+          <p class="text-sm text-slate-500 m-0">
+            5 jobs, 2 users, 5k requests/mo, hourly intervals
+          </p>
         </div>
         <div class="bg-white border-2 border-emerald-500 rounded-lg p-6">
           <h3 class="text-base font-semibold mb-2 text-slate-900">Pro</h3>
-          <div class="text-3xl font-bold mb-1 text-slate-900">€29<span class="text-sm font-normal text-slate-500">/mo</span></div>
-          <p class="text-sm text-slate-500 m-0">Unlimited jobs & users, 250k requests/mo, per-minute intervals</p>
+          <div class="text-3xl font-bold mb-1 text-slate-900">
+            €29<span class="text-sm font-normal text-slate-500">/mo</span>
+          </div>
+          <p class="text-sm text-slate-500 m-0">
+            Unlimited jobs & users, 250k requests/mo, per-minute intervals
+          </p>
         </div>
       </div>
     </section>
-
-    <!-- CTA -->
+    
+<!-- CTA -->
     <section class="py-20 text-center border-t border-slate-200">
       <h2 class="text-2xl font-bold mb-4 text-slate-900">Ready to get started?</h2>
       <p class="text-slate-600 mb-8">Create your free account and schedule your first job.</p>
-      <a href="/users/register" class="inline-block px-6 py-3 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors no-underline">
+      <a
+        href="/users/register"
+        class="inline-block px-6 py-3 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors no-underline"
+      >
         Get started free
       </a>
     </section>
