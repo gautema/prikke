@@ -23,6 +23,7 @@ defmodule Prikke.Jobs.Job do
     field :headers_json, :string, virtual: true
 
     belongs_to :organization, Prikke.Accounts.Organization
+    has_many :executions, Prikke.Executions.Execution
 
     timestamps(type: :utc_datetime)
   end

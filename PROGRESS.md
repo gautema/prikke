@@ -47,8 +47,16 @@ Last updated: 2026-01-28
   - Free: max 5 jobs, hourly minimum interval
   - Pro: unlimited jobs, per-minute intervals
   - Enforced on create and update
-- [ ] **Executions schema** - Next up
-- [ ] Executions context
+- [x] **Executions schema**
+  - status (pending, running, success, failed, timeout)
+  - scheduled_for, started_at, finished_at
+  - status_code, duration_ms, response_body, error_message
+  - Indexes for job lookup and pending status
+- [x] **Executions context**
+  - create_execution, claim_next_execution (FOR UPDATE SKIP LOCKED)
+  - complete_execution, fail_execution, timeout_execution
+  - Stats functions (job, org, monthly counts)
+  - Cleanup function for retention policy
 
 ### Phase 4: Job Execution Engine (Not Started)
 - [ ] Scheduler GenServer (ticks every 60s, advisory lock)
@@ -176,6 +184,9 @@ app/lib/app/
 ├── jobs/
 │   └── job.ex
 ├── jobs.ex                    # Includes tier limit enforcement
+├── executions/
+│   └── execution.ex
+├── executions.ex              # Claim with SKIP LOCKED, stats
 ├── mailer.ex
 └── repo.ex
 
@@ -249,7 +260,7 @@ Environment variables:
 
 ## Test Coverage
 
-- **158 tests passing**
+- **175 tests passing**
 - Accounts: user auth, organizations, memberships, invites, API keys
 - Jobs: CRUD, validations, cron parsing, tier limits
 - API Auth Plug: bearer token validation
@@ -277,6 +288,7 @@ Environment variables:
 
 ## Recently Completed
 
+- [x] Executions schema & context (claim with SKIP LOCKED, stats, monthly counts)
 - [x] Manual upgrade to Pro (click to upgrade, sales contacts user)
 - [x] Notification settings (org settings → Notifications tab)
 - [x] Team member limits for organizations (Free: 2, Pro: unlimited)
