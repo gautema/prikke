@@ -108,6 +108,7 @@ defmodule PrikkeWeb.Router do
       live "/jobs/new", JobLive.New, :new
       live "/jobs/:id", JobLive.Show, :show
       live "/jobs/:id/edit", JobLive.Edit, :edit
+      live "/jobs/:job_id/executions/:id", JobLive.ExecutionShow, :show
     end
 
     get "/users/settings", UserSettingsController, :edit

@@ -58,6 +58,30 @@ defmodule Prikke.Executions do
   end
 
   @doc """
+  Gets an execution by ID, scoped to an organization.
+  Returns nil if not found or not belonging to the organization.
+  """
+  def get_execution_for_org(organization, execution_id) do
+    from(e in Execution,
+      join: j in Job, on: e.job_id == j.id,
+      where: j.organization_id == ^organization.id and e.id == ^execution_id,
+      preload: [job: j]
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Gets an execution by ID, scoped to a specific job.
+  Returns nil if not found or not belonging to the job.
+  """
+  def get_execution_for_job(job, execution_id) do
+    from(e in Execution,
+      where: e.job_id == ^job.id and e.id == ^execution_id
+    )
+    |> Repo.one()
+  end
+
+  @doc """
   Claims the next pending execution for processing.
   Uses FOR UPDATE SKIP LOCKED to allow concurrent workers.
   Returns {:ok, execution} or {:ok, nil} if no work available.
@@ -116,9 +140,9 @@ defmodule Prikke.Executions do
   @doc """
   Marks an execution as timed out.
   """
-  def timeout_execution(execution) do
+  def timeout_execution(execution, duration_ms \\ nil) do
     execution
-    |> Execution.timeout_changeset()
+    |> Execution.timeout_changeset(duration_ms)
     |> Repo.update()
   end
 

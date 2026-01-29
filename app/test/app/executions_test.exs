@@ -85,13 +85,14 @@ defmodule Prikke.ExecutionsTest do
 
       assert {:ok, completed} = Executions.complete_execution(running, %{
         status_code: 200,
-        response_body: "OK"
+        response_body: "OK",
+        duration_ms: 150
       })
 
       assert completed.status == "success"
       assert completed.status_code == 200
       assert completed.finished_at != nil
-      assert completed.duration_ms != nil
+      assert completed.duration_ms == 150
     end
 
     test "fail_execution/2 marks execution as failed", %{job: job} do

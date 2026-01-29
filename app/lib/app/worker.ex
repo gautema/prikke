@@ -111,15 +111,23 @@ defmodule Prikke.Worker do
       job = execution.job
       Logger.info("[Worker] Executing job #{job.name} (#{job.id})")
 
-      case make_request(job) do
+      # Track start time with millisecond precision for accurate duration
+      start_time = System.monotonic_time(:millisecond)
+
+      result = make_request(job)
+
+      # Calculate duration from monotonic clock (more accurate than timestamps)
+      duration_ms = System.monotonic_time(:millisecond) - start_time
+
+      case result do
         {:ok, response} ->
-          handle_success(execution, response)
+          handle_success(execution, response, duration_ms)
 
         {:error, %Req.TransportError{reason: :timeout}} ->
-          handle_timeout(execution)
+          handle_timeout(execution, duration_ms)
 
         {:error, error} ->
-          handle_failure(execution, error)
+          handle_failure(execution, error, duration_ms)
       end
     end
   end
@@ -152,23 +160,25 @@ defmodule Prikke.Worker do
     Enum.map(headers, fn {k, v} -> {to_string(k), to_string(v)} end)
   end
 
-  defp handle_success(execution, response) do
+  defp handle_success(execution, response, duration_ms) do
     # Consider 2xx as success
     if response.status >= 200 and response.status < 300 do
-      Logger.info("[Worker] Job succeeded with status #{response.status}")
+      Logger.info("[Worker] Job succeeded with status #{response.status} in #{duration_ms}ms")
 
       Executions.complete_execution(execution, %{
         status_code: response.status,
-        response_body: truncate_body(response.body)
+        response_body: truncate_body(response.body),
+        duration_ms: duration_ms
       })
     else
       # Non-2xx is treated as failure
-      Logger.warning("[Worker] Job failed with status #{response.status}")
+      Logger.warning("[Worker] Job failed with status #{response.status} in #{duration_ms}ms")
 
       {:ok, updated_execution} = Executions.fail_execution(execution, %{
         status_code: response.status,
         response_body: truncate_body(response.body),
-        error_message: "HTTP #{response.status}"
+        error_message: "HTTP #{response.status}",
+        duration_ms: duration_ms
       })
 
       # Send failure notification (async)
@@ -178,10 +188,10 @@ defmodule Prikke.Worker do
     end
   end
 
-  defp handle_timeout(execution) do
-    Logger.warning("[Worker] Job timed out")
+  defp handle_timeout(execution, duration_ms) do
+    Logger.warning("[Worker] Job timed out after #{duration_ms}ms")
 
-    {:ok, updated_execution} = Executions.timeout_execution(execution)
+    {:ok, updated_execution} = Executions.timeout_execution(execution, duration_ms)
 
     # Send failure notification (async)
     notify_failure(updated_execution)
@@ -189,12 +199,13 @@ defmodule Prikke.Worker do
     maybe_retry(execution)
   end
 
-  defp handle_failure(execution, error) do
+  defp handle_failure(execution, error, duration_ms) do
     error_message = format_error(error)
-    Logger.warning("[Worker] Job failed: #{error_message}")
+    Logger.warning("[Worker] Job failed: #{error_message} after #{duration_ms}ms")
 
     {:ok, updated_execution} = Executions.fail_execution(execution, %{
-      error_message: error_message
+      error_message: error_message,
+      duration_ms: duration_ms
     })
 
     # Send failure notification (async)

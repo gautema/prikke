@@ -84,13 +84,14 @@ defmodule Prikke.WorkerTest do
       # Then complete it
       {:ok, completed} = Executions.complete_execution(claimed, %{
         status_code: 200,
-        response_body: "OK"
+        response_body: "OK",
+        duration_ms: 250
       })
 
       assert completed.status == "success"
       assert completed.status_code == 200
       assert completed.finished_at != nil
-      assert completed.duration_ms != nil
+      assert completed.duration_ms == 250
     end
 
     test "fail_execution sets failed status" do

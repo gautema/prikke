@@ -66,44 +66,42 @@ defmodule Prikke.Executions.Execution do
 
   @doc """
   Changeset for completing an execution with success.
+  Accepts duration_ms in attrs for accurate timing (measured in worker).
   """
   def complete_changeset(execution, attrs) do
     now = DateTime.utc_now(:second)
-    duration = if execution.started_at, do: DateTime.diff(now, execution.started_at, :millisecond), else: nil
 
     execution
-    |> cast(attrs, [:status_code, :response_body])
+    |> cast(attrs, [:status_code, :response_body, :duration_ms])
     |> put_change(:status, "success")
     |> put_change(:finished_at, now)
-    |> put_change(:duration_ms, duration)
   end
 
   @doc """
   Changeset for marking an execution as failed.
+  Accepts duration_ms in attrs for accurate timing (measured in worker).
   """
   def fail_changeset(execution, attrs) do
     now = DateTime.utc_now(:second)
-    duration = if execution.started_at, do: DateTime.diff(now, execution.started_at, :millisecond), else: nil
 
     execution
-    |> cast(attrs, [:status_code, :response_body, :error_message])
+    |> cast(attrs, [:status_code, :response_body, :error_message, :duration_ms])
     |> put_change(:status, "failed")
     |> put_change(:finished_at, now)
-    |> put_change(:duration_ms, duration)
   end
 
   @doc """
   Changeset for marking an execution as timed out.
+  Accepts duration_ms for accurate timing (measured in worker).
   """
-  def timeout_changeset(execution) do
+  def timeout_changeset(execution, duration_ms \\ nil) do
     now = DateTime.utc_now(:second)
-    duration = if execution.started_at, do: DateTime.diff(now, execution.started_at, :millisecond), else: nil
 
     execution
     |> change(%{
       status: "timeout",
       finished_at: now,
-      duration_ms: duration,
+      duration_ms: duration_ms,
       error_message: "Request timed out"
     })
   end

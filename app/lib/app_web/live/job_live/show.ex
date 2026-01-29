@@ -246,7 +246,7 @@ defmodule PrikkeWeb.JobLive.Show do
               <!-- Mobile: Card layout -->
               <div class="sm:hidden space-y-3">
                 <%= for exec <- @executions do %>
-                  <div class="bg-slate-50 rounded-lg p-3">
+                  <.link navigate={~p"/jobs/#{@job.id}/executions/#{exec.id}"} class="block bg-slate-50 rounded-lg p-3 hover:bg-slate-100 transition-colors">
                     <div class="flex items-center justify-between mb-2">
                       <.status_badge status={exec.status} />
                       <span class="text-xs text-slate-500"><%= format_execution_time(exec.scheduled_for) %></span>
@@ -260,7 +260,7 @@ defmodule PrikkeWeb.JobLive.Show do
                     <%= if exec.error_message do %>
                       <p class="text-red-600 text-xs mt-2"><%= truncate(exec.error_message, 80) %></p>
                     <% end %>
-                  </div>
+                  </.link>
                 <% end %>
               </div>
               <!-- Desktop: Table layout -->
@@ -276,7 +276,7 @@ defmodule PrikkeWeb.JobLive.Show do
                   </thead>
                   <tbody class="divide-y divide-slate-200">
                     <%= for exec <- @executions do %>
-                      <tr class="hover:bg-slate-100">
+                      <.link navigate={~p"/jobs/#{@job.id}/executions/#{exec.id}"} class="table-row hover:bg-slate-100 cursor-pointer">
                         <td class="px-4 py-2">
                           <.status_badge status={exec.status} />
                         </td>
@@ -294,7 +294,7 @@ defmodule PrikkeWeb.JobLive.Show do
                             <span class="text-red-600 text-xs"><%= truncate(exec.error_message, 50) %></span>
                           <% end %>
                         </td>
-                      </tr>
+                      </.link>
                     <% end %>
                   </tbody>
                 </table>
