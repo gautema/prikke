@@ -99,6 +99,7 @@ defmodule PrikkeWeb.Router do
     put "/organizations/members/:id/role", OrganizationController, :update_member_role
     get "/organizations/notifications", OrganizationController, :notifications
     put "/organizations/notifications", OrganizationController, :update_notifications
+    post "/organizations/upgrade", OrganizationController, :upgrade
 
     # Invites (authenticated)
     get "/invites", InviteController, :index

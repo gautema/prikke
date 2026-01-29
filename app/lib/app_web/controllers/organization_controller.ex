@@ -150,4 +150,26 @@ defmodule PrikkeWeb.OrganizationController do
         render(conn, :notifications, organization: organization, changeset: changeset)
     end
   end
+
+  def upgrade(conn, _params) do
+    organization = conn.assigns.current_organization
+
+    if organization.tier == "free" do
+      case Accounts.upgrade_organization_to_pro(organization) do
+        {:ok, _organization} ->
+          conn
+          |> put_flash(:info, "You've been upgraded to Pro! Our team will reach out to set up billing.")
+          |> redirect(to: ~p"/organizations/settings")
+
+        {:error, _} ->
+          conn
+          |> put_flash(:error, "Could not upgrade. Please try again.")
+          |> redirect(to: ~p"/organizations/settings")
+      end
+    else
+      conn
+      |> put_flash(:info, "You're already on the Pro plan.")
+      |> redirect(to: ~p"/organizations/settings")
+    end
+  end
 end

@@ -445,6 +445,15 @@ defmodule Prikke.AccountsTest do
       assert fetched = Accounts.get_organization_by_slug("test-slug")
       assert fetched.id == org.id
     end
+
+    test "upgrade_organization_to_pro/1 changes tier from free to pro" do
+      user = user_fixture()
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test", slug: "test-upgrade"})
+      assert org.tier == "free"
+
+      assert {:ok, upgraded} = Accounts.upgrade_organization_to_pro(org)
+      assert upgraded.tier == "pro"
+    end
   end
 
   describe "memberships" do

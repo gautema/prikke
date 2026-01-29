@@ -85,10 +85,10 @@ Last updated: 2026-01-28
 - [ ] Notification worker (on job failure) - uses settings above
 - [ ] Slack/Discord payload formatting
 
-### Phase 8: Billing (Not Started)
-- [ ] Lemon Squeezy integration
-- [ ] Usage tracking (monthly executions)
-- [ ] Limit enforcement (requests per month)
+### Phase 8: Billing (MVP Approach)
+- [x] Manual upgrade flow (user clicks upgrade → tier changes → "sales will contact you" message)
+- [ ] Usage tracking (monthly executions) - enforced in Phase 4
+- [ ] Lemon Squeezy integration (post-MVP, when ready to charge)
 
 ### Phase 9: Monitoring & Alerting (Not Started)
 - [ ] Application error tracking (Sentry or AppSignal)
@@ -249,7 +249,7 @@ Environment variables:
 
 ## Test Coverage
 
-- **148 tests passing**
+- **158 tests passing**
 - Accounts: user auth, organizations, memberships, invites, API keys
 - Jobs: CRUD, validations, cron parsing, tier limits
 - API Auth Plug: bearer token validation
@@ -277,6 +277,7 @@ Environment variables:
 
 ## Recently Completed
 
+- [x] Manual upgrade to Pro (click to upgrade, sales contacts user)
 - [x] Notification settings (org settings → Notifications tab)
 - [x] Team member limits for organizations (Free: 2, Pro: unlimited)
 - [x] Tier limits for jobs (max count, min interval)

@@ -28,7 +28,7 @@
 | Auth | phx.gen.auth + API keys | Sessions for dashboard, API keys for programmatic access |
 | Hosting | Koyeb (Frankfurt) | French company, managed containers, EU region |
 | Database | Koyeb Managed Postgres | Same provider as compute, low latency |
-| Payments | Lemon Squeezy | Merchant of Record, handles EU VAT |
+| Payments | Manual (MVP) / Lemon Squeezy (future) | Manual upgrade + sales contact for MVP |
 | Email | Mailjet | French company, good free tier |
 | Domain + DNS | Porkbun | Cheap domains, free DNS hosting |
 
@@ -280,7 +280,7 @@ Notes:
 | Container | Koyeb Small 🇫🇷 | ~€10/mo |
 | Database | Koyeb Postgres 🇫🇷 | ~€7/mo |
 | Email | Mailjet 🇫🇷 | Free tier (6k/mo) |
-| Payments | Lemon Squeezy | % of revenue |
+| Payments | Manual (MVP) | Free |
 | Monitoring | Better Stack | Free tier |
 | **Total** | | **~€18/mo** |
 
@@ -307,6 +307,13 @@ docker push registry.koyeb.com/your-org/prikke
 
 ## Payments
 
+**MVP Approach (current):**
+- Manual upgrade: user clicks "Upgrade to Pro" → tier changes immediately
+- Flash message: "Our team will reach out to set up billing"
+- Sales/founder contacts upgraded users manually
+- No payment integration needed initially
+
+**Post-MVP (when ready to charge):**
 Using Lemon Squeezy (Merchant of Record):
 - They are the seller, handle EU VAT
 - No tax compliance headaches

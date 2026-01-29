@@ -63,7 +63,13 @@
         Current plan: <span class="font-medium"><%= String.capitalize(@organization.tier) %></span>
       </p>
       <%= if @organization.tier == "free" do %>
-        <a href="#" class="text-emerald-600 font-medium hover:underline">Upgrade to Pro →</a>
+        <.form for={%{}} action={~p"/organizations/upgrade"} method="post">
+          <button type="submit" class="text-emerald-600 font-medium hover:underline">
+            Upgrade to Pro →
+          </button>
+        </.form>
+      <% else %>
+        <p class="text-sm text-slate-500">You have access to all Pro features.</p>
       <% end %>
     </div>
   </div>

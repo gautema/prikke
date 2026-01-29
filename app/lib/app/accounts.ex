@@ -354,6 +354,15 @@ defmodule Prikke.Accounts do
   end
 
   @doc """
+  Upgrades an organization to Pro tier.
+  """
+  def upgrade_organization_to_pro(organization) do
+    organization
+    |> Ecto.Changeset.change(tier: "pro")
+    |> Repo.update()
+  end
+
+  @doc """
   Deletes an organization.
   """
   def delete_organization(organization) do
