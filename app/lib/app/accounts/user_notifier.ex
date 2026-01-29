@@ -223,4 +223,95 @@ defmodule Prikke.Accounts.UserNotifier do
     html = email_template(html_content, "Accept invitation", url)
     deliver(email, "You're invited to #{org_name} on Prikke", text, html)
   end
+
+  @doc """
+  Deliver admin notification when a new user signs up.
+  """
+  def deliver_admin_new_user_notification(user) do
+    config = Application.get_env(:app, Prikke.Mailer, [])
+    admin_email = Keyword.get(config, :admin_email)
+
+    if admin_email do
+      text = """
+      New user signup on Prikke!
+
+      Email: #{user.email}
+      User ID: #{user.id}
+      Signed up at: #{Calendar.strftime(user.inserted_at, "%Y-%m-%d %H:%M:%S UTC")}
+
+      - Prikke System
+      """
+
+      html = admin_notification_template(user)
+      deliver(admin_email, "New user signup: #{user.email}", text, html)
+    else
+      Logger.debug("No ADMIN_EMAIL configured, skipping new user notification")
+      {:ok, :skipped}
+    end
+  end
+
+  defp admin_notification_template(user) do
+    """
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 480px; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <!-- Header -->
+              <tr>
+                <td style="padding: 32px 32px 24px 32px; text-align: center; border-bottom: 1px solid #e2e8f0;">
+                  <div style="display: inline-flex; align-items: center;">
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #10b981; border-radius: 50%; margin-right: 8px;"></span>
+                    <span style="font-size: 20px; font-weight: 600; color: #0f172a;">prikke</span>
+                  </div>
+                </td>
+              </tr>
+              <!-- Content -->
+              <tr>
+                <td style="padding: 32px;">
+                  <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #0f172a;">New User Signup!</h2>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 6px; padding: 16px;">
+                    <tr>
+                      <td style="padding: 8px 16px;">
+                        <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">Email</p>
+                        <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a; font-weight: 500;">#{user.email}</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 16px;">
+                        <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">User ID</p>
+                        <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a; font-family: monospace;">#{user.id}</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 16px;">
+                        <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">Signed Up</p>
+                        <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a;">#{Calendar.strftime(user.inserted_at, "%Y-%m-%d %H:%M:%S UTC")}</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <!-- Footer -->
+              <tr>
+                <td style="padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
+                  <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                    Prikke Admin Notification
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+    """
+  end
 end

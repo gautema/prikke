@@ -87,9 +87,20 @@ defmodule Prikke.Accounts do
 
   """
   def register_user(attrs) do
-    %User{}
-    |> User.email_changeset(attrs)
-    |> Repo.insert()
+    result =
+      %User{}
+      |> User.email_changeset(attrs)
+      |> Repo.insert()
+
+    case result do
+      {:ok, user} ->
+        # Send admin notification asynchronously
+        Task.start(fn -> UserNotifier.deliver_admin_new_user_notification(user) end)
+        {:ok, user}
+
+      error ->
+        error
+    end
   end
 
   ## Settings
