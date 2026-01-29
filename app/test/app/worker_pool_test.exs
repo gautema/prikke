@@ -22,9 +22,9 @@ defmodule Prikke.WorkerPoolTest do
       {:ok, result} = WorkerPool.scale()
 
       assert result.queue == 0
-      # Should spawn min_workers (2)
-      assert result.spawned == 2
-      assert WorkerSupervisor.worker_count() == 2
+      # Should spawn min_workers (1)
+      assert result.spawned == 1
+      assert WorkerSupervisor.worker_count() == 1
     end
 
     test "scale spawns workers up to queue depth" do
@@ -66,7 +66,7 @@ defmodule Prikke.WorkerPoolTest do
 
       assert is_integer(stats.queue_depth)
       assert is_integer(stats.active_workers)
-      assert stats.min_workers == 2
+      assert stats.min_workers == 1
       assert stats.max_workers == 20
     end
   end

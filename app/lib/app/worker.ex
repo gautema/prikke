@@ -46,7 +46,7 @@ defmodule Prikke.Worker do
   # How long to wait between polls when no work is found (ms)
   # Uses exponential backoff: starts at base, doubles up to max
   @poll_interval_base 2_000
-  @poll_interval_max 30_000
+  @poll_interval_max 5_000
 
   # Exit after this duration of no work (5 minutes)
   @max_idle_ms 300_000

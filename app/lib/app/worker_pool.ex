@@ -7,7 +7,7 @@ defmodule Prikke.WorkerPool do
   The pool manager periodically checks the pending execution count and
   adjusts the number of workers to match demand:
 
-  - Minimum workers: 2 (always ready to process work)
+  - Minimum workers: 1 (always ready to process work)
   - Maximum workers: 20 (limit concurrent HTTP requests)
   - Scale up: spawn workers when queue > current workers
   - Scale down: workers self-terminate after idle timeout
@@ -30,7 +30,7 @@ defmodule Prikke.WorkerPool do
   ## Configuration
 
   - `@check_interval` - How often to check queue depth (5 seconds)
-  - `@min_workers` - Minimum workers to keep ready (2)
+  - `@min_workers` - Minimum workers to keep ready (1)
   - `@max_workers` - Maximum concurrent workers (20)
 
   ## Testing
@@ -49,7 +49,7 @@ defmodule Prikke.WorkerPool do
   @check_interval 5_000
 
   # Worker pool bounds
-  @min_workers 2
+  @min_workers 1
   @max_workers 20
 
   ## Client API
