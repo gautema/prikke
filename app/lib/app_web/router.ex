@@ -66,6 +66,9 @@ defmodule PrikkeWeb.Router do
       post "/trigger", JobController, :trigger
     end
 
+    # On-demand queue - simple API for immediate execution
+    post "/q", QueueController, :push
+
     # Declarative sync
     put "/sync", SyncController, :sync
   end

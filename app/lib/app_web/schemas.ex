@@ -209,6 +209,62 @@ defmodule PrikkeWeb.Schemas do
     })
   end
 
+  defmodule QueueRequest do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "QueueRequest",
+      description: "Request to queue an HTTP request for immediate execution",
+      type: :object,
+      required: [:url],
+      properties: %{
+        url: %Schema{type: :string, format: :uri, description: "Webhook URL to call"},
+        method: %Schema{type: :string, enum: ["GET", "POST", "PUT", "PATCH", "DELETE"], default: "POST", description: "HTTP method"},
+        headers: %Schema{type: :object, additionalProperties: %Schema{type: :string}, description: "HTTP headers"},
+        body: %Schema{type: :string, nullable: true, description: "Request body"},
+        name: %Schema{type: :string, nullable: true, description: "Optional name for the job"},
+        timeout_ms: %Schema{type: :integer, default: 30000, description: "Request timeout in milliseconds"}
+      },
+      example: %{
+        url: "https://example.com/api/webhook",
+        method: "POST",
+        headers: %{"Content-Type" => "application/json", "Authorization" => "Bearer token"},
+        body: ~s({"event": "user.created", "user_id": 123})
+      }
+    })
+  end
+
+  defmodule QueueResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "QueueResponse",
+      description: "Response from queuing a request",
+      type: :object,
+      properties: %{
+        data: %Schema{
+          type: :object,
+          properties: %{
+            job_id: %Schema{type: :string, format: :uuid, description: "Created job ID"},
+            execution_id: %Schema{type: :string, format: :uuid, description: "Pending execution ID"},
+            status: %Schema{type: :string, description: "Execution status (pending)"},
+            scheduled_for: %Schema{type: :string, format: :"date-time", description: "Scheduled execution time"}
+          }
+        },
+        message: %Schema{type: :string}
+      },
+      example: %{
+        data: %{
+          job_id: "019c0123-4567-7890-abcd-ef1234567890",
+          execution_id: "019c0123-4567-7890-abcd-ef1234567891",
+          status: "pending",
+          scheduled_for: "2026-01-29T15:30:00Z"
+        },
+        message: "Request queued for immediate execution"
+      }
+    })
+  end
+
   defmodule ErrorResponse do
     require OpenApiSpex
 
