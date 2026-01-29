@@ -130,9 +130,7 @@ defmodule PrikkeWeb.JobLive.New do
                 <label for="job_cron_expression" class="block text-sm font-medium text-slate-700 mb-1">
                   Cron Expression
                 </label>
-                <div class="relative">
-                  <.input field={@form[:cron_expression]} type="text" placeholder="0 * * * *" class="font-mono bg-slate-50 border-slate-300" />
-                </div>
+                <.input field={@form[:cron_expression]} type="text" placeholder="0 * * * *" class="w-full px-4 py-3 font-mono text-base bg-slate-50 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400" />
                 <p class="text-sm text-slate-500 mt-2">
                   Examples: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-mono">* * * * *</code> (every minute),
                   <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-mono">0 * * * *</code> (hourly),
