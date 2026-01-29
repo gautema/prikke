@@ -41,6 +41,7 @@ defmodule Prikke.Worker do
 
   alias Prikke.Executions
   alias Prikke.Jobs
+  alias Prikke.Notifications
 
   # How long to wait between polls when no work is found (ms)
   @poll_interval 1_000
@@ -164,11 +165,14 @@ defmodule Prikke.Worker do
       # Non-2xx is treated as failure
       Logger.warning("[Worker] Job failed with status #{response.status}")
 
-      Executions.fail_execution(execution, %{
+      {:ok, updated_execution} = Executions.fail_execution(execution, %{
         status_code: response.status,
         response_body: truncate_body(response.body),
         error_message: "HTTP #{response.status}"
       })
+
+      # Send failure notification (async)
+      notify_failure(updated_execution)
 
       maybe_retry(execution)
     end
@@ -177,7 +181,11 @@ defmodule Prikke.Worker do
   defp handle_timeout(execution) do
     Logger.warning("[Worker] Job timed out")
 
-    Executions.timeout_execution(execution)
+    {:ok, updated_execution} = Executions.timeout_execution(execution)
+
+    # Send failure notification (async)
+    notify_failure(updated_execution)
+
     maybe_retry(execution)
   end
 
@@ -185,11 +193,21 @@ defmodule Prikke.Worker do
     error_message = format_error(error)
     Logger.warning("[Worker] Job failed: #{error_message}")
 
-    Executions.fail_execution(execution, %{
+    {:ok, updated_execution} = Executions.fail_execution(execution, %{
       error_message: error_message
     })
 
+    # Send failure notification (async)
+    notify_failure(updated_execution)
+
     maybe_retry(execution)
+  end
+
+  # Send notification for failed execution (preserves job/org from original execution)
+  defp notify_failure(updated_execution) do
+    # The updated execution loses preloads, so we need to re-fetch with associations
+    execution_with_job = Executions.get_execution_with_job(updated_execution.id)
+    Notifications.notify_failure(execution_with_job)
   end
 
   defp return_error(nil), do: :ok
