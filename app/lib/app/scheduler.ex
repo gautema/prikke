@@ -2,12 +2,85 @@ defmodule Prikke.Scheduler do
   @moduledoc """
   Scheduler GenServer that creates pending executions for due jobs.
 
-  - Ticks every 60 seconds (fallback)
-  - Wakes immediately via PubSub when jobs are created/enabled
-  - Uses Postgres advisory lock so only one node schedules in a cluster
-  - Finds jobs where next_run_at <= now
-  - Creates pending executions
-  - Advances next_run_at for cron jobs
+  ## Overview
+
+  The scheduler is responsible for finding jobs that are due to run and creating
+  pending executions for them. Workers then claim and execute these pending
+  executions.
+
+  ## How It Works
+
+  ```
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                         Scheduler                                │
+  │                                                                  │
+  │  1. Tick every 60s (fallback) or wake via PubSub                │
+  │  2. Acquire advisory lock (leader election)                      │
+  │  3. Query: SELECT * FROM jobs WHERE enabled AND next_run_at <= now│
+  │  4. For each due job:                                            │
+  │     a. Check monthly execution limit                             │
+  │     b. Create pending execution                                  │
+  │     c. Advance next_run_at (cron) or clear it (one-time)        │
+  └─────────────────────────────────────────────────────────────────┘
+  ```
+
+  ## Leader Election (Clustering)
+
+  In a multi-node cluster, only one scheduler should create executions to avoid
+  duplicates. We use Postgres advisory locks for leader election:
+
+  - `pg_try_advisory_lock(id)` - non-blocking, returns true if acquired
+  - `pg_advisory_unlock(id)` - releases the lock on shutdown
+  - Lock is tied to the database connection, auto-releases if connection drops
+
+  If a node can't acquire the lock, it stays passive until the leader fails.
+
+  ## Wake-up Mechanism
+
+  Instead of only ticking every 60 seconds, the scheduler can be woken immediately
+  when a job becomes due:
+
+  - Subscribes to PubSub topic "scheduler"
+  - `Jobs.notify_scheduler/0` broadcasts `:wake` message
+  - Called when a job is enabled or updated to be due within 60 seconds
+  - Reduces latency for one-time jobs and recently-enabled jobs
+
+  ## Job Scheduling Flow
+
+  For **cron jobs**:
+  1. Job created with `next_run_at` = next cron time (computed from expression)
+  2. Scheduler finds job when `next_run_at <= now`
+  3. Creates pending execution with `scheduled_for = next_run_at`
+  4. Advances `next_run_at` to next cron time
+  5. Repeat forever
+
+  For **one-time jobs**:
+  1. Job created with `next_run_at = scheduled_at`
+  2. Scheduler finds job when `next_run_at <= now`
+  3. Creates pending execution
+  4. Sets `next_run_at = nil` (job won't run again)
+
+  ## Monthly Limits
+
+  Before creating an execution, the scheduler checks the organization's monthly
+  execution count against their tier limit:
+
+  - Free: 5,000 executions/month
+  - Pro: 250,000 executions/month
+
+  If the limit is reached, the job is skipped but `next_run_at` is still advanced
+  to prevent infinite retry loops.
+
+  ## Configuration
+
+  - `@tick_interval` - Fallback tick interval (60 seconds)
+  - `@advisory_lock_id` - Unique ID for the Postgres advisory lock
+
+  ## Testing
+
+  Start with `test_mode: true` to:
+  - Skip auto-tick on init (call `tick/0` manually)
+  - Bypass advisory lock (each test gets its own scheduler)
   """
 
   use GenServer
@@ -19,19 +92,47 @@ defmodule Prikke.Scheduler do
   alias Prikke.Executions
 
   # Advisory lock ID - arbitrary unique number for this application
+  # Used for leader election in multi-node clusters
   @advisory_lock_id 728_492_847
 
   # Tick interval in milliseconds (60 seconds)
+  # This is the fallback; PubSub wake-ups provide faster response
   @tick_interval 60_000
 
   ## Client API
 
+  @doc """
+  Starts the scheduler GenServer.
+
+  ## Options
+
+  - `:test_mode` - If true, skips auto-tick and advisory lock (default: false)
+
+  ## Examples
+
+      # Normal start (in application supervisor)
+      Prikke.Scheduler.start_link()
+
+      # Test mode
+      start_supervised({Prikke.Scheduler, test_mode: true})
+  """
   def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
   @doc """
-  Manually trigger a scheduler tick (for testing).
+  Manually trigger a scheduler tick.
+
+  Finds all due jobs and creates pending executions. Returns `{:ok, count}`
+  where count is the number of jobs scheduled.
+
+  This is primarily used for testing. In production, the scheduler ticks
+  automatically every 60 seconds and responds to PubSub wake-ups.
+
+  ## Examples
+
+      iex> Prikke.Scheduler.tick()
+      {:ok, 3}
   """
   def tick do
     GenServer.call(__MODULE__, :tick)
@@ -104,25 +205,30 @@ defmodule Prikke.Scheduler do
 
   ## Private Functions
 
+  # Attempts to acquire the Postgres advisory lock for leader election.
+  # Returns state unchanged if already holding lock or in test mode.
+  # Uses pg_try_advisory_lock which is non-blocking.
   defp maybe_acquire_lock(%{has_lock: true} = state), do: state
   defp maybe_acquire_lock(%{test_mode: true} = state), do: %{state | has_lock: true}
 
   defp maybe_acquire_lock(%{has_lock: false} = state) do
-    # Try to acquire advisory lock (non-blocking)
     case Repo.query("SELECT pg_try_advisory_lock($1)", [@advisory_lock_id]) do
       {:ok, %{rows: [[true]]}} ->
         Logger.info("[Scheduler] Acquired advisory lock, becoming leader")
         %{state | has_lock: true}
 
       _ ->
+        # Another node holds the lock, stay passive
         state
     end
   end
 
+  # Finds all due jobs and creates pending executions for them.
+  # A job is "due" when: enabled = true AND next_run_at <= now
+  # Returns {:ok, count} where count is jobs successfully scheduled.
   defp schedule_due_jobs do
     now = DateTime.utc_now()
 
-    # Find all enabled jobs that are due
     due_jobs =
       from(j in Job,
         where: j.enabled == true and j.next_run_at <= ^now,
@@ -132,7 +238,7 @@ defmodule Prikke.Scheduler do
 
     scheduled_count =
       Enum.reduce(due_jobs, 0, fn job, count ->
-        case schedule_job(job, now) do
+        case schedule_job(job) do
           :ok -> count + 1
           :skipped -> count
           :error -> count
@@ -146,10 +252,21 @@ defmodule Prikke.Scheduler do
     {:ok, scheduled_count}
   end
 
-  defp schedule_job(job, _now) do
-    # Check monthly execution limit
+  # Schedules a single job by creating a pending execution.
+  #
+  # Flow:
+  # 1. Check monthly execution limit for the organization
+  # 2. Create pending execution with scheduled_for = job.next_run_at
+  # 3. Advance next_run_at:
+  #    - Cron jobs: compute next cron time
+  #    - One-time jobs: set to nil (won't run again)
+  #
+  # Returns:
+  # - :ok - execution created successfully
+  # - :skipped - monthly limit reached (next_run_at still advanced)
+  # - :error - failed to create execution
+  defp schedule_job(job) do
     if within_monthly_limit?(job) do
-      # Create pending execution
       case Executions.create_execution_for_job(job, job.next_run_at) do
         {:ok, _execution} ->
           # Advance next_run_at for cron jobs, or clear for one-time jobs
@@ -165,7 +282,7 @@ defmodule Prikke.Scheduler do
       end
     else
       Logger.warning("[Scheduler] Job #{job.id} skipped - monthly limit reached for org #{job.organization_id}")
-      # Still advance next_run_at so we don't keep trying
+      # Still advance next_run_at so we don't keep trying this job
       job
       |> Job.advance_next_run_changeset()
       |> Repo.update()
@@ -174,6 +291,10 @@ defmodule Prikke.Scheduler do
     end
   end
 
+  # Checks if the organization is within their monthly execution limit.
+  # Limits are defined in Jobs.get_tier_limits/1:
+  # - Free: 5,000 executions/month
+  # - Pro: 250,000 executions/month
   defp within_monthly_limit?(job) do
     org = job.organization
     tier_limits = Prikke.Jobs.get_tier_limits(org.tier)

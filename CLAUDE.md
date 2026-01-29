@@ -43,11 +43,44 @@
 ### Job Execution Architecture
 No external job libraries - just GenServers and Postgres:
 
-**Scheduler GenServer:**
-- Ticks every 60 seconds
-- Queries jobs table for due cron/one-time jobs
-- Inserts executions with `status = 'pending'`
-- Uses Postgres advisory lock so only one node schedules in cluster
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                              Overview                                │
+│                                                                      │
+│  ┌───────────┐   creates    ┌────────────┐   claimed by  ┌────────┐ │
+│  │ Scheduler │ ──────────▶  │ Executions │ ◀──────────── │Workers │ │
+│  │ (1 leader)│   pending    │  (queue)   │   SKIP LOCKED │ (2-20) │ │
+│  └───────────┘              └────────────┘               └────────┘ │
+│       │                                                       │     │
+│       │ advisory lock                              HTTP requests    │
+│       ▼                                                       ▼     │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                        PostgreSQL                            │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Scheduler GenServer** (`lib/app/scheduler.ex`):
+- Ticks every 60 seconds (fallback) or wakes via PubSub immediately
+- Uses Postgres advisory lock for leader election (only one node schedules)
+- Finds jobs where `enabled = true AND next_run_at <= now`
+- Creates pending executions and advances `next_run_at`
+- Enforces monthly execution limits before scheduling
+
+```elixir
+# Scheduler flow:
+1. Acquire advisory lock (pg_try_advisory_lock)
+2. Query due jobs: SELECT * FROM jobs WHERE enabled AND next_run_at <= now
+3. For each job:
+   a. Check monthly limit (count_current_month_executions)
+   b. Insert execution with status='pending', scheduled_for=next_run_at
+   c. Update job: next_run_at = next_cron_time (or nil for one-time)
+```
+
+**PubSub Wake-up:**
+- Scheduler subscribes to "scheduler" topic
+- `Jobs.notify_scheduler/0` broadcasts `:wake` when job enabled/updated
+- Reduces latency for one-time jobs (no 60s wait)
 
 **Worker Pool (GenServer pool or Task.Supervisor):**
 - Workers claim pending executions: `FOR UPDATE SKIP LOCKED`
@@ -57,8 +90,8 @@ No external job libraries - just GenServers and Postgres:
 
 **Postgres Features Used:**
 - `FOR UPDATE SKIP LOCKED` - concurrent job claiming without conflicts
-- `pg_advisory_lock` - leader election for scheduler
-- `pg_notify` / LISTEN - optional: wake workers on new job
+- `pg_try_advisory_lock` - non-blocking leader election for scheduler
+- `pg_advisory_unlock` - release lock on scheduler shutdown
 
 ```elixir
 # Claim next pending execution with priority
