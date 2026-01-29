@@ -136,6 +136,13 @@ defmodule PrikkeWeb.JobLive.Index do
   def render(assigns) do
     ~H"""
     <div class="max-w-4xl mx-auto py-6 sm:py-8 px-4">
+      <div class="mb-4">
+        <.link navigate={~p"/dashboard"} class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1">
+          <.icon name="hero-chevron-left" class="w-4 h-4" />
+          Back to Dashboard
+        </.link>
+      </div>
+
       <div class="flex justify-between items-center mb-6 sm:mb-8">
         <div>
           <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Jobs</h1>

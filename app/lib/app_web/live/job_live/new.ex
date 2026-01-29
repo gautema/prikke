@@ -78,7 +78,7 @@ defmodule PrikkeWeb.JobLive.New do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-[500px] mx-auto py-8 px-4">
+    <div class="max-w-2xl mx-auto py-8 px-4">
       <div class="mb-6">
         <.link navigate={~p"/jobs"} class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1">
           <.icon name="hero-chevron-left" class="w-4 h-4" />
@@ -130,11 +130,13 @@ defmodule PrikkeWeb.JobLive.New do
                 <label for="job_cron_expression" class="block text-sm font-medium text-slate-700 mb-1">
                   Cron Expression
                 </label>
-                <.input field={@form[:cron_expression]} type="text" placeholder="0 * * * *" class="font-mono" />
+                <div class="relative">
+                  <.input field={@form[:cron_expression]} type="text" placeholder="0 * * * *" class="font-mono bg-slate-50 border-slate-300" />
+                </div>
                 <p class="text-sm text-slate-500 mt-2">
-                  Examples: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">* * * * *</code> (every minute),
-                  <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">0 * * * *</code> (hourly),
-                  <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">0 9 * * *</code> (daily at 9am)
+                  Examples: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-mono">* * * * *</code> (every minute),
+                  <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-mono">0 * * * *</code> (hourly),
+                  <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-mono">0 9 * * *</code> (daily at 9am)
                 </p>
               </div>
             <% else %>
@@ -167,18 +169,18 @@ defmodule PrikkeWeb.JobLive.New do
 
             <div>
               <label for="job_headers" class="block text-sm font-medium text-slate-700 mb-1">
-                Headers (JSON)
+                Headers <span class="text-slate-400 font-normal">(JSON)</span>
               </label>
-              <.input field={@form[:headers_json]} type="textarea" rows="3" placeholder="{}" class="font-mono" />
-              <p class="text-sm text-slate-500 mt-1">Optional. JSON object with custom headers.</p>
+              <.input field={@form[:headers_json]} type="textarea" rows="3" placeholder='{"Content-Type": "application/json"}' class="font-mono text-sm bg-slate-50 border-slate-300" />
+              <p class="text-xs text-slate-500 mt-1">Optional. JSON object with custom headers.</p>
             </div>
 
             <div>
               <label for="job_body" class="block text-sm font-medium text-slate-700 mb-1">
                 Request Body
               </label>
-              <.input field={@form[:body]} type="textarea" rows="4" placeholder="{}" class="font-mono" />
-              <p class="text-sm text-slate-500 mt-1">Optional. For POST/PUT/PATCH requests.</p>
+              <.input field={@form[:body]} type="textarea" rows="4" placeholder='{"key": "value"}' class="font-mono text-sm bg-slate-50 border-slate-300" />
+              <p class="text-xs text-slate-500 mt-1">Optional. For POST/PUT/PATCH requests.</p>
             </div>
           </div>
         </div>
