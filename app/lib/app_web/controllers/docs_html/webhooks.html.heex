@@ -42,19 +42,19 @@
   <p>To ensure requests come from Prikke, verify the signature using your webhook secret:</p>
   <div class="bg-white border border-slate-200 rounded-lg overflow-hidden my-6">
     <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">Node.js</div>
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">const</span> crypto = <span class="text-purple-300">require</span>(<span class="text-green-300">'crypto'</span>);
+    <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">const</span> crypto = <span class="text-purple-300">require</span>(<span class="text-green-300">'crypto'</span>);
 
-<span class="text-purple-300">function</span> <span class="text-sky-300">verifySignature</span>(payload, signature, secret) &#123;
+<span class="text-purple-300">function</span> <span class="text-sky-300">verifySignature</span>(payload, signature, secret) {
   <span class="text-purple-300">const</span> expected = crypto
     .createHmac(<span class="text-green-300">'sha256'</span>, secret)
     .update(payload)
     .digest(<span class="text-green-300">'hex'</span>);
 
-  <span class="text-purple-300">return</span> <span class="text-green-300">`sha256=$&#123;expected&#125;`</span> === signature;
-&#125;
+  <span class="text-purple-300">return</span> <span class="text-green-300">`sha256=${expected}`</span> === signature;
+}
 
 <span class="text-slate-500">// In your handler</span>
-app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; &#123;
+app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; {
   <span class="text-purple-300">const</span> signature = req.headers[<span class="text-green-300">'x-prikke-signature'</span>];
   <span class="text-purple-300">const</span> isValid = verifySignature(
     JSON.stringify(req.body),
@@ -62,12 +62,12 @@ app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; &#123;
     process.env.PRIKKE_WEBHOOK_SECRET
   );
 
-  <span class="text-purple-300">if</span> (!isValid) &#123;
-    <span class="text-purple-300">return</span> res.status(<span class="text-orange-300">401</span>).json(&#123; <span class="text-sky-300">error</span>: <span class="text-green-300">'Invalid signature'</span> &#125;);
-  &#125;
+  <span class="text-purple-300">if</span> (!isValid) {
+    <span class="text-purple-300">return</span> res.status(<span class="text-orange-300">401</span>).json({ <span class="text-sky-300">error</span>: <span class="text-green-300">'Invalid signature'</span> });
+  }
 
   <span class="text-slate-500">// Process the job...</span>
-&#125;);</pre>
+});</pre>
   </div>
 
   <h2>Response Handling</h2>
@@ -143,35 +143,35 @@ app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; &#123;
   <p>Use the <code class="bg-slate-100 px-2 py-1 rounded text-sm">X-Prikke-Execution-Id</code> header to deduplicate:</p>
   <div class="bg-white border border-slate-200 rounded-lg overflow-hidden my-6">
     <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">Deduplication Example</div>
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-slate-500">// Track processed executions</span>
+    <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-slate-500">// Track processed executions</span>
 <span class="text-purple-300">const</span> processed = <span class="text-purple-300">new</span> Set(); <span class="text-slate-500">// Use Redis in production</span>
 
-app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purple-300">async</span> (req, res) =&gt; &#123;
+app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purple-300">async</span> (req, res) =&gt; {
   <span class="text-purple-300">const</span> executionId = req.headers[<span class="text-green-300">'x-prikke-execution-id'</span>];
 
-  <span class="text-purple-300">if</span> (processed.has(executionId)) &#123;
-    <span class="text-purple-300">return</span> res.json(&#123; <span class="text-sky-300">status</span>: <span class="text-green-300">'already_processed'</span> &#125;);
-  &#125;
+  <span class="text-purple-300">if</span> (processed.has(executionId)) {
+    <span class="text-purple-300">return</span> res.json({ <span class="text-sky-300">status</span>: <span class="text-green-300">'already_processed'</span> });
+  }
 
   <span class="text-slate-500">// Process the job...</span>
   <span class="text-purple-300">await</span> doWork();
 
   processed.add(executionId);
-  res.json(&#123; <span class="text-sky-300">status</span>: <span class="text-green-300">'ok'</span> &#125;);
-&#125;);</pre>
+  res.json({ <span class="text-sky-300">status</span>: <span class="text-green-300">'ok'</span> });
+});</pre>
   </div>
 
   <h2>Custom Headers</h2>
   <p>You can configure custom headers when creating a job:</p>
-  <pre class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://prikke.whitenoise.no/api/jobs \
+  <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://prikke.whitenoise.no/api/jobs \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
-  -d '&#123;
+  -d '{
     <span class="text-sky-300">"name"</span>: <span class="text-green-300">"My job"</span>,
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/webhook"</span>,
     <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 * * * *"</span>,
-    <span class="text-sky-300">"headers"</span>: &#123;
+    <span class="text-sky-300">"headers"</span>: {
       <span class="text-sky-300">"Authorization"</span>: <span class="text-green-300">"Bearer my-app-token"</span>
-    &#125;
-  &#125;'</pre>
+    }
+  }'</pre>
 </.docs_layout>

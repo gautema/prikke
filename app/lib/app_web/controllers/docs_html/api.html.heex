@@ -32,19 +32,19 @@
         <tr><td class="py-2 pr-4"><code class="text-sky-600">delete_removed</code></td><td class="py-2 pr-4 text-slate-500">boolean</td><td class="py-2 text-slate-600">Delete jobs not in this config (default: false)</td></tr>
       </table>
     </div>
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X PUT https://prikke.whitenoise.no/api/sync \
+    <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X PUT https://prikke.whitenoise.no/api/sync \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
-  -d '&#123;
-    <span class="text-sky-300">"jobs"</span>: [&#123;
+  -d '{
+    <span class="text-sky-300">"jobs"</span>: [{
       <span class="text-sky-300">"key"</span>: <span class="text-green-300">"daily-backup"</span>,
       <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Daily backup"</span>,
       <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/backup"</span>,
       <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 6 * * *"</span>
-    &#125;],
-    <span class="text-sky-300">"notifications"</span>: &#123;<span class="text-sky-300">"email"</span>: <span class="text-green-300">"alerts@myapp.com"</span>&#125;,
+    }],
+    <span class="text-sky-300">"notifications"</span>: {<span class="text-sky-300">"email"</span>: <span class="text-green-300">"alerts@myapp.com"</span>},
     <span class="text-sky-300">"delete_removed"</span>: <span class="text-orange-300">true</span>
-  &#125;'</pre>
+  }'</pre>
   </div>
 
   <h2>Jobs API</h2>
@@ -75,26 +75,26 @@
     </div>
     <div class="border-b border-slate-800">
       <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800">Recurring Job</div>
-      <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://prikke.whitenoise.no/api/jobs \
+      <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://prikke.whitenoise.no/api/jobs \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
-  -d '&#123;
+  -d '{
     <span class="text-sky-300">"key"</span>: <span class="text-green-300">"daily-backup"</span>,
     <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Daily backup"</span>,
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/backup"</span>,
     <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 6 * * *"</span>
-  &#125;'</pre>
+  }'</pre>
     </div>
     <div>
       <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800">One-time Job</div>
-      <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://prikke.whitenoise.no/api/jobs \
+      <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://prikke.whitenoise.no/api/jobs \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
-  -d '&#123;
+  -d '{
     <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Send reminder"</span>,
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/remind"</span>,
     <span class="text-sky-300">"run_at"</span>: <span class="text-green-300">"2025-02-01T09:00:00Z"</span>
-  &#125;'</pre>
+  }'</pre>
     </div>
   </div>
 
@@ -118,10 +118,10 @@
       </div>
       <p class="text-slate-600 m-0">Update a job. You can update any field.</p>
     </div>
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X PATCH https://prikke.whitenoise.no/api/jobs/job_abc123 \
+    <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X PATCH https://prikke.whitenoise.no/api/jobs/job_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
-  -d '&#123;<span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 7 * * *"</span>&#125;'</pre>
+  -d '{"cron": "0 7 * * *"}'</pre>
   </div>
 
   <div class="bg-white border border-slate-200 rounded-lg overflow-hidden mb-6">
@@ -146,14 +146,14 @@
       </div>
       <p class="text-slate-600 m-0">Get execution history for a job.</p>
     </div>
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">&#123;
-  <span class="text-sky-300">"executions"</span>: [&#123;
+    <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">{
+  <span class="text-sky-300">"executions"</span>: [{
     <span class="text-sky-300">"id"</span>: <span class="text-green-300">"exec_123"</span>,
     <span class="text-sky-300">"status"</span>: <span class="text-green-300">"success"</span>,
     <span class="text-sky-300">"status_code"</span>: <span class="text-orange-300">200</span>,
     <span class="text-sky-300">"duration_ms"</span>: <span class="text-orange-300">145</span>
-  &#125;]
-&#125;</pre>
+  }]
+}</pre>
   </div>
 
   <h2>Errors</h2>
@@ -178,10 +178,10 @@
   </div>
 
   <p>Error responses include a message:</p>
-  <pre class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto">&#123;
-  <span class="text-sky-300">"error"</span>: &#123;
+  <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto">{
+  <span class="text-sky-300">"error"</span>: {
     <span class="text-sky-300">"code"</span>: <span class="text-green-300">"invalid_cron"</span>,
     <span class="text-sky-300">"message"</span>: <span class="text-green-300">"Invalid cron expression"</span>
-  &#125;
-&#125;</pre>
+  }
+}</pre>
 </.docs_layout>

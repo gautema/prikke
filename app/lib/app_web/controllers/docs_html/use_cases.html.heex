@@ -15,16 +15,16 @@
         <h3 class="text-lg font-semibold text-slate-900 m-0">Email Sequences</h3>
         <p class="text-slate-600 text-sm mt-1 mb-0">Schedule follow-up emails without managing queues or workers.</p>
       </div>
-      <pre class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500">// Schedule welcome email 24 hours after signup</span>
-<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://prikke.whitenoise.no/api/jobs'</span>, &#123;
+      <pre phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500">// Schedule welcome email 24 hours after signup</span>
+<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://prikke.whitenoise.no/api/jobs'</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">'POST'</span>,
-  <span class="text-sky-300">headers</span>: &#123; <span class="text-sky-300">'Authorization'</span>: <span class="text-green-300">'Bearer YOUR_API_KEY'</span> &#125;,
-  <span class="text-sky-300">body</span>: JSON.stringify(&#123;
+  <span class="text-sky-300">headers</span>: { <span class="text-sky-300">'Authorization'</span>: <span class="text-green-300">'Bearer YOUR_API_KEY'</span> },
+  <span class="text-sky-300">body</span>: JSON.stringify({
     <span class="text-sky-300">name</span>: <span class="text-green-300">'welcome-email'</span>,
     <span class="text-sky-300">url</span>: <span class="text-green-300">'https://myapp.com/api/send-welcome'</span>,
     <span class="text-sky-300">run_at</span>: <span class="text-purple-300">new</span> Date(Date.now() + <span class="text-orange-300">86400000</span>).toISOString()
-  &#125;)
-&#125;);</pre>
+  })
+});</pre>
     </div>
 
     <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
@@ -36,14 +36,14 @@
         <h3 class="text-lg font-semibold text-slate-900 m-0">Report Generation</h3>
         <p class="text-slate-600 text-sm mt-1 mb-0">Generate PDFs or exports without timing out. Email when ready.</p>
       </div>
-      <pre class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500">// Return immediately, process in background</span>
-<span class="text-purple-300">await</span> prikke.createJob(&#123;
+      <pre phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500">// Return immediately, process in background</span>
+<span class="text-purple-300">await</span> prikke.createJob({
   <span class="text-sky-300">name</span>: <span class="text-green-300">'generate-report'</span>,
   <span class="text-sky-300">url</span>: <span class="text-green-300">'https://myapp.com/api/reports/generate'</span>,
   <span class="text-sky-300">run_at</span>: <span class="text-purple-300">new</span> Date().toISOString(),
-  <span class="text-sky-300">body</span>: JSON.stringify(&#123; reportId, userId &#125;)
-&#125;);
-<span class="text-purple-300">return</span> Response.json(&#123; <span class="text-sky-300">status</span>: <span class="text-green-300">'processing'</span> &#125;);</pre>
+  <span class="text-sky-300">body</span>: JSON.stringify({ reportId, userId })
+});
+<span class="text-purple-300">return</span> Response.json({ <span class="text-sky-300">status</span>: <span class="text-green-300">'processing'</span> });</pre>
     </div>
 
     <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
@@ -55,16 +55,16 @@
         <h3 class="text-lg font-semibold text-slate-900 m-0">Webhook Relay</h3>
         <p class="text-slate-600 text-sm mt-1 mb-0">Acknowledge webhooks fast, process reliably later.</p>
       </div>
-      <pre class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500">// Stripe webhook - return 200 immediately</span>
-<span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(req) &#123;
+      <pre phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500">// Stripe webhook - return 200 immediately</span>
+<span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(req) {
   <span class="text-purple-300">const</span> event = <span class="text-purple-300">await</span> req.json();
-  <span class="text-purple-300">await</span> prikke.createJob(&#123;
-    <span class="text-sky-300">name</span>: <span class="text-green-300">`stripe-</span><span class="text-orange-300">$&#123;event.id&#125;</span><span class="text-green-300">`</span>,
+  <span class="text-purple-300">await</span> prikke.createJob({
+    <span class="text-sky-300">name</span>: <span class="text-green-300">`stripe-${event.id}`</span>,
     <span class="text-sky-300">url</span>: <span class="text-green-300">'https://myapp.com/api/process-stripe'</span>,
     <span class="text-sky-300">run_at</span>: <span class="text-purple-300">new</span> Date().toISOString()
-  &#125;);
-  <span class="text-purple-300">return</span> Response.json(&#123; <span class="text-sky-300">received</span>: <span class="text-orange-300">true</span> &#125;);
-&#125;</pre>
+  });
+  <span class="text-purple-300">return</span> Response.json({ <span class="text-sky-300">received</span>: <span class="text-orange-300">true</span> });
+}</pre>
     </div>
   </div>
 
@@ -80,11 +80,11 @@
         <h3 class="text-lg font-semibold text-slate-900 m-0">Subscription Renewals</h3>
         <p class="text-slate-600 text-sm mt-1 mb-0">Process recurring billing daily at 6 AM UTC.</p>
       </div>
-      <pre class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed">&#123;
+      <pre phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed">{
   <span class="text-sky-300">"name"</span>: <span class="text-green-300">"process-renewals"</span>,
   <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/billing/renewals"</span>,
   <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 6 * * *"</span>
-&#125;</pre>
+}</pre>
     </div>
 
     <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
@@ -95,11 +95,11 @@
         <h3 class="text-lg font-semibold text-slate-900 m-0">Database Cleanup</h3>
         <p class="text-slate-600 text-sm mt-1 mb-0">Clean up old sessions every night at 2 AM.</p>
       </div>
-      <pre class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed">&#123;
+      <pre phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed">{
   <span class="text-sky-300">"name"</span>: <span class="text-green-300">"cleanup-sessions"</span>,
   <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/maintenance/cleanup"</span>,
   <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 2 * * *"</span>
-&#125;</pre>
+}</pre>
     </div>
 
     <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
@@ -110,11 +110,11 @@
         <h3 class="text-lg font-semibold text-slate-900 m-0">Health Checks</h3>
         <p class="text-slate-600 text-sm mt-1 mb-0">Monitor external APIs every 15 minutes.</p>
       </div>
-      <pre class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed">&#123;
+      <pre phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed">{
   <span class="text-sky-300">"name"</span>: <span class="text-green-300">"healthcheck-stripe"</span>,
   <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/health/stripe"</span>,
   <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"*/15 * * * *"</span>
-&#125;</pre>
+}</pre>
     </div>
   </div>
 

@@ -91,23 +91,23 @@
     <!-- How it works -->
     <section class="py-14 border-t border-slate-200">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">How it works</h2>
-      <pre class="bg-slate-900 text-slate-100 p-6 rounded-lg font-mono text-sm leading-relaxed overflow-x-auto"><span class="text-slate-500"># Recurring job - runs every day at 06:00 UTC</span>
+      <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-6 rounded-lg font-mono text-sm leading-relaxed overflow-x-auto"><span class="text-slate-500"># Recurring job - runs every day at 06:00 UTC</span>
 curl -X POST https://prikke.whitenoise.no/api/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
-  -d '&#123;
+  -d '{
     <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Daily backup"</span>,
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/backup"</span>,
     <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 6 * * *"</span>
-  &#125;'
+  }'
 
 <span class="text-slate-500"># One-time job - runs once at a specific time</span>
 curl -X POST https://prikke.whitenoise.no/api/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
-  -d '&#123;
+  -d '{
     <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Send reminder"</span>,
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/remind"</span>,
     <span class="text-sky-300">"run_at"</span>: <span class="text-green-300">"2025-02-01T09:00:00Z"</span>
-  &#125;'</pre>
+  }'</pre>
     </section>
 
     <!-- Pricing -->

@@ -36,14 +36,14 @@
           </div>
         </div>
       </div>
-      <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://prikke.whitenoise.no/api/jobs \
+      <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://prikke.whitenoise.no/api/jobs \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
-  -d '&#123;
+  -d '{
     <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Hourly sync"</span>,
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/sync"</span>,
     <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 * * * *"</span>
-  &#125;'</pre>
+  }'</pre>
     </div>
 
     <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
@@ -56,13 +56,13 @@
           </div>
         </div>
       </div>
-      <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-slate-500">// Next.js API route example</span>
-<span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(request) &#123;
+      <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-slate-500">// Next.js API route example</span>
+<span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(request) {
   <span class="text-slate-500">// Do your work here</span>
   <span class="text-purple-300">await</span> syncData();
 
-  <span class="text-purple-300">return</span> Response.json(&#123; <span class="text-sky-300">ok</span>: <span class="text-orange-300">true</span> &#125;);
-&#125;</pre>
+  <span class="text-purple-300">return</span> Response.json({ <span class="text-sky-300">ok</span>: <span class="text-orange-300">true</span> });
+}</pre>
     </div>
   </div>
 
