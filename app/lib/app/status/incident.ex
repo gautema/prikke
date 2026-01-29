@@ -24,8 +24,10 @@ defmodule Prikke.Status.Incident do
     |> validate_inclusion(:status, @statuses)
   end
 
-  def resolve_changeset(incident) do
+  def resolve_changeset(incident, resolved_at \\ nil) do
+    resolved_at = resolved_at || DateTime.utc_now(:second)
+
     incident
-    |> change(resolved_at: DateTime.utc_now(:second))
+    |> change(resolved_at: resolved_at)
   end
 end

@@ -69,6 +69,9 @@ defmodule PrikkeWeb.Api.QueueController do
          {:ok, execution} <- Executions.create_execution_for_job(job, scheduled_at),
          # Clear next_run_at so scheduler doesn't also create an execution
          {:ok, _job} <- Jobs.clear_next_run(job) do
+      # Wake workers to process immediately
+      Jobs.notify_workers()
+
       conn
       |> put_status(:accepted)
       |> json(%{

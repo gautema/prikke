@@ -247,6 +247,8 @@ defmodule Prikke.Scheduler do
 
     if scheduled_count > 0 do
       Logger.info("[Scheduler] Scheduled #{scheduled_count} job(s)")
+      # Wake workers to process the new executions
+      Prikke.Jobs.notify_workers()
     end
 
     {:ok, scheduled_count}

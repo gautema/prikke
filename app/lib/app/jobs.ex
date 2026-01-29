@@ -48,6 +48,14 @@ defmodule Prikke.Jobs do
   end
 
   @doc """
+  Notifies workers to wake up and check for pending executions.
+  Called when new executions are created.
+  """
+  def notify_workers do
+    Phoenix.PubSub.broadcast(Prikke.PubSub, "workers", :wake)
+  end
+
+  @doc """
   Returns the list of jobs for an organization.
 
   ## Examples

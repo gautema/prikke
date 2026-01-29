@@ -44,10 +44,12 @@ defmodule Prikke.Worker do
   alias Prikke.Notifications
 
   # How long to wait between polls when no work is found (ms)
-  @poll_interval 1_000
+  # Uses exponential backoff: starts at base, doubles up to max
+  @poll_interval_base 2_000
+  @poll_interval_max 30_000
 
-  # Exit after this many consecutive empty polls (5 minutes)
-  @max_idle_polls 300
+  # Exit after this duration of no work (5 minutes)
+  @max_idle_ms 300_000
 
   # Retry backoff multiplier (attempt^2 * base_ms)
   @retry_base_delay_ms 5_000
@@ -65,9 +67,12 @@ defmodule Prikke.Worker do
     # Trap exits to allow graceful shutdown (finish current request)
     Process.flag(:trap_exit, true)
 
+    # Subscribe to wake notifications (from scheduler when new executions are created)
+    Phoenix.PubSub.subscribe(Prikke.PubSub, "workers")
+
     # Start working immediately
     send(self(), :work)
-    {:ok, %{idle_polls: 0, working: false}}
+    {:ok, %{idle_since: nil, poll_interval: @poll_interval_base, working: false}}
   end
 
   @impl true
@@ -79,16 +84,19 @@ defmodule Prikke.Worker do
   def handle_info(:work, state) do
     case Executions.claim_next_execution() do
       {:ok, nil} ->
-        # No work available
-        new_idle = state.idle_polls + 1
+        # No work available - track idle time and use exponential backoff
+        now = System.monotonic_time(:millisecond)
+        idle_since = state.idle_since || now
+        idle_duration = now - idle_since
 
-        if new_idle >= @max_idle_polls do
+        if idle_duration >= @max_idle_ms do
           # Exit normally after being idle too long
           {:stop, :normal, state}
         else
-          # Wait and try again
-          Process.send_after(self(), :work, @poll_interval)
-          {:noreply, %{state | idle_polls: new_idle, working: false}}
+          # Exponential backoff: double interval each time, up to max
+          next_interval = min(state.poll_interval * 2, @poll_interval_max)
+          Process.send_after(self(), :work, state.poll_interval)
+          {:noreply, %{state | idle_since: idle_since, poll_interval: next_interval, working: false}}
         end
 
       {:ok, execution} ->
@@ -96,13 +104,13 @@ defmodule Prikke.Worker do
         state = %{state | working: true}
         execute(execution)
 
-        # Reset idle counter and look for more work immediately
+        # Reset idle tracking and look for more work immediately
         send(self(), :work)
-        {:noreply, %{state | idle_polls: 0, working: false}}
+        {:noreply, %{state | idle_since: nil, poll_interval: @poll_interval_base, working: false}}
 
       {:error, reason} ->
         Logger.error("[Worker] Failed to claim execution: #{inspect(reason)}")
-        Process.send_after(self(), :work, @poll_interval)
+        Process.send_after(self(), :work, state.poll_interval)
         {:noreply, %{state | working: false}}
     end
   end
@@ -119,6 +127,14 @@ defmodule Prikke.Worker do
       # Not working, can exit immediately
       {:stop, :normal, state}
     end
+  end
+
+  # Wake signal from PubSub - check for work immediately
+  def handle_info(:wake, state) do
+    unless state.working do
+      send(self(), :work)
+    end
+    {:noreply, state}
   end
 
   # Ignore unexpected messages (e.g., from test mailer sending :email messages)

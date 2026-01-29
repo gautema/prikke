@@ -38,6 +38,15 @@ defmodule Prikke.StatusMonitor do
     test_mode = Keyword.get(opts, :test_mode, false)
 
     unless test_mode do
+      # Detect any downtime that occurred while the app wasn't running
+      case Status.detect_and_record_downtime() do
+        {:recorded, incident} ->
+          Logger.info("[StatusMonitor] Recorded downtime incident from #{incident.started_at} to #{incident.resolved_at}")
+
+        :ok ->
+          :ok
+      end
+
       # Initial check after a short delay
       Process.send_after(self(), :check, 5_000)
     end

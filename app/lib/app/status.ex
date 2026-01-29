@@ -199,4 +199,58 @@ defmodule Prikke.Status do
     )
     |> Repo.all()
   end
+
+  @doc """
+  Detects if the system was down based on a gap since last check.
+  If the last check was more than `threshold_minutes` ago, creates a resolved
+  incident for the downtime period.
+
+  Called on startup to record any downtime that occurred while the app wasn't running.
+  Returns :ok or {:recorded, incident} if downtime was detected.
+  """
+  def detect_and_record_downtime(threshold_minutes \\ 2) do
+    # Get the most recent status check across all components
+    latest_check =
+      from(c in StatusCheck,
+        order_by: [desc: c.last_checked_at],
+        limit: 1
+      )
+      |> Repo.one()
+
+    case latest_check do
+      nil ->
+        # No previous checks, first startup
+        :ok
+
+      check ->
+        now = DateTime.utc_now(:second)
+        gap_minutes = DateTime.diff(now, check.last_checked_at, :minute)
+
+        if gap_minutes >= threshold_minutes do
+          # There was downtime - create a resolved incident
+          downtime_start = check.last_checked_at
+          downtime_end = now
+
+          {:ok, incident} =
+            %Incident{}
+            |> Incident.changeset(%{
+              component: "api",
+              status: "down",
+              message: "System was unavailable (detected on restart)",
+              started_at: downtime_start
+            })
+            |> Repo.insert()
+
+          # Immediately resolve since we're back up
+          {:ok, resolved_incident} =
+            incident
+            |> Incident.resolve_changeset(downtime_end)
+            |> Repo.update()
+
+          {:recorded, resolved_incident}
+        else
+          :ok
+        end
+    end
+  end
 end
