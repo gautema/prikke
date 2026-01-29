@@ -106,11 +106,6 @@ defmodule PrikkeWeb.DashboardLive do
             </p>
           <% end %>
         </div>
-        <%= if @current_organization do %>
-          <a href={~p"/organizations/settings"} class="text-sm text-slate-500 hover:text-slate-700">
-            Org Settings
-          </a>
-        <% end %>
       </div>
 
       <%= if @current_organization do %>

@@ -93,6 +93,15 @@
                       <% end %>
                     <% end %>
                     <div class="border-t border-slate-200 mt-1 pt-1">
+                      <%= if @current_organization do %>
+                        <.link
+                          href={~p"/organizations/settings"}
+                          class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 no-underline flex items-center gap-2"
+                        >
+                          <.icon name="hero-cog-6-tooth" class="w-4 h-4 text-slate-400" />
+                          Organization settings
+                        </.link>
+                      <% end %>
                       <.link
                         href={~p"/organizations/new"}
                         class="block px-4 py-2 text-sm text-emerald-600 hover:bg-slate-50 no-underline"
@@ -173,6 +182,15 @@
                         {org.name}
                       </.link>
                     <% end %>
+                  <% end %>
+                  <%= if @current_organization do %>
+                    <.link
+                      href={~p"/organizations/settings"}
+                      class="block py-1.5 text-sm text-slate-600 no-underline flex items-center gap-2"
+                    >
+                      <.icon name="hero-cog-6-tooth" class="w-4 h-4 text-slate-400" />
+                      Organization settings
+                    </.link>
                   <% end %>
                   <.link
                     href={~p"/organizations/new"}
