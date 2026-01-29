@@ -60,8 +60,9 @@ defmodule PrikkeWeb.Api.JobController do
 
   def create(conn, %{"job" => job_params}) do
     org = conn.assigns.current_organization
+    api_key_name = conn.assigns[:api_key_name]
 
-    case Jobs.create_job(org, job_params) do
+    case Jobs.create_job(org, job_params, api_key_name: api_key_name) do
       {:ok, job} ->
         conn
         |> put_status(:created)
@@ -93,13 +94,14 @@ defmodule PrikkeWeb.Api.JobController do
 
   def update(conn, %{"id" => id, "job" => job_params}) do
     org = conn.assigns.current_organization
+    api_key_name = conn.assigns[:api_key_name]
 
     case Jobs.get_job(org, id) do
       nil ->
         {:error, :not_found}
 
       job ->
-        case Jobs.update_job(org, job, job_params) do
+        case Jobs.update_job(org, job, job_params, api_key_name: api_key_name) do
           {:ok, job} -> json(conn, %{data: job_json(job)})
           {:error, changeset} -> {:error, changeset}
         end
@@ -126,13 +128,14 @@ defmodule PrikkeWeb.Api.JobController do
 
   def delete(conn, %{"id" => id}) do
     org = conn.assigns.current_organization
+    api_key_name = conn.assigns[:api_key_name]
 
     case Jobs.get_job(org, id) do
       nil ->
         {:error, :not_found}
 
       job ->
-        case Jobs.delete_job(org, job) do
+        case Jobs.delete_job(org, job, api_key_name: api_key_name) do
           {:ok, _job} -> send_resp(conn, :no_content, "")
           {:error, changeset} -> {:error, changeset}
         end

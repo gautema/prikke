@@ -15,8 +15,10 @@ defmodule PrikkeWeb.Plugs.ApiAuth do
 
   def call(conn, _opts) do
     with {:ok, token} <- get_token_from_header(conn),
-         {:ok, organization} <- Accounts.verify_api_key(token) do
-      assign(conn, :current_organization, organization)
+         {:ok, organization, api_key_name} <- Accounts.verify_api_key(token) do
+      conn
+      |> assign(:current_organization, organization)
+      |> assign(:api_key_name, api_key_name)
     else
       {:error, _reason} ->
         conn

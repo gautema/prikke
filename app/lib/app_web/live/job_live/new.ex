@@ -41,7 +41,7 @@ defmodule PrikkeWeb.JobLive.New do
   end
 
   def handle_event("save", %{"job" => job_params}, socket) do
-    case Jobs.create_job(socket.assigns.organization, job_params) do
+    case Jobs.create_job(socket.assigns.organization, job_params, scope: socket.assigns.current_scope) do
       {:ok, job} ->
         {:noreply,
          socket

@@ -35,6 +35,7 @@ defmodule PrikkeWeb.Api.QueueController do
 
   def push(conn, params) do
     org = conn.assigns.current_organization
+    api_key_name = conn.assigns[:api_key_name]
     # Schedule 1 second in the future to pass validation, will execute immediately
     scheduled_at =
       DateTime.utc_now()
@@ -66,7 +67,7 @@ defmodule PrikkeWeb.Api.QueueController do
       "retry_attempts" => params["retry_attempts"] || 5
     }
 
-    with {:ok, job} <- Jobs.create_job(org, job_params),
+    with {:ok, job} <- Jobs.create_job(org, job_params, api_key_name: api_key_name),
          {:ok, execution} <- Executions.create_execution_for_job(job, scheduled_at),
          # Clear next_run_at so scheduler doesn't also create an execution
          {:ok, _job} <- Jobs.clear_next_run(job) do

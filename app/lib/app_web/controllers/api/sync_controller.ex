@@ -65,11 +65,12 @@ defmodule PrikkeWeb.Api.SyncController do
 
   def sync(conn, %{"jobs" => jobs_params} = params) when is_list(jobs_params) do
     org = conn.assigns.current_organization
+    api_key_name = conn.assigns[:api_key_name]
     delete_removed = params["delete_removed"] == true
 
     result =
       Repo.transaction(fn ->
-        sync_jobs(org, jobs_params, delete_removed)
+        sync_jobs(org, jobs_params, delete_removed, api_key_name)
       end)
 
     case result do
@@ -90,7 +91,7 @@ defmodule PrikkeWeb.Api.SyncController do
     |> json(%{error: %{code: "bad_request", message: "Request body must include 'jobs' array"}})
   end
 
-  defp sync_jobs(org, jobs_params, delete_removed) do
+  defp sync_jobs(org, jobs_params, delete_removed, api_key_name) do
     existing_jobs = Jobs.list_jobs(org) |> Map.new(&{&1.name, &1})
     declared_names = MapSet.new(jobs_params, & &1["name"])
 
@@ -105,7 +106,7 @@ defmodule PrikkeWeb.Api.SyncController do
           case Map.get(existing_jobs, name) do
             nil ->
               # Create new job
-              case Jobs.create_job(org, job_params) do
+              case Jobs.create_job(org, job_params, api_key_name: api_key_name) do
                 {:ok, job} ->
                   {[job.name | created], updated, errors}
 
@@ -116,7 +117,7 @@ defmodule PrikkeWeb.Api.SyncController do
 
             existing_job ->
               # Update existing job
-              case Jobs.update_job(org, existing_job, job_params) do
+              case Jobs.update_job(org, existing_job, job_params, api_key_name: api_key_name) do
                 {:ok, _job} ->
                   {created, [name | updated], errors}
 
@@ -134,7 +135,7 @@ defmodule PrikkeWeb.Api.SyncController do
         existing_jobs
         |> Enum.filter(fn {name, _job} -> not MapSet.member?(declared_names, name) end)
         |> Enum.reduce([], fn {name, job}, deleted ->
-          case Jobs.delete_job(org, job) do
+          case Jobs.delete_job(org, job, api_key_name: api_key_name) do
             {:ok, _} -> [name | deleted]
             {:error, _} -> deleted
           end

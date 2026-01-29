@@ -77,7 +77,7 @@ defmodule PrikkeWeb.QueueLive do
       "retry_attempts" => 5
     }
 
-    case Jobs.create_job(org, job_params) do
+    case Jobs.create_job(org, job_params, scope: socket.assigns.current_scope) do
       {:ok, job} ->
         case Executions.create_execution_for_job(job, scheduled_at) do
           {:ok, execution} ->

@@ -77,14 +77,14 @@ defmodule PrikkeWeb.JobLive.Index do
   @impl true
   def handle_event("delete", %{"id" => id}, socket) do
     job = Jobs.get_job!(socket.assigns.organization, id)
-    {:ok, _} = Jobs.delete_job(socket.assigns.organization, job)
+    {:ok, _} = Jobs.delete_job(socket.assigns.organization, job, scope: socket.assigns.current_scope)
 
     {:noreply, put_flash(socket, :info, "Job deleted successfully")}
   end
 
   def handle_event("toggle", %{"id" => id}, socket) do
     job = Jobs.get_job!(socket.assigns.organization, id)
-    {:ok, _} = Jobs.toggle_job(socket.assigns.organization, job)
+    {:ok, _} = Jobs.toggle_job(socket.assigns.organization, job, scope: socket.assigns.current_scope)
 
     {:noreply, socket}
   end

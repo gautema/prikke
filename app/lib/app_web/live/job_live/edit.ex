@@ -58,7 +58,7 @@ defmodule PrikkeWeb.JobLive.Edit do
 
     job_params = parse_headers(job_params)
 
-    case Jobs.update_job(socket.assigns.organization, socket.assigns.job, job_params) do
+    case Jobs.update_job(socket.assigns.organization, socket.assigns.job, job_params, scope: socket.assigns.current_scope) do
       {:ok, job} ->
         Logger.info(
           "[JobLive.Edit] Job updated successfully, redirecting to #{~p"/jobs/#{job.id}"}"

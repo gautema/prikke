@@ -86,7 +86,7 @@ defmodule PrikkeWeb.JobLive.Show do
     job = socket.assigns.job
     Logger.info("[JobLive.Show] Toggle event for job #{job.id}, currently enabled=#{job.enabled}")
 
-    case Jobs.toggle_job(socket.assigns.organization, job) do
+    case Jobs.toggle_job(socket.assigns.organization, job, scope: socket.assigns.current_scope) do
       {:ok, updated_job} ->
         Logger.info("[JobLive.Show] Toggle succeeded, now enabled=#{updated_job.enabled}")
         {:noreply, assign(socket, :job, updated_job)}
@@ -98,7 +98,7 @@ defmodule PrikkeWeb.JobLive.Show do
   end
 
   def handle_event("delete", _, socket) do
-    {:ok, _} = Jobs.delete_job(socket.assigns.organization, socket.assigns.job)
+    {:ok, _} = Jobs.delete_job(socket.assigns.organization, socket.assigns.job, scope: socket.assigns.current_scope)
 
     {:noreply,
      socket

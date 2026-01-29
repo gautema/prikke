@@ -629,8 +629,9 @@ defmodule Prikke.Accounts do
   end
 
   @doc """
-  Verifies an API key and returns the organization if valid.
+  Verifies an API key and returns the organization and key name if valid.
   Expected format: "pk_live_xxx.sk_live_yyy" or just the key_id for lookup.
+  Returns {:ok, organization, api_key_name} on success.
   """
   def verify_api_key(full_key) do
     case String.split(full_key, ".") do
@@ -646,7 +647,7 @@ defmodule Prikke.Accounts do
               |> Ecto.Changeset.change(last_used_at: DateTime.utc_now(:second))
               |> Repo.update()
 
-              {:ok, api_key.organization}
+              {:ok, api_key.organization, api_key.name || api_key.key_id}
             else
               {:error, :invalid_secret}
             end
