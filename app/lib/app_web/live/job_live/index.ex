@@ -244,10 +244,8 @@ defmodule PrikkeWeb.JobLive.Index do
                     <%= if job.schedule_type == "cron" do %>
                       <span class="font-mono">{job.cron_expression}</span>
                     <% else %>
-                      <span class="hidden sm:inline">One-time: </span>{Calendar.strftime(
-                        job.scheduled_at,
-                        "%d %b %Y, %H:%M"
-                      )}
+                      <span class="hidden sm:inline">One-time: </span>
+                      <.local_time id={"job-#{job.id}-scheduled"} datetime={job.scheduled_at} />
                     <% end %>
                   </div>
                 </div>

@@ -168,7 +168,7 @@ defmodule PrikkeWeb.JobLive.Show do
                 <.job_status_badge job={@job} latest_info={@latest_info} />
               </div>
               <p class="text-sm text-slate-500 mt-1">
-                Created {Calendar.strftime(@job.inserted_at, "%d %b %Y")}
+                Created <.local_time id="job-created" datetime={@job.inserted_at} format="date" />
               </p>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
@@ -252,7 +252,7 @@ defmodule PrikkeWeb.JobLive.Show do
                 <div>
                   <span class="text-slate-900 font-medium">One-time execution</span>
                   <p class="text-slate-600 mt-1">
-                    Scheduled for {Calendar.strftime(@job.scheduled_at, "%d %B %Y at %H:%M")} UTC
+                    Scheduled for <.local_time id="job-scheduled" datetime={@job.scheduled_at} format="full" />
                   </p>
                 </div>
               <% end %>
@@ -323,7 +323,7 @@ defmodule PrikkeWeb.JobLive.Show do
                       <div class="flex items-center gap-3">
                         <.status_badge status={exec.status} />
                         <span class="text-sm text-slate-600">
-                          {format_execution_time(exec.scheduled_for)}
+                          <.local_time id={"exec-#{exec.id}"} datetime={exec.scheduled_for} />
                         </span>
                       </div>
                       <div class="flex items-center gap-4 text-sm text-slate-500">
@@ -469,12 +469,6 @@ defmodule PrikkeWeb.JobLive.Show do
   defp format_avg_duration(ms) do
     ms = Decimal.to_float(ms)
     format_duration(round(ms))
-  end
-
-  defp format_execution_time(nil), do: "—"
-
-  defp format_execution_time(datetime) do
-    Calendar.strftime(datetime, "%d %b, %H:%M:%S")
   end
 
   defp truncate(nil, _), do: nil

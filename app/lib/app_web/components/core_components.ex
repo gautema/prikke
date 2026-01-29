@@ -630,6 +630,184 @@ defmodule PrikkeWeb.CoreComponents do
   end
 
   @doc """
+  Renders a datetime in the user's local timezone.
+
+  Uses a JavaScript hook to convert UTC to local time on the client side.
+
+  ## Examples
+
+      <.local_time id="created-at" datetime={@created_at} />
+      <.local_time id="scheduled" datetime={@scheduled_at} format="datetime" />
+
+  ## Formats
+
+    * `:datetime` - "29 Jan 2026, 14:30" (default)
+    * `:time` - "14:30:45"
+    * `:date` - "29 Jan 2026"
+    * `:full` - "29 January 2026 at 14:30"
+
+  """
+  attr :id, :string, required: true
+  attr :datetime, :any, required: true, doc: "DateTime, NaiveDateTime, or nil"
+  attr :format, :string, default: "datetime", values: ~w(datetime time date full)
+
+  def local_time(%{datetime: nil} = assigns) do
+    ~H"""
+    <span>—</span>
+    """
+  end
+
+  def local_time(assigns) do
+    ~H"""
+    <span
+      id={@id}
+      phx-hook=".LocalTime"
+      data-timestamp={to_iso8601(@datetime)}
+      data-format={@format}
+      class="relative group/time inline-block"
+    >
+      <span>{format_utc_fallback(@datetime, @format)}</span>
+      <span class="absolute invisible group-hover/time:visible top-full left-0 mt-1 px-2 py-1 text-xs text-white bg-slate-800 rounded whitespace-nowrap z-50 pointer-events-none">
+        {format_utc_tooltip(@datetime)}
+      </span>
+    </span>
+    <script :type={Phoenix.LiveView.ColocatedHook} name=".LocalTime">
+      export default {
+        mounted() {
+          this.formatTime()
+        },
+        updated() {
+          this.formatTime()
+        },
+        formatTime() {
+          const timestamp = this.el.dataset.timestamp
+          const format = this.el.dataset.format
+          const date = new Date(timestamp)
+
+          let text
+          switch(format) {
+            case 'time':
+              text = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+              break
+            case 'date':
+              text = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+              break
+            case 'full':
+              text = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) +
+                     ' at ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })
+              break
+            default: // datetime
+              text = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
+                     ', ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })
+          }
+          this.el.firstChild.textContent = text
+        }
+      }
+    </script>
+    """
+  end
+
+  @doc """
+  Renders a relative time that updates live on the client.
+
+  Shows times like "5s ago", "2m ago", "1h ago". Falls back to local datetime
+  for times older than 24 hours.
+
+  ## Examples
+
+      <.relative_time id="exec-123" datetime={@execution.scheduled_for} />
+
+  """
+  attr :id, :string, required: true
+  attr :datetime, :any, required: true, doc: "DateTime, NaiveDateTime, or nil"
+
+  def relative_time(%{datetime: nil} = assigns) do
+    ~H"""
+    <span>—</span>
+    """
+  end
+
+  def relative_time(assigns) do
+    ~H"""
+    <span
+      id={@id}
+      phx-hook=".RelativeTime"
+      data-timestamp={to_iso8601(@datetime)}
+      class="relative group/time inline-block"
+    >
+      <span>{format_relative_fallback(@datetime)}</span>
+      <span class="absolute invisible group-hover/time:visible top-full left-0 mt-1 px-2 py-1 text-xs text-white bg-slate-800 rounded whitespace-nowrap z-50 pointer-events-none">
+        {format_utc_tooltip(@datetime)}
+      </span>
+    </span>
+    <script :type={Phoenix.LiveView.ColocatedHook} name=".RelativeTime">
+      export default {
+        mounted() {
+          this.updateTime()
+          this.interval = setInterval(() => this.updateTime(), 10000)
+        },
+        updated() {
+          this.updateTime()
+        },
+        destroyed() {
+          clearInterval(this.interval)
+        },
+        updateTime() {
+          const timestamp = this.el.dataset.timestamp
+          const date = new Date(timestamp)
+          const now = new Date()
+          const diff = Math.floor((now - date) / 1000)
+
+          let text
+          if (diff < 0) {
+            text = "just now"
+          } else if (diff < 60) {
+            text = `${diff}s ago`
+          } else if (diff < 3600) {
+            text = `${Math.floor(diff / 60)}m ago`
+          } else if (diff < 86400) {
+            text = `${Math.floor(diff / 3600)}h ago`
+          } else {
+            text = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) +
+                   ', ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })
+          }
+          this.el.firstChild.textContent = text
+        }
+      }
+    </script>
+    """
+  end
+
+  defp to_iso8601(%DateTime{} = dt), do: DateTime.to_iso8601(dt)
+  defp to_iso8601(%NaiveDateTime{} = dt), do: NaiveDateTime.to_iso8601(dt) <> "Z"
+
+  defp format_utc_tooltip(datetime) do
+    Calendar.strftime(datetime, "%Y-%m-%d %H:%M:%S UTC")
+  end
+
+  defp format_utc_fallback(datetime, format) do
+    case format do
+      "time" -> Calendar.strftime(datetime, "%H:%M:%S")
+      "date" -> Calendar.strftime(datetime, "%d %b %Y")
+      "full" -> Calendar.strftime(datetime, "%d %B %Y at %H:%M")
+      _ -> Calendar.strftime(datetime, "%d %b %Y, %H:%M")
+    end
+  end
+
+  defp format_relative_fallback(datetime) do
+    now = DateTime.utc_now()
+    diff = DateTime.diff(now, datetime, :second)
+
+    cond do
+      diff < 0 -> "just now"
+      diff < 60 -> "#{diff}s ago"
+      diff < 3600 -> "#{div(diff, 60)}m ago"
+      diff < 86400 -> "#{div(diff, 3600)}h ago"
+      true -> Calendar.strftime(datetime, "%d %b, %H:%M")
+    end
+  end
+
+  @doc """
   Renders the app footer with documentation links.
 
   ## Examples

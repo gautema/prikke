@@ -88,7 +88,7 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
                 <.status_badge status={@execution.status} />
               </div>
               <p class="text-sm text-slate-500 mt-1">
-                Scheduled for {format_datetime(@execution.scheduled_for)}
+                Scheduled for <.local_time id="exec-scheduled" datetime={@execution.scheduled_for} format="full" />
               </p>
             </div>
             <%= if @execution.status in ["failed", "timeout", "missed"] do %>
@@ -109,20 +109,20 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
             <div class="bg-slate-50 rounded-lg p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
                 <span class="text-xs text-slate-500 uppercase">Scheduled For</span>
-                <p class="text-slate-900 text-sm font-mono">
-                  {format_datetime(@execution.scheduled_for)}
+                <p class="text-slate-900 text-sm">
+                  <.local_time id="timing-scheduled" datetime={@execution.scheduled_for} />
                 </p>
               </div>
               <div>
                 <span class="text-xs text-slate-500 uppercase">Started At</span>
-                <p class="text-slate-900 text-sm font-mono">
-                  {format_datetime(@execution.started_at)}
+                <p class="text-slate-900 text-sm">
+                  <.local_time id="timing-started" datetime={@execution.started_at} />
                 </p>
               </div>
               <div>
                 <span class="text-xs text-slate-500 uppercase">Finished At</span>
-                <p class="text-slate-900 text-sm font-mono">
-                  {format_datetime(@execution.finished_at)}
+                <p class="text-slate-900 text-sm">
+                  <.local_time id="timing-finished" datetime={@execution.finished_at} />
                 </p>
               </div>
               <div>
@@ -218,7 +218,9 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
               </div>
               <div>
                 <span class="text-xs text-slate-500 uppercase">Created At</span>
-                <p class="text-slate-700">{format_datetime(@execution.inserted_at)}</p>
+                <p class="text-slate-700">
+                  <.local_time id="meta-created" datetime={@execution.inserted_at} />
+                </p>
               </div>
               <div>
                 <span class="text-xs text-slate-500 uppercase">Job Name</span>
@@ -263,12 +265,6 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
   defp status_code_color(code) when code >= 300 and code < 400, do: "text-blue-600"
   defp status_code_color(code) when code >= 400 and code < 500, do: "text-amber-600"
   defp status_code_color(_), do: "text-red-600"
-
-  defp format_datetime(nil), do: "—"
-
-  defp format_datetime(datetime) do
-    Calendar.strftime(datetime, "%Y-%m-%d %H:%M:%S UTC")
-  end
 
   defp format_duration(nil), do: "—"
   defp format_duration(ms) when ms < 1000, do: "#{ms}ms"

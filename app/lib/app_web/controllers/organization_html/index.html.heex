@@ -15,27 +15,31 @@
 
     <div class="bg-white border border-slate-200 rounded-lg divide-y divide-slate-200">
       <%= for org <- @organizations do %>
-        <div class="p-4 flex justify-between items-center">
-          <div>
-            <div class="font-medium text-slate-900">{org.name}</div>
-            <div class="text-sm text-slate-500">{org.slug} · {String.capitalize(org.tier)}</div>
+        <%= if @current_organization && @current_organization.id == org.id do %>
+          <div class="p-4 flex justify-between items-center">
+            <div>
+              <div class="font-medium text-slate-900">{org.name}</div>
+              <div class="text-sm text-slate-500">{org.slug} · {String.capitalize(org.tier)}</div>
+            </div>
+            <span class="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded">
+              Current
+            </span>
           </div>
-          <div class="flex items-center gap-3">
-            <%= if @current_organization && @current_organization.id == org.id do %>
-              <span class="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded">
-                Current
-              </span>
-            <% else %>
-              <.link
-                href={~p"/organizations/#{org.id}/switch"}
-                method="post"
-                class="text-sm text-slate-600 hover:text-slate-900"
-              >
-                Switch
-              </.link>
-            <% end %>
-          </div>
-        </div>
+        <% else %>
+          <.link
+            href={~p"/organizations/#{org.id}/switch"}
+            method="post"
+            class="p-4 flex justify-between items-center hover:bg-slate-50 transition-colors cursor-pointer block"
+          >
+            <div>
+              <div class="font-medium text-slate-900">{org.name}</div>
+              <div class="text-sm text-slate-500">{org.slug} · {String.capitalize(org.tier)}</div>
+            </div>
+            <span class="text-sm text-slate-400">
+              Switch →
+            </span>
+          </.link>
+        <% end %>
       <% end %>
 
       <%= if @organizations == [] do %>
