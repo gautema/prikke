@@ -80,9 +80,9 @@ defmodule PrikkeWeb.JobLive.New do
     ~H"""
     <div class="max-w-2xl mx-auto py-8 px-4">
       <div class="mb-6">
-        <.link navigate={~p"/jobs"} class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1">
+        <.link navigate={~p"/dashboard"} class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1">
           <.icon name="hero-chevron-left" class="w-4 h-4" />
-          Back to Jobs
+          Back to Dashboard
         </.link>
       </div>
 
