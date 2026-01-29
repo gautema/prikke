@@ -134,7 +134,35 @@ defmodule PrikkeWeb.JobLive.Edit do
       >
         <!-- Basic Info -->
         <div class="bg-white border border-slate-200 rounded-lg p-6">
-          <h2 class="text-lg font-semibold text-slate-900 mb-4">Basic Info</h2>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-slate-900">Basic Info</h2>
+            <label class="flex items-center gap-3 cursor-pointer">
+              <span class="text-sm font-medium text-slate-700">Enabled</span>
+              <button
+                type="button"
+                phx-click={JS.dispatch("click", to: "#job_enabled_checkbox")}
+                class={[
+                  "relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2",
+                  Phoenix.HTML.Form.normalize_value("checkbox", @form[:enabled].value) && "bg-emerald-500",
+                  !Phoenix.HTML.Form.normalize_value("checkbox", @form[:enabled].value) && "bg-slate-200"
+                ]}
+              >
+                <span class={[
+                  "pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                  Phoenix.HTML.Form.normalize_value("checkbox", @form[:enabled].value) && "translate-x-5",
+                  !Phoenix.HTML.Form.normalize_value("checkbox", @form[:enabled].value) && "translate-x-0"
+                ]}></span>
+              </button>
+              <input
+                type="checkbox"
+                id="job_enabled_checkbox"
+                name={@form[:enabled].name}
+                value="true"
+                checked={Phoenix.HTML.Form.normalize_value("checkbox", @form[:enabled].value)}
+                class="sr-only"
+              />
+            </label>
+          </div>
 
           <div class="space-y-4">
             <div>
@@ -215,22 +243,6 @@ defmodule PrikkeWeb.JobLive.Edit do
               <p class="text-xs text-slate-500 mt-1">Optional. For POST/PUT/PATCH requests.</p>
             </div>
           </div>
-        </div>
-
-        <!-- Options -->
-        <div class="bg-white border border-slate-200 rounded-lg p-6">
-          <h2 class="text-lg font-semibold text-slate-900 mb-4">Options</h2>
-
-          <label class="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              name={@form[:enabled].name}
-              value="true"
-              checked={Phoenix.HTML.Form.normalize_value("checkbox", @form[:enabled].value)}
-              class="w-4 h-4 text-emerald-500 border-slate-300 rounded focus:ring-emerald-500"
-            />
-            <span class="text-sm text-slate-700">Job enabled</span>
-          </label>
         </div>
 
         <!-- Actions -->
