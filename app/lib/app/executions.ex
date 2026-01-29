@@ -63,7 +63,8 @@ defmodule Prikke.Executions do
   """
   def get_execution_for_org(organization, execution_id) do
     from(e in Execution,
-      join: j in Job, on: e.job_id == j.id,
+      join: j in Job,
+      on: e.job_id == j.id,
       where: j.organization_id == ^organization.id and e.id == ^execution_id,
       preload: [job: j]
     )
@@ -96,17 +97,23 @@ defmodule Prikke.Executions do
     now = DateTime.utc_now()
 
     query =
-      from e in Execution,
-        join: j in Job, on: e.job_id == j.id,
-        join: o in Prikke.Accounts.Organization, on: j.organization_id == o.id,
+      from(e in Execution,
+        join: j in Job,
+        on: e.job_id == j.id,
+        join: o in Prikke.Accounts.Organization,
+        on: j.organization_id == o.id,
         where: e.status == "pending" and e.scheduled_for <= ^now,
         order_by: [
-          desc: o.tier,                    # Pro customers first
-          asc: j.interval_minutes,         # Minute crons first, one-time jobs last (NULL)
-          asc: e.scheduled_for             # Oldest first within same priority
+          # Pro customers first
+          desc: o.tier,
+          # Minute crons first, one-time jobs last (NULL)
+          asc: j.interval_minutes,
+          # Oldest first within same priority
+          asc: e.scheduled_for
         ],
         limit: 1,
         lock: "FOR UPDATE SKIP LOCKED"
+      )
 
     # Wrap in transaction to hold the FOR UPDATE lock until status is updated
     Repo.transaction(fn ->
@@ -215,7 +222,8 @@ defmodule Prikke.Executions do
     limit = Keyword.get(opts, :limit, 50)
 
     from(e in Execution,
-      join: j in Job, on: e.job_id == j.id,
+      join: j in Job,
+      on: e.job_id == j.id,
       where: j.organization_id == ^organization.id,
       order_by: [desc: e.scheduled_for],
       limit: ^limit,
@@ -241,7 +249,7 @@ defmodule Prikke.Executions do
     since = Keyword.get(opts, :since, DateTime.add(DateTime.utc_now(), -24, :hour))
 
     query =
-      from e in Execution,
+      from(e in Execution,
         where: e.job_id == ^job.id and e.scheduled_for >= ^since,
         select: %{
           total: count(e.id),
@@ -253,6 +261,7 @@ defmodule Prikke.Executions do
           missed: count(fragment("CASE WHEN ? = 'missed' THEN 1 END", e.status)),
           avg_duration_ms: avg(e.duration_ms)
         }
+      )
 
     Repo.one(query)
   end
@@ -264,8 +273,9 @@ defmodule Prikke.Executions do
     since = Keyword.get(opts, :since, DateTime.add(DateTime.utc_now(), -24, :hour))
 
     query =
-      from e in Execution,
-        join: j in Job, on: e.job_id == j.id,
+      from(e in Execution,
+        join: j in Job,
+        on: e.job_id == j.id,
         where: j.organization_id == ^organization.id and e.scheduled_for >= ^since,
         select: %{
           total: count(e.id),
@@ -277,6 +287,7 @@ defmodule Prikke.Executions do
           missed: count(fragment("CASE WHEN ? = 'missed' THEN 1 END", e.status)),
           avg_duration_ms: avg(e.duration_ms)
         }
+      )
 
     Repo.one(query)
   end
@@ -295,7 +306,8 @@ defmodule Prikke.Executions do
     end_of_month = Date.new!(next_year, next_month, 1) |> DateTime.new!(~T[00:00:00], "Etc/UTC")
 
     from(e in Execution,
-      join: j in Job, on: e.job_id == j.id,
+      join: j in Job,
+      on: e.job_id == j.id,
       where: j.organization_id == ^organization.id,
       where: e.scheduled_for >= ^start_of_month and e.scheduled_for < ^end_of_month,
       where: e.status in ["success", "failed", "timeout"]
@@ -328,7 +340,8 @@ defmodule Prikke.Executions do
     cutoff = DateTime.add(DateTime.utc_now(), -retention_days, :day)
 
     from(e in Execution,
-      join: j in Job, on: e.job_id == j.id,
+      join: j in Job,
+      on: e.job_id == j.id,
       where: j.organization_id == ^organization.id,
       where: e.finished_at < ^cutoff
     )
@@ -351,7 +364,8 @@ defmodule Prikke.Executions do
 
     stale_executions =
       from(e in Execution,
-        join: j in Job, on: e.job_id == j.id,
+        join: j in Job,
+        on: e.job_id == j.id,
         where: e.status == "running" and e.started_at < ^cutoff,
         preload: [job: j]
       )
