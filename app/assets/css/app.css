@@ -104,6 +104,11 @@
 
 /* This file is for your main application CSS */
 
+/* Lock body scroll when mobile menu is open */
+body:has(#mobile-menu-toggle:checked) {
+  overflow: hidden;
+}
+
 /* Documentation content styles */
 .docs-content h1 { @apply text-4xl font-bold text-slate-900 mb-4 leading-tight; }
 .docs-content h2 { @apply text-2xl font-semibold text-slate-900 mt-8 pt-6 border-t border-slate-200; }

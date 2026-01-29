@@ -302,13 +302,37 @@ defmodule Prikke.Jobs do
 
   @doc """
   Toggles a job's enabled status.
+  When enabling, resets next_run_at to avoid creating missed executions.
   """
   def toggle_job(%Organization{} = org, %Job{} = job, opts \\ []) do
+    if job.organization_id != org.id do
+      raise ArgumentError, "job does not belong to organization"
+    end
+
     action = if job.enabled, do: :disabled, else: :enabled
 
-    case update_job(org, job, %{enabled: !job.enabled}) do
+    # When enabling, reset next_run_at to avoid missed executions backlog
+    # We use Ecto.Changeset.change directly to bypass Job.changeset's compute_next_run_at
+    changeset =
+      if job.enabled do
+        Ecto.Changeset.change(job, enabled: false, next_run_at: nil)
+      else
+        Ecto.Changeset.change(job,
+          enabled: true,
+          next_run_at: compute_next_run_for_enable(job)
+        )
+      end
+
+    case Repo.update(changeset) do
       {:ok, updated_job} ->
-        # Log toggle separately for clearer audit trail
+        broadcast(org, {:updated, updated_job})
+
+        # Notify scheduler if job was just enabled and has a next run
+        if updated_job.enabled && updated_job.next_run_at do
+          notify_scheduler()
+        end
+
+        # Log toggle for audit trail
         audit_log(opts, action, :job, updated_job.id, org.id)
         {:ok, updated_job}
 
@@ -316,6 +340,35 @@ defmodule Prikke.Jobs do
         error
     end
   end
+
+  # Computes the next run time when enabling a job, starting from now.
+  # This prevents creating missed executions for the time the job was disabled.
+  defp compute_next_run_for_enable(%Job{schedule_type: "cron"} = job) do
+    case Crontab.CronExpression.Parser.parse(job.cron_expression) do
+      {:ok, cron} ->
+        now = DateTime.utc_now()
+
+        case Crontab.Scheduler.get_next_run_date(cron, DateTime.to_naive(now)) do
+          {:ok, naive_next} -> DateTime.from_naive!(naive_next, "Etc/UTC")
+          {:error, _} -> nil
+        end
+
+      {:error, _} ->
+        nil
+    end
+  end
+
+  defp compute_next_run_for_enable(%Job{schedule_type: "once"} = job) do
+    # For one-time jobs, only schedule if scheduled_at is in the future
+    if job.scheduled_at && DateTime.compare(job.scheduled_at, DateTime.utc_now()) == :gt do
+      job.scheduled_at
+    else
+      # One-time job in the past won't run
+      nil
+    end
+  end
+
+  defp compute_next_run_for_enable(_job), do: nil
 
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking job changes.

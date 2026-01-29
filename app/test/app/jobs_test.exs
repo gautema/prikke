@@ -388,6 +388,102 @@ defmodule Prikke.JobsTest do
 
       assert {:ok, %Job{enabled: true}} = Jobs.toggle_job(org, job)
     end
+
+    test "re-enabling a cron job resets next_run_at to future time (skips missed executions)" do
+      org = organization_fixture()
+      # Create a cron job that runs every hour
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Hourly Job",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *"
+        })
+
+      # Disable the job
+      {:ok, disabled_job} = Jobs.toggle_job(org, job)
+      assert disabled_job.enabled == false
+
+      # Manually set next_run_at to a past time (simulating missed executions)
+      past_time =
+        DateTime.utc_now()
+        |> DateTime.add(-7200, :second)
+        |> DateTime.truncate(:second)
+
+      {:ok, job_with_past_next_run} =
+        disabled_job
+        |> Ecto.Changeset.change(next_run_at: past_time)
+        |> Prikke.Repo.update()
+
+      assert DateTime.compare(job_with_past_next_run.next_run_at, DateTime.utc_now()) == :lt
+
+      # Re-enable the job
+      {:ok, re_enabled_job} = Jobs.toggle_job(org, job_with_past_next_run)
+      assert re_enabled_job.enabled == true
+
+      # next_run_at should now be in the future (not the past time)
+      assert re_enabled_job.next_run_at != nil
+      assert DateTime.compare(re_enabled_job.next_run_at, DateTime.utc_now()) == :gt
+    end
+
+    test "re-enabling a one-time job with future scheduled_at keeps it scheduled" do
+      org = organization_fixture()
+      future_time = DateTime.add(DateTime.utc_now(), 3600, :second)
+
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Future One-time Job",
+          url: "https://example.com/webhook",
+          schedule_type: "once",
+          scheduled_at: future_time
+        })
+
+      # Disable and re-enable
+      {:ok, disabled_job} = Jobs.toggle_job(org, job)
+      {:ok, re_enabled_job} = Jobs.toggle_job(org, disabled_job)
+
+      assert re_enabled_job.enabled == true
+      assert re_enabled_job.next_run_at != nil
+      # Should be the original scheduled_at time
+      assert DateTime.compare(re_enabled_job.next_run_at, DateTime.utc_now()) == :gt
+    end
+
+    test "re-enabling a one-time job with past scheduled_at does not schedule it" do
+      org = organization_fixture()
+      future_time =
+        DateTime.utc_now()
+        |> DateTime.add(3600, :second)
+        |> DateTime.truncate(:second)
+
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "One-time Job",
+          url: "https://example.com/webhook",
+          schedule_type: "once",
+          scheduled_at: future_time
+        })
+
+      # Disable the job
+      {:ok, disabled_job} = Jobs.toggle_job(org, job)
+
+      # Manually set scheduled_at to a past time (simulating time passing)
+      past_time =
+        DateTime.utc_now()
+        |> DateTime.add(-3600, :second)
+        |> DateTime.truncate(:second)
+
+      {:ok, job_with_past_scheduled_at} =
+        disabled_job
+        |> Ecto.Changeset.change(scheduled_at: past_time, next_run_at: nil)
+        |> Prikke.Repo.update()
+
+      # Re-enable the job
+      {:ok, re_enabled_job} = Jobs.toggle_job(org, job_with_past_scheduled_at)
+      assert re_enabled_job.enabled == true
+
+      # next_run_at should be nil since scheduled_at is in the past
+      assert re_enabled_job.next_run_at == nil
+    end
   end
 
   describe "change_job/2" do
