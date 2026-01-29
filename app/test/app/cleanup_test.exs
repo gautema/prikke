@@ -47,14 +47,47 @@ defmodule Prikke.CleanupTest do
         |> Prikke.Repo.update()
 
       # Run cleanup
-      {:ok, deleted_count} = Cleanup.run_cleanup()
+      {:ok, result} = Cleanup.run_cleanup()
 
       # Old execution should be deleted
-      assert deleted_count == 1
+      assert result.executions == 1
       assert Executions.get_execution(old_exec.id) == nil
 
       # Recent execution should still exist
       assert Executions.get_execution(recent_exec.id) != nil
+    end
+
+    test "deletes completed one-time jobs older than retention period" do
+      org = organization_fixture()
+
+      # Create one-time jobs first with future dates, then backdate them
+      future = DateTime.utc_now() |> DateTime.add(1, :day) |> DateTime.truncate(:second)
+      old_time = DateTime.utc_now() |> DateTime.add(-8, :day) |> DateTime.truncate(:second)
+      recent_time = DateTime.utc_now() |> DateTime.add(-1, :day) |> DateTime.truncate(:second)
+
+      # Create and then backdate to simulate an old completed one-time job
+      old_job = job_fixture(org, %{schedule_type: "once", scheduled_at: future})
+      old_job
+      |> Ecto.Changeset.change(%{next_run_at: nil, updated_at: old_time, scheduled_at: old_time})
+      |> Prikke.Repo.update!()
+
+      # Create and then backdate to simulate a recent completed one-time job
+      recent_job = job_fixture(org, %{schedule_type: "once", scheduled_at: future})
+      recent_job
+      |> Ecto.Changeset.change(%{next_run_at: nil, updated_at: recent_time, scheduled_at: recent_time})
+      |> Prikke.Repo.update!()
+
+      # Create a cron job (should not be deleted)
+      cron_job = job_fixture(org, %{schedule_type: "cron", cron_expression: "0 * * * *"})
+
+      # Run cleanup
+      {:ok, result} = Cleanup.run_cleanup()
+
+      # Only old completed one-time job should be deleted
+      assert result.jobs == 1
+      assert Prikke.Jobs.get_job(org, old_job.id) == nil
+      assert Prikke.Jobs.get_job(org, recent_job.id) != nil
+      assert Prikke.Jobs.get_job(org, cron_job.id) != nil
     end
 
     test "respects pro tier's longer retention" do

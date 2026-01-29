@@ -4,6 +4,8 @@ defmodule PrikkeWeb.OrganizationController do
   import Phoenix.Component, only: [to_form: 1]
 
   alias Prikke.Accounts
+  alias Prikke.Jobs
+  alias Prikke.Executions
 
   def index(conn, _params) do
     user = conn.assigns.current_scope.user
@@ -53,7 +55,15 @@ defmodule PrikkeWeb.OrganizationController do
 
     if organization do
       changeset = Accounts.change_organization(organization)
-      render(conn, :edit, organization: organization, form: to_form(changeset))
+      tier_limits = Jobs.get_tier_limits(organization.tier)
+      monthly_executions = Executions.count_current_month_executions(organization)
+
+      render(conn, :edit,
+        organization: organization,
+        form: to_form(changeset),
+        monthly_executions: monthly_executions,
+        monthly_limit: tier_limits.max_monthly_executions
+      )
     else
       conn
       |> put_flash(:error, "No organization selected.")

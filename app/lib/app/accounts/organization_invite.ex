@@ -2,7 +2,7 @@ defmodule Prikke.Accounts.OrganizationInvite do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @primary_key {:id, :binary_id, autogenerate: true}
+  @primary_key {:id, Prikke.UUID7, autogenerate: true}
   @foreign_key_type :binary_id
   schema "organization_invites" do
     field :email, :string

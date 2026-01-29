@@ -1,10 +1,12 @@
 defmodule Prikke.Cleanup do
   @moduledoc """
-  Scheduled cleanup of old execution history.
+  Scheduled cleanup of old data.
 
-  Runs daily at 3 AM UTC and deletes executions older than
-  the organization's tier retention limit:
+  Runs daily at 3 AM UTC and cleans up:
+  1. Executions older than tier retention limit
+  2. Completed one-time jobs older than tier retention limit
 
+  Retention limits:
   - Free: 7 days
   - Pro: 30 days
 
@@ -111,26 +113,30 @@ defmodule Prikke.Cleanup do
   end
 
   defp do_cleanup do
-    Logger.info("[Cleanup] Starting execution history cleanup")
+    Logger.info("[Cleanup] Starting cleanup")
 
     organizations = Accounts.list_all_organizations()
 
-    results =
-      Enum.map(organizations, fn org ->
+    {total_executions, total_jobs} =
+      Enum.reduce(organizations, {0, 0}, fn org, {exec_acc, job_acc} ->
         retention_days = get_retention_days(org.tier)
-        {deleted, _} = Executions.cleanup_old_executions(org, retention_days)
-        {org.id, deleted}
+
+        # Clean old executions
+        {exec_deleted, _} = Executions.cleanup_old_executions(org, retention_days)
+
+        # Clean completed one-time jobs
+        {jobs_deleted, _} = Jobs.cleanup_completed_once_jobs(org, retention_days)
+
+        {exec_acc + exec_deleted, job_acc + jobs_deleted}
       end)
 
-    total_deleted = Enum.reduce(results, 0, fn {_, count}, acc -> acc + count end)
-
-    if total_deleted > 0 do
-      Logger.info("[Cleanup] Deleted #{total_deleted} old executions")
+    if total_executions > 0 or total_jobs > 0 do
+      Logger.info("[Cleanup] Deleted #{total_executions} executions, #{total_jobs} completed one-time jobs")
     else
-      Logger.info("[Cleanup] No old executions to delete")
+      Logger.info("[Cleanup] Nothing to clean up")
     end
 
-    {:ok, total_deleted}
+    {:ok, %{executions: total_executions, jobs: total_jobs}}
   end
 
   defp get_retention_days(tier) do

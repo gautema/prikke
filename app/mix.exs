@@ -71,6 +71,12 @@ defmodule Prikke.MixProject do
       # Cron parsing
       {:crontab, "~> 1.1"},
 
+      # UUID v7 (time-ordered)
+      {:uniq, "~> 0.6"},
+
+      # OpenAPI spec generation
+      {:open_api_spex, "~> 3.21"},
+
       # Time zones
       {:tz, "~> 0.28"},
 

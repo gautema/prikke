@@ -39,10 +39,32 @@ defmodule PrikkeWeb.Router do
     get "/", HealthController, :check
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", PrikkeWeb do
-  #   pipe_through :api
-  # end
+  # API routes - authenticated via API keys
+  pipeline :api_auth do
+    plug PrikkeWeb.Plugs.ApiAuth
+  end
+
+  # OpenAPI spec (no auth required)
+  scope "/api", PrikkeWeb.Api do
+    pipe_through [:api]
+
+    get "/openapi", OpenApiController, :spec
+  end
+
+  # API routes - authenticated via API keys
+  scope "/api", PrikkeWeb.Api do
+    pipe_through [:api, :api_auth]
+
+    # Jobs CRUD
+    resources "/jobs", JobController, except: [:new, :edit] do
+      # Nested routes
+      get "/executions", JobController, :executions
+      post "/trigger", JobController, :trigger
+    end
+
+    # Declarative sync
+    put "/sync", SyncController, :sync
+  end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:app, :dev_routes) do

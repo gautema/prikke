@@ -2,7 +2,7 @@
 
 ## Current Status: Phase 3 - In Progress
 
-Last updated: 2026-01-28
+Last updated: 2026-01-29
 
 ---
 
@@ -79,12 +79,19 @@ Last updated: 2026-01-28
   - Handles success (2xx), failure (non-2xx), and timeouts
   - Retries one-time jobs with exponential backoff
   - Truncates large response bodies
+- [x] Cleanup GenServer
+  - Runs daily at 3 AM UTC
+  - Advisory lock for clustering (only one node cleans)
+  - Deletes executions older than retention period
+  - Deletes completed one-time jobs older than retention period
+  - Tier-based retention: Free 7 days, Pro 30 days
 
-### Phase 5: REST API (Not Started)
-- [ ] API routes for jobs CRUD
-- [ ] Declarative sync endpoint (`PUT /api/sync`)
-- [ ] Trigger endpoint (`POST /api/jobs/:id/trigger`)
-- [ ] Execution history endpoint
+### Phase 5: REST API (Complete)
+- [x] API routes for jobs CRUD (GET, POST, PUT, DELETE /api/jobs)
+- [x] Declarative sync endpoint (`PUT /api/sync`)
+- [x] Trigger endpoint (`POST /api/jobs/:id/trigger`)
+- [x] Execution history endpoint (`GET /api/jobs/:id/executions`)
+- [x] OpenAPI spec at `/api/openapi` (OpenApiSpex)
 
 ### Phase 6: Dashboard (Complete)
 - [x] Basic dashboard with stats cards
@@ -139,8 +146,8 @@ Last updated: 2026-01-28
 - [x] Max jobs per organization
 - [x] Minimum cron interval
 - [x] Max team members per organization (including pending invites)
-- [ ] Monthly execution limit (needs executions table)
-- [ ] History retention (needs executions table)
+- [x] History retention (Cleanup GenServer deletes old data daily)
+- [x] Monthly execution limit (scheduler skips jobs when limit reached, dashboard shows usage)
 
 ---
 
@@ -203,9 +210,11 @@ app/lib/app/
 ├── executions/
 │   └── execution.ex
 ├── executions.ex              # Claim with SKIP LOCKED, stats
+├── scheduler.ex               # Creates executions for due jobs
 ├── worker.ex                  # Job executor (HTTP requests)
 ├── worker_pool.ex             # Scales workers based on queue
 ├── worker_supervisor.ex       # DynamicSupervisor for workers
+├── cleanup.ex                 # Daily cleanup of old data
 ├── mailer.ex
 └── repo.ex
 
@@ -279,7 +288,7 @@ Environment variables:
 
 ## Test Coverage
 
-- **194 tests passing**
+- **222 tests passing**
 - Accounts: user auth, organizations, memberships, invites, API keys
 - Jobs: CRUD, validations, cron parsing, tier limits
 - API Auth Plug: bearer token validation
@@ -305,6 +314,12 @@ Environment variables:
 
 ## Recently Completed
 
+- [x] **REST API** - Full CRUD for jobs, trigger, executions, declarative sync
+- [x] **OpenAPI spec** - Auto-generated via OpenApiSpex at `/api/openapi`
+- [x] **UUID v7** - Time-ordered UUIDs for better index performance
+- [x] **Monthly execution limit visibility** - usage bar on dashboard and org settings, warnings at 80%/100%
+- [x] **Cleanup GenServer** - deletes old executions and completed one-time jobs based on tier retention
+- [x] **"Completed" status for one-time jobs** - shows in UI, hides toggle button
 - [x] **Dashboard Stats** - real execution data (today's runs, success rate, recent executions)
 - [x] **Job Execution History** - 24h stats and execution table on job detail page
 - [x] **Worker Pool** - scales 2-20 workers based on queue depth

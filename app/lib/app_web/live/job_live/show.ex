@@ -102,27 +102,23 @@ defmodule PrikkeWeb.JobLive.Show do
           <div>
             <div class="flex items-center gap-3">
               <h1 class="text-xl font-bold text-slate-900"><%= @job.name %></h1>
-              <span class={[
-                "text-xs font-medium px-2 py-0.5 rounded",
-                @job.enabled && "bg-emerald-100 text-emerald-700",
-                !@job.enabled && "bg-slate-100 text-slate-500"
-              ]}>
-                <%= if @job.enabled, do: "Active", else: "Paused" %>
-              </span>
+              <.job_status_badge job={@job} />
             </div>
             <p class="text-sm text-slate-500 mt-1">Created <%= Calendar.strftime(@job.inserted_at, "%b %d, %Y") %></p>
           </div>
           <div class="flex items-center gap-2">
-            <button
-              phx-click="toggle"
-              class={[
-                "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
-                @job.enabled && "text-slate-600 bg-slate-100 hover:bg-slate-200",
-                !@job.enabled && "text-emerald-600 bg-emerald-100 hover:bg-emerald-200"
-              ]}
-            >
-              <%= if @job.enabled, do: "Pause", else: "Enable" %>
-            </button>
+            <%= unless job_completed?(@job) do %>
+              <button
+                phx-click="toggle"
+                class={[
+                  "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                  @job.enabled && "text-slate-600 bg-slate-100 hover:bg-slate-200",
+                  !@job.enabled && "text-emerald-600 bg-emerald-100 hover:bg-emerald-200"
+                ]}
+              >
+                <%= if @job.enabled, do: "Pause", else: "Enable" %>
+              </button>
+            <% end %>
             <.link
               navigate={~p"/jobs/#{@job.id}/edit"}
               class="px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
@@ -299,6 +295,23 @@ defmodule PrikkeWeb.JobLive.Show do
       ms >= 1000 -> "#{div(ms, 1000)} second(s)"
       true -> "#{ms}ms"
     end
+  end
+
+  defp job_completed?(job) do
+    job.schedule_type == "once" and is_nil(job.next_run_at)
+  end
+
+  defp job_status_badge(assigns) do
+    ~H"""
+    <%= cond do %>
+      <% job_completed?(@job) -> %>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600">Completed</span>
+      <% @job.enabled -> %>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">Active</span>
+      <% true -> %>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">Paused</span>
+    <% end %>
+    """
   end
 
   defp status_badge(assigns) do

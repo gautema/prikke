@@ -71,6 +71,23 @@ defmodule PrikkeWeb.JobLive.Index do
     end
   end
 
+  defp job_completed?(job) do
+    job.schedule_type == "once" and is_nil(job.next_run_at)
+  end
+
+  defp job_status_badge(assigns) do
+    ~H"""
+    <%= cond do %>
+      <% job_completed?(@job) -> %>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600">Completed</span>
+      <% @job.enabled -> %>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">Active</span>
+      <% true -> %>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">Paused</span>
+    <% end %>
+    """
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -108,13 +125,7 @@ defmodule PrikkeWeb.JobLive.Index do
                   <.link navigate={~p"/jobs/#{job.id}"} class="font-medium text-slate-900 hover:text-emerald-600 truncate">
                     <%= job.name %>
                   </.link>
-                  <span class={[
-                    "text-xs font-medium px-2 py-0.5 rounded",
-                    job.enabled && "bg-emerald-100 text-emerald-700",
-                    !job.enabled && "bg-slate-100 text-slate-500"
-                  ]}>
-                    <%= if job.enabled, do: "Active", else: "Paused" %>
-                  </span>
+                  <.job_status_badge job={job} />
                 </div>
                 <div class="text-sm text-slate-500 mt-1 flex items-center gap-2">
                   <span class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded"><%= job.method %></span>
@@ -129,21 +140,23 @@ defmodule PrikkeWeb.JobLive.Index do
                 </div>
               </div>
               <div class="flex items-center gap-3 ml-4">
-                <button
-                  phx-click="toggle"
-                  phx-value-id={job.id}
-                  class={[
-                    "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2",
-                    job.enabled && "bg-emerald-500",
-                    !job.enabled && "bg-slate-200"
-                  ]}
-                >
-                  <span class={[
-                    "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                    job.enabled && "translate-x-5",
-                    !job.enabled && "translate-x-0"
-                  ]}></span>
-                </button>
+                <%= unless job_completed?(job) do %>
+                  <button
+                    phx-click="toggle"
+                    phx-value-id={job.id}
+                    class={[
+                      "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2",
+                      job.enabled && "bg-emerald-500",
+                      !job.enabled && "bg-slate-200"
+                    ]}
+                  >
+                    <span class={[
+                      "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                      job.enabled && "translate-x-5",
+                      !job.enabled && "translate-x-0"
+                    ]}></span>
+                  </button>
+                <% end %>
                 <.link navigate={~p"/jobs/#{job.id}/edit"} class="text-slate-400 hover:text-slate-600 p-1">
                   <.icon name="hero-pencil-square" class="w-5 h-5" />
                 </.link>

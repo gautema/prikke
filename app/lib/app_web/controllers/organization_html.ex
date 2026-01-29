@@ -23,4 +23,20 @@ defmodule PrikkeWeb.OrganizationHTML do
       end
     end
   end
+
+  def format_number(n) when n >= 1_000_000, do: "#{Float.round(n / 1_000_000, 1)}M"
+  def format_number(n) when n >= 1_000, do: "#{Float.round(n / 1_000, 1)}k"
+  def format_number(n), do: "#{n}"
+
+  def usage_percent(_current, 0), do: 0
+  def usage_percent(current, limit), do: round(current / limit * 100)
+
+  def usage_bar_color(current, limit) do
+    percent = usage_percent(current, limit)
+    cond do
+      percent >= 100 -> "bg-red-500"
+      percent >= 80 -> "bg-amber-500"
+      true -> "bg-emerald-500"
+    end
+  end
 end

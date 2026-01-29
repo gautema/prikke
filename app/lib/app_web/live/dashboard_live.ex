@@ -94,7 +94,7 @@ defmodule PrikkeWeb.DashboardLive do
 
       <%= if @current_organization do %>
         <!-- Quick Stats -->
-        <div class="grid grid-cols-3 gap-4 mb-8">
+        <div class="grid grid-cols-3 gap-4 mb-4">
           <.link navigate={~p"/jobs"} class="bg-white border border-slate-200 rounded-lg p-6 hover:border-slate-300 transition-colors">
             <div class="text-sm font-medium text-slate-500 mb-1">Active Jobs</div>
             <div class="text-3xl font-bold text-slate-900"><%= @stats.active_jobs %></div>
@@ -107,6 +107,40 @@ defmodule PrikkeWeb.DashboardLive do
             <div class="text-sm font-medium text-slate-500 mb-1">Success Rate</div>
             <div class="text-3xl font-bold text-emerald-500"><%= @stats.success_rate %></div>
           </div>
+        </div>
+
+        <!-- Monthly Usage -->
+        <div class="bg-white border border-slate-200 rounded-lg p-4 mb-8">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-medium text-slate-600">Monthly Executions</span>
+            <span class="text-sm text-slate-500">
+              <%= format_number(@stats.monthly_executions) %> / <%= format_number(@stats.monthly_limit) %>
+            </span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-2">
+            <div
+              class={[
+                "h-2 rounded-full transition-all",
+                usage_bar_color(@stats.monthly_executions, @stats.monthly_limit)
+              ]}
+              style={"width: #{min(usage_percent(@stats.monthly_executions, @stats.monthly_limit), 100)}%"}
+            >
+            </div>
+          </div>
+          <%= if usage_percent(@stats.monthly_executions, @stats.monthly_limit) >= 80 do %>
+            <p class={[
+              "text-xs mt-2",
+              if(usage_percent(@stats.monthly_executions, @stats.monthly_limit) >= 100, do: "text-red-600", else: "text-amber-600")
+            ]}>
+              <%= if usage_percent(@stats.monthly_executions, @stats.monthly_limit) >= 100 do %>
+                Monthly limit reached. Jobs will be skipped until next month.
+                <.link navigate={~p"/organizations/settings"} class="underline">Upgrade to Pro</.link>
+              <% else %>
+                Approaching monthly limit.
+                <.link navigate={~p"/organizations/settings"} class="underline">Upgrade to Pro</.link> for 250k executions.
+              <% end %>
+            </p>
+          <% end %>
         </div>
 
         <!-- Jobs Section -->
@@ -137,13 +171,7 @@ defmodule PrikkeWeb.DashboardLive do
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-2">
                         <span class="font-medium text-slate-900 truncate"><%= job.name %></span>
-                        <span class={[
-                          "text-xs font-medium px-2 py-0.5 rounded",
-                          job.enabled && "bg-emerald-100 text-emerald-700",
-                          !job.enabled && "bg-slate-100 text-slate-500"
-                        ]}>
-                          <%= if job.enabled, do: "Active", else: "Paused" %>
-                        </span>
+                        <.job_status_badge job={job} />
                       </div>
                       <div class="text-sm text-slate-500 mt-0.5 flex items-center gap-2">
                         <span class="font-mono text-xs"><%= job.method %></span>
@@ -227,10 +255,12 @@ defmodule PrikkeWeb.DashboardLive do
     """
   end
 
-  defp load_stats(nil), do: %{active_jobs: 0, total_jobs: 0, executions_today: 0, success_rate: "—"}
+  defp load_stats(nil), do: %{active_jobs: 0, total_jobs: 0, executions_today: 0, success_rate: "—", monthly_executions: 0, monthly_limit: 0}
 
   defp load_stats(organization) do
     exec_stats = Executions.get_today_stats(organization)
+    tier_limits = Jobs.get_tier_limits(organization.tier)
+    monthly_executions = Executions.count_current_month_executions(organization)
 
     success_rate = calculate_success_rate(exec_stats)
 
@@ -238,7 +268,9 @@ defmodule PrikkeWeb.DashboardLive do
       active_jobs: Jobs.count_enabled_jobs(organization),
       total_jobs: Jobs.count_jobs(organization),
       executions_today: exec_stats.total,
-      success_rate: success_rate
+      success_rate: success_rate,
+      monthly_executions: monthly_executions,
+      monthly_limit: tier_limits.max_monthly_executions
     }
   end
 
@@ -246,6 +278,22 @@ defmodule PrikkeWeb.DashboardLive do
   defp calculate_success_rate(%{total: total, success: success}) do
     rate = round(success / total * 100)
     "#{rate}%"
+  end
+
+  defp format_number(n) when n >= 1_000_000, do: "#{Float.round(n / 1_000_000, 1)}M"
+  defp format_number(n) when n >= 1_000, do: "#{Float.round(n / 1_000, 1)}k"
+  defp format_number(n), do: "#{n}"
+
+  defp usage_percent(_current, 0), do: 0
+  defp usage_percent(current, limit), do: round(current / limit * 100)
+
+  defp usage_bar_color(current, limit) do
+    percent = usage_percent(current, limit)
+    cond do
+      percent >= 100 -> "bg-red-500"
+      percent >= 80 -> "bg-amber-500"
+      true -> "bg-emerald-500"
+    end
   end
 
   defp load_recent_jobs(nil), do: []
@@ -260,6 +308,23 @@ defmodule PrikkeWeb.DashboardLive do
 
   defp load_recent_executions(organization) do
     Executions.list_organization_executions(organization, limit: 10)
+  end
+
+  defp job_completed?(job) do
+    job.schedule_type == "once" and is_nil(job.next_run_at)
+  end
+
+  defp job_status_badge(assigns) do
+    ~H"""
+    <%= cond do %>
+      <% job_completed?(@job) -> %>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600">Completed</span>
+      <% @job.enabled -> %>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">Active</span>
+      <% true -> %>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">Paused</span>
+    <% end %>
+    """
   end
 
   defp status_badge(assigns) do

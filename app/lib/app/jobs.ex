@@ -281,4 +281,21 @@ defmodule Prikke.Jobs do
     |> where(enabled: true)
     |> Repo.aggregate(:count)
   end
+
+  @doc """
+  Deletes completed one-time jobs older than retention_days.
+
+  A one-time job is "completed" when next_run_at is nil (already executed).
+  """
+  def cleanup_completed_once_jobs(%Organization{} = org, retention_days) do
+    cutoff = DateTime.utc_now() |> DateTime.add(-retention_days, :day)
+
+    from(j in Job,
+      where: j.organization_id == ^org.id,
+      where: j.schedule_type == "once",
+      where: is_nil(j.next_run_at),
+      where: j.updated_at < ^cutoff
+    )
+    |> Repo.delete_all()
+  end
 end

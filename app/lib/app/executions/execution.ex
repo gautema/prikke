@@ -2,7 +2,7 @@ defmodule Prikke.Executions.Execution do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @primary_key {:id, :binary_id, autogenerate: true}
+  @primary_key {:id, Prikke.UUID7, autogenerate: true}
   @foreign_key_type :binary_id
   schema "executions" do
     field :status, :string, default: "pending"
