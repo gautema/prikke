@@ -9,7 +9,11 @@ defmodule PrikkeWeb.JobLive.Index do
     org = get_organization(socket, session)
 
     if org do
-      if connected?(socket), do: Jobs.subscribe_jobs(org)
+      if connected?(socket) do
+        Jobs.subscribe_jobs(org)
+        Executions.subscribe_organization_executions(org.id)
+      end
+
       jobs = Jobs.list_jobs(org)
       job_ids = Enum.map(jobs, & &1.id)
       latest_statuses = Executions.get_latest_statuses(job_ids)
@@ -52,6 +56,17 @@ defmodule PrikkeWeb.JobLive.Index do
        Enum.reject(jobs, fn j -> j.id == job.id end)
      end)
      |> update(:latest_statuses, fn statuses -> Map.delete(statuses, job.id) end)}
+  end
+
+  def handle_info({:execution_updated, execution}, socket) do
+    # Update the status for this job
+    job_id = execution.job_id
+
+    {:noreply,
+     socket
+     |> update(:latest_statuses, fn statuses ->
+       Map.put(statuses, job_id, %{status: execution.status, attempt: execution.attempt})
+     end)}
   end
 
   defp refresh_latest_statuses(socket) do

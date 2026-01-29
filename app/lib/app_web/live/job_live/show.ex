@@ -13,7 +13,11 @@ defmodule PrikkeWeb.JobLive.Show do
       executions = Executions.list_job_executions(job, limit: 20)
       stats = Executions.get_job_stats(job)
       latest_info = get_latest_info(executions)
-      if connected?(socket), do: Jobs.subscribe_jobs(org)
+
+      if connected?(socket) do
+        Jobs.subscribe_jobs(org)
+        Executions.subscribe_job_executions(job.id)
+      end
 
       {:ok,
        socket
@@ -58,6 +62,20 @@ defmodule PrikkeWeb.JobLive.Show do
     else
       {:noreply, socket}
     end
+  end
+
+  def handle_info({:execution_updated, _execution}, socket) do
+    # Refresh executions list when any execution for this job changes
+    job = socket.assigns.job
+    executions = Executions.list_job_executions(job, limit: 20)
+    stats = Executions.get_job_stats(job)
+    latest_info = get_latest_info(executions)
+
+    {:noreply,
+     socket
+     |> assign(:executions, executions)
+     |> assign(:stats, stats)
+     |> assign(:latest_info, latest_info)}
   end
 
   def handle_info(_, socket), do: {:noreply, socket}

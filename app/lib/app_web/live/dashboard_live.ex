@@ -21,9 +21,10 @@ defmodule PrikkeWeb.DashboardLive do
 
     current_org = current_org || List.first(organizations)
 
-    # Subscribe to job updates if we have an organization
+    # Subscribe to job and execution updates if we have an organization
     if current_org && connected?(socket) do
       Jobs.subscribe_jobs(current_org)
+      Executions.subscribe_organization_executions(current_org.id)
     end
 
     recent_jobs = load_recent_jobs(current_org)
@@ -55,6 +56,11 @@ defmodule PrikkeWeb.DashboardLive do
   end
 
   def handle_info({:deleted, _job}, socket) do
+    org = socket.assigns.current_organization
+    {:noreply, reload_data(socket, org)}
+  end
+
+  def handle_info({:execution_updated, _execution}, socket) do
     org = socket.assigns.current_organization
     {:noreply, reload_data(socket, org)}
   end

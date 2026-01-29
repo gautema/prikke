@@ -10,6 +10,46 @@ defmodule Prikke.Executions do
   alias Prikke.Jobs.Job
 
   @doc """
+  Subscribes to execution updates for a specific job.
+  Receives {:execution_updated, execution} messages.
+  """
+  def subscribe_job_executions(job_id) do
+    Phoenix.PubSub.subscribe(Prikke.PubSub, "job:#{job_id}:executions")
+  end
+
+  @doc """
+  Subscribes to execution updates for all jobs in an organization.
+  Receives {:execution_updated, execution} messages.
+  """
+  def subscribe_organization_executions(org_id) do
+    Phoenix.PubSub.subscribe(Prikke.PubSub, "org:#{org_id}:executions")
+  end
+
+  @doc """
+  Broadcasts an execution update to subscribers.
+  Broadcasts to both the job-specific and organization-wide topics.
+  """
+  def broadcast_execution_update(execution) do
+    # Broadcast to job-specific topic
+    Phoenix.PubSub.broadcast(
+      Prikke.PubSub,
+      "job:#{execution.job_id}:executions",
+      {:execution_updated, execution}
+    )
+
+    # Also broadcast to organization topic (need to load job for org_id)
+    execution_with_job = get_execution_with_job(execution.id)
+
+    if execution_with_job && execution_with_job.job do
+      Phoenix.PubSub.broadcast(
+        Prikke.PubSub,
+        "org:#{execution_with_job.job.organization_id}:executions",
+        {:execution_updated, execution_with_job}
+      )
+    end
+  end
+
+  @doc """
   Creates a pending execution for a job.
   Used by the scheduler when a job is due.
   """
@@ -139,27 +179,51 @@ defmodule Prikke.Executions do
   Marks an execution as successfully completed.
   """
   def complete_execution(execution, attrs \\ %{}) do
-    execution
-    |> Execution.complete_changeset(attrs)
-    |> Repo.update()
+    result =
+      execution
+      |> Execution.complete_changeset(attrs)
+      |> Repo.update()
+
+    case result do
+      {:ok, updated} -> broadcast_execution_update(updated)
+      _ -> :ok
+    end
+
+    result
   end
 
   @doc """
   Marks an execution as failed.
   """
   def fail_execution(execution, attrs \\ %{}) do
-    execution
-    |> Execution.fail_changeset(attrs)
-    |> Repo.update()
+    result =
+      execution
+      |> Execution.fail_changeset(attrs)
+      |> Repo.update()
+
+    case result do
+      {:ok, updated} -> broadcast_execution_update(updated)
+      _ -> :ok
+    end
+
+    result
   end
 
   @doc """
   Marks an execution as timed out.
   """
   def timeout_execution(execution, duration_ms \\ nil) do
-    execution
-    |> Execution.timeout_changeset(duration_ms)
-    |> Repo.update()
+    result =
+      execution
+      |> Execution.timeout_changeset(duration_ms)
+      |> Repo.update()
+
+    case result do
+      {:ok, updated} -> broadcast_execution_update(updated)
+      _ -> :ok
+    end
+
+    result
   end
 
   @doc """
