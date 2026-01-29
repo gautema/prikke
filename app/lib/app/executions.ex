@@ -191,6 +191,21 @@ defmodule Prikke.Executions do
   end
 
   @doc """
+  Gets the previous execution status for a job, excluding the given execution.
+  Returns the status string or nil if no previous execution exists.
+  Used to detect status changes for notifications.
+  """
+  def get_previous_status(job, current_execution_id) do
+    from(e in Execution,
+      where: e.job_id == ^job.id and e.id != ^current_execution_id,
+      order_by: [desc: e.scheduled_for],
+      limit: 1,
+      select: e.status
+    )
+    |> Repo.one()
+  end
+
+  @doc """
   Gets the latest execution status for multiple jobs.
   Returns a map of job_id => status (or nil if no executions).
   """

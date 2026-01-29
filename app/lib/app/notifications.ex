@@ -35,19 +35,31 @@ defmodule Prikke.Notifications do
 
     # Check if notifications are enabled
     if org.notify_on_failure do
-      # Send email notification
-      if email = notification_email(org) do
-        send_failure_email(execution, email)
-      end
+      # Only notify on status change (first failure in a sequence)
+      previous_status = Prikke.Executions.get_previous_status(job, execution.id)
 
-      # Send webhook notification
-      if webhook_url = org.notification_webhook_url do
-        send_failure_webhook(execution, webhook_url)
+      if should_notify?(previous_status) do
+        # Send email notification
+        if email = notification_email(org) do
+          send_failure_email(execution, email)
+        end
+
+        # Send webhook notification
+        if webhook_url = org.notification_webhook_url do
+          send_failure_webhook(execution, webhook_url)
+        end
+      else
+        Logger.debug("[Notifications] Skipping notification - previous execution also failed")
       end
     else
       Logger.debug("[Notifications] Notifications disabled for org #{org.id}")
     end
   end
+
+  # Notify if previous execution was successful or this is the first execution
+  defp should_notify?(nil), do: true
+  defp should_notify?("success"), do: true
+  defp should_notify?(_failed_status), do: false
 
   # Get the email to notify - use notification_email if set, otherwise org owner
   defp notification_email(org) do
