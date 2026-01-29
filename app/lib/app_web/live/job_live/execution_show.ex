@@ -48,6 +48,25 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
   end
 
   @impl true
+  def handle_event("retry", _params, socket) do
+    job = socket.assigns.job
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    case Executions.create_execution_for_job(job, now) do
+      {:ok, execution} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Job triggered - new execution created")
+         |> redirect(to: ~p"/jobs/#{job.id}/executions/#{execution.id}")}
+
+      {:error, _changeset} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to trigger job")}
+    end
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="max-w-4xl mx-auto py-6 sm:py-8 px-4">
@@ -70,6 +89,15 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
                 Scheduled for <%= format_datetime(@execution.scheduled_for) %>
               </p>
             </div>
+            <%= if @execution.status in ["failed", "timeout", "missed"] do %>
+              <button
+                phx-click="retry"
+                class="px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-md hover:bg-emerald-600 transition-colors flex items-center gap-2"
+              >
+                <.icon name="hero-arrow-path" class="w-4 h-4" />
+                Retry Now
+              </button>
+            <% end %>
           </div>
         </div>
 

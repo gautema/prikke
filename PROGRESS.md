@@ -177,13 +177,18 @@ Last updated: 2026-01-29
 
 ## Potential Next Steps
 
+### Zeplo Feature Parity (Priority)
+1. **On-demand queues** - Simple API for immediate job execution (`POST /api/queues/:name` with pass-through body)
+2. **URL proxy API** - Prefix any URL to queue it (`POST /q/https://api.example.com/webhook`)
+3. **Rate limit handling** - Auto-retry on 429 responses with backoff from `Retry-After` header
+4. **Bulk push** - Queue multiple jobs in a single API call (transaction-safe)
+
 ### Post-MVP Enhancements
 1. **Error tracking** - Add Sentry or AppSignal for application monitoring
 2. **External uptime monitoring** - Better Stack or similar for external pings
 3. **Lemon Squeezy integration** - When ready to charge, replace manual upgrade
 4. **Customer-facing status pages** - Let users create status pages for their own services
-5. **Job queues** - On-demand jobs triggered via API (immediate execution)
-6. **Workflows** - Multi-step jobs with dependencies
+5. **Workflows** - Multi-step jobs with dependencies
 
 ---
 
@@ -326,6 +331,8 @@ Environment variables:
 
 ## Recently Completed
 
+- [x] **Retry button** - Retry failed/timeout/missed executions from the UI
+- [x] **Smart failure notifications** - Only email on first failure (not repeated failures)
 - [x] **Admin notifications** - Email alerts for new signups and Pro upgrades (`ADMIN_EMAIL` env var)
 - [x] **Prominent enabled toggle** - Moved to top of job form with large toggle switch
 - [x] **Authorization security fix** - `get_organization_for_user/2` verifies membership before accessing org data
