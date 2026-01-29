@@ -40,4 +40,19 @@ defmodule PrikkeWeb.OrganizationHTML do
       true -> "bg-emerald-500"
     end
   end
+
+  def action_badge_class("created"), do: "bg-emerald-100 text-emerald-700"
+  def action_badge_class("updated"), do: "bg-blue-100 text-blue-700"
+  def action_badge_class("deleted"), do: "bg-red-100 text-red-700"
+  def action_badge_class("enabled"), do: "bg-emerald-100 text-emerald-700"
+  def action_badge_class("disabled"), do: "bg-slate-100 text-slate-600"
+  def action_badge_class("triggered"), do: "bg-amber-100 text-amber-700"
+  def action_badge_class("upgraded"), do: "bg-purple-100 text-purple-700"
+  def action_badge_class("downgraded"), do: "bg-slate-100 text-slate-600"
+  def action_badge_class("invited"), do: "bg-blue-100 text-blue-700"
+  def action_badge_class("removed"), do: "bg-red-100 text-red-700"
+  def action_badge_class("role_changed"), do: "bg-amber-100 text-amber-700"
+  def action_badge_class("api_key_created"), do: "bg-emerald-100 text-emerald-700"
+  def action_badge_class("api_key_deleted"), do: "bg-red-100 text-red-700"
+  def action_badge_class(_), do: "bg-slate-100 text-slate-600"
 end

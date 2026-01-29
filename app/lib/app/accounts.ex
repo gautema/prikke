@@ -7,6 +7,7 @@ defmodule Prikke.Accounts do
   alias Prikke.Repo
 
   alias Prikke.Accounts.{User, UserToken, UserNotifier, Organization, Membership, ApiKey}
+  alias Prikke.Audit
 
   # Tier limits for organizations
   @tier_limits %{
@@ -388,16 +389,26 @@ defmodule Prikke.Accounts do
   @doc """
   Updates an organization.
   """
-  def update_organization(organization, attrs) do
-    organization
-    |> Organization.changeset(attrs)
-    |> Repo.update()
+  def update_organization(organization, attrs, opts \\ []) do
+    old_org = Map.from_struct(organization)
+
+    case organization
+         |> Organization.changeset(attrs)
+         |> Repo.update() do
+      {:ok, updated_org} ->
+        changes = Audit.compute_changes(old_org, Map.from_struct(updated_org), [:name])
+        audit_log(opts, :updated, :organization, updated_org.id, updated_org.id, changes: changes)
+        {:ok, updated_org}
+
+      error ->
+        error
+    end
   end
 
   @doc """
   Upgrades an organization to Pro tier.
   """
-  def upgrade_organization_to_pro(organization) do
+  def upgrade_organization_to_pro(organization, opts \\ []) do
     result =
       organization
       |> Ecto.Changeset.change(tier: "pro")
@@ -407,6 +418,7 @@ defmodule Prikke.Accounts do
       {:ok, org} ->
         # Send admin notification asynchronously
         Task.start(fn -> UserNotifier.deliver_admin_upgrade_notification(org) end)
+        audit_log(opts, :upgraded, :organization, org.id, org.id)
         {:ok, org}
 
       error ->
@@ -431,10 +443,22 @@ defmodule Prikke.Accounts do
   @doc """
   Updates notification settings for an organization.
   """
-  def update_notification_settings(organization, attrs) do
-    organization
-    |> Organization.notification_changeset(attrs)
-    |> Repo.update()
+  def update_notification_settings(organization, attrs, opts \\ []) do
+    old_org = Map.from_struct(organization)
+
+    case organization
+         |> Organization.notification_changeset(attrs)
+         |> Repo.update() do
+      {:ok, updated_org} ->
+        changes = Audit.compute_changes(old_org, Map.from_struct(updated_org), [
+          :notify_on_failure, :notification_email, :notification_webhook_url
+        ])
+        audit_log(opts, :updated, :organization, updated_org.id, updated_org.id, changes: changes)
+        {:ok, updated_org}
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -502,17 +526,39 @@ defmodule Prikke.Accounts do
   @doc """
   Updates a membership role.
   """
-  def update_membership_role(membership, role) do
-    membership
-    |> Membership.changeset(%{role: role})
-    |> Repo.update()
+  def update_membership_role(membership, role, opts \\ []) do
+    old_role = membership.role
+    membership = Repo.preload(membership, :user)
+
+    case membership
+         |> Membership.changeset(%{role: role})
+         |> Repo.update() do
+      {:ok, updated} ->
+        changes = %{"role" => %{"from" => old_role, "to" => role}, "user_email" => membership.user.email}
+        audit_log(opts, :role_changed, :membership, updated.id, membership.organization_id, changes: changes)
+        {:ok, updated}
+
+      error ->
+        error
+    end
   end
 
   @doc """
   Deletes a membership.
   """
-  def delete_membership(membership) do
-    Repo.delete(membership)
+  def delete_membership(membership, opts \\ []) do
+    membership = Repo.preload(membership, :user)
+
+    case Repo.delete(membership) do
+      {:ok, deleted} ->
+        audit_log(opts, :removed, :membership, deleted.id, membership.organization_id,
+          changes: %{"user_email" => membership.user.email}
+        )
+        {:ok, deleted}
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -551,7 +597,7 @@ defmodule Prikke.Accounts do
   Creates an API key for an organization.
   Returns {:ok, api_key, raw_secret} where raw_secret should be shown once to the user.
   """
-  def create_api_key(organization, user, attrs \\ %{}) do
+  def create_api_key(organization, user, attrs \\ %{}, opts \\ []) do
     {key_id, raw_secret} = ApiKey.generate_key_pair()
     key_hash = ApiKey.hash_secret(raw_secret)
 
@@ -563,8 +609,14 @@ defmodule Prikke.Accounts do
       |> Map.put(:created_by_id, user.id)
 
     case %ApiKey{} |> ApiKey.changeset(attrs) |> Repo.insert() do
-      {:ok, api_key} -> {:ok, api_key, raw_secret}
-      {:error, changeset} -> {:error, changeset}
+      {:ok, api_key} ->
+        audit_log(opts, :api_key_created, :api_key, api_key.id, organization.id,
+          changes: %{"name" => api_key.name, "key_id" => key_id}
+        )
+        {:ok, api_key, raw_secret}
+
+      {:error, changeset} ->
+        {:error, changeset}
     end
   end
 
@@ -630,8 +682,17 @@ defmodule Prikke.Accounts do
   @doc """
   Deletes an API key.
   """
-  def delete_api_key(api_key) do
-    Repo.delete(api_key)
+  def delete_api_key(api_key, opts \\ []) do
+    case Repo.delete(api_key) do
+      {:ok, deleted} ->
+        audit_log(opts, :api_key_deleted, :api_key, deleted.id, deleted.organization_id,
+          changes: %{"name" => deleted.name, "key_id" => deleted.key_id}
+        )
+        {:ok, deleted}
+
+      error ->
+        error
+    end
   end
 
   ## Organization Invites
@@ -874,5 +935,21 @@ defmodule Prikke.Accounts do
   def count_pro_organizations do
     from(o in Organization, where: o.tier == "pro")
     |> Repo.aggregate(:count)
+  end
+
+  ## Private: Audit Logging
+
+  defp audit_log(opts, action, resource_type, resource_id, org_id, extra_opts \\ []) do
+    scope = Keyword.get(opts, :scope)
+    changes = Keyword.get(extra_opts, :changes, %{})
+
+    if scope != nil do
+      Audit.log(scope, action, resource_type, resource_id,
+        organization_id: org_id,
+        changes: changes
+      )
+    else
+      :ok
+    end
   end
 end

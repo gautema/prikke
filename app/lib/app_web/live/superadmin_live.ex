@@ -5,6 +5,7 @@ defmodule PrikkeWeb.SuperadminLive do
   alias Prikke.Jobs
   alias Prikke.Executions
   alias Prikke.Analytics
+  alias Prikke.Audit
 
   @impl true
   def mount(_params, _session, socket) do
@@ -54,15 +55,21 @@ defmodule PrikkeWeb.SuperadminLive do
     active_orgs = Accounts.list_active_organizations(limit: 5)
     recent_executions = Executions.list_recent_executions_all(limit: 10)
 
-    # Pro organizations
-    pro_orgs = Accounts.list_pro_organizations(limit: 10)
+    # Pro count for stats
     pro_count = Accounts.count_pro_organizations()
 
     # Execution trend
     execution_trend = Executions.executions_by_day(14)
 
+    # Monthly executions per org
+    org_monthly_executions = Executions.list_organization_monthly_executions(limit: 20)
+
+    # Recent audit logs
+    audit_logs = Audit.list_all_logs(limit: 20)
+
     socket
     |> assign(:platform_stats, platform_stats)
+    |> assign(:org_monthly_executions, org_monthly_executions)
     |> assign(:exec_stats, exec_stats)
     |> assign(:success_rate, success_rate)
     |> assign(:analytics, analytics)
@@ -70,9 +77,9 @@ defmodule PrikkeWeb.SuperadminLive do
     |> assign(:recent_jobs, recent_jobs)
     |> assign(:active_orgs, active_orgs)
     |> assign(:recent_executions, recent_executions)
-    |> assign(:pro_orgs, pro_orgs)
     |> assign(:pro_count, pro_count)
     |> assign(:execution_trend, execution_trend)
+    |> assign(:audit_logs, audit_logs)
   end
 
   @impl true
@@ -261,27 +268,65 @@ defmodule PrikkeWeb.SuperadminLive do
         </div>
       </div>
       
-    <!-- Pro Organizations -->
+    <!-- Monthly Executions by Organization -->
       <div class="bg-white border border-slate-200 rounded-lg p-6 mb-8">
         <div class="flex justify-between items-center mb-4">
-          <h2 class="text-lg font-semibold text-slate-900">Pro Organizations</h2>
-          <span class="text-sm text-emerald-600 font-medium">{@pro_count} total</span>
+          <h2 class="text-lg font-semibold text-slate-900">Monthly Executions by Organization</h2>
+          <span class="text-sm text-slate-500">{Calendar.strftime(DateTime.utc_now(), "%B %Y")}</span>
         </div>
-        <div class="space-y-3">
-          <%= for org <- @pro_orgs do %>
-            <div class="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
-              <div>
-                <div class="font-medium text-slate-900">{org.name}</div>
-                <div class="text-sm text-slate-500">{org.owner_email}</div>
-              </div>
-              <div class="text-xs text-slate-400">
-                Upgraded <.relative_time id={"pro-#{org.id}"} datetime={org.upgraded_at} />
-              </div>
-            </div>
-          <% end %>
-          <%= if @pro_orgs == [] do %>
-            <div class="text-sm text-slate-400 py-4 text-center">No Pro organizations yet</div>
-          <% end %>
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead>
+              <tr class="border-b border-slate-200">
+                <th class="py-2 text-left text-sm font-medium text-slate-500">Organization</th>
+                <th class="py-2 text-left text-sm font-medium text-slate-500">Tier</th>
+                <th class="py-2 text-right text-sm font-medium text-slate-500">Executions</th>
+                <th class="py-2 text-right text-sm font-medium text-slate-500">Limit</th>
+                <th class="py-2 text-right text-sm font-medium text-slate-500">Usage</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <%= for {org, count, limit} <- @org_monthly_executions do %>
+                <% usage_pct = Float.round(count / limit * 100, 1) %>
+                <tr>
+                  <td class="py-2 font-medium text-slate-900">{org.name}</td>
+                  <td class="py-2">
+                    <span class={[
+                      "text-xs px-2 py-0.5 rounded-full",
+                      if(org.tier == "pro", do: "bg-emerald-100 text-emerald-700", else: "bg-slate-100 text-slate-600")
+                    ]}>
+                      {org.tier}
+                    </span>
+                  </td>
+                  <td class="py-2 text-right font-mono text-sm text-slate-600">
+                    {format_number(count)}
+                  </td>
+                  <td class="py-2 text-right font-mono text-sm text-slate-400">
+                    {format_number(limit)}
+                  </td>
+                  <td class="py-2 text-right">
+                    <span class={[
+                      "text-sm font-medium",
+                      cond do
+                        usage_pct >= 100 -> "text-red-600"
+                        usage_pct >= 80 -> "text-amber-600"
+                        true -> "text-slate-600"
+                      end
+                    ]}>
+                      {usage_pct}%
+                    </span>
+                  </td>
+                </tr>
+              <% end %>
+              <%= if @org_monthly_executions == [] do %>
+                <tr>
+                  <td colspan="5" class="py-8 text-center text-slate-400">
+                    No executions this month
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
         </div>
       </div>
       
@@ -366,6 +411,56 @@ defmodule PrikkeWeb.SuperadminLive do
           <% end %>
         </div>
       </div>
+
+    <!-- Audit Logs -->
+      <div class="bg-white border border-slate-200 rounded-lg mb-8">
+        <div class="px-6 py-4 border-b border-slate-200">
+          <h2 class="text-lg font-semibold text-slate-900">Recent Audit Logs</h2>
+        </div>
+        <div class="divide-y divide-slate-200">
+          <%= for log <- @audit_logs do %>
+            <div class="px-6 py-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class={["text-xs px-2 py-0.5 rounded-full font-medium", action_badge_class(log.action)]}>
+                    {Audit.format_action(log.action)}
+                  </span>
+                  <span class="text-sm text-slate-600">
+                    {Audit.format_resource_type(log.resource_type)}
+                  </span>
+                </div>
+                <span class="text-xs text-slate-400">
+                  <.relative_time id={"audit-#{log.id}"} datetime={log.inserted_at} />
+                </span>
+              </div>
+              <div class="mt-1 text-sm text-slate-500">
+                <%= case log.actor_type do %>
+                  <% "user" -> %>
+                    <span class="text-slate-700">{log.actor && log.actor.email}</span>
+                  <% "api" -> %>
+                    <span class="text-amber-600">API: {log.metadata["api_key_name"]}</span>
+                  <% "system" -> %>
+                    <span class="text-slate-400">System</span>
+                  <% _ -> %>
+                    <span class="text-slate-400">Unknown</span>
+                <% end %>
+                <%= if log.organization do %>
+                  <span class="mx-1">·</span>
+                  <span class="text-slate-400">{log.organization.name}</span>
+                <% end %>
+              </div>
+              <%= if log.changes != %{} do %>
+                <div class="mt-1 text-xs text-slate-400 font-mono truncate">
+                  {inspect(log.changes, limit: 3)}
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+          <%= if @audit_logs == [] do %>
+            <div class="px-6 py-8 text-center text-slate-400">No audit logs yet</div>
+          <% end %>
+        </div>
+      </div>
     </div>
 
     <.footer />
@@ -410,4 +505,26 @@ defmodule PrikkeWeb.SuperadminLive do
   defp format_duration(ms) when ms < 1000, do: "#{ms}ms"
   defp format_duration(ms) when ms < 60_000, do: "#{Float.round(ms / 1000, 1)}s"
   defp format_duration(ms), do: "#{Float.round(ms / 60_000, 1)}m"
+
+  defp format_number(num) when is_integer(num) do
+    num
+    |> Integer.to_string()
+    |> String.graphemes()
+    |> Enum.reverse()
+    |> Enum.chunk_every(3)
+    |> Enum.join(",")
+    |> String.reverse()
+  end
+
+  defp format_number(num), do: to_string(num)
+
+  defp action_badge_class("created"), do: "bg-emerald-100 text-emerald-700"
+  defp action_badge_class("updated"), do: "bg-blue-100 text-blue-700"
+  defp action_badge_class("deleted"), do: "bg-red-100 text-red-700"
+  defp action_badge_class("enabled"), do: "bg-emerald-100 text-emerald-700"
+  defp action_badge_class("disabled"), do: "bg-slate-100 text-slate-600"
+  defp action_badge_class("triggered"), do: "bg-amber-100 text-amber-700"
+  defp action_badge_class("upgraded"), do: "bg-purple-100 text-purple-700"
+  defp action_badge_class("downgraded"), do: "bg-slate-100 text-slate-600"
+  defp action_badge_class(_), do: "bg-slate-100 text-slate-600"
 end

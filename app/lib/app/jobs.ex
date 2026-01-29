@@ -8,6 +8,7 @@ defmodule Prikke.Jobs do
 
   alias Prikke.Jobs.Job
   alias Prikke.Accounts.Organization
+  alias Prikke.Audit
 
   # Tier limits
   @tier_limits %{
@@ -148,13 +149,14 @@ defmodule Prikke.Jobs do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_job(%Organization{} = org, attrs) do
+  def create_job(%Organization{} = org, attrs, opts \\ []) do
     changeset = Job.create_changeset(%Job{}, attrs, org.id)
 
     with :ok <- check_job_limit(org),
          :ok <- check_interval_limit(org, changeset),
          {:ok, job} <- Repo.insert(changeset) do
       broadcast(org, {:created, job})
+      audit_log(opts, :created, :job, job.id, org.id)
       {:ok, job}
     else
       {:error, :job_limit_reached} ->
@@ -220,7 +222,7 @@ defmodule Prikke.Jobs do
       {:error, %Ecto.Changeset{}}
 
   """
-  def update_job(%Organization{} = org, %Job{} = job, attrs) do
+  def update_job(%Organization{} = org, %Job{} = job, attrs, opts \\ []) do
     if job.organization_id != org.id do
       raise ArgumentError, "job does not belong to organization"
     end
@@ -228,18 +230,26 @@ defmodule Prikke.Jobs do
     changeset = Job.changeset(job, attrs)
 
     was_enabled = job.enabled
+    old_job = Map.from_struct(job)
 
     with :ok <- check_interval_limit(org, changeset),
-         {:ok, job} <- Repo.update(changeset) do
-      broadcast(org, {:updated, job})
+         {:ok, updated_job} <- Repo.update(changeset) do
+      broadcast(org, {:updated, updated_job})
       # Notify scheduler if job was just enabled, or if schedule changed to be due soon
-      if job.enabled && job.next_run_at do
-        just_enabled = !was_enabled && job.enabled
-        due_soon = DateTime.diff(job.next_run_at, DateTime.utc_now()) <= 60
+      if updated_job.enabled && updated_job.next_run_at do
+        just_enabled = !was_enabled && updated_job.enabled
+        due_soon = DateTime.diff(updated_job.next_run_at, DateTime.utc_now()) <= 60
         if just_enabled || due_soon, do: notify_scheduler()
       end
 
-      {:ok, job}
+      # Audit log with changes
+      changes = Audit.compute_changes(old_job, Map.from_struct(updated_job), [
+        :name, :url, :method, :headers, :body, :schedule_type, :cron_expression,
+        :scheduled_at, :timezone, :enabled, :timeout_ms, :retry_attempts
+      ])
+      audit_log(opts, :updated, :job, updated_job.id, org.id, changes: changes)
+
+      {:ok, updated_job}
     else
       {:error, :interval_too_frequent} ->
         {:error,
@@ -278,13 +288,14 @@ defmodule Prikke.Jobs do
       {:error, %Ecto.Changeset{}}
 
   """
-  def delete_job(%Organization{} = org, %Job{} = job) do
+  def delete_job(%Organization{} = org, %Job{} = job, opts \\ []) do
     if job.organization_id != org.id do
       raise ArgumentError, "job does not belong to organization"
     end
 
     with {:ok, job} <- Repo.delete(job) do
       broadcast(org, {:deleted, job})
+      audit_log(opts, :deleted, :job, job.id, org.id, changes: %{"name" => job.name})
       {:ok, job}
     end
   end
@@ -292,8 +303,18 @@ defmodule Prikke.Jobs do
   @doc """
   Toggles a job's enabled status.
   """
-  def toggle_job(%Organization{} = org, %Job{} = job) do
-    update_job(org, job, %{enabled: !job.enabled})
+  def toggle_job(%Organization{} = org, %Job{} = job, opts \\ []) do
+    action = if job.enabled, do: :disabled, else: :enabled
+
+    case update_job(org, job, %{enabled: !job.enabled}) do
+      {:ok, updated_job} ->
+        # Log toggle separately for clearer audit trail
+        audit_log(opts, action, :job, updated_job.id, org.id)
+        {:ok, updated_job}
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -381,5 +402,31 @@ defmodule Prikke.Jobs do
       preload: [:organization]
     )
     |> Repo.all()
+  end
+
+  ## Private: Audit Logging
+
+  defp audit_log(opts, action, resource_type, resource_id, org_id, extra_opts \\ []) do
+    scope = Keyword.get(opts, :scope)
+    api_key_name = Keyword.get(opts, :api_key_name)
+    changes = Keyword.get(extra_opts, :changes, %{})
+
+    cond do
+      scope != nil ->
+        Audit.log(scope, action, resource_type, resource_id,
+          organization_id: org_id,
+          changes: changes
+        )
+
+      api_key_name != nil ->
+        Audit.log_api(api_key_name, action, resource_type, resource_id,
+          organization_id: org_id,
+          changes: changes
+        )
+
+      true ->
+        # No audit logging if no scope or api_key provided
+        :ok
+    end
   end
 end

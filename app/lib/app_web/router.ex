@@ -136,6 +136,7 @@ defmodule PrikkeWeb.Router do
     get "/organizations/api-keys", OrganizationController, :api_keys
     post "/organizations/api-keys", OrganizationController, :create_api_key
     delete "/organizations/api-keys/:id", OrganizationController, :delete_api_key
+    get "/organizations/audit", OrganizationController, :audit
 
     # Invites (authenticated)
     get "/invites", InviteController, :index

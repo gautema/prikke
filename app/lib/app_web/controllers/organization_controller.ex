@@ -6,6 +6,7 @@ defmodule PrikkeWeb.OrganizationController do
   alias Prikke.Accounts
   alias Prikke.Jobs
   alias Prikke.Executions
+  alias Prikke.Audit
 
   def index(conn, _params) do
     user = conn.assigns.current_scope.user
@@ -254,6 +255,29 @@ defmodule PrikkeWeb.OrganizationController do
             |> put_flash(:error, "Could not revoke API key.")
             |> redirect(to: ~p"/organizations/api-keys")
         end
+    end
+  end
+
+  def audit(conn, _params) do
+    organization = conn.assigns.current_organization
+    user = conn.assigns.current_scope.user
+
+    if organization do
+      # Check if user is owner or admin
+      membership = Accounts.get_membership(organization, user)
+
+      if membership && membership.role in ["owner", "admin"] do
+        audit_logs = Audit.list_organization_logs(organization, limit: 50)
+        render(conn, :audit, organization: organization, audit_logs: audit_logs)
+      else
+        conn
+        |> put_flash(:error, "You need to be an admin to view audit logs.")
+        |> redirect(to: ~p"/organizations/settings")
+      end
+    else
+      conn
+      |> put_flash(:error, "No organization selected.")
+      |> redirect(to: ~p"/")
     end
   end
 end

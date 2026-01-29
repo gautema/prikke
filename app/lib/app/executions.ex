@@ -549,4 +549,35 @@ defmodule Prikke.Executions do
       nil
     end
   end
+
+  @doc """
+  Gets monthly execution counts per organization.
+  Returns a list of {organization, execution_count, tier_limit} tuples sorted by execution count desc.
+  """
+  def list_organization_monthly_executions(opts \\ []) do
+    limit = Keyword.get(opts, :limit, 50)
+    now = DateTime.utc_now()
+    start_of_month = Date.new!(now.year, now.month, 1) |> DateTime.new!(~T[00:00:00], "Etc/UTC")
+
+    tier_limits = Prikke.Jobs.tier_limits()
+
+    from(e in Execution,
+      join: j in Job,
+      on: e.job_id == j.id,
+      join: o in Prikke.Accounts.Organization,
+      on: j.organization_id == o.id,
+      where: e.scheduled_for >= ^start_of_month,
+      where: e.status in ["success", "failed", "timeout"],
+      where: e.attempt == 1,
+      group_by: [o.id, o.name, o.tier],
+      select: {o, count(e.id)},
+      order_by: [desc: count(e.id)],
+      limit: ^limit
+    )
+    |> Repo.all()
+    |> Enum.map(fn {org, count} ->
+      tier_limit = tier_limits[org.tier][:max_monthly_executions] || 5_000
+      {org, count, tier_limit}
+    end)
+  end
 end
