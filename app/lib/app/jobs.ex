@@ -214,6 +214,18 @@ defmodule Prikke.Jobs do
   end
 
   @doc """
+  Clears the next_run_at field for a job.
+
+  This is used when an execution has been manually created (e.g., via queue API)
+  to prevent the scheduler from also creating an execution for the same job.
+  """
+  def clear_next_run(%Job{} = job) do
+    job
+    |> Ecto.Changeset.change(next_run_at: nil)
+    |> Repo.update()
+  end
+
+  @doc """
   Deletes a job.
 
   ## Examples

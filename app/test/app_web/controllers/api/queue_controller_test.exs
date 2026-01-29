@@ -18,7 +18,7 @@ defmodule PrikkeWeb.Api.QueueControllerTest do
     %{conn: conn, org: org, api_key: api_key}
   end
 
-  describe "POST /api/q" do
+  describe "POST /api/queue" do
     test "queues a request for immediate execution", %{conn: conn} do
       params = %{
         "url" => "https://example.com/webhook",
@@ -26,7 +26,7 @@ defmodule PrikkeWeb.Api.QueueControllerTest do
         "body" => ~s({"event": "test"})
       }
 
-      conn = post(conn, ~p"/api/q", params)
+      conn = post(conn, ~p"/api/queue", params)
       response = json_response(conn, 202)
 
       assert response["message"] == "Request queued for immediate execution"
@@ -39,7 +39,7 @@ defmodule PrikkeWeb.Api.QueueControllerTest do
     test "uses defaults for optional fields", %{conn: conn} do
       params = %{"url" => "https://example.com/webhook"}
 
-      conn = post(conn, ~p"/api/q", params)
+      conn = post(conn, ~p"/api/queue", params)
       response = json_response(conn, 202)
 
       assert response["data"]["status"] == "pending"
@@ -51,7 +51,7 @@ defmodule PrikkeWeb.Api.QueueControllerTest do
         "name" => "My Custom Job"
       }
 
-      conn = post(conn, ~p"/api/q", params)
+      conn = post(conn, ~p"/api/queue", params)
       response = json_response(conn, 202)
 
       assert response["data"]["job_id"]
@@ -65,7 +65,7 @@ defmodule PrikkeWeb.Api.QueueControllerTest do
       conn =
         build_conn()
         |> put_req_header("accept", "application/json")
-        |> post(~p"/api/q", %{"url" => "https://example.com"})
+        |> post(~p"/api/queue", %{"url" => "https://example.com"})
 
       assert json_response(conn, 401)["error"]["code"] == "unauthorized"
     end
@@ -73,7 +73,7 @@ defmodule PrikkeWeb.Api.QueueControllerTest do
     test "returns error for invalid URL", %{conn: conn} do
       params = %{"url" => "not-a-valid-url"}
 
-      conn = post(conn, ~p"/api/q", params)
+      conn = post(conn, ~p"/api/queue", params)
       assert json_response(conn, 422)
     end
   end

@@ -29,7 +29,7 @@ defmodule PrikkeWeb.StatusHTML do
 
   def format_time(nil), do: "Never"
   def format_time(datetime) do
-    Calendar.strftime(datetime, "%b %d, %Y %H:%M UTC")
+    Calendar.strftime(datetime, "%d %b %Y, %H:%M UTC")
   end
 
   def format_duration(nil, _), do: ""

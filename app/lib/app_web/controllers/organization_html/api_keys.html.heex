@@ -74,9 +74,9 @@
                 <div class="font-medium text-slate-900">{key.name || "Unnamed key"}</div>
                 <div class="text-sm text-slate-500 font-mono">{key.key_id}</div>
                 <div class="text-xs text-slate-400 mt-1">
-                  Created {Calendar.strftime(key.inserted_at, "%b %d, %Y")}
+                  Created {Calendar.strftime(key.inserted_at, "%d %b %Y")}
                   <%= if key.last_used_at do %>
-                    · Last used {Calendar.strftime(key.last_used_at, "%b %d, %Y")}
+                    · Last used {Calendar.strftime(key.last_used_at, "%d %b %Y")}
                   <% else %>
                     · Never used
                   <% end %>

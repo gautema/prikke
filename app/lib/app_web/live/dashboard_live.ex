@@ -157,12 +157,21 @@ defmodule PrikkeWeb.DashboardLive do
         <div class="bg-white border border-slate-200 rounded-lg">
           <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
             <h2 class="text-lg font-semibold text-slate-900">Jobs</h2>
-            <.link
-              navigate={~p"/jobs/new"}
-              class="text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors no-underline"
-            >
-              New Job
-            </.link>
+            <div class="flex gap-2">
+              <.link
+                navigate={~p"/queue"}
+                class="text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-md transition-colors no-underline flex items-center gap-1.5"
+              >
+                <.icon name="hero-bolt" class="w-4 h-4" />
+                Queue
+              </.link>
+              <.link
+                navigate={~p"/jobs/new"}
+                class="text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors no-underline"
+              >
+                New Job
+              </.link>
+            </div>
           </div>
           <%= if @recent_jobs == [] do %>
             <div class="p-12 text-center">
@@ -180,9 +189,9 @@ defmodule PrikkeWeb.DashboardLive do
                   <div class="flex items-center justify-between">
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-2">
-                        <.execution_status_dot status={@latest_statuses[job.id]} />
+                        <.execution_status_dot status={get_status(@latest_statuses[job.id])} />
                         <span class="font-medium text-slate-900 truncate"><%= job.name %></span>
-                        <.job_status_badge job={job} />
+                        <.job_status_badge job={job} latest_info={@latest_statuses[job.id]} />
                       </div>
                       <div class="text-sm text-slate-500 mt-0.5 flex items-center gap-2">
                         <span class="font-mono text-xs"><%= job.method %></span>
@@ -321,15 +330,32 @@ defmodule PrikkeWeb.DashboardLive do
     Executions.list_organization_executions(organization, limit: 10)
   end
 
-  defp job_completed?(job) do
-    job.schedule_type == "once" and is_nil(job.next_run_at)
+  defp get_status(nil), do: nil
+  defp get_status(%{status: status}), do: status
+
+  defp get_attempt(nil), do: 1
+  defp get_attempt(%{attempt: attempt}), do: attempt
+
+  defp job_completed?(job, latest_info) do
+    job.schedule_type == "once" and is_nil(job.next_run_at) and get_status(latest_info) == "success"
   end
 
   defp job_status_badge(assigns) do
+    status = get_status(assigns.latest_info)
+    attempt = get_attempt(assigns.latest_info)
+    assigns = assign(assigns, :status, status)
+    assigns = assign(assigns, :attempt, attempt)
+
     ~H"""
     <%= cond do %>
-      <% job_completed?(@job) -> %>
+      <% job_completed?(@job, @latest_info) -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600">Completed</span>
+      <% @job.schedule_type == "once" and @status in ["failed", "timeout"] -> %>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-red-100 text-red-700">Failed</span>
+      <% @job.schedule_type == "once" and @status in ["pending", "running"] and @attempt > 1 -> %>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">Retrying (<%= @attempt %>/<%= @job.retry_attempts %>)</span>
+      <% @job.schedule_type == "once" and @status in ["pending", "running"] -> %>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-blue-100 text-blue-700">Running</span>
       <% @job.enabled -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">Active</span>
       <% true -> %>
@@ -403,10 +429,11 @@ defmodule PrikkeWeb.DashboardLive do
     diff = DateTime.diff(now, datetime, :second)
 
     cond do
+      diff < 0 -> "just now"
       diff < 60 -> "#{diff}s ago"
       diff < 3600 -> "#{div(diff, 60)}m ago"
       diff < 86400 -> "#{div(diff, 3600)}h ago"
-      true -> Calendar.strftime(datetime, "%b %d, %H:%M")
+      true -> Calendar.strftime(datetime, "%d %b, %H:%M")
     end
   end
 end

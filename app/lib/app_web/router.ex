@@ -67,7 +67,7 @@ defmodule PrikkeWeb.Router do
     end
 
     # On-demand queue - simple API for immediate execution
-    post "/q", QueueController, :push
+    post "/queue", QueueController, :push
 
     # Declarative sync
     put "/sync", SyncController, :sync
@@ -112,6 +112,8 @@ defmodule PrikkeWeb.Router do
       live "/jobs/:id", JobLive.Show, :show
       live "/jobs/:id/edit", JobLive.Edit, :edit
       live "/jobs/:job_id/executions/:id", JobLive.ExecutionShow, :show
+
+      live "/queue", QueueLive
     end
 
     get "/users/settings", UserSettingsController, :edit

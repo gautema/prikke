@@ -40,23 +40,35 @@ defmodule PrikkeWeb.Api.QueueController do
       |> DateTime.add(1, :second)
       |> DateTime.truncate(:second)
 
-    # Generate a name if not provided
-    name = params["name"] || "Queue #{DateTime.to_iso8601(scheduled_at)}"
+    # Generate a name if not provided or empty
+    url = params["url"]
+    pretty_time = Calendar.strftime(scheduled_at, "%d %b, %H:%M")
+    default_name = "#{url} · #{pretty_time}"
+
+    name =
+      case params["name"] do
+        nil -> default_name
+        "" -> default_name
+        n -> n
+      end
 
     job_params = %{
       "name" => name,
-      "url" => params["url"],
+      "url" => url,
       "method" => params["method"] || "POST",
       "headers" => params["headers"] || %{},
       "body" => params["body"] || "",
       "schedule_type" => "once",
       "scheduled_at" => scheduled_at,
       "enabled" => true,
-      "timeout_ms" => params["timeout_ms"] || 30_000
+      "timeout_ms" => params["timeout_ms"] || 30_000,
+      "retry_attempts" => params["retry_attempts"] || 5
     }
 
     with {:ok, job} <- Jobs.create_job(org, job_params),
-         {:ok, execution} <- Executions.create_execution_for_job(job, scheduled_at) do
+         {:ok, execution} <- Executions.create_execution_for_job(job, scheduled_at),
+         # Clear next_run_at so scheduler doesn't also create an execution
+         {:ok, _job} <- Jobs.clear_next_run(job) do
       conn
       |> put_status(:accepted)
       |> json(%{

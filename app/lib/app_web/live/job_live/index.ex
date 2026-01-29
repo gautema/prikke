@@ -88,15 +88,32 @@ defmodule PrikkeWeb.JobLive.Index do
     end
   end
 
-  defp job_completed?(job) do
-    job.schedule_type == "once" and is_nil(job.next_run_at)
+  defp get_status(nil), do: nil
+  defp get_status(%{status: status}), do: status
+
+  defp get_attempt(nil), do: 1
+  defp get_attempt(%{attempt: attempt}), do: attempt
+
+  defp job_completed?(job, latest_info) do
+    job.schedule_type == "once" and is_nil(job.next_run_at) and get_status(latest_info) == "success"
   end
 
   defp job_status_badge(assigns) do
+    status = get_status(assigns.latest_info)
+    attempt = get_attempt(assigns.latest_info)
+    assigns = assign(assigns, :status, status)
+    assigns = assign(assigns, :attempt, attempt)
+
     ~H"""
     <%= cond do %>
-      <% job_completed?(@job) -> %>
+      <% job_completed?(@job, @latest_info) -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600">Completed</span>
+      <% @job.schedule_type == "once" and @status in ["failed", "timeout"] -> %>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-red-100 text-red-700">Failed</span>
+      <% @job.schedule_type == "once" and @status in ["pending", "running"] and @attempt > 1 -> %>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">Retrying (<%= @attempt %>/<%= @job.retry_attempts %>)</span>
+      <% @job.schedule_type == "once" and @status in ["pending", "running"] -> %>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-blue-100 text-blue-700">Running</span>
       <% @job.enabled -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">Active</span>
       <% true -> %>
@@ -174,11 +191,11 @@ defmodule PrikkeWeb.JobLive.Index do
               <div class="flex items-start sm:items-center justify-between gap-3">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-                    <.execution_status_dot status={@latest_statuses[job.id]} />
+                    <.execution_status_dot status={get_status(@latest_statuses[job.id])} />
                     <.link navigate={~p"/jobs/#{job.id}"} class="font-medium text-slate-900 hover:text-emerald-600 break-all sm:truncate">
                       <%= job.name %>
                     </.link>
-                    <.job_status_badge job={job} />
+                    <.job_status_badge job={job} latest_info={@latest_statuses[job.id]} />
                   </div>
                   <div class="text-sm text-slate-500 mt-1 flex items-center gap-2">
                     <span class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded shrink-0"><%= job.method %></span>
@@ -188,12 +205,12 @@ defmodule PrikkeWeb.JobLive.Index do
                     <%= if job.schedule_type == "cron" do %>
                       <span class="font-mono"><%= job.cron_expression %></span>
                     <% else %>
-                      <span class="hidden sm:inline">One-time: </span><%= Calendar.strftime(job.scheduled_at, "%b %d, %Y %H:%M") %>
+                      <span class="hidden sm:inline">One-time: </span><%= Calendar.strftime(job.scheduled_at, "%d %b %Y, %H:%M") %>
                     <% end %>
                   </div>
                 </div>
                 <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-                  <%= unless job_completed?(job) do %>
+                  <%= unless job_completed?(job, @latest_statuses[job.id]) do %>
                     <button
                       type="button"
                       phx-click="toggle"

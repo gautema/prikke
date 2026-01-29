@@ -20,7 +20,7 @@
             <div>
               <div class="font-medium text-slate-900"><%= invite.organization.name %></div>
               <div class="text-sm text-slate-500">
-                Invited <%= Calendar.strftime(invite.inserted_at, "%b %d, %Y") %>
+                Invited <%= Calendar.strftime(invite.inserted_at, "%d %b %Y") %>
                 <%= if invite.invited_by do %>
                   by <%= invite.invited_by.email %>
                 <% end %>

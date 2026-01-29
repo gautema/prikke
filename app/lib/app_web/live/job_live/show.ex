@@ -12,6 +12,7 @@ defmodule PrikkeWeb.JobLive.Show do
       job = Jobs.get_job!(org, id)
       executions = Executions.list_job_executions(job, limit: 20)
       stats = Executions.get_job_stats(job)
+      latest_info = get_latest_info(executions)
       if connected?(socket), do: Jobs.subscribe_jobs(org)
 
       {:ok,
@@ -20,6 +21,7 @@ defmodule PrikkeWeb.JobLive.Show do
        |> assign(:job, job)
        |> assign(:executions, executions)
        |> assign(:stats, stats)
+       |> assign(:latest_info, latest_info)
        |> assign(:page_title, job.name)}
     else
       {:ok,
@@ -34,11 +36,13 @@ defmodule PrikkeWeb.JobLive.Show do
     if job.id == socket.assigns.job.id do
       executions = Executions.list_job_executions(job, limit: 20)
       stats = Executions.get_job_stats(job)
+      latest_info = get_latest_info(executions)
       {:noreply,
        socket
        |> assign(:job, job)
        |> assign(:executions, executions)
-       |> assign(:stats, stats)}
+       |> assign(:stats, stats)
+       |> assign(:latest_info, latest_info)}
     else
       {:noreply, socket}
     end
@@ -114,12 +118,12 @@ defmodule PrikkeWeb.JobLive.Show do
             <div>
               <div class="flex items-center gap-3 flex-wrap">
                 <h1 class="text-lg sm:text-xl font-bold text-slate-900"><%= @job.name %></h1>
-                <.job_status_badge job={@job} />
+                <.job_status_badge job={@job} latest_info={@latest_info} />
               </div>
-              <p class="text-sm text-slate-500 mt-1">Created <%= Calendar.strftime(@job.inserted_at, "%b %d, %Y") %></p>
+              <p class="text-sm text-slate-500 mt-1">Created <%= Calendar.strftime(@job.inserted_at, "%d %b %Y") %></p>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-              <%= unless job_completed?(@job) do %>
+              <%= unless job_completed?(@job, @latest_info) do %>
                 <button
                   type="button"
                   phx-click="toggle"
@@ -188,7 +192,7 @@ defmodule PrikkeWeb.JobLive.Show do
                 <div>
                   <span class="text-slate-900 font-medium">One-time execution</span>
                   <p class="text-slate-600 mt-1">
-                    Scheduled for <%= Calendar.strftime(@job.scheduled_at, "%B %d, %Y at %H:%M") %> UTC
+                    Scheduled for <%= Calendar.strftime(@job.scheduled_at, "%d %B %Y at %H:%M") %> UTC
                   </p>
                 </div>
               <% end %>
@@ -302,15 +306,35 @@ defmodule PrikkeWeb.JobLive.Show do
     end
   end
 
-  defp job_completed?(job) do
-    job.schedule_type == "once" and is_nil(job.next_run_at)
+  defp get_latest_info([]), do: nil
+  defp get_latest_info([exec | _]), do: %{status: exec.status, attempt: exec.attempt}
+
+  defp get_status(nil), do: nil
+  defp get_status(%{status: status}), do: status
+
+  defp get_attempt(nil), do: 1
+  defp get_attempt(%{attempt: attempt}), do: attempt
+
+  defp job_completed?(job, latest_info) do
+    job.schedule_type == "once" and is_nil(job.next_run_at) and get_status(latest_info) == "success"
   end
 
   defp job_status_badge(assigns) do
+    status = get_status(assigns.latest_info)
+    attempt = get_attempt(assigns.latest_info)
+    assigns = assign(assigns, :status, status)
+    assigns = assign(assigns, :attempt, attempt)
+
     ~H"""
     <%= cond do %>
-      <% job_completed?(@job) -> %>
+      <% job_completed?(@job, @latest_info) -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600">Completed</span>
+      <% @job.schedule_type == "once" and @status in ["failed", "timeout"] -> %>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-red-100 text-red-700">Failed</span>
+      <% @job.schedule_type == "once" and @status in ["pending", "running"] and @attempt > 1 -> %>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">Retrying (<%= @attempt %>/<%= @job.retry_attempts %>)</span>
+      <% @job.schedule_type == "once" and @status in ["pending", "running"] -> %>
+        <span class="text-xs font-medium px-2 py-0.5 rounded bg-blue-100 text-blue-700">Running</span>
       <% @job.enabled -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">Active</span>
       <% true -> %>
@@ -364,7 +388,7 @@ defmodule PrikkeWeb.JobLive.Show do
 
   defp format_execution_time(nil), do: "—"
   defp format_execution_time(datetime) do
-    Calendar.strftime(datetime, "%b %d, %H:%M:%S")
+    Calendar.strftime(datetime, "%d %b, %H:%M:%S")
   end
 
   defp truncate(nil, _), do: nil

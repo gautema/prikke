@@ -206,8 +206,8 @@ defmodule Prikke.Executions do
   end
 
   @doc """
-  Gets the latest execution status for multiple jobs.
-  Returns a map of job_id => status (or nil if no executions).
+  Gets the latest execution info for multiple jobs.
+  Returns a map of job_id => %{status: status, attempt: attempt} (or nil if no executions).
   """
   def get_latest_statuses([]), do: %{}
 
@@ -220,11 +220,11 @@ defmodule Prikke.Executions do
         select: %{job_id: e.job_id, max_scheduled: max(e.scheduled_for)}
       )
 
-    # Join to get the status for each latest execution
+    # Join to get the status and attempt for each latest execution
     from(e in Execution,
       join: lt in subquery(latest_times),
       on: e.job_id == lt.job_id and e.scheduled_for == lt.max_scheduled,
-      select: {e.job_id, e.status}
+      select: {e.job_id, %{status: e.status, attempt: e.attempt}}
     )
     |> Repo.all()
     |> Map.new()
