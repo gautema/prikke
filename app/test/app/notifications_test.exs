@@ -14,7 +14,7 @@ defmodule Prikke.NotificationsTest do
       # Clear welcome email
       flush_emails()
 
-      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org", slug: "test-org"})
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org"})
 
       {:ok, job} =
         Jobs.create_job(org, %{
@@ -66,7 +66,7 @@ defmodule Prikke.NotificationsTest do
       user = user_fixture()
       flush_emails()
 
-      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org", slug: "test-org"})
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org"})
 
       {:ok, job} =
         Jobs.create_job(org, %{
@@ -133,7 +133,7 @@ defmodule Prikke.NotificationsTest do
       user = user_fixture()
       flush_emails()
 
-      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org", slug: "test-org"})
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org"})
 
       {:ok, org} =
         Accounts.update_notification_settings(org, %{

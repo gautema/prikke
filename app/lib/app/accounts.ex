@@ -362,11 +362,6 @@ defmodule Prikke.Accounts do
   def get_organization_for_user(_user, _org_id), do: nil
 
   @doc """
-  Gets an organization by slug.
-  """
-  def get_organization_by_slug(slug), do: Repo.get_by(Organization, slug: slug)
-
-  @doc """
   Lists all organizations for a user.
   """
   def list_user_organizations(user) do

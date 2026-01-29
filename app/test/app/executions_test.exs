@@ -10,7 +10,7 @@ defmodule Prikke.ExecutionsTest do
   describe "executions" do
     setup do
       user = user_fixture()
-      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org", slug: "test-org"})
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org"})
 
       {:ok, job} =
         Jobs.create_job(org, %{

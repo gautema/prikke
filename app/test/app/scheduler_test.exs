@@ -11,7 +11,7 @@ defmodule Prikke.SchedulerTest do
   describe "scheduler" do
     setup do
       user = user_fixture()
-      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org", slug: "test-org"})
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org"})
       # Upgrade to Pro for minute-level cron testing
       {:ok, org} = Accounts.upgrade_organization_to_pro(org)
 

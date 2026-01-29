@@ -101,14 +101,10 @@ defmodule Prikke.AccountsFixtures do
     attrs = Enum.into(attrs, %{})
     user = Map.get_lazy(attrs, :user, fn -> user_fixture() end)
     name = attrs[:name] || unique_org_name()
-    slug = attrs[:slug] || Prikke.Accounts.Organization.generate_slug(name)
     tier = attrs[:tier] || "free"
 
     {:ok, org} =
-      Accounts.create_organization(user, %{
-        name: name,
-        slug: slug
-      })
+      Accounts.create_organization(user, %{name: name})
 
     # Update tier if not free (create_organization doesn't accept tier)
     if tier != "free" do

@@ -262,7 +262,6 @@ defmodule Prikke.Accounts.UserNotifier do
       Organization upgraded to Pro on Prikke!
 
       Organization: #{organization.name}
-      Slug: #{organization.slug}
       Organization ID: #{organization.id}
       Upgraded at: #{Calendar.strftime(DateTime.utc_now(), "%Y-%m-%d %H:%M:%S UTC")}
 
@@ -310,12 +309,6 @@ defmodule Prikke.Accounts.UserNotifier do
                       <td style="padding: 8px 16px;">
                         <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">Organization</p>
                         <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a; font-weight: 500;">#{organization.name}</p>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style="padding: 8px 16px;">
-                        <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">Slug</p>
-                        <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a; font-family: monospace;">#{organization.slug}</p>
                       </td>
                     </tr>
                     <tr>

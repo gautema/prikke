@@ -9,7 +9,7 @@ defmodule PrikkeWeb.Plugs.ApiAuthTest do
   describe "ApiAuth plug" do
     setup do
       user = user_fixture()
-      {:ok, org} = Accounts.create_organization(user, %{name: "Test", slug: "test"})
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test"})
       {:ok, api_key, raw_secret} = Accounts.create_api_key(org, user)
       full_key = "#{api_key.key_id}.#{raw_secret}"
 

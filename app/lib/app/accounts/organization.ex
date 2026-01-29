@@ -6,7 +6,6 @@ defmodule Prikke.Accounts.Organization do
   @foreign_key_type :binary_id
   schema "organizations" do
     field :name, :string
-    field :slug, :string
     field :tier, :string, default: "free"
 
     # Notification settings
@@ -24,14 +23,9 @@ defmodule Prikke.Accounts.Organization do
   @doc false
   def changeset(organization, attrs) do
     organization
-    |> cast(attrs, [:name, :slug, :tier])
-    |> validate_required([:name, :slug])
+    |> cast(attrs, [:name, :tier])
+    |> validate_required([:name])
     |> validate_inclusion(:tier, ["free", "pro"])
-    |> validate_format(:slug, ~r/^[a-z0-9-]+$/,
-      message: "must be lowercase letters, numbers, and hyphens only"
-    )
-    |> validate_length(:slug, min: 3, max: 50)
-    |> unique_constraint(:slug, message: "has already been taken")
   end
 
   @doc """
@@ -63,14 +57,4 @@ defmodule Prikke.Accounts.Organization do
     end
   end
 
-  @doc """
-  Generates a slug from the organization name.
-  """
-  def generate_slug(name) do
-    name
-    |> String.downcase()
-    |> String.replace(~r/[^a-z0-9\s-]/, "")
-    |> String.replace(~r/\s+/, "-")
-    |> String.trim("-")
-  end
 end

@@ -398,11 +398,10 @@ defmodule Prikke.AccountsTest do
   describe "organizations" do
     test "create_organization/2 creates org and adds user as owner" do
       user = user_fixture()
-      attrs = %{name: "Test Org", slug: "test-org"}
+      attrs = %{name: "Test Org"}
 
       assert {:ok, org} = Accounts.create_organization(user, attrs)
       assert org.name == "Test Org"
-      assert org.slug == "test-org"
       assert org.tier == "free"
 
       # User should be owner
@@ -410,27 +409,10 @@ defmodule Prikke.AccountsTest do
       assert membership.role == "owner"
     end
 
-    test "create_organization/2 validates slug format" do
-      user = user_fixture()
-      attrs = %{name: "Test", slug: "Invalid Slug!"}
-
-      assert {:error, changeset} = Accounts.create_organization(user, attrs)
-      assert "must be lowercase letters, numbers, and hyphens only" in errors_on(changeset).slug
-    end
-
-    test "create_organization/2 enforces unique slugs" do
-      user = user_fixture()
-      attrs = %{name: "Test Org", slug: "test-org"}
-
-      assert {:ok, _org} = Accounts.create_organization(user, attrs)
-      assert {:error, changeset} = Accounts.create_organization(user, attrs)
-      assert "has already been taken" in errors_on(changeset).slug
-    end
-
     test "list_user_organizations/1 returns user's organizations" do
       user = user_fixture()
-      {:ok, org1} = Accounts.create_organization(user, %{name: "Org 1", slug: "org-1"})
-      {:ok, org2} = Accounts.create_organization(user, %{name: "Org 2", slug: "org-2"})
+      {:ok, org1} = Accounts.create_organization(user, %{name: "Org 1"})
+      {:ok, org2} = Accounts.create_organization(user, %{name: "Org 2"})
 
       orgs = Accounts.list_user_organizations(user)
       assert length(orgs) == 2
@@ -438,18 +420,10 @@ defmodule Prikke.AccountsTest do
       assert Enum.any?(orgs, &(&1.id == org2.id))
     end
 
-    test "get_organization_by_slug/1 returns organization" do
-      user = user_fixture()
-      {:ok, org} = Accounts.create_organization(user, %{name: "Test", slug: "test-slug"})
-
-      assert fetched = Accounts.get_organization_by_slug("test-slug")
-      assert fetched.id == org.id
-    end
-
     test "get_organization_for_user/2 returns org only if user is member" do
       user1 = user_fixture()
       user2 = user_fixture()
-      {:ok, org} = Accounts.create_organization(user1, %{name: "Test", slug: "test-access"})
+      {:ok, org} = Accounts.create_organization(user1, %{name: "Test"})
 
       # User1 is a member, should get the org
       assert fetched = Accounts.get_organization_for_user(user1, org.id)
@@ -466,7 +440,7 @@ defmodule Prikke.AccountsTest do
 
     test "upgrade_organization_to_pro/1 changes tier from free to pro" do
       user = user_fixture()
-      {:ok, org} = Accounts.create_organization(user, %{name: "Test", slug: "test-upgrade"})
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test"})
       assert org.tier == "free"
 
       assert {:ok, upgraded} = Accounts.upgrade_organization_to_pro(org)
@@ -477,7 +451,7 @@ defmodule Prikke.AccountsTest do
   describe "memberships" do
     setup do
       user = user_fixture()
-      {:ok, org} = Accounts.create_organization(user, %{name: "Test", slug: "test"})
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test"})
       %{user: user, org: org}
     end
 
@@ -512,7 +486,7 @@ defmodule Prikke.AccountsTest do
   describe "api_keys" do
     setup do
       user = user_fixture()
-      {:ok, org} = Accounts.create_organization(user, %{name: "Test", slug: "test"})
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test"})
       %{user: user, org: org}
     end
 
@@ -569,7 +543,7 @@ defmodule Prikke.AccountsTest do
   describe "organization invites - member limits" do
     test "free tier enforces 2 member limit" do
       owner = user_fixture()
-      {:ok, org} = Accounts.create_organization(owner, %{name: "Test", slug: "test"})
+      {:ok, org} = Accounts.create_organization(owner, %{name: "Test"})
 
       # Org starts with 1 member (owner). Free tier allows max 2.
       # First invite should succeed
@@ -592,7 +566,7 @@ defmodule Prikke.AccountsTest do
 
     test "free tier counts pending invites toward limit" do
       owner = user_fixture()
-      {:ok, org} = Accounts.create_organization(owner, %{name: "Test", slug: "test"})
+      {:ok, org} = Accounts.create_organization(owner, %{name: "Test"})
 
       # Create one pending invite
       {:ok, _invite, _token} =
@@ -615,7 +589,7 @@ defmodule Prikke.AccountsTest do
 
     test "pro tier allows unlimited members" do
       owner = user_fixture()
-      {:ok, org} = Accounts.create_organization(owner, %{name: "Test", slug: "test-pro"})
+      {:ok, org} = Accounts.create_organization(owner, %{name: "Test"})
 
       # Upgrade to pro tier
       org = org |> Ecto.Changeset.change(tier: "pro") |> Prikke.Repo.update!()
@@ -632,7 +606,7 @@ defmodule Prikke.AccountsTest do
 
     test "count_organization_members/1 counts correctly" do
       owner = user_fixture()
-      {:ok, org} = Accounts.create_organization(owner, %{name: "Test", slug: "test-count"})
+      {:ok, org} = Accounts.create_organization(owner, %{name: "Test"})
 
       assert Accounts.count_organization_members(org) == 1
 
@@ -645,7 +619,7 @@ defmodule Prikke.AccountsTest do
 
     test "count_pending_invites/1 counts correctly" do
       owner = user_fixture()
-      {:ok, org} = Accounts.create_organization(owner, %{name: "Test", slug: "test-pending"})
+      {:ok, org} = Accounts.create_organization(owner, %{name: "Test"})
 
       # Upgrade to pro to allow more invites for testing
       org = org |> Ecto.Changeset.change(tier: "pro") |> Prikke.Repo.update!()
@@ -673,7 +647,7 @@ defmodule Prikke.AccountsTest do
   describe "notification settings" do
     test "update_notification_settings/2 updates notification fields" do
       user = user_fixture()
-      {:ok, org} = Accounts.create_organization(user, %{name: "Test", slug: "test-notify"})
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test"})
 
       assert org.notify_on_failure == true
       assert org.notification_email == nil
@@ -693,7 +667,7 @@ defmodule Prikke.AccountsTest do
 
     test "update_notification_settings/2 validates email format" do
       user = user_fixture()
-      {:ok, org} = Accounts.create_organization(user, %{name: "Test", slug: "test-email-valid"})
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test"})
 
       {:error, changeset} =
         Accounts.update_notification_settings(org, %{
@@ -705,7 +679,7 @@ defmodule Prikke.AccountsTest do
 
     test "update_notification_settings/2 validates webhook URL format" do
       user = user_fixture()
-      {:ok, org} = Accounts.create_organization(user, %{name: "Test", slug: "test-webhook-valid"})
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test"})
 
       {:error, changeset} =
         Accounts.update_notification_settings(org, %{
@@ -717,7 +691,7 @@ defmodule Prikke.AccountsTest do
 
     test "update_notification_settings/2 allows empty/nil values" do
       user = user_fixture()
-      {:ok, org} = Accounts.create_organization(user, %{name: "Test", slug: "test-empty"})
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test"})
 
       # First set values
       {:ok, org} =
