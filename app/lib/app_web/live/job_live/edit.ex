@@ -68,7 +68,12 @@ defmodule PrikkeWeb.JobLive.Edit do
 
       {:error, %Ecto.Changeset{} = changeset} ->
         Logger.warning("[JobLive.Edit] Job update failed: #{inspect(changeset.errors)}")
-        {:noreply, assign_form(socket, changeset)}
+        # Set action to :validate so errors are displayed
+        changeset = Map.put(changeset, :action, :validate)
+        {:noreply,
+         socket
+         |> put_flash(:error, "Could not save job. Please check the errors below.")
+         |> assign_form(changeset)}
     end
   end
 

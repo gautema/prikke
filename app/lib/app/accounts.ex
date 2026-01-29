@@ -313,10 +313,18 @@ defmodule Prikke.Accounts do
   Creates an organization and adds the given user as owner.
   """
   def create_organization(user, attrs) do
-    Repo.transact(fn ->
-      with {:ok, org} <- %Organization{} |> Organization.changeset(attrs) |> Repo.insert(),
-           {:ok, _membership} <- create_membership(org, user, "owner") do
-        {:ok, org}
+    Repo.transaction(fn ->
+      changeset = Organization.changeset(%Organization{}, attrs)
+
+      case Repo.insert(changeset) do
+        {:ok, org} ->
+          case create_membership(org, user, "owner") do
+            {:ok, _membership} -> org
+            {:error, _} -> Repo.rollback(changeset)
+          end
+
+        {:error, changeset} ->
+          Repo.rollback(changeset)
       end
     end)
   end

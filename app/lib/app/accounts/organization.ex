@@ -29,7 +29,7 @@ defmodule Prikke.Accounts.Organization do
     |> validate_inclusion(:tier, ["free", "pro"])
     |> validate_format(:slug, ~r/^[a-z0-9-]+$/, message: "must be lowercase letters, numbers, and hyphens only")
     |> validate_length(:slug, min: 3, max: 50)
-    |> unique_constraint(:slug)
+    |> unique_constraint(:slug, message: "has already been taken")
   end
 
   @doc """

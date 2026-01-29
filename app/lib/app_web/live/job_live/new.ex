@@ -49,7 +49,11 @@ defmodule PrikkeWeb.JobLive.New do
          |> redirect(to: ~p"/jobs/#{job.id}")}
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign_form(socket, changeset)}
+        changeset = Map.put(changeset, :action, :validate)
+        {:noreply,
+         socket
+         |> put_flash(:error, "Could not create job. Please check the errors below.")
+         |> assign_form(changeset)}
     end
   end
 
