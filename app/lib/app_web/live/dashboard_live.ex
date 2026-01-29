@@ -26,13 +26,18 @@ defmodule PrikkeWeb.DashboardLive do
       Jobs.subscribe_jobs(current_org)
     end
 
+    recent_jobs = load_recent_jobs(current_org)
+    job_ids = Enum.map(recent_jobs, & &1.id)
+    latest_statuses = Executions.get_latest_statuses(job_ids)
+
     socket =
       socket
       |> assign(:current_organization, current_org)
       |> assign(:organizations, organizations)
       |> assign(:pending_invites_count, length(pending_invites))
       |> assign(:stats, load_stats(current_org))
-      |> assign(:recent_jobs, load_recent_jobs(current_org))
+      |> assign(:recent_jobs, recent_jobs)
+      |> assign(:latest_statuses, latest_statuses)
       |> assign(:recent_executions, load_recent_executions(current_org))
 
     {:ok, socket}
@@ -55,9 +60,14 @@ defmodule PrikkeWeb.DashboardLive do
   end
 
   defp reload_data(socket, org) do
+    recent_jobs = load_recent_jobs(org)
+    job_ids = Enum.map(recent_jobs, & &1.id)
+    latest_statuses = Executions.get_latest_statuses(job_ids)
+
     socket
     |> assign(:stats, load_stats(org))
-    |> assign(:recent_jobs, load_recent_jobs(org))
+    |> assign(:recent_jobs, recent_jobs)
+    |> assign(:latest_statuses, latest_statuses)
     |> assign(:recent_executions, load_recent_executions(org))
   end
 
@@ -170,6 +180,7 @@ defmodule PrikkeWeb.DashboardLive do
                   <div class="flex items-center justify-between">
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-2">
+                        <.execution_status_dot status={@latest_statuses[job.id]} />
                         <span class="font-medium text-slate-900 truncate"><%= job.name %></span>
                         <.job_status_badge job={job} />
                       </div>
@@ -326,6 +337,33 @@ defmodule PrikkeWeb.DashboardLive do
     <% end %>
     """
   end
+
+  defp execution_status_dot(assigns) do
+    ~H"""
+    <span
+      class={["w-2.5 h-2.5 rounded-full shrink-0", status_dot_color(@status)]}
+      title={status_dot_title(@status)}
+    />
+    """
+  end
+
+  defp status_dot_color(nil), do: "bg-slate-300"
+  defp status_dot_color("success"), do: "bg-emerald-500"
+  defp status_dot_color("failed"), do: "bg-red-500"
+  defp status_dot_color("timeout"), do: "bg-amber-500"
+  defp status_dot_color("running"), do: "bg-blue-500 animate-pulse"
+  defp status_dot_color("pending"), do: "bg-slate-400"
+  defp status_dot_color("missed"), do: "bg-orange-500"
+  defp status_dot_color(_), do: "bg-slate-300"
+
+  defp status_dot_title(nil), do: "No executions yet"
+  defp status_dot_title("success"), do: "Last run: Success"
+  defp status_dot_title("failed"), do: "Last run: Failed"
+  defp status_dot_title("timeout"), do: "Last run: Timeout"
+  defp status_dot_title("running"), do: "Currently running"
+  defp status_dot_title("pending"), do: "Pending execution"
+  defp status_dot_title("missed"), do: "Last run: Missed"
+  defp status_dot_title(_), do: "Unknown status"
 
   defp status_badge(assigns) do
     ~H"""
