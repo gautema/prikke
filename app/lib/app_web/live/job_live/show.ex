@@ -243,61 +243,30 @@ defmodule PrikkeWeb.JobLive.Show do
                 No executions yet. This job will run according to its schedule.
               </div>
             <% else %>
-              <!-- Mobile: Card layout -->
-              <div class="sm:hidden space-y-3">
+              <div class="bg-slate-50 rounded-lg overflow-hidden divide-y divide-slate-200">
                 <%= for exec <- @executions do %>
-                  <.link navigate={~p"/jobs/#{@job.id}/executions/#{exec.id}"} class="block bg-slate-50 rounded-lg p-3 hover:bg-slate-100 transition-colors">
-                    <div class="flex items-center justify-between mb-2">
-                      <.status_badge status={exec.status} />
-                      <span class="text-xs text-slate-500"><%= format_execution_time(exec.scheduled_for) %></span>
-                    </div>
-                    <div class="flex items-center gap-4 text-sm text-slate-600">
-                      <span><%= format_duration(exec.duration_ms) %></span>
-                      <%= if exec.status_code do %>
-                        <span class="font-mono"><%= exec.status_code %></span>
-                      <% end %>
+                  <.link navigate={~p"/jobs/#{@job.id}/executions/#{exec.id}"} class="block px-4 py-3 hover:bg-slate-100 transition-colors">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-3">
+                        <.status_badge status={exec.status} />
+                        <span class="text-sm text-slate-600"><%= format_execution_time(exec.scheduled_for) %></span>
+                      </div>
+                      <div class="flex items-center gap-4 text-sm text-slate-500">
+                        <span><%= format_duration(exec.duration_ms) %></span>
+                        <%= if exec.status_code do %>
+                          <span class={[
+                            "font-mono",
+                            status_code_color(exec.status_code)
+                          ]}><%= exec.status_code %></span>
+                        <% end %>
+                        <.icon name="hero-chevron-right" class="w-4 h-4 text-slate-400" />
+                      </div>
                     </div>
                     <%= if exec.error_message do %>
-                      <p class="text-red-600 text-xs mt-2"><%= truncate(exec.error_message, 80) %></p>
+                      <p class="text-red-600 text-xs mt-1 pl-0 sm:pl-16"><%= truncate(exec.error_message, 60) %></p>
                     <% end %>
                   </.link>
                 <% end %>
-              </div>
-              <!-- Desktop: Table layout -->
-              <div class="hidden sm:block bg-slate-50 rounded-lg overflow-hidden">
-                <table class="w-full text-sm">
-                  <thead>
-                    <tr class="border-b border-slate-200 text-left">
-                      <th class="px-4 py-2 font-medium text-slate-500">Status</th>
-                      <th class="px-4 py-2 font-medium text-slate-500">Time</th>
-                      <th class="px-4 py-2 font-medium text-slate-500">Duration</th>
-                      <th class="px-4 py-2 font-medium text-slate-500">Response</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-200">
-                    <%= for exec <- @executions do %>
-                      <.link navigate={~p"/jobs/#{@job.id}/executions/#{exec.id}"} class="table-row hover:bg-slate-100 cursor-pointer">
-                        <td class="px-4 py-2">
-                          <.status_badge status={exec.status} />
-                        </td>
-                        <td class="px-4 py-2 text-slate-600">
-                          <%= format_execution_time(exec.scheduled_for) %>
-                        </td>
-                        <td class="px-4 py-2 text-slate-600">
-                          <%= format_duration(exec.duration_ms) %>
-                        </td>
-                        <td class="px-4 py-2 text-slate-600">
-                          <%= if exec.status_code do %>
-                            <span class="font-mono"><%= exec.status_code %></span>
-                          <% end %>
-                          <%= if exec.error_message do %>
-                            <span class="text-red-600 text-xs"><%= truncate(exec.error_message, 50) %></span>
-                          <% end %>
-                        </td>
-                      </.link>
-                    <% end %>
-                  </tbody>
-                </table>
               </div>
             <% end %>
           </div>
@@ -368,6 +337,11 @@ defmodule PrikkeWeb.JobLive.Show do
   defp status_badge_class("pending"), do: "bg-slate-100 text-slate-600"
   defp status_badge_class("missed"), do: "bg-orange-100 text-orange-700"
   defp status_badge_class(_), do: "bg-slate-100 text-slate-600"
+
+  defp status_code_color(code) when code >= 200 and code < 300, do: "text-emerald-600"
+  defp status_code_color(code) when code >= 300 and code < 400, do: "text-blue-600"
+  defp status_code_color(code) when code >= 400 and code < 500, do: "text-amber-600"
+  defp status_code_color(_), do: "text-red-600"
 
   defp status_label("success"), do: "Success"
   defp status_label("failed"), do: "Failed"

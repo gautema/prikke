@@ -108,14 +108,23 @@ defmodule Prikke.Executions do
         limit: 1,
         lock: "FOR UPDATE SKIP LOCKED"
 
-    case Repo.one(query) do
-      nil ->
-        {:ok, nil}
+    # Wrap in transaction to hold the FOR UPDATE lock until status is updated
+    Repo.transaction(fn ->
+      case Repo.one(query) do
+        nil ->
+          nil
 
-      execution ->
-        execution
-        |> Execution.start_changeset()
-        |> Repo.update()
+        execution ->
+          case execution |> Execution.start_changeset() |> Repo.update() do
+            {:ok, updated} -> updated
+            {:error, _} -> Repo.rollback(:update_failed)
+          end
+      end
+    end)
+    |> case do
+      {:ok, nil} -> {:ok, nil}
+      {:ok, execution} -> {:ok, execution}
+      {:error, reason} -> {:error, reason}
     end
   end
 
