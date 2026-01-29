@@ -446,6 +446,24 @@ defmodule Prikke.AccountsTest do
       assert fetched.id == org.id
     end
 
+    test "get_organization_for_user/2 returns org only if user is member" do
+      user1 = user_fixture()
+      user2 = user_fixture()
+      {:ok, org} = Accounts.create_organization(user1, %{name: "Test", slug: "test-access"})
+
+      # User1 is a member, should get the org
+      assert fetched = Accounts.get_organization_for_user(user1, org.id)
+      assert fetched.id == org.id
+
+      # User2 is not a member, should get nil
+      assert Accounts.get_organization_for_user(user2, org.id) == nil
+    end
+
+    test "get_organization_for_user/2 returns nil for invalid org_id" do
+      user = user_fixture()
+      assert Accounts.get_organization_for_user(user, Ecto.UUID.generate()) == nil
+    end
+
     test "upgrade_organization_to_pro/1 changes tier from free to pro" do
       user = user_fixture()
       {:ok, org} = Accounts.create_organization(user, %{name: "Test", slug: "test-upgrade"})

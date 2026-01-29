@@ -88,7 +88,7 @@ defmodule PrikkeWeb.JobLive.Show do
     org_id = session["current_organization_id"]
 
     if org_id do
-      Prikke.Accounts.get_organization(org_id)
+      Prikke.Accounts.get_organization_for_user(user, org_id)
     else
       case Prikke.Accounts.list_user_organizations(user) do
         [org | _] -> org

@@ -335,6 +335,21 @@ defmodule Prikke.Accounts do
   def get_organization(id), do: Repo.get(Organization, id)
 
   @doc """
+  Gets an organization by ID, but only if the user is a member.
+  Returns nil if the organization doesn't exist or the user isn't a member.
+  """
+  def get_organization_for_user(%User{} = user, org_id) when is_binary(org_id) do
+    from(o in Organization,
+      join: m in Membership,
+      on: m.organization_id == o.id,
+      where: o.id == ^org_id and m.user_id == ^user.id
+    )
+    |> Repo.one()
+  end
+
+  def get_organization_for_user(_user, _org_id), do: nil
+
+  @doc """
   Gets an organization by slug.
   """
   def get_organization_by_slug(slug), do: Repo.get_by(Organization, slug: slug)
