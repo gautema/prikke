@@ -23,12 +23,12 @@ defmodule Prikke.Application do
     Supervisor.start_link(children, opts)
   end
 
-  # Don't start Repo in CI mode (no database available)
+  # Don't start Repo and Scheduler in CI mode (no database available)
   defp maybe_add_repo(children) do
     if Application.get_env(:app, :ci_mode, false) do
       children
     else
-      [Prikke.Repo | children]
+      [Prikke.Repo, Prikke.Scheduler | children]
     end
   end
 

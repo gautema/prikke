@@ -18,6 +18,7 @@ defmodule Prikke.Jobs.Job do
     field :enabled, :boolean, default: true
     field :retry_attempts, :integer, default: 3
     field :timeout_ms, :integer, default: 30000
+    field :next_run_at, :utc_datetime
 
     # Virtual field for form editing
     field :headers_json, :string, virtual: true
@@ -57,6 +58,7 @@ defmodule Prikke.Jobs.Job do
     |> validate_number(:timeout_ms, greater_than_or_equal_to: 1000, less_than_or_equal_to: 300_000)
     |> validate_schedule()
     |> compute_interval_minutes()
+    |> compute_next_run_at()
   end
 
   @doc """
@@ -166,4 +168,93 @@ defmodule Prikke.Jobs.Job do
   defp estimate_minute_interval([{:/, :*, step}]) when is_integer(step), do: step
   defp estimate_minute_interval(list) when is_list(list) and length(list) > 1, do: div(60, length(list))
   defp estimate_minute_interval(_), do: 60
+
+  defp compute_next_run_at(changeset) do
+    # Only compute if enabled
+    if get_field(changeset, :enabled) do
+      case get_field(changeset, :schedule_type) do
+        "cron" ->
+          compute_next_cron_run(changeset)
+
+        "once" ->
+          # One-time jobs run at scheduled_at
+          scheduled_at = get_field(changeset, :scheduled_at)
+          put_change(changeset, :next_run_at, scheduled_at)
+
+        _ ->
+          changeset
+      end
+    else
+      # Disabled jobs don't have a next run
+      put_change(changeset, :next_run_at, nil)
+    end
+  end
+
+  defp compute_next_cron_run(changeset) do
+    case get_field(changeset, :cron_expression) do
+      nil ->
+        changeset
+
+      expression ->
+        case Crontab.CronExpression.Parser.parse(expression) do
+          {:ok, cron} ->
+            now = DateTime.utc_now()
+            # Get next run time from cron expression
+            case Crontab.Scheduler.get_next_run_date(cron, DateTime.to_naive(now)) do
+              {:ok, naive_next} ->
+                next_run = DateTime.from_naive!(naive_next, "Etc/UTC")
+                put_change(changeset, :next_run_at, next_run)
+
+              {:error, _} ->
+                changeset
+            end
+
+          {:error, _} ->
+            changeset
+        end
+    end
+  end
+
+  @doc """
+  Computes the next run time for a cron job after it has been scheduled.
+  Called by the scheduler after creating an execution.
+  """
+  def advance_next_run_changeset(job) do
+    case job.schedule_type do
+      "cron" ->
+        case Crontab.CronExpression.Parser.parse(job.cron_expression) do
+          {:ok, cron} ->
+            # Get next run after the current next_run_at (or now if nil)
+            reference = job.next_run_at || DateTime.utc_now()
+            case Crontab.Scheduler.get_next_run_date(cron, DateTime.to_naive(reference)) do
+              {:ok, naive_next} ->
+                next_run = DateTime.from_naive!(naive_next, "Etc/UTC")
+                # If next_run equals current, add 1 minute and recalculate
+                next_run = if DateTime.compare(next_run, reference) != :gt do
+                  reference_plus_one = DateTime.add(reference, 60, :second)
+                  case Crontab.Scheduler.get_next_run_date(cron, DateTime.to_naive(reference_plus_one)) do
+                    {:ok, naive} -> DateTime.from_naive!(naive, "Etc/UTC")
+                    _ -> next_run
+                  end
+                else
+                  next_run
+                end
+                change(job, next_run_at: next_run)
+
+              {:error, _} ->
+                change(job, %{})
+            end
+
+          {:error, _} ->
+            change(job, %{})
+        end
+
+      "once" ->
+        # One-time jobs don't advance, they get disabled or next_run_at set to nil
+        change(job, next_run_at: nil)
+
+      _ ->
+        change(job, %{})
+    end
+  end
 end

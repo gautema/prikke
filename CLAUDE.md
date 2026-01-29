@@ -487,6 +487,7 @@ lib/app/
 12. **Project-level notifications** - Not per-job (simpler, covers 90% of use cases)
 13. **Status page** - Public status page for Prikke itself (builds trust); execution history IS user monitoring
 14. **Job priority** - Pro tier before Free; minute-interval crons before hourly/daily; one-time jobs lowest priority
+15. **Monthly limit counting** - Currently uses COUNT query (fine for MVP). Future: cache in ETS with 5-minute TTL, invalidate on execution completion
 
 ## Competitors
 

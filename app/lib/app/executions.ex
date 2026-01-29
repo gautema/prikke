@@ -197,6 +197,9 @@ defmodule Prikke.Executions do
   @doc """
   Counts executions for an organization in a given month.
   Used for enforcing monthly execution limits.
+
+  NOTE: Currently uses a COUNT query which is fine for MVP scale.
+  Future optimization: cache in ETS with 5-minute TTL, invalidate on completion.
   """
   def count_monthly_executions(organization, year, month) do
     start_of_month = Date.new!(year, month, 1) |> DateTime.new!(~T[00:00:00], "Etc/UTC")

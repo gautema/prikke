@@ -58,12 +58,17 @@ Last updated: 2026-01-28
   - Stats functions (job, org, monthly counts)
   - Cleanup function for retention policy
 
-### Phase 4: Job Execution Engine (Not Started)
-- [ ] Scheduler GenServer (ticks every 60s, advisory lock)
+### Phase 4: Job Execution Engine (In Progress)
+- [x] Scheduler GenServer
+  - Ticks every 60 seconds
+  - Advisory lock for leader election (only one node schedules)
+  - Finds due jobs via `next_run_at` field
+  - Creates pending executions
+  - Advances `next_run_at` for cron jobs
+  - Enforces monthly execution limits
 - [ ] Worker Pool Manager (scales 2-20 workers)
 - [ ] Worker GenServer (claims with SKIP LOCKED)
 - [ ] HTTP Executor (Req library)
-- [ ] **Monthly execution limits** (Free: 5k/mo, Pro: 250k/mo)
 
 ### Phase 5: REST API (Not Started)
 - [ ] API routes for jobs CRUD
@@ -260,7 +265,7 @@ Environment variables:
 
 ## Test Coverage
 
-- **175 tests passing**
+- **181 tests passing**
 - Accounts: user auth, organizations, memberships, invites, API keys
 - Jobs: CRUD, validations, cron parsing, tier limits
 - API Auth Plug: bearer token validation
@@ -288,6 +293,7 @@ Environment variables:
 
 ## Recently Completed
 
+- [x] Scheduler GenServer (ticks every 60s, advisory lock, creates pending executions)
 - [x] Executions schema & context (claim with SKIP LOCKED, stats, monthly counts)
 - [x] Manual upgrade to Pro (click to upgrade, sales contacts user)
 - [x] Notification settings (org settings → Notifications tab)
