@@ -60,7 +60,7 @@ Last updated: 2026-01-29
 
 ### Phase 4: Job Execution Engine (Complete)
 - [x] Scheduler GenServer
-  - Ticks every 60 seconds
+  - Ticks every 10 seconds for timely job execution
   - Advisory lock for leader election (only one node schedules)
   - Finds due jobs via `next_run_at` field
   - Creates pending executions
@@ -69,11 +69,15 @@ Last updated: 2026-01-29
 - [x] Worker Pool Manager (scales 2-20 workers)
   - Checks queue depth every 5 seconds
   - Spawns workers when queue > current workers
-  - Workers self-terminate after 30s idle
+  - Workers self-terminate after 5 min idle
 - [x] Worker GenServer (claims with SKIP LOCKED)
-  - Claims pending executions with FOR UPDATE SKIP LOCKED
+  - Claims pending executions with FOR UPDATE SKIP LOCKED (in transaction)
   - Priority: Pro tier first, minute crons before hourly/daily
   - Self-terminates after max idle polls
+  - Graceful shutdown: finishes current request before exiting (60s timeout)
+- [x] Stale execution recovery
+  - Cleanup runs hourly to find "running" executions stuck >5 min
+  - Marks them as failed (worker crash/restart recovery)
 - [x] HTTP Executor (Req library)
   - Respects job.timeout_ms
   - Handles success (2xx), failure (non-2xx), and timeouts
@@ -101,8 +105,11 @@ Last updated: 2026-01-29
 - [x] Footer component (app + marketing variants)
 - [x] Real execution stats (today's runs, success rate)
 - [x] Recent executions list on dashboard
-- [x] Execution history on job detail page
+- [x] Execution history on job detail page (clickable rows)
 - [x] 24-hour stats on job detail (total, success, failed, avg duration)
+- [x] Execution detail page (`/jobs/:job_id/executions/:id`)
+  - Shows timing, request details, response body, metadata
+  - Color-coded status codes
 
 ### Phase 7: Notifications (Complete)
 - [x] Mailjet configured for production email
@@ -284,7 +291,7 @@ Environment variables:
 
 ## Test Coverage
 
-- **248 tests passing**
+- **249 tests passing**
 - Accounts: user auth, organizations, memberships, invites, API keys
 - Jobs: CRUD, validations, cron parsing, tier limits
 - Executions: creation, claiming, completion, stats
@@ -313,6 +320,12 @@ Environment variables:
 
 ## Recently Completed
 
+- [x] **Execution detail page** - view full request/response details for any execution
+- [x] **Graceful shutdown** - workers finish current request during deploys (60s timeout)
+- [x] **Stale execution recovery** - hourly cleanup of stuck "running" executions
+- [x] **Scheduler tick 10s** - reduced from 60s to prevent jobs being marked as missed
+- [x] **Accurate duration tracking** - uses monotonic clock instead of timestamps
+- [x] **Claim race condition fix** - FOR UPDATE SKIP LOCKED now wrapped in transaction
 - [x] **Public Status Page** (`/status`) - shows component health, incidents, auto-creates/resolves incidents
 - [x] **StatusMonitor GenServer** - checks scheduler, workers, API every 60 seconds
 - [x] **Notification Worker** - sends failure alerts via email and webhook (async via Task.Supervisor)
