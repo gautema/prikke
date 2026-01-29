@@ -123,7 +123,7 @@ defmodule PrikkeWeb.JobLive.Show do
               <p class="text-sm text-slate-500 mt-1">Created <%= Calendar.strftime(@job.inserted_at, "%d %b %Y") %></p>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-              <%= unless job_completed?(@job, @latest_info) do %>
+              <%= if @job.schedule_type == "cron" do %>
                 <button
                   type="button"
                   phx-click="toggle"

@@ -320,12 +320,14 @@ defmodule Prikke.Executions do
     {next_year, next_month} = if month == 12, do: {year + 1, 1}, else: {year, month + 1}
     end_of_month = Date.new!(next_year, next_month, 1) |> DateTime.new!(~T[00:00:00], "Etc/UTC")
 
+    # Only count initial attempts (attempt == 1), retries are free
     from(e in Execution,
       join: j in Job,
       on: e.job_id == j.id,
       where: j.organization_id == ^organization.id,
       where: e.scheduled_for >= ^start_of_month and e.scheduled_for < ^end_of_month,
-      where: e.status in ["success", "failed", "timeout"]
+      where: e.status in ["success", "failed", "timeout"],
+      where: e.attempt == 1
     )
     |> Repo.aggregate(:count)
   end

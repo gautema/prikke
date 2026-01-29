@@ -165,12 +165,21 @@ defmodule PrikkeWeb.JobLive.Index do
           <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Jobs</h1>
           <p class="text-slate-500 mt-1 text-sm sm:text-base"><%= @organization.name %></p>
         </div>
-        <.link
-          navigate={~p"/jobs/new"}
-          class="font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-3 sm:px-4 py-2 rounded-md transition-colors text-sm sm:text-base"
-        >
-          New Job
-        </.link>
+        <div class="flex gap-2">
+          <.link
+            navigate={~p"/queue"}
+            class="font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 sm:px-4 py-2 rounded-md transition-colors text-sm sm:text-base flex items-center gap-1.5"
+          >
+            <.icon name="hero-bolt" class="w-4 h-4" />
+            Queue
+          </.link>
+          <.link
+            navigate={~p"/jobs/new"}
+            class="font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-3 sm:px-4 py-2 rounded-md transition-colors text-sm sm:text-base"
+          >
+            New Job
+          </.link>
+        </div>
       </div>
 
       <%= if @jobs == [] do %>
@@ -210,7 +219,7 @@ defmodule PrikkeWeb.JobLive.Index do
                   </div>
                 </div>
                 <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-                  <%= unless job_completed?(job, @latest_statuses[job.id]) do %>
+                  <%= if job.schedule_type == "cron" do %>
                     <button
                       type="button"
                       phx-click="toggle"

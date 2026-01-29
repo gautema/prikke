@@ -57,9 +57,20 @@ defmodule Prikke.Jobs do
 
   """
   def list_jobs(%Organization{} = org) do
-    Job
-    |> where(organization_id: ^org.id)
-    |> order_by([j], desc: j.inserted_at)
+    # Subquery to get the latest execution time per job
+    latest_exec_subquery =
+      from(e in Prikke.Executions.Execution,
+        group_by: e.job_id,
+        select: %{job_id: e.job_id, last_exec: max(e.scheduled_for)}
+      )
+
+    from(j in Job,
+      where: j.organization_id == ^org.id,
+      left_join: le in subquery(latest_exec_subquery),
+      on: le.job_id == j.id,
+      order_by: [desc_nulls_last: le.last_exec, desc: j.inserted_at],
+      select: j
+    )
     |> Repo.all()
   end
 
