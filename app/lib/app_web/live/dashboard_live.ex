@@ -272,7 +272,7 @@ defmodule PrikkeWeb.DashboardLive do
                           <span class="font-mono text-xs">{execution.status_code}</span>
                           <span class="mx-1">·</span>
                         <% end %>
-                        <span>{format_time(execution.scheduled_for)}</span>
+                        <.relative_time id={execution.id} datetime={execution.scheduled_for} />
                       </div>
                     </div>
                   </div>
@@ -470,16 +470,58 @@ defmodule PrikkeWeb.DashboardLive do
   defp format_duration(ms) when ms < 60_000, do: "#{Float.round(ms / 1000, 1)}s"
   defp format_duration(ms), do: "#{Float.round(ms / 60_000, 1)}m"
 
-  defp format_time(nil), do: ""
+  defp relative_time(assigns) do
+    ~H"""
+    <span id={"time-#{@id}"} phx-hook=".RelativeTime" data-timestamp={DateTime.to_iso8601(@datetime)}>
+      {format_relative(@datetime)}
+    </span>
+    <script :type={Phoenix.LiveView.ColocatedHook} name=".RelativeTime">
+      export default {
+        mounted() {
+          this.updateTime()
+          this.interval = setInterval(() => this.updateTime(), 10000)
+        },
+        updated() {
+          this.updateTime()
+        },
+        destroyed() {
+          clearInterval(this.interval)
+        },
+        updateTime() {
+          const timestamp = this.el.dataset.timestamp
+          const date = new Date(timestamp)
+          const now = new Date()
+          const diff = Math.floor((now - date) / 1000)
 
-  defp format_time(datetime) do
-    today = DateTime.utc_now() |> DateTime.to_date()
-    date = DateTime.to_date(datetime)
+          let text
+          if (diff < 0) {
+            text = "just now"
+          } else if (diff < 60) {
+            text = `${diff}s ago`
+          } else if (diff < 3600) {
+            text = `${Math.floor(diff / 60)}m ago`
+          } else if (diff < 86400) {
+            text = `${Math.floor(diff / 3600)}h ago`
+          } else {
+            text = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+          }
+          this.el.innerText = text
+        }
+      }
+    </script>
+    """
+  end
 
-    if date == today do
-      Calendar.strftime(datetime, "%H:%M:%S")
-    else
-      Calendar.strftime(datetime, "%d %b, %H:%M")
+  defp format_relative(datetime) do
+    now = DateTime.utc_now()
+    diff = DateTime.diff(now, datetime, :second)
+
+    cond do
+      diff < 0 -> "just now"
+      diff < 60 -> "#{diff}s ago"
+      diff < 3600 -> "#{div(diff, 60)}m ago"
+      diff < 86400 -> "#{div(diff, 3600)}h ago"
+      true -> Calendar.strftime(datetime, "%d %b, %H:%M")
     end
   end
 end
