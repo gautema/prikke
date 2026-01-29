@@ -7,7 +7,7 @@ defmodule Prikke.Worker do
   1. Worker starts and immediately tries to claim work
   2. If work found: execute HTTP request, update status, loop
   3. If no work: wait briefly, then try again
-  4. After @max_idle_polls consecutive empty polls, worker exits normally
+  4. After 5 minutes of no work, worker exits normally
 
   ## Execution Flow
 
@@ -46,8 +46,8 @@ defmodule Prikke.Worker do
   # How long to wait between polls when no work is found (ms)
   @poll_interval 1_000
 
-  # Exit after this many consecutive empty polls
-  @max_idle_polls 30
+  # Exit after this many consecutive empty polls (5 minutes)
+  @max_idle_polls 300
 
   # Retry backoff multiplier (attempt^2 * base_ms)
   @retry_base_delay_ms 5_000
