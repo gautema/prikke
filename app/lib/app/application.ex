@@ -47,7 +47,8 @@ defmodule Prikke.Application do
         Prikke.Scheduler,
         Prikke.WorkerSupervisor,
         Prikke.WorkerPool,
-        Prikke.Cleanup
+        Prikke.Cleanup,
+        Prikke.StatusMonitor
       ]
     end
   end

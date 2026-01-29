@@ -1,0 +1,19 @@
+defmodule PrikkeWeb.StatusController do
+  use PrikkeWeb, :controller
+
+  alias Prikke.Status
+
+  def index(conn, _params) do
+    status = Status.get_current_status()
+    overall = Status.overall_status()
+    incidents = Status.list_recent_incidents(10)
+    open_incidents = Status.list_open_incidents()
+
+    render(conn, :index,
+      status: status,
+      overall: overall,
+      incidents: incidents,
+      open_incidents: open_incidents
+    )
+  end
+end

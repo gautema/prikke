@@ -30,6 +30,9 @@ defmodule PrikkeWeb.Router do
     get "/docs/cron", DocsController, :cron
     get "/docs/webhooks", DocsController, :webhooks
     get "/use-cases", DocsController, :use_cases
+
+    # Public status page
+    get "/status", StatusController, :index
   end
 
   # Health check endpoint for Koyeb
