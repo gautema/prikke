@@ -1,6 +1,6 @@
 # Prikke Implementation Progress
 
-## Current Status: Phase 3 - In Progress
+## Current Status: MVP Complete
 
 Last updated: 2026-01-29
 
@@ -104,7 +104,7 @@ Last updated: 2026-01-29
 - [x] Execution history on job detail page
 - [x] 24-hour stats on job detail (total, success, failed, avg duration)
 
-### Phase 7: Notifications (Partial)
+### Phase 7: Notifications (Complete)
 - [x] Mailjet configured for production email
 - [x] Configurable from_email/from_name
 - [x] Branded HTML email templates (logo, emerald button, clean layout)
@@ -113,19 +113,31 @@ Last updated: 2026-01-29
   - Enable/disable failure notifications
   - Custom notification email
   - Webhook URL (Slack/Discord auto-detect ready)
-- [ ] Notification worker (on job failure) - uses settings above
-- [ ] Slack/Discord payload formatting
+- [x] **Notification worker** (on job failure)
+  - Async via Task.Supervisor (non-blocking)
+  - Sends email to notification_email
+  - Sends POST to notification_webhook_url
+- [x] **Slack/Discord payload formatting**
+  - Auto-detects `hooks.slack.com` and `discord.com/api/webhooks`
+  - Formats messages with appropriate markdown (Slack: `:x:`, Discord: `❌`)
+  - Generic JSON payload for other webhooks
 
 ### Phase 8: Billing (MVP Approach)
 - [x] Manual upgrade flow (user clicks upgrade → tier changes → "sales will contact you" message)
 - [ ] Usage tracking (monthly executions) - enforced in Phase 4
 - [ ] Lemon Squeezy integration (post-MVP, when ready to charge)
 
-### Phase 9: Monitoring & Alerting (Not Started)
+### Phase 9: Monitoring & Alerting (Partial)
 - [ ] Application error tracking (Sentry or AppSignal)
 - [ ] Performance monitoring (response times, queue depth)
 - [ ] Infrastructure alerts (high CPU, memory, disk)
-- [ ] Public status page for Prikke itself
+- [x] **Public status page for Prikke itself** (`/status`)
+  - StatusMonitor GenServer checks every 60 seconds
+  - Monitors scheduler, workers, and API components
+  - 3 rows in status_checks table (one per component, upsert pattern)
+  - Automatic incident creation when components go down
+  - Automatic incident resolution when components recover
+  - Shows overall status, component health, active & past incidents
 - [ ] Uptime monitoring (external ping service)
 - [ ] Alert channels (email, Slack/Discord webhook)
 - [ ] Dashboard for system health metrics
@@ -151,43 +163,15 @@ Last updated: 2026-01-29
 
 ---
 
-## Immediate Next Steps
+## Potential Next Steps
 
-### 1. Executions Schema & Context
-```elixir
-schema "executions" do
-  belongs_to :job, Job
-  field :status, :string        # pending, running, success, failed, timeout
-  field :scheduled_for, :utc_datetime
-  field :started_at, :utc_datetime
-  field :finished_at, :utc_datetime
-  field :status_code, :integer
-  field :duration_ms, :integer
-  field :response_body, :string
-  field :error_message, :string
-  field :attempt, :integer, default: 1
-  timestamps()
-end
-```
-
-### 2. Scheduler GenServer
-- Acquire advisory lock (only one node schedules)
-- Tick every 60 seconds
-- Query due jobs (cron: next_run <= now, once: scheduled_at <= now)
-- Insert pending executions
-- **Check monthly execution limit before scheduling**
-
-### 3. Worker Pool
-- DynamicSupervisor with 2-20 workers
-- Workers claim executions: `FOR UPDATE SKIP LOCKED`
-- Execute HTTP request with Req
-- Update execution status
-- Handle retries (one-time jobs only)
-
-### 4. Dashboard Polish
-- Show real stats from executions table
-- Recent executions list
-- Execution history on job detail
+### Post-MVP Enhancements
+1. **Error tracking** - Add Sentry or AppSignal for application monitoring
+2. **External uptime monitoring** - Better Stack or similar for external pings
+3. **Lemon Squeezy integration** - When ready to charge, replace manual upgrade
+4. **Customer-facing status pages** - Let users create status pages for their own services
+5. **Job queues** - On-demand jobs triggered via API (immediate execution)
+6. **Workflows** - Multi-step jobs with dependencies
 
 ---
 
@@ -210,11 +194,17 @@ app/lib/app/
 ├── executions/
 │   └── execution.ex
 ├── executions.ex              # Claim with SKIP LOCKED, stats
+├── status/
+│   ├── status_check.ex        # Component health status
+│   └── incident.ex            # Incident tracking
+├── status.ex                  # Status context (upsert, incidents)
 ├── scheduler.ex               # Creates executions for due jobs
 ├── worker.ex                  # Job executor (HTTP requests)
 ├── worker_pool.ex             # Scales workers based on queue
 ├── worker_supervisor.ex       # DynamicSupervisor for workers
 ├── cleanup.ex                 # Daily cleanup of old data
+├── notifications.ex           # Email and webhook failure alerts
+├── status_monitor.ex          # Health check GenServer
 ├── mailer.ex
 └── repo.ex
 
@@ -230,6 +220,10 @@ app/lib/app_web/
 │   │   ├── home.html.heex
 │   │   └── dashboard.html.heex
 │   ├── docs_controller.ex
+│   ├── status_controller.ex    # Public status page
+│   ├── status_html.ex          # Status page helpers
+│   ├── status_html/
+│   │   └── index.html.heex     # Status page template
 │   ├── error_html/
 │   │   ├── 403.html.heex
 │   │   ├── 404.html.heex
@@ -280,17 +274,22 @@ Environment variables:
 
 ### URLs
 - Production: https://prikke.whitenoise.no
+- Status: https://prikke.whitenoise.no/status
 - Register: https://prikke.whitenoise.no/users/register
 - Dashboard: https://prikke.whitenoise.no/dashboard
 - Jobs: https://prikke.whitenoise.no/jobs
+- API Docs: https://prikke.whitenoise.no/api/docs
 
 ---
 
 ## Test Coverage
 
-- **222 tests passing**
+- **248 tests passing**
 - Accounts: user auth, organizations, memberships, invites, API keys
 - Jobs: CRUD, validations, cron parsing, tier limits
+- Executions: creation, claiming, completion, stats
+- Notifications: email and webhook delivery
+- Status: health checks, incidents, status page
 - API Auth Plug: bearer token validation
 - LiveView: basic rendering tests
 
@@ -307,13 +306,19 @@ Environment variables:
 
 ## Known Issues / TODOs
 
-1. **No API endpoints** - Only LiveView UI currently
-2. **No notification worker** - Job failure alerts not sent yet
+1. **No error tracking** - Sentry/AppSignal not configured yet
+2. **No external uptime monitoring** - Should add Better Stack or similar
 
 ---
 
 ## Recently Completed
 
+- [x] **Public Status Page** (`/status`) - shows component health, incidents, auto-creates/resolves incidents
+- [x] **StatusMonitor GenServer** - checks scheduler, workers, API every 60 seconds
+- [x] **Notification Worker** - sends failure alerts via email and webhook (async via Task.Supervisor)
+- [x] **Slack/Discord auto-detection** - formats webhook payloads appropriately
+- [x] **Argon2id password hashing** - replaced bcrypt for better security
+- [x] **Missed execution tracking** - detects scheduler downtime and logs missed jobs
 - [x] **REST API** - Full CRUD for jobs, trigger, executions, declarative sync
 - [x] **OpenAPI spec** - Auto-generated via OpenApiSpex at `/api/openapi`
 - [x] **UUID v7** - Time-ordered UUIDs for better index performance
