@@ -71,6 +71,13 @@ document.addEventListener("click", (e) => {
     document.querySelectorAll("[data-mobile-menu]").forEach(menu => {
       menu.classList.toggle("hidden")
     })
+    // Toggle hamburger/X icons
+    const openIcon = toggle.querySelector("[data-menu-icon-open]")
+    const closeIcon = toggle.querySelector("[data-menu-icon-close]")
+    if (openIcon && closeIcon) {
+      openIcon.classList.toggle("hidden")
+      closeIcon.classList.toggle("hidden")
+    }
   }
 })
 

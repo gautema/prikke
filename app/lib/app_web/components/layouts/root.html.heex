@@ -45,7 +45,12 @@
           
 <!-- Mobile menu button -->
           <button type="button" class="sm:hidden p-2 text-slate-600" data-mobile-menu-toggle>
-            <.icon name="hero-bars-3" class="w-6 h-6" />
+            <span data-menu-icon-open>
+              <.icon name="hero-bars-3" class="w-6 h-6" />
+            </span>
+            <span class="hidden" data-menu-icon-close>
+              <.icon name="hero-x-mark" class="w-6 h-6" />
+            </span>
           </button>
           
 <!-- Desktop nav -->
@@ -157,8 +162,11 @@
           </div>
         </nav>
         
-<!-- Mobile menu -->
-        <div class="hidden sm:hidden border-t border-slate-200 bg-white" data-mobile-menu>
+<!-- Mobile menu (overlay) -->
+        <div
+          class="hidden sm:hidden fixed inset-x-0 top-14 bottom-0 bg-white border-t border-slate-200 z-50 overflow-y-auto"
+          data-mobile-menu
+        >
           <div class="px-4 py-3 space-y-3">
             <%= if @current_scope do %>
               <.link href={~p"/dashboard"} class="block text-sm font-medium text-slate-700">
