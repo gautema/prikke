@@ -26,6 +26,7 @@
         <h2 class="text-lg font-semibold text-slate-900 mb-4">Failure Alerts</h2>
         <p class="text-sm text-slate-500 mb-4">Get notified when a job execution fails.</p>
 
+        <input type="hidden" name={@form[:notify_on_failure].name} value="false" />
         <label class="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -36,7 +37,6 @@
           />
           <span class="text-sm text-slate-700">Enable failure notifications</span>
         </label>
-        <input type="hidden" name={@form[:notify_on_failure].name} value="false" />
       </div>
 
       <div class="bg-white border border-slate-200 rounded-lg p-6">
