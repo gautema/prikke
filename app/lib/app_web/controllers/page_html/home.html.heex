@@ -7,27 +7,42 @@
           <div class="w-4 h-4 bg-emerald-500 rounded-full"></div>
           prikke
         </a>
-        <nav class="flex items-center gap-6">
+        <!-- Mobile menu button -->
+        <button type="button" class="sm:hidden p-2 text-slate-600" data-mobile-menu-toggle>
+          <.icon name="hero-bars-3" class="w-6 h-6" />
+        </button>
+        <!-- Desktop nav -->
+        <nav class="hidden sm:flex items-center gap-6">
           <a href="/docs" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">Docs</a>
-          <a href="/docs/api" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">API</a>
-          <a href="/use-cases" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">Use Cases</a>
+          <a href="/status" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">Status</a>
           <span class="w-px h-4 bg-slate-300"></span>
           <a href="/users/register" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">Register</a>
           <a href="/users/log-in" class="text-[15px] font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors no-underline">Log in</a>
         </nav>
       </header>
+      <!-- Mobile menu -->
+      <div class="hidden sm:hidden pb-4" data-mobile-menu>
+        <nav class="flex flex-col gap-3">
+          <a href="/docs" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">Docs</a>
+          <a href="/status" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">Status</a>
+          <div class="border-t border-slate-200 pt-3 mt-1 flex flex-col gap-3">
+            <a href="/users/register" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">Register</a>
+            <a href="/users/log-in" class="text-[15px] font-medium text-emerald-600 no-underline">Log in</a>
+          </div>
+        </nav>
+      </div>
     <% end %>
 
     <!-- Hero -->
-    <section class="py-20 text-center">
+    <section class="py-12 sm:py-20 text-center">
       <div class="inline-flex items-center gap-1.5 bg-white border border-slate-200 px-4 py-2 rounded-full text-sm text-slate-600 mb-6">
         <.icon name="hero-clock" class="w-[18px] h-[18px]" />
         EU-hosted
       </div>
-      <h1 class="text-5xl font-bold leading-tight tracking-tight mb-6 text-slate-900">
+      <h1 class="text-3xl sm:text-5xl font-bold leading-tight tracking-tight mb-6 text-slate-900">
         Background jobs,<br>made simple.
       </h1>
-      <p class="text-xl text-slate-600 mb-10 max-w-[500px] mx-auto">
+      <p class="text-lg sm:text-xl text-slate-600 mb-10 max-w-[500px] mx-auto">
         Cron scheduling and webhook delivery for developers who ship products, not infrastructure.
       </p>
       <span class="text-sm text-slate-500 italic">Jobs done, til punkt og prikke.</span>
@@ -88,7 +103,7 @@
     <!-- How it works -->
     <section class="py-14 border-t border-slate-200">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">How it works</h2>
-      <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-6 rounded-lg font-mono text-sm leading-relaxed overflow-x-auto"><span class="text-slate-500"># Recurring job - runs every day at 06:00 UTC</span>
+      <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-4 sm:p-6 rounded-lg font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto"><span class="text-slate-500"># Recurring job - runs every day at 06:00 UTC</span>
 curl -X POST https://prikke.whitenoise.no/api/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
   -d '{
@@ -110,7 +125,7 @@ curl -X POST https://prikke.whitenoise.no/api/jobs \
     <!-- Pricing -->
     <section class="py-14 border-t border-slate-200 text-center">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">Simple pricing</h2>
-      <div class="grid grid-cols-2 gap-4 max-w-[480px] mx-auto text-left">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-[480px] mx-auto text-left">
         <div class="bg-white border border-slate-200 rounded-lg p-6">
           <h3 class="text-base font-semibold mb-2 text-slate-900">Free</h3>
           <div class="text-3xl font-bold mb-1 text-slate-900">€0</div>

@@ -39,7 +39,14 @@
             <div class="w-3 h-3 bg-emerald-500 rounded-full"></div>
             prikke
           </a>
-          <div class="flex items-center gap-4">
+
+          <!-- Mobile menu button -->
+          <button type="button" class="sm:hidden p-2 text-slate-600" data-mobile-menu-toggle>
+            <.icon name="hero-bars-3" class="w-6 h-6" />
+          </button>
+
+          <!-- Desktop nav -->
+          <div class="hidden sm:flex items-center gap-4">
             <%= if @current_scope do %>
               <.link href={~p"/dashboard"} class="text-sm font-medium text-slate-700 hover:text-emerald-600">Dashboard</.link>
               <!-- Org Switcher -->
@@ -71,7 +78,7 @@
                 </div>
               <% end %>
               <span class="w-px h-5 bg-slate-200"></span>
-              <span class="text-sm text-slate-500">{@current_scope.user.email}</span>
+              <span class="text-sm text-slate-500 hidden md:inline">{@current_scope.user.email}</span>
               <%= if assigns[:pending_invites_count] && @pending_invites_count > 0 do %>
                 <.link href={~p"/invites"} class="text-sm text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
                   Invites
@@ -86,6 +93,49 @@
             <% end %>
           </div>
         </nav>
+
+        <!-- Mobile menu -->
+        <div class="hidden sm:hidden border-t border-slate-200 bg-white" data-mobile-menu>
+          <div class="px-4 py-3 space-y-3">
+            <%= if @current_scope do %>
+              <.link href={~p"/dashboard"} class="block text-sm font-medium text-slate-700">Dashboard</.link>
+              <%= if assigns[:organizations] && length(@organizations) > 0 do %>
+                <div class="py-2 border-t border-slate-100">
+                  <p class="text-xs text-slate-400 uppercase tracking-wide mb-2">Organizations</p>
+                  <%= for org <- @organizations do %>
+                    <%= if @current_organization && org.id == @current_organization.id do %>
+                      <div class="flex items-center justify-between py-1.5 text-sm text-slate-900">
+                        <span><%= org.name %></span>
+                        <.icon name="hero-check" class="w-4 h-4 text-emerald-500" />
+                      </div>
+                    <% else %>
+                      <.link href={~p"/organizations/#{org.id}/switch"} method="post" class="block py-1.5 text-sm text-slate-600 no-underline">
+                        <%= org.name %>
+                      </.link>
+                    <% end %>
+                  <% end %>
+                  <.link href={~p"/organizations/new"} class="block py-1.5 text-sm text-emerald-600 no-underline">
+                    + New organization
+                  </.link>
+                </div>
+              <% end %>
+              <div class="pt-2 border-t border-slate-100 space-y-2">
+                <p class="text-xs text-slate-400"><%= @current_scope.user.email %></p>
+                <%= if assigns[:pending_invites_count] && @pending_invites_count > 0 do %>
+                  <.link href={~p"/invites"} class="block text-sm text-slate-600 flex items-center gap-1.5">
+                    Invites
+                    <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-emerald-500 rounded-full"><%= @pending_invites_count %></span>
+                  </.link>
+                <% end %>
+                <.link href={~p"/users/settings"} class="block text-sm text-slate-600">Settings</.link>
+                <.link href={~p"/users/log-out"} method="delete" class="block text-sm text-slate-600">Log out</.link>
+              </div>
+            <% else %>
+              <.link href={~p"/users/register"} class="block text-sm text-slate-600">Register</.link>
+              <.link href={~p"/users/log-in"} class="block text-sm font-medium text-emerald-600">Log in</.link>
+            <% end %>
+          </div>
+        </div>
       </header>
     <% end %>
     {@inner_content}

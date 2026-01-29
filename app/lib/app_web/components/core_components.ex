@@ -616,20 +616,22 @@ defmodule PrikkeWeb.CoreComponents do
     ~H"""
     <%= if @variant == "marketing" do %>
       <footer class="py-10 border-t border-slate-200 text-center text-slate-500 text-sm">
-        <p>
-          Prikke · Made in Norway ·
+        <div class="flex flex-wrap justify-center gap-4 mb-3">
+          <a href="/docs" class="text-slate-600 no-underline hover:text-emerald-500">Docs</a>
+          <a href="/api/docs" class="text-slate-600 no-underline hover:text-emerald-500">API Reference</a>
+          <a href="/status" class="text-slate-600 no-underline hover:text-emerald-500">Status</a>
           <a href="mailto:gaute.magnussen@gmail.com" class="text-slate-600 no-underline hover:text-emerald-500">Contact</a>
-        </p>
+        </div>
+        <p class="text-slate-400">Prikke · Made in Norway</p>
       </footer>
     <% else %>
       <footer class="border-t border-slate-200 mt-12">
         <div class="max-w-4xl mx-auto px-4 py-6">
-          <div class="flex justify-between items-center text-sm text-slate-500">
-            <div class="flex gap-6">
+          <div class="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-500">
+            <div class="flex flex-wrap justify-center gap-4 sm:gap-6">
               <a href="/docs" class="hover:text-slate-700">Docs</a>
-              <a href="/docs/api" class="hover:text-slate-700">API</a>
-              <a href="/docs/cron" class="hover:text-slate-700">Cron</a>
-              <a href="/docs/webhooks" class="hover:text-slate-700">Webhooks</a>
+              <a href="/api/docs" class="hover:text-slate-700">API Reference</a>
+              <a href="/status" class="hover:text-slate-700">Status</a>
             </div>
             <div>
               <a href="mailto:gaute.magnussen@gmail.com" class="hover:text-slate-700">Contact</a>

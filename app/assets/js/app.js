@@ -63,6 +63,17 @@ document.addEventListener("click", (e) => {
   }
 })
 
+// Mobile menu toggle
+document.addEventListener("click", (e) => {
+  const toggle = e.target.closest("[data-mobile-menu-toggle]")
+  if (toggle) {
+    e.preventDefault()
+    document.querySelectorAll("[data-mobile-menu]").forEach(menu => {
+      menu.classList.toggle("hidden")
+    })
+  }
+})
+
 // The lines below enable quality of life phoenix_live_reload
 // development features:
 //
