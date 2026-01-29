@@ -91,9 +91,7 @@ defmodule PrikkeWeb.JobLive.Index do
       <%= if @jobs == [] do %>
         <div class="bg-white border border-slate-200 rounded-lg p-12 text-center">
           <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <.icon name="hero-clock" class="w-6 h-6 text-slate-400" />
           </div>
           <h3 class="text-lg font-medium text-slate-900 mb-2">No jobs yet</h3>
           <p class="text-slate-500 mb-6">Create your first scheduled job to get started.</p>
@@ -147,9 +145,7 @@ defmodule PrikkeWeb.JobLive.Index do
                   ]}></span>
                 </button>
                 <.link navigate={~p"/jobs/#{job.id}/edit"} class="text-slate-400 hover:text-slate-600 p-1">
-                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
+                  <.icon name="hero-pencil-square" class="w-5 h-5" />
                 </.link>
                 <button
                   phx-click="delete"
@@ -157,9 +153,7 @@ defmodule PrikkeWeb.JobLive.Index do
                   data-confirm="Are you sure you want to delete this job?"
                   class="text-slate-400 hover:text-red-600 p-1"
                 >
-                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
+                  <.icon name="hero-trash" class="w-5 h-5" />
                 </button>
               </div>
             </div>

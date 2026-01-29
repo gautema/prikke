@@ -1,13 +1,15 @@
 defmodule PrikkeWeb.UserSettingsController do
   use PrikkeWeb, :controller
 
+  import Phoenix.Component, only: [to_form: 2]
+
   alias Prikke.Accounts
   alias PrikkeWeb.UserAuth
 
   import PrikkeWeb.UserAuth, only: [require_sudo_mode: 2]
 
   plug :require_sudo_mode
-  plug :assign_email_and_password_changesets
+  plug :assign_email_and_password_forms
 
   def edit(conn, _params) do
     render(conn, :edit)
@@ -33,7 +35,7 @@ defmodule PrikkeWeb.UserSettingsController do
         |> redirect(to: ~p"/users/settings")
 
       changeset ->
-        render(conn, :edit, email_changeset: %{changeset | action: :insert})
+        render(conn, :edit, email_form: to_form(%{changeset | action: :insert}, as: :user))
     end
   end
 
@@ -49,7 +51,7 @@ defmodule PrikkeWeb.UserSettingsController do
         |> UserAuth.log_in_user(user)
 
       {:error, changeset} ->
-        render(conn, :edit, password_changeset: changeset)
+        render(conn, :edit, password_form: to_form(changeset, as: :user))
     end
   end
 
@@ -67,11 +69,11 @@ defmodule PrikkeWeb.UserSettingsController do
     end
   end
 
-  defp assign_email_and_password_changesets(conn, _opts) do
+  defp assign_email_and_password_forms(conn, _opts) do
     user = conn.assigns.current_scope.user
 
     conn
-    |> assign(:email_changeset, Accounts.change_user_email(user))
-    |> assign(:password_changeset, Accounts.change_user_password(user))
+    |> assign(:email_form, to_form(Accounts.change_user_email(user), as: :user))
+    |> assign(:password_form, to_form(Accounts.change_user_password(user), as: :user))
   end
 end

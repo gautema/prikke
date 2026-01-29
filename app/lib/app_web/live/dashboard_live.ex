@@ -123,9 +123,7 @@ defmodule PrikkeWeb.DashboardLive do
           <%= if @recent_jobs == [] do %>
             <div class="p-12 text-center">
               <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <.icon name="hero-clock" class="w-6 h-6 text-slate-400" />
               </div>
               <h3 class="text-lg font-medium text-slate-900 mb-1">No jobs yet</h3>
               <p class="text-slate-500 mb-4">Create your first scheduled job to get started.</p>
@@ -186,9 +184,7 @@ defmodule PrikkeWeb.DashboardLive do
         <!-- No organization state -->
         <div class="bg-white border border-slate-200 rounded-lg p-12 text-center">
           <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
+            <.icon name="hero-building-office" class="w-6 h-6 text-emerald-600" />
           </div>
           <h3 class="text-lg font-medium text-slate-900 mb-1">Create your first organization</h3>
           <p class="text-slate-500 mb-6">Organizations help you manage jobs and team members.</p>

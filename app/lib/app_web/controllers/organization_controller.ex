@@ -1,6 +1,8 @@
 defmodule PrikkeWeb.OrganizationController do
   use PrikkeWeb, :controller
 
+  import Phoenix.Component, only: [to_form: 1]
+
   alias Prikke.Accounts
 
   def index(conn, _params) do
@@ -11,7 +13,7 @@ defmodule PrikkeWeb.OrganizationController do
 
   def new(conn, _params) do
     changeset = Accounts.change_organization(%Accounts.Organization{})
-    render(conn, :new, changeset: changeset)
+    render(conn, :new, form: to_form(changeset))
   end
 
   def create(conn, %{"organization" => org_params}) do
@@ -25,7 +27,7 @@ defmodule PrikkeWeb.OrganizationController do
         |> redirect(to: ~p"/")
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        render(conn, :new, changeset: changeset)
+        render(conn, :new, form: to_form(changeset))
     end
   end
 
@@ -51,7 +53,7 @@ defmodule PrikkeWeb.OrganizationController do
 
     if organization do
       changeset = Accounts.change_organization(organization)
-      render(conn, :edit, organization: organization, changeset: changeset)
+      render(conn, :edit, organization: organization, form: to_form(changeset))
     else
       conn
       |> put_flash(:error, "No organization selected.")
@@ -69,7 +71,7 @@ defmodule PrikkeWeb.OrganizationController do
         |> redirect(to: ~p"/organizations/settings")
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        render(conn, :edit, organization: organization, changeset: changeset)
+        render(conn, :edit, organization: organization, form: to_form(changeset))
     end
   end
 
@@ -129,7 +131,7 @@ defmodule PrikkeWeb.OrganizationController do
 
     if organization do
       changeset = Accounts.change_notification_settings(organization)
-      render(conn, :notifications, organization: organization, changeset: changeset)
+      render(conn, :notifications, organization: organization, form: to_form(changeset))
     else
       conn
       |> put_flash(:error, "No organization selected.")
@@ -147,7 +149,7 @@ defmodule PrikkeWeb.OrganizationController do
         |> redirect(to: ~p"/organizations/notifications")
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        render(conn, :notifications, organization: organization, changeset: changeset)
+        render(conn, :notifications, organization: organization, form: to_form(changeset))
     end
   end
 
