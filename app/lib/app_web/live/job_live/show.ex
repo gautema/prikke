@@ -2,6 +2,7 @@ defmodule PrikkeWeb.JobLive.Show do
   use PrikkeWeb, :live_view
 
   alias Prikke.Jobs
+  alias Prikke.Executions
 
   @impl true
   def mount(%{"id" => id}, session, socket) do
@@ -9,12 +10,16 @@ defmodule PrikkeWeb.JobLive.Show do
 
     if org do
       job = Jobs.get_job!(org, id)
+      executions = Executions.list_job_executions(job, limit: 20)
+      stats = Executions.get_job_stats(job)
       if connected?(socket), do: Jobs.subscribe_jobs(org)
 
       {:ok,
        socket
        |> assign(:organization, org)
        |> assign(:job, job)
+       |> assign(:executions, executions)
+       |> assign(:stats, stats)
        |> assign(:page_title, job.name)}
     else
       {:ok,
@@ -27,7 +32,13 @@ defmodule PrikkeWeb.JobLive.Show do
   @impl true
   def handle_info({:updated, job}, socket) do
     if job.id == socket.assigns.job.id do
-      {:noreply, assign(socket, :job, job)}
+      executions = Executions.list_job_executions(job, limit: 20)
+      stats = Executions.get_job_stats(job)
+      {:noreply,
+       socket
+       |> assign(:job, job)
+       |> assign(:executions, executions)
+       |> assign(:stats, stats)}
     else
       {:noreply, socket}
     end
@@ -188,12 +199,75 @@ defmodule PrikkeWeb.JobLive.Show do
             </div>
           </div>
 
-          <!-- Recent Executions Placeholder -->
+          <!-- Stats (24h) -->
+          <%= if @stats.total > 0 do %>
+            <div>
+              <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Last 24 Hours</h3>
+              <div class="bg-slate-50 rounded-lg p-4 grid grid-cols-4 gap-4">
+                <div>
+                  <span class="text-xs text-slate-500 uppercase">Total</span>
+                  <p class="text-xl font-bold text-slate-900"><%= @stats.total %></p>
+                </div>
+                <div>
+                  <span class="text-xs text-slate-500 uppercase">Success</span>
+                  <p class="text-xl font-bold text-emerald-600"><%= @stats.success %></p>
+                </div>
+                <div>
+                  <span class="text-xs text-slate-500 uppercase">Failed</span>
+                  <p class="text-xl font-bold text-red-600"><%= @stats.failed + @stats.timeout %></p>
+                </div>
+                <div>
+                  <span class="text-xs text-slate-500 uppercase">Avg Duration</span>
+                  <p class="text-xl font-bold text-slate-900"><%= format_avg_duration(@stats.avg_duration_ms) %></p>
+                </div>
+              </div>
+            </div>
+          <% end %>
+
+          <!-- Recent Executions -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Recent Executions</h3>
-            <div class="bg-slate-50 rounded-lg p-8 text-center text-slate-500">
-              No executions yet. This job will run according to its schedule.
-            </div>
+            <%= if @executions == [] do %>
+              <div class="bg-slate-50 rounded-lg p-8 text-center text-slate-500">
+                No executions yet. This job will run according to its schedule.
+              </div>
+            <% else %>
+              <div class="bg-slate-50 rounded-lg overflow-hidden">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-slate-200 text-left">
+                      <th class="px-4 py-2 font-medium text-slate-500">Status</th>
+                      <th class="px-4 py-2 font-medium text-slate-500">Time</th>
+                      <th class="px-4 py-2 font-medium text-slate-500">Duration</th>
+                      <th class="px-4 py-2 font-medium text-slate-500">Response</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200">
+                    <%= for exec <- @executions do %>
+                      <tr class="hover:bg-slate-100">
+                        <td class="px-4 py-2">
+                          <.status_badge status={exec.status} />
+                        </td>
+                        <td class="px-4 py-2 text-slate-600">
+                          <%= format_execution_time(exec.scheduled_for) %>
+                        </td>
+                        <td class="px-4 py-2 text-slate-600">
+                          <%= format_duration(exec.duration_ms) %>
+                        </td>
+                        <td class="px-4 py-2 text-slate-600">
+                          <%= if exec.status_code do %>
+                            <span class="font-mono"><%= exec.status_code %></span>
+                          <% end %>
+                          <%= if exec.error_message do %>
+                            <span class="text-red-600 text-xs"><%= truncate(exec.error_message, 50) %></span>
+                          <% end %>
+                        </td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            <% end %>
           </div>
         </div>
       </div>
@@ -226,4 +300,49 @@ defmodule PrikkeWeb.JobLive.Show do
       true -> "#{ms}ms"
     end
   end
+
+  defp status_badge(assigns) do
+    ~H"""
+    <span class={[
+      "text-xs font-medium px-2 py-0.5 rounded",
+      status_badge_class(@status)
+    ]}>
+      <%= status_label(@status) %>
+    </span>
+    """
+  end
+
+  defp status_badge_class("success"), do: "bg-emerald-100 text-emerald-700"
+  defp status_badge_class("failed"), do: "bg-red-100 text-red-700"
+  defp status_badge_class("timeout"), do: "bg-amber-100 text-amber-700"
+  defp status_badge_class("running"), do: "bg-blue-100 text-blue-700"
+  defp status_badge_class("pending"), do: "bg-slate-100 text-slate-600"
+  defp status_badge_class(_), do: "bg-slate-100 text-slate-600"
+
+  defp status_label("success"), do: "Success"
+  defp status_label("failed"), do: "Failed"
+  defp status_label("timeout"), do: "Timeout"
+  defp status_label("running"), do: "Running"
+  defp status_label("pending"), do: "Pending"
+  defp status_label(status), do: status
+
+  defp format_duration(nil), do: "—"
+  defp format_duration(ms) when ms < 1000, do: "#{ms}ms"
+  defp format_duration(ms) when ms < 60_000, do: "#{Float.round(ms / 1000, 1)}s"
+  defp format_duration(ms), do: "#{Float.round(ms / 60_000, 1)}m"
+
+  defp format_avg_duration(nil), do: "—"
+  defp format_avg_duration(ms) do
+    ms = Decimal.to_float(ms)
+    format_duration(round(ms))
+  end
+
+  defp format_execution_time(nil), do: "—"
+  defp format_execution_time(datetime) do
+    Calendar.strftime(datetime, "%b %d, %H:%M:%S")
+  end
+
+  defp truncate(nil, _), do: nil
+  defp truncate(string, max) when byte_size(string) <= max, do: string
+  defp truncate(string, max), do: String.slice(string, 0, max) <> "..."
 end

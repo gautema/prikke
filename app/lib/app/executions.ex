@@ -225,6 +225,15 @@ defmodule Prikke.Executions do
   end
 
   @doc """
+  Gets execution stats for an organization for today (since midnight UTC).
+  """
+  def get_today_stats(organization) do
+    today = DateTime.utc_now() |> DateTime.to_date()
+    since = DateTime.new!(today, ~T[00:00:00], "Etc/UTC")
+    get_organization_stats(organization, since: since)
+  end
+
+  @doc """
   Deletes old executions based on tier retention policy.
   Free: 7 days, Pro: 30 days
   """

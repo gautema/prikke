@@ -86,15 +86,16 @@ Last updated: 2026-01-28
 - [ ] Trigger endpoint (`POST /api/jobs/:id/trigger`)
 - [ ] Execution history endpoint
 
-### Phase 6: Dashboard (Partial)
+### Phase 6: Dashboard (Complete)
 - [x] Basic dashboard with stats cards
 - [x] Jobs list with real-time updates
 - [x] Job detail page
 - [x] Create/edit job forms
 - [x] Footer component (app + marketing variants)
-- [ ] Real execution stats (today's runs, success rate)
-- [ ] Recent executions list on dashboard
-- [ ] Execution history on job detail page
+- [x] Real execution stats (today's runs, success rate)
+- [x] Recent executions list on dashboard
+- [x] Execution history on job detail page
+- [x] 24-hour stats on job detail (total, success, failed, avg duration)
 
 ### Phase 7: Notifications (Partial)
 - [x] Mailjet configured for production email
@@ -297,14 +298,15 @@ Environment variables:
 
 ## Known Issues / TODOs
 
-1. **Dashboard stats are placeholders** - Need to wire up real execution data
-2. **No API endpoints** - Only LiveView UI currently
-3. **No notification worker** - Job failure alerts not sent yet
+1. **No API endpoints** - Only LiveView UI currently
+2. **No notification worker** - Job failure alerts not sent yet
 
 ---
 
 ## Recently Completed
 
+- [x] **Dashboard Stats** - real execution data (today's runs, success rate, recent executions)
+- [x] **Job Execution History** - 24h stats and execution table on job detail page
 - [x] **Worker Pool** - scales 2-20 workers based on queue depth
 - [x] **Worker** - claims and executes jobs with HTTP, handles retries
 - [x] **HTTP Execution** - full request/response handling with Req

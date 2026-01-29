@@ -3,6 +3,7 @@ defmodule PrikkeWeb.DashboardLive do
 
   alias Prikke.Accounts
   alias Prikke.Jobs
+  alias Prikke.Executions
 
   @impl true
   def mount(_params, session, socket) do
@@ -32,6 +33,7 @@ defmodule PrikkeWeb.DashboardLive do
       |> assign(:pending_invites_count, length(pending_invites))
       |> assign(:stats, load_stats(current_org))
       |> assign(:recent_jobs, load_recent_jobs(current_org))
+      |> assign(:recent_executions, load_recent_executions(current_org))
 
     {:ok, socket}
   end
@@ -39,26 +41,24 @@ defmodule PrikkeWeb.DashboardLive do
   @impl true
   def handle_info({:created, _job}, socket) do
     org = socket.assigns.current_organization
-    {:noreply,
-     socket
-     |> assign(:stats, load_stats(org))
-     |> assign(:recent_jobs, load_recent_jobs(org))}
+    {:noreply, reload_data(socket, org)}
   end
 
   def handle_info({:updated, _job}, socket) do
     org = socket.assigns.current_organization
-    {:noreply,
-     socket
-     |> assign(:stats, load_stats(org))
-     |> assign(:recent_jobs, load_recent_jobs(org))}
+    {:noreply, reload_data(socket, org)}
   end
 
   def handle_info({:deleted, _job}, socket) do
     org = socket.assigns.current_organization
-    {:noreply,
-     socket
-     |> assign(:stats, load_stats(org))
-     |> assign(:recent_jobs, load_recent_jobs(org))}
+    {:noreply, reload_data(socket, org)}
+  end
+
+  defp reload_data(socket, org) do
+    socket
+    |> assign(:stats, load_stats(org))
+    |> assign(:recent_jobs, load_recent_jobs(org))
+    |> assign(:recent_executions, load_recent_executions(org))
   end
 
   @impl true
@@ -176,9 +176,37 @@ defmodule PrikkeWeb.DashboardLive do
           <div class="px-6 py-4 border-b border-slate-200">
             <h2 class="text-lg font-semibold text-slate-900">Recent Executions</h2>
           </div>
-          <div class="p-8 text-center text-slate-500">
-            No executions yet. Jobs will appear here once they run.
-          </div>
+          <%= if @recent_executions == [] do %>
+            <div class="p-8 text-center text-slate-500">
+              No executions yet. Jobs will appear here once they run.
+            </div>
+          <% else %>
+            <div class="divide-y divide-slate-200">
+              <%= for execution <- @recent_executions do %>
+                <.link navigate={~p"/jobs/#{execution.job_id}"} class="block px-6 py-3 hover:bg-slate-50 transition-colors">
+                  <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center gap-2">
+                        <.status_badge status={execution.status} />
+                        <span class="font-medium text-slate-900 truncate"><%= execution.job.name %></span>
+                      </div>
+                      <div class="text-sm text-slate-500 mt-0.5">
+                        <%= if execution.duration_ms do %>
+                          <span><%= format_duration(execution.duration_ms) %></span>
+                          <span class="mx-1">·</span>
+                        <% end %>
+                        <%= if execution.status_code do %>
+                          <span class="font-mono text-xs"><%= execution.status_code %></span>
+                          <span class="mx-1">·</span>
+                        <% end %>
+                        <span><%= format_time(execution.scheduled_for) %></span>
+                      </div>
+                    </div>
+                  </div>
+                </.link>
+              <% end %>
+            </div>
+          <% end %>
         </div>
       <% else %>
         <!-- No organization state -->
@@ -202,12 +230,22 @@ defmodule PrikkeWeb.DashboardLive do
   defp load_stats(nil), do: %{active_jobs: 0, total_jobs: 0, executions_today: 0, success_rate: "—"}
 
   defp load_stats(organization) do
+    exec_stats = Executions.get_today_stats(organization)
+
+    success_rate = calculate_success_rate(exec_stats)
+
     %{
       active_jobs: Jobs.count_enabled_jobs(organization),
       total_jobs: Jobs.count_jobs(organization),
-      executions_today: 0,
-      success_rate: "—"
+      executions_today: exec_stats.total,
+      success_rate: success_rate
     }
+  end
+
+  defp calculate_success_rate(%{total: 0}), do: "—"
+  defp calculate_success_rate(%{total: total, success: success}) do
+    rate = round(success / total * 100)
+    "#{rate}%"
   end
 
   defp load_recent_jobs(nil), do: []
@@ -216,5 +254,54 @@ defmodule PrikkeWeb.DashboardLive do
     organization
     |> Jobs.list_jobs()
     |> Enum.take(5)
+  end
+
+  defp load_recent_executions(nil), do: []
+
+  defp load_recent_executions(organization) do
+    Executions.list_organization_executions(organization, limit: 10)
+  end
+
+  defp status_badge(assigns) do
+    ~H"""
+    <span class={[
+      "text-xs font-medium px-2 py-0.5 rounded",
+      status_badge_class(@status)
+    ]}>
+      <%= status_label(@status) %>
+    </span>
+    """
+  end
+
+  defp status_badge_class("success"), do: "bg-emerald-100 text-emerald-700"
+  defp status_badge_class("failed"), do: "bg-red-100 text-red-700"
+  defp status_badge_class("timeout"), do: "bg-amber-100 text-amber-700"
+  defp status_badge_class("running"), do: "bg-blue-100 text-blue-700"
+  defp status_badge_class("pending"), do: "bg-slate-100 text-slate-600"
+  defp status_badge_class(_), do: "bg-slate-100 text-slate-600"
+
+  defp status_label("success"), do: "Success"
+  defp status_label("failed"), do: "Failed"
+  defp status_label("timeout"), do: "Timeout"
+  defp status_label("running"), do: "Running"
+  defp status_label("pending"), do: "Pending"
+  defp status_label(status), do: status
+
+  defp format_duration(nil), do: nil
+  defp format_duration(ms) when ms < 1000, do: "#{ms}ms"
+  defp format_duration(ms) when ms < 60_000, do: "#{Float.round(ms / 1000, 1)}s"
+  defp format_duration(ms), do: "#{Float.round(ms / 60_000, 1)}m"
+
+  defp format_time(nil), do: ""
+  defp format_time(datetime) do
+    now = DateTime.utc_now()
+    diff = DateTime.diff(now, datetime, :second)
+
+    cond do
+      diff < 60 -> "#{diff}s ago"
+      diff < 3600 -> "#{div(diff, 60)}m ago"
+      diff < 86400 -> "#{div(diff, 3600)}h ago"
+      true -> Calendar.strftime(datetime, "%b %d, %H:%M")
+    end
   end
 end
