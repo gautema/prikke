@@ -2,6 +2,7 @@ defmodule PrikkeWeb.JobLive.Index do
   use PrikkeWeb, :live_view
 
   alias Prikke.Jobs
+  alias Prikke.Executions
 
   @impl true
   def mount(_params, session, socket) do
@@ -9,12 +10,16 @@ defmodule PrikkeWeb.JobLive.Index do
 
     if org do
       if connected?(socket), do: Jobs.subscribe_jobs(org)
+      jobs = Jobs.list_jobs(org)
+      job_ids = Enum.map(jobs, & &1.id)
+      latest_statuses = Executions.get_latest_statuses(job_ids)
 
       {:ok,
        socket
        |> assign(:organization, org)
        |> assign(:page_title, "Jobs")
-       |> assign(:jobs, Jobs.list_jobs(org))}
+       |> assign(:jobs, jobs)
+       |> assign(:latest_statuses, latest_statuses)}
     else
       {:ok,
        socket
@@ -25,21 +30,33 @@ defmodule PrikkeWeb.JobLive.Index do
 
   @impl true
   def handle_info({:created, job}, socket) do
-    {:noreply, update(socket, :jobs, fn jobs -> [job | jobs] end)}
+    {:noreply,
+     socket
+     |> update(:jobs, fn jobs -> [job | jobs] end)
+     |> refresh_latest_statuses()}
   end
 
   def handle_info({:updated, job}, socket) do
     {:noreply,
-     update(socket, :jobs, fn jobs ->
+     socket
+     |> update(:jobs, fn jobs ->
        Enum.map(jobs, fn j -> if j.id == job.id, do: job, else: j end)
-     end)}
+     end)
+     |> refresh_latest_statuses()}
   end
 
   def handle_info({:deleted, job}, socket) do
     {:noreply,
-     update(socket, :jobs, fn jobs ->
+     socket
+     |> update(:jobs, fn jobs ->
        Enum.reject(jobs, fn j -> j.id == job.id end)
-     end)}
+     end)
+     |> update(:latest_statuses, fn statuses -> Map.delete(statuses, job.id) end)}
+  end
+
+  defp refresh_latest_statuses(socket) do
+    job_ids = Enum.map(socket.assigns.jobs, & &1.id)
+    assign(socket, :latest_statuses, Executions.get_latest_statuses(job_ids))
   end
 
   @impl true
@@ -88,6 +105,33 @@ defmodule PrikkeWeb.JobLive.Index do
     """
   end
 
+  defp execution_status_dot(assigns) do
+    ~H"""
+    <span
+      class={["w-2.5 h-2.5 rounded-full shrink-0", status_dot_color(@status)]}
+      title={status_dot_title(@status)}
+    />
+    """
+  end
+
+  defp status_dot_color(nil), do: "bg-slate-300"
+  defp status_dot_color("success"), do: "bg-emerald-500"
+  defp status_dot_color("failed"), do: "bg-red-500"
+  defp status_dot_color("timeout"), do: "bg-amber-500"
+  defp status_dot_color("running"), do: "bg-blue-500 animate-pulse"
+  defp status_dot_color("pending"), do: "bg-slate-400"
+  defp status_dot_color("missed"), do: "bg-orange-500"
+  defp status_dot_color(_), do: "bg-slate-300"
+
+  defp status_dot_title(nil), do: "No executions yet"
+  defp status_dot_title("success"), do: "Last run: Success"
+  defp status_dot_title("failed"), do: "Last run: Failed"
+  defp status_dot_title("timeout"), do: "Last run: Timeout"
+  defp status_dot_title("running"), do: "Currently running"
+  defp status_dot_title("pending"), do: "Pending execution"
+  defp status_dot_title("missed"), do: "Last run: Missed"
+  defp status_dot_title(_), do: "Unknown status"
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -123,6 +167,7 @@ defmodule PrikkeWeb.JobLive.Index do
               <div class="flex items-start sm:items-center justify-between gap-3">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                    <.execution_status_dot status={@latest_statuses[job.id]} />
                     <.link navigate={~p"/jobs/#{job.id}"} class="font-medium text-slate-900 hover:text-emerald-600 break-all sm:truncate">
                       <%= job.name %>
                     </.link>

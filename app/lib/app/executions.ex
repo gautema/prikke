@@ -170,6 +170,45 @@ defmodule Prikke.Executions do
   end
 
   @doc """
+  Gets the latest execution status for a job.
+  Returns the status string or nil if no executions exist.
+  """
+  def get_latest_status(job) do
+    from(e in Execution,
+      where: e.job_id == ^job.id,
+      order_by: [desc: e.scheduled_for],
+      limit: 1,
+      select: e.status
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Gets the latest execution status for multiple jobs.
+  Returns a map of job_id => status (or nil if no executions).
+  """
+  def get_latest_statuses([]), do: %{}
+
+  def get_latest_statuses(job_ids) when is_list(job_ids) do
+    # Subquery to get max scheduled_for per job
+    latest_times =
+      from(e in Execution,
+        where: e.job_id in ^job_ids,
+        group_by: e.job_id,
+        select: %{job_id: e.job_id, max_scheduled: max(e.scheduled_for)}
+      )
+
+    # Join to get the status for each latest execution
+    from(e in Execution,
+      join: lt in subquery(latest_times),
+      on: e.job_id == lt.job_id and e.scheduled_for == lt.max_scheduled,
+      select: {e.job_id, e.status}
+    )
+    |> Repo.all()
+    |> Map.new()
+  end
+
+  @doc """
   Lists recent executions for an organization.
   """
   def list_organization_executions(organization, opts \\ []) do
