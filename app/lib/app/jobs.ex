@@ -40,6 +40,14 @@ defmodule Prikke.Jobs do
   end
 
   @doc """
+  Notifies the scheduler to wake up and check for due jobs.
+  Called when a job is created or enabled.
+  """
+  def notify_scheduler do
+    Phoenix.PubSub.broadcast(Prikke.PubSub, "scheduler", :wake)
+  end
+
+  @doc """
   Returns the list of jobs for an organization.
 
   ## Examples
@@ -182,9 +190,17 @@ defmodule Prikke.Jobs do
 
     changeset = Job.changeset(job, attrs)
 
+    was_enabled = job.enabled
+
     with :ok <- check_interval_limit(org, changeset),
          {:ok, job} <- Repo.update(changeset) do
       broadcast(org, {:updated, job})
+      # Notify scheduler if job was just enabled, or if schedule changed to be due soon
+      if job.enabled && job.next_run_at do
+        just_enabled = !was_enabled && job.enabled
+        due_soon = DateTime.diff(job.next_run_at, DateTime.utc_now()) <= 60
+        if just_enabled || due_soon, do: notify_scheduler()
+      end
       {:ok, job}
     else
       {:error, :interval_too_frequent} ->

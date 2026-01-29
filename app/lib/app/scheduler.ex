@@ -2,7 +2,8 @@ defmodule Prikke.Scheduler do
   @moduledoc """
   Scheduler GenServer that creates pending executions for due jobs.
 
-  - Ticks every 60 seconds
+  - Ticks every 60 seconds (fallback)
+  - Wakes immediately via PubSub when jobs are created/enabled
   - Uses Postgres advisory lock so only one node schedules in a cluster
   - Finds jobs where next_run_at <= now
   - Creates pending executions
@@ -39,10 +40,19 @@ defmodule Prikke.Scheduler do
   ## Server Callbacks
 
   @impl true
-  def init(_opts) do
-    # Schedule first tick immediately
-    send(self(), :tick)
-    {:ok, %{has_lock: false}}
+  def init(opts) do
+    # Subscribe to scheduler wake-up notifications
+    Phoenix.PubSub.subscribe(Prikke.PubSub, "scheduler")
+
+    test_mode = Keyword.get(opts, :test_mode, false)
+
+    # In test mode, don't auto-tick (tests call tick() manually)
+    unless test_mode do
+      send(self(), :tick)
+    end
+
+    # In test mode, skip advisory lock (each test has its own scheduler)
+    {:ok, %{has_lock: test_mode, test_mode: test_mode}}
   end
 
   @impl true
@@ -59,6 +69,18 @@ defmodule Prikke.Scheduler do
   end
 
   @impl true
+  def handle_info(:wake, state) do
+    # Immediately check for due jobs when notified
+    state = maybe_acquire_lock(state)
+
+    if state.has_lock do
+      schedule_due_jobs()
+    end
+
+    {:noreply, state}
+  end
+
+  @impl true
   def handle_call(:tick, _from, state) do
     state = maybe_acquire_lock(state)
 
@@ -71,9 +93,19 @@ defmodule Prikke.Scheduler do
     {:reply, result, state}
   end
 
+  @impl true
+  def terminate(_reason, %{has_lock: true}) do
+    # Release advisory lock on shutdown
+    Repo.query("SELECT pg_advisory_unlock($1)", [@advisory_lock_id])
+    :ok
+  end
+
+  def terminate(_reason, _state), do: :ok
+
   ## Private Functions
 
   defp maybe_acquire_lock(%{has_lock: true} = state), do: state
+  defp maybe_acquire_lock(%{test_mode: true} = state), do: %{state | has_lock: true}
 
   defp maybe_acquire_lock(%{has_lock: false} = state) do
     # Try to acquire advisory lock (non-blocking)

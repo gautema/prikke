@@ -16,6 +16,7 @@ defmodule Prikke.Application do
         PrikkeWeb.Endpoint
       ]
       |> maybe_add_repo()
+      |> maybe_add_scheduler()
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -23,12 +24,21 @@ defmodule Prikke.Application do
     Supervisor.start_link(children, opts)
   end
 
-  # Don't start Repo and Scheduler in CI mode (no database available)
+  # Don't start Repo in CI mode (no database available)
   defp maybe_add_repo(children) do
     if Application.get_env(:app, :ci_mode, false) do
       children
     else
-      [Prikke.Repo, Prikke.Scheduler | children]
+      [Prikke.Repo | children]
+    end
+  end
+
+  # Don't start Scheduler in CI or test mode, and it needs PubSub so add at the end
+  defp maybe_add_scheduler(children) do
+    if Application.get_env(:app, :ci_mode, false) or Mix.env() == :test do
+      children
+    else
+      children ++ [Prikke.Scheduler]
     end
   end
 

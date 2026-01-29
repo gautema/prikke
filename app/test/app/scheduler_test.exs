@@ -14,6 +14,13 @@ defmodule Prikke.SchedulerTest do
       {:ok, org} = Accounts.create_organization(user, %{name: "Test Org", slug: "test-org"})
       # Upgrade to Pro for minute-level cron testing
       {:ok, org} = Accounts.upgrade_organization_to_pro(org)
+
+      # Start scheduler for tests (it's disabled in test mode by default)
+      # Use test_mode: true to skip auto-tick
+      {:ok, pid} = start_supervised({Prikke.Scheduler, test_mode: true})
+      # Allow the scheduler process to use the test's database sandbox
+      Ecto.Adapters.SQL.Sandbox.allow(Prikke.Repo, self(), pid)
+
       %{user: user, organization: org}
     end
 
@@ -28,9 +35,14 @@ defmodule Prikke.SchedulerTest do
 
       # Manually set next_run_at to the past
       past = DateTime.utc_now() |> DateTime.add(-120, :second) |> DateTime.truncate(:second)
-      job
-      |> Ecto.Changeset.change(next_run_at: past)
-      |> Prikke.Repo.update!()
+      job =
+        job
+        |> Ecto.Changeset.change(next_run_at: past)
+        |> Prikke.Repo.update!()
+
+      # Verify job is set up correctly
+      assert job.enabled == true
+      assert DateTime.compare(job.next_run_at, DateTime.utc_now()) == :lt
 
       # Trigger scheduler tick
       {:ok, count} = Scheduler.tick()
