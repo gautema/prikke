@@ -90,3 +90,7 @@ config :phoenix_live_view,
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
+
+# Configure mailer for development (admin notifications go to Swoosh mailbox)
+config :app, Prikke.Mailer,
+  admin_email: "admin@localhost"
