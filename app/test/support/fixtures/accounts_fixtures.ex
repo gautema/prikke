@@ -87,6 +87,14 @@ defmodule Prikke.AccountsFixtures do
     )
   end
 
+  def superadmin_fixture(attrs \\ %{}) do
+    user = user_fixture(attrs)
+
+    user
+    |> Ecto.Changeset.change(is_superadmin: true)
+    |> Prikke.Repo.update!()
+  end
+
   def unique_org_name, do: "Org #{System.unique_integer([:positive])}"
 
   def organization_fixture(attrs \\ %{}) do

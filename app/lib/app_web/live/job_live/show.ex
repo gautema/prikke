@@ -252,7 +252,8 @@ defmodule PrikkeWeb.JobLive.Show do
                 <div>
                   <span class="text-slate-900 font-medium">One-time execution</span>
                   <p class="text-slate-600 mt-1">
-                    Scheduled for <.local_time id="job-scheduled" datetime={@job.scheduled_at} format="full" />
+                    Scheduled for
+                    <.local_time id="job-scheduled" datetime={@job.scheduled_at} format="full" />
                   </p>
                 </div>
               <% end %>

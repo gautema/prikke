@@ -267,7 +267,10 @@ defmodule PrikkeWeb.DashboardLive do
                           <span class="font-mono text-xs">{execution.status_code}</span>
                           <span class="mx-1">·</span>
                         <% end %>
-                        <.relative_time id={"exec-#{execution.id}"} datetime={execution.scheduled_for} />
+                        <.relative_time
+                          id={"exec-#{execution.id}"}
+                          datetime={execution.scheduled_for}
+                        />
                       </div>
                     </div>
                   </div>

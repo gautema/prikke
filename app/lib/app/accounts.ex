@@ -782,4 +782,97 @@ defmodule Prikke.Accounts do
       url_fn.(raw_token)
     )
   end
+
+  ## Superadmin Stats
+
+  @doc """
+  Counts total users.
+  """
+  def count_users do
+    Repo.aggregate(User, :count)
+  end
+
+  @doc """
+  Counts users created since a given datetime.
+  """
+  def count_users_since(since) do
+    from(u in User, where: u.inserted_at >= ^since)
+    |> Repo.aggregate(:count)
+  end
+
+  @doc """
+  Counts total organizations.
+  """
+  def count_organizations do
+    Repo.aggregate(Organization, :count)
+  end
+
+  @doc """
+  Lists recent user signups.
+  """
+  def list_recent_users(opts \\ []) do
+    limit = Keyword.get(opts, :limit, 10)
+
+    from(u in User,
+      order_by: [desc: u.inserted_at],
+      limit: ^limit
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Lists organizations with the most executions this month.
+  Returns a list of {organization, execution_count} tuples.
+  """
+  def list_active_organizations(opts \\ []) do
+    limit = Keyword.get(opts, :limit, 10)
+    now = DateTime.utc_now()
+    start_of_month = Date.new!(now.year, now.month, 1) |> DateTime.new!(~T[00:00:00], "Etc/UTC")
+
+    from(o in Organization,
+      join: j in Prikke.Jobs.Job,
+      on: j.organization_id == o.id,
+      join: e in Prikke.Executions.Execution,
+      on: e.job_id == j.id,
+      where: e.scheduled_for >= ^start_of_month,
+      group_by: o.id,
+      order_by: [desc: count(e.id)],
+      select: {o, count(e.id)},
+      limit: ^limit
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Lists Pro tier organizations with owner email.
+  Returns a list of maps with organization name, owner email, and upgrade date.
+  """
+  def list_pro_organizations(opts \\ []) do
+    limit = Keyword.get(opts, :limit, 20)
+
+    from(o in Organization,
+      join: m in Membership,
+      on: m.organization_id == o.id and m.role == "owner",
+      join: u in User,
+      on: u.id == m.user_id,
+      where: o.tier == "pro",
+      order_by: [desc: o.updated_at],
+      select: %{
+        id: o.id,
+        name: o.name,
+        owner_email: u.email,
+        upgraded_at: o.updated_at
+      },
+      limit: ^limit
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Counts Pro tier organizations.
+  """
+  def count_pro_organizations do
+    from(o in Organization, where: o.tier == "pro")
+    |> Repo.aggregate(:count)
+  end
 end

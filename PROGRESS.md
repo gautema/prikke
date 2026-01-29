@@ -222,6 +222,9 @@ app/lib/app/
 ├── cleanup.ex                 # Daily cleanup of old data
 ├── notifications.ex           # Email and webhook failure alerts
 ├── status_monitor.ex          # Health check GenServer
+├── analytics/
+│   └── pageview.ex            # Pageview tracking schema
+├── analytics.ex               # Pageview analytics context
 ├── mailer.ex
 └── repo.ex
 
@@ -255,7 +258,12 @@ app/lib/app_web/
 │       ├── new.ex
 │       └── edit.ex
 ├── plugs/
-│   └── api_auth.ex
+│   ├── api_auth.ex
+│   ├── require_superadmin.ex   # Superadmin route protection
+│   └── track_pageview.ex       # Pageview tracking
+├── live/
+│   ├── superadmin_live.ex      # Platform-wide dashboard
+│   └── ...
 └── router.ex
 ```
 
@@ -302,7 +310,7 @@ Environment variables:
 
 ## Test Coverage
 
-- **251 tests passing**
+- **277 tests passing**
 - Accounts: user auth, organizations, memberships, invites, API keys
 - Jobs: CRUD, validations, cron parsing, tier limits
 - Executions: creation, claiming, completion, stats
@@ -331,6 +339,22 @@ Environment variables:
 
 ## Recently Completed
 
+- [x] **Superadmin Dashboard** (`/superadmin`) - Platform-wide analytics and monitoring
+  - is_superadmin flag on users, set via migration for designated admins
+  - RequireSuperadmin plug for route protection
+  - Platform stats: total users, organizations, jobs, Pro customers
+  - Execution stats: today, 7d, 30d, monthly with success/failed/missed breakdown
+  - Execution trend chart (14-day visual)
+  - Pageview tracking: anonymous session-based tracking with privacy (IP hashing)
+  - Analytics: pageviews, unique visitors, top pages
+  - Pro Organizations list with owner email and upgrade date
+  - Recent activity: signups, jobs, active organizations
+  - Auto-refresh every 30 seconds
+- [x] **Pageview Analytics** - Custom analytics system
+  - Pageview schema (path, session_id, referrer, user_agent, ip_hash, user_id)
+  - TrackPageview plug runs on all browser GET requests
+  - Async tracking (non-blocking)
+  - Privacy-preserving IP hashing
 - [x] **Retry button** - Retry failed/timeout/missed executions from the UI
 - [x] **Smart failure notifications** - Only email on first failure (not repeated failures)
 - [x] **Admin notifications** - Email alerts for new signups and Pro upgrades (`ADMIN_EMAIL` env var)

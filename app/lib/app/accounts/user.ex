@@ -10,6 +10,7 @@ defmodule Prikke.Accounts.User do
     field :hashed_password, :string, redact: true
     field :confirmed_at, :utc_datetime
     field :authenticated_at, :utc_datetime, virtual: true
+    field :is_superadmin, :boolean, default: false
 
     has_many :memberships, Prikke.Accounts.Membership
     has_many :organizations, through: [:memberships, :organization]

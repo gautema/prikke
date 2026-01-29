@@ -351,4 +351,35 @@ defmodule Prikke.Jobs do
     )
     |> Repo.delete_all()
   end
+
+  ## Platform-wide Stats (for superadmin)
+
+  @doc """
+  Counts total jobs across all organizations.
+  """
+  def count_all_jobs do
+    Repo.aggregate(Job, :count)
+  end
+
+  @doc """
+  Counts enabled jobs across all organizations.
+  """
+  def count_all_enabled_jobs do
+    from(j in Job, where: j.enabled == true)
+    |> Repo.aggregate(:count)
+  end
+
+  @doc """
+  Lists recently created jobs across all organizations.
+  """
+  def list_recent_jobs_all(opts \\ []) do
+    limit = Keyword.get(opts, :limit, 10)
+
+    from(j in Job,
+      order_by: [desc: j.inserted_at],
+      limit: ^limit,
+      preload: [:organization]
+    )
+    |> Repo.all()
+  end
 end

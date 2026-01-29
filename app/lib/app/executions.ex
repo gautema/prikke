@@ -463,4 +463,90 @@ defmodule Prikke.Executions do
 
     length(stale_executions)
   end
+
+  ## Platform-wide Stats (for superadmin)
+
+  @doc """
+  Gets platform-wide execution stats for the superadmin dashboard.
+  """
+  def get_platform_stats do
+    now = DateTime.utc_now()
+    today = DateTime.new!(Date.utc_today(), ~T[00:00:00], "Etc/UTC")
+    seven_days_ago = DateTime.add(now, -7, :day)
+    thirty_days_ago = DateTime.add(now, -30, :day)
+    start_of_month = Date.new!(now.year, now.month, 1) |> DateTime.new!(~T[00:00:00], "Etc/UTC")
+
+    %{
+      today: get_platform_stats_since(today),
+      seven_days: get_platform_stats_since(seven_days_ago),
+      thirty_days: get_platform_stats_since(thirty_days_ago),
+      this_month: get_platform_stats_since(start_of_month)
+    }
+  end
+
+  defp get_platform_stats_since(since) do
+    from(e in Execution,
+      where: e.scheduled_for >= ^since,
+      select: %{
+        total: count(e.id),
+        success: count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status)),
+        failed: count(fragment("CASE WHEN ? = 'failed' THEN 1 END", e.status)),
+        timeout: count(fragment("CASE WHEN ? = 'timeout' THEN 1 END", e.status)),
+        pending: count(fragment("CASE WHEN ? = 'pending' THEN 1 END", e.status)),
+        running: count(fragment("CASE WHEN ? = 'running' THEN 1 END", e.status)),
+        missed: count(fragment("CASE WHEN ? = 'missed' THEN 1 END", e.status))
+      }
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Gets execution counts by day for the last N days (platform-wide).
+  """
+  def executions_by_day(days) do
+    since = DateTime.utc_now() |> DateTime.add(-days, :day)
+
+    from(e in Execution,
+      where: e.scheduled_for >= ^since,
+      group_by: fragment("DATE(?)", e.scheduled_for),
+      select: {
+        fragment("DATE(?)", e.scheduled_for),
+        %{
+          total: count(e.id),
+          success: count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status)),
+          failed: count(fragment("CASE WHEN ? = 'failed' THEN 1 END", e.status))
+        }
+      },
+      order_by: [asc: fragment("DATE(?)", e.scheduled_for)]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Lists recent executions across all organizations.
+  """
+  def list_recent_executions_all(opts \\ []) do
+    limit = Keyword.get(opts, :limit, 20)
+
+    from(e in Execution,
+      order_by: [desc: e.scheduled_for],
+      limit: ^limit,
+      preload: [job: :organization]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets overall success rate for the platform.
+  """
+  def get_platform_success_rate(since) do
+    stats = get_platform_stats_since(since)
+    completed = stats.success + stats.failed + stats.timeout
+
+    if completed > 0 do
+      round(stats.success / completed * 100)
+    else
+      nil
+    end
+  end
 end

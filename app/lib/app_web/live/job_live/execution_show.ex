@@ -88,7 +88,8 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
                 <.status_badge status={@execution.status} />
               </div>
               <p class="text-sm text-slate-500 mt-1">
-                Scheduled for <.local_time id="exec-scheduled" datetime={@execution.scheduled_for} format="full" />
+                Scheduled for
+                <.local_time id="exec-scheduled" datetime={@execution.scheduled_for} format="full" />
               </p>
             </div>
             <%= if @execution.status in ["failed", "timeout", "missed"] do %>

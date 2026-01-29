@@ -12,6 +12,7 @@ defmodule PrikkeWeb.Router do
     plug :put_secure_browser_headers
     plug :fetch_current_scope_for_user
     plug :fetch_current_organization
+    plug PrikkeWeb.Plugs.TrackPageview
   end
 
   pipeline :api do
@@ -141,6 +142,17 @@ defmodule PrikkeWeb.Router do
     post "/invites", InviteController, :create
     post "/invites/:id/accept-direct", InviteController, :accept_direct
     delete "/invites/:id", InviteController, :delete
+  end
+
+  # Superadmin routes - requires superadmin role
+  scope "/", PrikkeWeb do
+    pipe_through [:browser, :require_authenticated_user, PrikkeWeb.Plugs.RequireSuperadmin]
+
+    live_session :require_superadmin,
+      on_mount: [{PrikkeWeb.UserAuth, :ensure_authenticated}],
+      session: {__MODULE__, :live_session_data, []} do
+      live "/superadmin", SuperadminLive, :index
+    end
   end
 
   # Invites (public - for viewing/accepting invites)
