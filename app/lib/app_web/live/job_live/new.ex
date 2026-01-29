@@ -78,7 +78,7 @@ defmodule PrikkeWeb.JobLive.New do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-2xl mx-auto py-8 px-4">
+    <div class="max-w-4xl mx-auto py-8 px-4">
       <div class="mb-6">
         <.link navigate={~p"/dashboard"} class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1">
           <.icon name="hero-chevron-left" class="w-4 h-4" />
@@ -171,7 +171,7 @@ defmodule PrikkeWeb.JobLive.New do
               <label for="job_headers" class="block text-sm font-medium text-slate-700 mb-1">
                 Headers <span class="text-slate-400 font-normal">(JSON)</span>
               </label>
-              <.input field={@form[:headers_json]} type="textarea" rows="3" placeholder='{"Content-Type": "application/json"}' class="font-mono text-sm bg-slate-50 border-slate-300" />
+              <.input field={@form[:headers_json]} type="textarea" rows="6" placeholder='{"Content-Type": "application/json"}' class="w-full px-4 py-3 font-mono text-sm bg-slate-50 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 min-h-[140px]" />
               <p class="text-xs text-slate-500 mt-1">Optional. JSON object with custom headers.</p>
             </div>
 
@@ -179,7 +179,7 @@ defmodule PrikkeWeb.JobLive.New do
               <label for="job_body" class="block text-sm font-medium text-slate-700 mb-1">
                 Request Body
               </label>
-              <.input field={@form[:body]} type="textarea" rows="4" placeholder='{"key": "value"}' class="font-mono text-sm bg-slate-50 border-slate-300" />
+              <.input field={@form[:body]} type="textarea" rows="10" placeholder='{"key": "value"}' class="w-full px-4 py-3 font-mono text-sm bg-slate-50 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 min-h-[200px]" />
               <p class="text-xs text-slate-500 mt-1">Optional. For POST/PUT/PATCH requests.</p>
             </div>
           </div>
