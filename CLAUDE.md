@@ -61,7 +61,7 @@ No external job libraries - just GenServers and Postgres:
 ```
 
 **Scheduler GenServer** (`lib/app/scheduler.ex`):
-- Ticks every 60 seconds (fallback) or wakes via PubSub immediately
+- Ticks every 10 seconds for timely job execution
 - Uses Postgres advisory lock for leader election (only one node schedules)
 - Finds jobs where `enabled = true AND next_run_at <= now`
 - Creates pending executions and advances `next_run_at`

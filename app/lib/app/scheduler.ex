@@ -37,12 +37,12 @@ defmodule Prikke.Scheduler do
 
   ## Wake-up Mechanism
 
-  Instead of only ticking every 60 seconds, the scheduler can be woken immediately
+  In addition to the 10-second tick interval, the scheduler can be woken immediately
   when a job becomes due:
 
   - Subscribes to PubSub topic "scheduler"
   - `Jobs.notify_scheduler/0` broadcasts `:wake` message
-  - Called when a job is enabled or updated to be due within 60 seconds
+  - Called when a job is enabled or updated to be due soon
   - Reduces latency for one-time jobs and recently-enabled jobs
 
   ## Job Scheduling Flow
@@ -73,7 +73,7 @@ defmodule Prikke.Scheduler do
 
   ## Configuration
 
-  - `@tick_interval` - Fallback tick interval (60 seconds)
+  - `@tick_interval` - Tick interval (10 seconds)
   - `@advisory_lock_id` - Unique ID for the Postgres advisory lock
 
   ## Testing
@@ -95,9 +95,9 @@ defmodule Prikke.Scheduler do
   # Used for leader election in multi-node clusters
   @advisory_lock_id 728_492_847
 
-  # Tick interval in milliseconds (60 seconds)
-  # This is the fallback; PubSub wake-ups provide faster response
-  @tick_interval 60_000
+  # Tick interval in milliseconds (10 seconds)
+  # Frequent ticks ensure jobs run close to their scheduled time
+  @tick_interval 10_000
 
   ## Client API
 
@@ -127,7 +127,7 @@ defmodule Prikke.Scheduler do
   where count is the number of jobs scheduled.
 
   This is primarily used for testing. In production, the scheduler ticks
-  automatically every 60 seconds and responds to PubSub wake-ups.
+  automatically every 10 seconds and responds to PubSub wake-ups.
 
   ## Examples
 
