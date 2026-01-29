@@ -62,12 +62,20 @@ defmodule Prikke.Worker do
 
   @impl true
   def init(_opts) do
+    # Trap exits to allow graceful shutdown (finish current request)
+    Process.flag(:trap_exit, true)
+
     # Start working immediately
     send(self(), :work)
-    {:ok, %{idle_polls: 0}}
+    {:ok, %{idle_polls: 0, working: false}}
   end
 
   @impl true
+  def handle_info(:work, %{shutting_down: true} = state) do
+    # Don't claim new work during shutdown
+    {:stop, :normal, state}
+  end
+
   def handle_info(:work, state) do
     case Executions.claim_next_execution() do
       {:ok, nil} ->
@@ -80,21 +88,36 @@ defmodule Prikke.Worker do
         else
           # Wait and try again
           Process.send_after(self(), :work, @poll_interval)
-          {:noreply, %{state | idle_polls: new_idle}}
+          {:noreply, %{state | idle_polls: new_idle, working: false}}
         end
 
       {:ok, execution} ->
         # Got work - execute it
+        state = %{state | working: true}
         execute(execution)
 
         # Reset idle counter and look for more work immediately
         send(self(), :work)
-        {:noreply, %{state | idle_polls: 0}}
+        {:noreply, %{state | idle_polls: 0, working: false}}
 
       {:error, reason} ->
         Logger.error("[Worker] Failed to claim execution: #{inspect(reason)}")
         Process.send_after(self(), :work, @poll_interval)
-        {:noreply, state}
+        {:noreply, %{state | working: false}}
+    end
+  end
+
+  @impl true
+  def handle_info({:EXIT, _pid, reason}, state) do
+    # Parent supervisor is shutting down
+    Logger.info("[Worker] Received exit signal: #{inspect(reason)}, shutting down gracefully")
+
+    if state.working do
+      # Currently working, mark as shutting down and let current work finish
+      {:noreply, Map.put(state, :shutting_down, true)}
+    else
+      # Not working, can exit immediately
+      {:stop, :normal, state}
     end
   end
 

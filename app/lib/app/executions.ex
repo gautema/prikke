@@ -286,4 +286,38 @@ defmodule Prikke.Executions do
     )
     |> Repo.delete_all()
   end
+
+  @doc """
+  Recovers stale executions stuck in "running" status.
+
+  An execution is considered stale if it's been in "running" status for longer
+  than its job's timeout plus a buffer (default 5 minutes). This can happen if
+  a worker crashes or the server restarts during execution.
+
+  Returns the count of recovered executions.
+  """
+  def recover_stale_executions(stale_threshold_minutes \\ 5) do
+    # Find executions stuck in "running" for too long
+    # Use a conservative threshold: job timeout + buffer
+    cutoff = DateTime.add(DateTime.utc_now(), -stale_threshold_minutes, :minute)
+
+    stale_executions =
+      from(e in Execution,
+        join: j in Job, on: e.job_id == j.id,
+        where: e.status == "running" and e.started_at < ^cutoff,
+        preload: [job: j]
+      )
+      |> Repo.all()
+
+    Enum.each(stale_executions, fn execution ->
+      # Mark as failed due to worker crash/restart
+      execution
+      |> Execution.fail_changeset(%{
+        error_message: "Execution interrupted (worker restart or crash)"
+      })
+      |> Repo.update()
+    end)
+
+    length(stale_executions)
+  end
 end

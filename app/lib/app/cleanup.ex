@@ -63,6 +63,9 @@ defmodule Prikke.Cleanup do
     now = DateTime.utc_now()
     today = DateTime.to_date(now)
 
+    # Always try to recover stale executions (runs every hour)
+    recover_stale_executions()
+
     state =
       if should_run_cleanup?(now, state.last_cleanup_date) do
         case try_acquire_lock() do
@@ -142,5 +145,14 @@ defmodule Prikke.Cleanup do
   defp get_retention_days(tier) do
     limits = Jobs.get_tier_limits(tier)
     limits.retention_days
+  end
+
+  # Recover executions stuck in "running" status (worker crashed or server restarted)
+  defp recover_stale_executions do
+    recovered = Executions.recover_stale_executions()
+
+    if recovered > 0 do
+      Logger.info("[Cleanup] Recovered #{recovered} stale execution(s) stuck in running status")
+    end
   end
 end
