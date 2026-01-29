@@ -473,15 +473,13 @@ defmodule PrikkeWeb.DashboardLive do
   defp format_time(nil), do: ""
 
   defp format_time(datetime) do
-    now = DateTime.utc_now()
-    diff = DateTime.diff(now, datetime, :second)
+    today = DateTime.utc_now() |> DateTime.to_date()
+    date = DateTime.to_date(datetime)
 
-    cond do
-      diff < 0 -> "just now"
-      diff < 60 -> "#{diff}s ago"
-      diff < 3600 -> "#{div(diff, 60)}m ago"
-      diff < 86400 -> "#{div(diff, 3600)}h ago"
-      true -> Calendar.strftime(datetime, "%d %b, %H:%M")
+    if date == today do
+      Calendar.strftime(datetime, "%H:%M:%S")
+    else
+      Calendar.strftime(datetime, "%d %b, %H:%M")
     end
   end
 end
