@@ -345,6 +345,13 @@ defmodule Prikke.Accounts do
   end
 
   @doc """
+  Lists all organizations. Used for system-wide cleanup tasks.
+  """
+  def list_all_organizations do
+    Repo.all(Organization)
+  end
+
+  @doc """
   Updates an organization.
   """
   def update_organization(organization, attrs) do

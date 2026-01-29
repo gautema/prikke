@@ -44,7 +44,8 @@ defmodule Prikke.Application do
       children ++ [
         Prikke.Scheduler,
         Prikke.WorkerSupervisor,
-        Prikke.WorkerPool
+        Prikke.WorkerPool,
+        Prikke.Cleanup
       ]
     end
   end

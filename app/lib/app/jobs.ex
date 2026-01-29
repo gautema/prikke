@@ -11,8 +11,8 @@ defmodule Prikke.Jobs do
 
   # Tier limits
   @tier_limits %{
-    "free" => %{max_jobs: 5, min_interval_minutes: 60, max_monthly_executions: 5_000},
-    "pro" => %{max_jobs: :unlimited, min_interval_minutes: 1, max_monthly_executions: 250_000}
+    "free" => %{max_jobs: 5, min_interval_minutes: 60, max_monthly_executions: 5_000, retention_days: 7},
+    "pro" => %{max_jobs: :unlimited, min_interval_minutes: 1, max_monthly_executions: 250_000, retention_days: 30}
   }
 
   def tier_limits, do: @tier_limits
