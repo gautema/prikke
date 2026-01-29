@@ -58,7 +58,7 @@ Last updated: 2026-01-28
   - Stats functions (job, org, monthly counts)
   - Cleanup function for retention policy
 
-### Phase 4: Job Execution Engine (In Progress)
+### Phase 4: Job Execution Engine (Complete)
 - [x] Scheduler GenServer
   - Ticks every 60 seconds
   - Advisory lock for leader election (only one node schedules)
@@ -66,9 +66,19 @@ Last updated: 2026-01-28
   - Creates pending executions
   - Advances `next_run_at` for cron jobs
   - Enforces monthly execution limits
-- [ ] Worker Pool Manager (scales 2-20 workers)
-- [ ] Worker GenServer (claims with SKIP LOCKED)
-- [ ] HTTP Executor (Req library)
+- [x] Worker Pool Manager (scales 2-20 workers)
+  - Checks queue depth every 5 seconds
+  - Spawns workers when queue > current workers
+  - Workers self-terminate after 30s idle
+- [x] Worker GenServer (claims with SKIP LOCKED)
+  - Claims pending executions with FOR UPDATE SKIP LOCKED
+  - Priority: Pro tier first, minute crons before hourly/daily
+  - Self-terminates after max idle polls
+- [x] HTTP Executor (Req library)
+  - Respects job.timeout_ms
+  - Handles success (2xx), failure (non-2xx), and timeouts
+  - Retries one-time jobs with exponential backoff
+  - Truncates large response bodies
 
 ### Phase 5: REST API (Not Started)
 - [ ] API routes for jobs CRUD
@@ -192,6 +202,9 @@ app/lib/app/
 ├── executions/
 │   └── execution.ex
 ├── executions.ex              # Claim with SKIP LOCKED, stats
+├── worker.ex                  # Job executor (HTTP requests)
+├── worker_pool.ex             # Scales workers based on queue
+├── worker_supervisor.ex       # DynamicSupervisor for workers
 ├── mailer.ex
 └── repo.ex
 
@@ -265,7 +278,7 @@ Environment variables:
 
 ## Test Coverage
 
-- **181 tests passing**
+- **194 tests passing**
 - Accounts: user auth, organizations, memberships, invites, API keys
 - Jobs: CRUD, validations, cron parsing, tier limits
 - API Auth Plug: bearer token validation
@@ -284,15 +297,17 @@ Environment variables:
 
 ## Known Issues / TODOs
 
-1. **No actual job execution** - Scheduler and workers not built yet
-2. **Dashboard stats are placeholders** - Need executions table to show real data
-3. **No API endpoints** - Only LiveView UI currently
-4. **Monthly execution limits** - Enforce when scheduler is built (Free: 5k/mo, Pro: 250k/mo)
+1. **Dashboard stats are placeholders** - Need to wire up real execution data
+2. **No API endpoints** - Only LiveView UI currently
+3. **No notification worker** - Job failure alerts not sent yet
 
 ---
 
 ## Recently Completed
 
+- [x] **Worker Pool** - scales 2-20 workers based on queue depth
+- [x] **Worker** - claims and executes jobs with HTTP, handles retries
+- [x] **HTTP Execution** - full request/response handling with Req
 - [x] Scheduler GenServer (ticks every 60s, advisory lock, creates pending executions)
 - [x] Executions schema & context (claim with SKIP LOCKED, stats, monthly counts)
 - [x] Manual upgrade to Pro (click to upgrade, sales contacts user)
