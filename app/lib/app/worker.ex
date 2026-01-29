@@ -121,6 +121,11 @@ defmodule Prikke.Worker do
     end
   end
 
+  # Ignore unexpected messages (e.g., from test mailer sending :email messages)
+  def handle_info(_msg, state) do
+    {:noreply, state}
+  end
+
   ## Private Functions
 
   defp execute(execution) do

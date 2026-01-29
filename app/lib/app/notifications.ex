@@ -55,9 +55,9 @@ defmodule Prikke.Notifications do
       org.notification_email && org.notification_email != "" ->
         org.notification_email
 
-      # TODO: Could fall back to org owner's email
+      # Fall back to org owner's email
       true ->
-        nil
+        Prikke.Accounts.get_organization_owner_email(org)
     end
   end
 
@@ -66,6 +66,10 @@ defmodule Prikke.Notifications do
   """
   def send_failure_email(execution, to_email) do
     job = execution.job
+
+    config = Application.get_env(:app, Prikke.Mailer, [])
+    from_name = Keyword.get(config, :from_name, "Prikke")
+    from_email = Keyword.get(config, :from_email, "noreply@whitenoise.no")
 
     subject = "[Prikke] Job failed: #{job.name}"
 
@@ -89,7 +93,7 @@ defmodule Prikke.Notifications do
     email =
       new()
       |> to(to_email)
-      |> from({"Prikke", "alerts@prikke.app"})
+      |> from({from_name, from_email})
       |> subject(subject)
       |> text_body(String.trim(body))
 

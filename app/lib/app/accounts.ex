@@ -530,6 +530,21 @@ defmodule Prikke.Accounts do
   defp role_level("member"), do: 1
   defp role_level(_), do: 0
 
+  @doc """
+  Gets the owner's email for an organization.
+  Returns nil if no owner is found.
+  """
+  def get_organization_owner_email(organization) do
+    from(m in Membership,
+      join: u in User,
+      on: u.id == m.user_id,
+      where: m.organization_id == ^organization.id and m.role == "owner",
+      select: u.email,
+      limit: 1
+    )
+    |> Repo.one()
+  end
+
   ## API Keys
 
   @doc """
