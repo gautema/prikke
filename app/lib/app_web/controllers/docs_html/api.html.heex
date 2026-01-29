@@ -1,35 +1,83 @@
 <.docs_layout>
   <h1>API Reference</h1>
-  <p class="text-xl text-slate-600 mb-10">Base URL: <code class="bg-slate-100 px-2 py-1 rounded text-sm">https://prikke.whitenoise.no/api</code></p>
+  <p class="text-xl text-slate-600 mb-10">
+    Base URL:
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">
+      https://prikke.whitenoise.no/api/v1
+    </code>
+  </p>
 
   <h2>Authentication</h2>
   <p>All API requests require an API key. Include it in the Authorization header:</p>
   <pre class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto">Authorization: Bearer <span class="text-green-300">pk_live_xxx.sk_live_yyy</span></pre>
 
   <h2>Queue API</h2>
-  <p>The simplest way to execute a webhook immediately. Just POST the URL and it runs right away.</p>
+  <p>
+    The simplest way to execute a webhook immediately. Just POST the URL and it runs right away.
+  </p>
 
   <div class="bg-white border border-slate-200 rounded-lg overflow-hidden mb-6">
     <div class="p-6 border-b border-slate-100">
       <div class="flex items-center gap-3 mb-4">
-        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-emerald-500 text-white">POST</span>
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-emerald-500 text-white">
+          POST
+        </span>
         <span class="font-mono text-sm">/queue</span>
       </div>
-      <p class="text-slate-600 m-0 mb-4">Queue a request for immediate execution. Creates a one-time job and executes it right away.</p>
+      <p class="text-slate-600 m-0 mb-4">
+        Queue a request for immediate execution. Creates a one-time job and executes it right away.
+      </p>
 
       <h4 class="text-sm font-semibold mt-4 mb-2 text-slate-900">Request Body</h4>
       <table class="text-sm w-full">
-        <tr class="border-b border-slate-100"><th class="text-left py-2 pr-4 text-slate-700">Field</th><th class="text-left py-2 pr-4 text-slate-700">Type</th><th class="text-left py-2 text-slate-700">Description</th></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">url</code></td><td class="py-2 pr-4 text-slate-500">string</td><td class="py-2 text-slate-600">The URL to call (required)</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">method</code></td><td class="py-2 pr-4 text-slate-500">string</td><td class="py-2 text-slate-600">HTTP method: GET, POST, PUT, PATCH, DELETE (default: POST)</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">headers</code></td><td class="py-2 pr-4 text-slate-500">object</td><td class="py-2 text-slate-600">Custom headers to send (optional)</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">body</code></td><td class="py-2 pr-4 text-slate-500">string</td><td class="py-2 text-slate-600">Request body (optional)</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">name</code></td><td class="py-2 pr-4 text-slate-500">string</td><td class="py-2 text-slate-600">Display name (auto-generated if omitted)</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">timeout_ms</code></td><td class="py-2 pr-4 text-slate-500">integer</td><td class="py-2 text-slate-600">Request timeout in milliseconds (default: 30000)</td></tr>
-        <tr><td class="py-2 pr-4"><code class="text-sky-600">retry_attempts</code></td><td class="py-2 pr-4 text-slate-500">integer</td><td class="py-2 text-slate-600">Number of retry attempts on failure (default: 5)</td></tr>
+        <tr class="border-b border-slate-100">
+          <th class="text-left py-2 pr-4 text-slate-700">Field</th>
+          <th class="text-left py-2 pr-4 text-slate-700">Type</th>
+          <th class="text-left py-2 text-slate-700">Description</th>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">url</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">The URL to call (required)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">method</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            HTTP method: GET, POST, PUT, PATCH, DELETE (default: POST)
+          </td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">headers</code></td>
+          <td class="py-2 pr-4 text-slate-500">object</td>
+          <td class="py-2 text-slate-600">Custom headers to send (optional)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">body</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">Request body (optional)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">name</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">Display name (auto-generated if omitted)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">timeout_ms</code></td>
+          <td class="py-2 pr-4 text-slate-500">integer</td>
+          <td class="py-2 text-slate-600">Request timeout in milliseconds (default: 30000)</td>
+        </tr>
+        <tr>
+          <td class="py-2 pr-4"><code class="text-sky-600">retry_attempts</code></td>
+          <td class="py-2 pr-4 text-slate-500">integer</td>
+          <td class="py-2 text-slate-600">Number of retry attempts on failure (default: 5)</td>
+        </tr>
       </table>
     </div>
-    <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://prikke.whitenoise.no/api/queue \
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X POST https://prikke.whitenoise.no/api/v1/queue \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
@@ -46,55 +94,124 @@
   <div class="bg-white border border-slate-200 rounded-lg overflow-hidden mb-6">
     <div class="p-6 border-b border-slate-100">
       <div class="flex items-center gap-3 mb-4">
-        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-blue-500 text-white">GET</span>
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-blue-500 text-white">
+          GET
+        </span>
         <span class="font-mono text-sm">/jobs</span>
       </div>
       <p class="text-slate-600 m-0">List all jobs for your organization.</p>
     </div>
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://prikke.whitenoise.no/api/jobs \
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://prikke.whitenoise.no/api/v1/jobs \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
   </div>
 
   <div class="bg-white border border-slate-200 rounded-lg overflow-hidden mb-6">
     <div class="p-6 border-b border-slate-100">
       <div class="flex items-center gap-3 mb-4">
-        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-blue-500 text-white">GET</span>
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-blue-500 text-white">
+          GET
+        </span>
         <span class="font-mono text-sm">/jobs/:id</span>
       </div>
       <p class="text-slate-600 m-0">Get a single job by ID.</p>
     </div>
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://prikke.whitenoise.no/api/jobs/job_abc123 \
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://prikke.whitenoise.no/api/v1/jobs/job_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
   </div>
 
   <div class="bg-white border border-slate-200 rounded-lg overflow-hidden mb-6">
     <div class="p-6 border-b border-slate-100">
       <div class="flex items-center gap-3 mb-4">
-        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-emerald-500 text-white">POST</span>
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-emerald-500 text-white">
+          POST
+        </span>
         <span class="font-mono text-sm">/jobs</span>
       </div>
       <p class="text-slate-600 m-0 mb-4">Create a new scheduled job.</p>
 
       <h4 class="text-sm font-semibold mt-4 mb-2 text-slate-900">Request Body</h4>
       <table class="text-sm w-full">
-        <tr class="border-b border-slate-100"><th class="text-left py-2 pr-4 text-slate-700">Field</th><th class="text-left py-2 pr-4 text-slate-700">Type</th><th class="text-left py-2 text-slate-700">Description</th></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">name</code></td><td class="py-2 pr-4 text-slate-500">string</td><td class="py-2 text-slate-600">Display name for this job (required)</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">url</code></td><td class="py-2 pr-4 text-slate-500">string</td><td class="py-2 text-slate-600">The URL to call (required)</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">method</code></td><td class="py-2 pr-4 text-slate-500">string</td><td class="py-2 text-slate-600">HTTP method: GET, POST, PUT, PATCH, DELETE (default: POST)</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">schedule_type</code></td><td class="py-2 pr-4 text-slate-500">string</td><td class="py-2 text-slate-600">"cron" for recurring or "once" for one-time (required)</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">cron_expression</code></td><td class="py-2 pr-4 text-slate-500">string</td><td class="py-2 text-slate-600">Cron expression (required if schedule_type is "cron")</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">scheduled_at</code></td><td class="py-2 pr-4 text-slate-500">string</td><td class="py-2 text-slate-600">ISO 8601 timestamp (required if schedule_type is "once")</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">timezone</code></td><td class="py-2 pr-4 text-slate-500">string</td><td class="py-2 text-slate-600">Timezone for cron jobs (default: UTC)</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">headers</code></td><td class="py-2 pr-4 text-slate-500">object</td><td class="py-2 text-slate-600">Custom headers to send (optional)</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">body</code></td><td class="py-2 pr-4 text-slate-500">string</td><td class="py-2 text-slate-600">Request body (optional)</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">timeout_ms</code></td><td class="py-2 pr-4 text-slate-500">integer</td><td class="py-2 text-slate-600">Request timeout in ms (default: 30000)</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">retry_attempts</code></td><td class="py-2 pr-4 text-slate-500">integer</td><td class="py-2 text-slate-600">Retry attempts for one-time jobs (default: 5)</td></tr>
-        <tr><td class="py-2 pr-4"><code class="text-sky-600">enabled</code></td><td class="py-2 pr-4 text-slate-500">boolean</td><td class="py-2 text-slate-600">Whether the job is active (default: true)</td></tr>
+        <tr class="border-b border-slate-100">
+          <th class="text-left py-2 pr-4 text-slate-700">Field</th>
+          <th class="text-left py-2 pr-4 text-slate-700">Type</th>
+          <th class="text-left py-2 text-slate-700">Description</th>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">name</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">Display name for this job (required)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">url</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">The URL to call (required)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">method</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            HTTP method: GET, POST, PUT, PATCH, DELETE (default: POST)
+          </td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">schedule_type</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            "cron" for recurring or "once" for one-time (required)
+          </td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">cron_expression</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            Cron expression (required if schedule_type is "cron")
+          </td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">scheduled_at</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            ISO 8601 timestamp (required if schedule_type is "once")
+          </td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">timezone</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">Timezone for cron jobs (default: UTC)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">headers</code></td>
+          <td class="py-2 pr-4 text-slate-500">object</td>
+          <td class="py-2 text-slate-600">Custom headers to send (optional)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">body</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">Request body (optional)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">timeout_ms</code></td>
+          <td class="py-2 pr-4 text-slate-500">integer</td>
+          <td class="py-2 text-slate-600">Request timeout in ms (default: 30000)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">retry_attempts</code></td>
+          <td class="py-2 pr-4 text-slate-500">integer</td>
+          <td class="py-2 text-slate-600">Retry attempts for one-time jobs (default: 5)</td>
+        </tr>
+        <tr>
+          <td class="py-2 pr-4"><code class="text-sky-600">enabled</code></td>
+          <td class="py-2 pr-4 text-slate-500">boolean</td>
+          <td class="py-2 text-slate-600">Whether the job is active (default: true)</td>
+        </tr>
       </table>
     </div>
     <div class="border-b border-slate-800">
       <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800">Recurring Job (cron)</div>
-      <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://prikke.whitenoise.no/api/jobs \
+      <pre
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl -X POST https://prikke.whitenoise.no/api/v1/jobs \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
@@ -107,7 +224,10 @@
     </div>
     <div>
       <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800">One-time Job</div>
-      <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://prikke.whitenoise.no/api/jobs \
+      <pre
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl -X POST https://prikke.whitenoise.no/api/v1/jobs \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
@@ -122,12 +242,17 @@
   <div class="bg-white border border-slate-200 rounded-lg overflow-hidden mb-6">
     <div class="p-6 border-b border-slate-100">
       <div class="flex items-center gap-3 mb-4">
-        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-amber-500 text-white">PUT</span>
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-amber-500 text-white">
+          PUT
+        </span>
         <span class="font-mono text-sm">/jobs/:id</span>
       </div>
       <p class="text-slate-600 m-0">Update a job. Only include the fields you want to change.</p>
     </div>
-    <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X PUT https://prikke.whitenoise.no/api/jobs/job_abc123 \
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X PUT https://prikke.whitenoise.no/api/v1/jobs/job_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
@@ -139,24 +264,30 @@
   <div class="bg-white border border-slate-200 rounded-lg overflow-hidden mb-6">
     <div class="p-6 border-b border-slate-100">
       <div class="flex items-center gap-3 mb-4">
-        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-red-500 text-white">DELETE</span>
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-red-500 text-white">
+          DELETE
+        </span>
         <span class="font-mono text-sm">/jobs/:id</span>
       </div>
       <p class="text-slate-600 m-0">Delete a job and all its execution history.</p>
     </div>
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X DELETE https://prikke.whitenoise.no/api/jobs/job_abc123 \
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X DELETE https://prikke.whitenoise.no/api/v1/jobs/job_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
   </div>
 
   <div class="bg-white border border-slate-200 rounded-lg overflow-hidden mb-6">
     <div class="p-6 border-b border-slate-100">
       <div class="flex items-center gap-3 mb-4">
-        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-emerald-500 text-white">POST</span>
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-emerald-500 text-white">
+          POST
+        </span>
         <span class="font-mono text-sm">/jobs/:id/trigger</span>
       </div>
-      <p class="text-slate-600 m-0">Trigger a job to run immediately. Creates a new execution that runs right away.</p>
+      <p class="text-slate-600 m-0">
+        Trigger a job to run immediately. Creates a new execution that runs right away.
+      </p>
     </div>
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://prikke.whitenoise.no/api/jobs/job_abc123/trigger \
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://prikke.whitenoise.no/api/v1/jobs/job_abc123/trigger \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
   </div>
 
@@ -165,18 +296,31 @@
   <div class="bg-white border border-slate-200 rounded-lg overflow-hidden mb-6">
     <div class="p-6 border-b border-slate-100">
       <div class="flex items-center gap-3 mb-4">
-        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-blue-500 text-white">GET</span>
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-blue-500 text-white">
+          GET
+        </span>
         <span class="font-mono text-sm">/jobs/:id/executions</span>
       </div>
       <p class="text-slate-600 m-0 mb-4">Get execution history for a job.</p>
 
       <h4 class="text-sm font-semibold mt-4 mb-2 text-slate-900">Query Parameters</h4>
       <table class="text-sm w-full">
-        <tr class="border-b border-slate-100"><th class="text-left py-2 pr-4 text-slate-700">Field</th><th class="text-left py-2 pr-4 text-slate-700">Type</th><th class="text-left py-2 text-slate-700">Description</th></tr>
-        <tr><td class="py-2 pr-4"><code class="text-sky-600">limit</code></td><td class="py-2 pr-4 text-slate-500">integer</td><td class="py-2 text-slate-600">Max results to return, 1-100 (default: 50)</td></tr>
+        <tr class="border-b border-slate-100">
+          <th class="text-left py-2 pr-4 text-slate-700">Field</th>
+          <th class="text-left py-2 pr-4 text-slate-700">Type</th>
+          <th class="text-left py-2 text-slate-700">Description</th>
+        </tr>
+        <tr>
+          <td class="py-2 pr-4"><code class="text-sky-600">limit</code></td>
+          <td class="py-2 pr-4 text-slate-500">integer</td>
+          <td class="py-2 text-slate-600">Max results to return, 1-100 (default: 50)</td>
+        </tr>
       </table>
     </div>
-    <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-slate-500"># Response</span>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500"># Response</span>
 {
   <span class="text-sky-300">"data"</span>: [{
     <span class="text-sky-300">"id"</span>: <span class="text-green-300">"exec_123"</span>,
@@ -197,26 +341,73 @@
   <div class="bg-white border border-slate-200 rounded-lg overflow-hidden mb-6">
     <div class="p-6 border-b border-slate-100">
       <div class="flex items-center gap-3 mb-4">
-        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-purple-500 text-white">PUT</span>
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-purple-500 text-white">
+          PUT
+        </span>
         <span class="font-mono text-sm">/sync</span>
       </div>
-      <p class="text-slate-600 m-0">Sync your entire project configuration. This is idempotent - safe to call repeatedly with the same config.</p>
+      <p class="text-slate-600 m-0">
+        Sync your entire project configuration. This is idempotent - safe to call repeatedly with the same config.
+      </p>
 
       <h4 class="text-sm font-semibold mt-4 mb-2 text-slate-900">Request Body</h4>
       <table class="text-sm w-full">
-        <tr class="border-b border-slate-100"><th class="text-left py-2 pr-4 text-slate-700">Field</th><th class="text-left py-2 pr-4 text-slate-700">Type</th><th class="text-left py-2 text-slate-700">Description</th></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">jobs</code></td><td class="py-2 pr-4 text-slate-500">array</td><td class="py-2 text-slate-600">Array of job configurations</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">jobs[].key</code></td><td class="py-2 pr-4 text-slate-500">string</td><td class="py-2 text-slate-600">Unique key for this job (your identifier)</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">jobs[].name</code></td><td class="py-2 pr-4 text-slate-500">string</td><td class="py-2 text-slate-600">Display name for this job</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">jobs[].url</code></td><td class="py-2 pr-4 text-slate-500">string</td><td class="py-2 text-slate-600">The URL to call</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">jobs[].method</code></td><td class="py-2 pr-4 text-slate-500">string</td><td class="py-2 text-slate-600">HTTP method (default: POST)</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">jobs[].cron</code></td><td class="py-2 pr-4 text-slate-500">string</td><td class="py-2 text-slate-600">Cron expression for recurring jobs</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">jobs[].headers</code></td><td class="py-2 pr-4 text-slate-500">object</td><td class="py-2 text-slate-600">Custom headers (optional)</td></tr>
-        <tr class="border-b border-slate-50"><td class="py-2 pr-4"><code class="text-sky-600">jobs[].body</code></td><td class="py-2 pr-4 text-slate-500">string</td><td class="py-2 text-slate-600">Request body (optional)</td></tr>
-        <tr><td class="py-2 pr-4"><code class="text-sky-600">delete_removed</code></td><td class="py-2 pr-4 text-slate-500">boolean</td><td class="py-2 text-slate-600">Delete jobs not in config (default: false)</td></tr>
+        <tr class="border-b border-slate-100">
+          <th class="text-left py-2 pr-4 text-slate-700">Field</th>
+          <th class="text-left py-2 pr-4 text-slate-700">Type</th>
+          <th class="text-left py-2 text-slate-700">Description</th>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">jobs</code></td>
+          <td class="py-2 pr-4 text-slate-500">array</td>
+          <td class="py-2 text-slate-600">Array of job configurations</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].key</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">Unique key for this job (your identifier)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].name</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">Display name for this job</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].url</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">The URL to call</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].method</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">HTTP method (default: POST)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].cron</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">Cron expression for recurring jobs</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].headers</code></td>
+          <td class="py-2 pr-4 text-slate-500">object</td>
+          <td class="py-2 text-slate-600">Custom headers (optional)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].body</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">Request body (optional)</td>
+        </tr>
+        <tr>
+          <td class="py-2 pr-4"><code class="text-sky-600">delete_removed</code></td>
+          <td class="py-2 pr-4 text-slate-500">boolean</td>
+          <td class="py-2 text-slate-600">Delete jobs not in config (default: false)</td>
+        </tr>
       </table>
     </div>
-    <pre phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X PUT https://prikke.whitenoise.no/api/sync \
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X PUT https://prikke.whitenoise.no/api/v1/sync \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
@@ -241,22 +432,55 @@
         </tr>
       </thead>
       <tbody class="text-slate-600">
-        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="text-emerald-600">200</code></td><td class="py-3 px-4">Success</td></tr>
-        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="text-emerald-600">201</code></td><td class="py-3 px-4">Created</td></tr>
-        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="text-emerald-600">202</code></td><td class="py-3 px-4">Accepted (for async operations like queue/trigger)</td></tr>
-        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="text-emerald-600">204</code></td><td class="py-3 px-4">No content (successful delete)</td></tr>
-        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="text-amber-600">400</code></td><td class="py-3 px-4">Bad request - check your parameters</td></tr>
-        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="text-amber-600">401</code></td><td class="py-3 px-4">Unauthorized - invalid API key</td></tr>
-        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="text-amber-600">404</code></td><td class="py-3 px-4">Not found</td></tr>
-        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="text-amber-600">422</code></td><td class="py-3 px-4">Validation error</td></tr>
-        <tr class="border-b border-slate-100"><td class="py-3 px-4"><code class="text-amber-600">429</code></td><td class="py-3 px-4">Rate limited - slow down</td></tr>
-        <tr><td class="py-3 px-4"><code class="text-red-600">500</code></td><td class="py-3 px-4">Server error - try again</td></tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-emerald-600">200</code></td>
+          <td class="py-3 px-4">Success</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-emerald-600">201</code></td>
+          <td class="py-3 px-4">Created</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-emerald-600">202</code></td>
+          <td class="py-3 px-4">Accepted (for async operations like queue/trigger)</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-emerald-600">204</code></td>
+          <td class="py-3 px-4">No content (successful delete)</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-amber-600">400</code></td>
+          <td class="py-3 px-4">Bad request - check your parameters</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-amber-600">401</code></td>
+          <td class="py-3 px-4">Unauthorized - invalid API key</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-amber-600">404</code></td>
+          <td class="py-3 px-4">Not found</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-amber-600">422</code></td>
+          <td class="py-3 px-4">Validation error</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-amber-600">429</code></td>
+          <td class="py-3 px-4">Rate limited - slow down</td>
+        </tr>
+        <tr>
+          <td class="py-3 px-4"><code class="text-red-600">500</code></td>
+          <td class="py-3 px-4">Server error - try again</td>
+        </tr>
       </tbody>
     </table>
   </div>
 
   <p>Error responses include details:</p>
-  <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto">{
+  <pre
+    phx-no-curly-interpolation
+    class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto"
+  >{
   <span class="text-sky-300">"error"</span>: {
     <span class="text-sky-300">"message"</span>: <span class="text-green-300">"Invalid cron expression"</span>,
     <span class="text-sky-300">"field"</span>: <span class="text-green-300">"cron_expression"</span>

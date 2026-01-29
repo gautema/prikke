@@ -21,7 +21,7 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
     %{conn: conn, org: org}
   end
 
-  describe "PUT /api/sync" do
+  describe "PUT /api/v1/sync" do
     test "creates new jobs", %{conn: conn, org: org} do
       params = %{
         "jobs" => [
@@ -40,7 +40,7 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
         ]
       }
 
-      conn = put(conn, ~p"/api/sync", params)
+      conn = put(conn, ~p"/api/v1/sync", params)
       response = json_response(conn, 200)
 
       assert response["data"]["created_count"] == 2
@@ -68,7 +68,7 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
         ]
       }
 
-      conn = put(conn, ~p"/api/sync", params)
+      conn = put(conn, ~p"/api/v1/sync", params)
       response = json_response(conn, 200)
 
       assert response["data"]["created_count"] == 0
@@ -100,7 +100,7 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
         ]
       }
 
-      conn = put(conn, ~p"/api/sync", params)
+      conn = put(conn, ~p"/api/v1/sync", params)
       response = json_response(conn, 200)
 
       assert response["data"]["created_count"] == 1
@@ -123,7 +123,7 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
         "delete_removed" => true
       }
 
-      conn = put(conn, ~p"/api/sync", params)
+      conn = put(conn, ~p"/api/v1/sync", params)
       response = json_response(conn, 200)
 
       assert response["data"]["deleted_count"] == 1
@@ -149,7 +149,7 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
         ]
       }
 
-      conn = put(conn, ~p"/api/sync", params)
+      conn = put(conn, ~p"/api/v1/sync", params)
       response = json_response(conn, 200)
 
       assert response["data"]["deleted_count"] == 0
@@ -169,14 +169,14 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
         ]
       }
 
-      conn = put(conn, ~p"/api/sync", params)
+      conn = put(conn, ~p"/api/v1/sync", params)
       response = json_response(conn, 422)
 
       assert response["error"]["code"] == "validation_error"
     end
 
     test "returns error without jobs array", %{conn: conn} do
-      conn = put(conn, ~p"/api/sync", %{})
+      conn = put(conn, ~p"/api/v1/sync", %{})
       response = json_response(conn, 400)
 
       assert response["error"]["code"] == "bad_request"
@@ -187,7 +187,7 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
 
       params = %{"jobs" => []}
 
-      conn = put(conn, ~p"/api/sync", params)
+      conn = put(conn, ~p"/api/v1/sync", params)
       response = json_response(conn, 200)
 
       assert response["data"]["created_count"] == 0

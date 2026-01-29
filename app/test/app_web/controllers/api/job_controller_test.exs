@@ -19,12 +19,12 @@ defmodule PrikkeWeb.Api.JobControllerTest do
     %{conn: conn, org: org, api_key: api_key}
   end
 
-  describe "GET /api/jobs" do
+  describe "GET /api/v1/jobs" do
     test "lists all jobs for the organization", %{conn: conn, org: org} do
       _job1 = job_fixture(org, %{name: "Job 1"})
       _job2 = job_fixture(org, %{name: "Job 2"})
 
-      conn = get(conn, ~p"/api/jobs")
+      conn = get(conn, ~p"/api/v1/jobs")
       response = json_response(conn, 200)
 
       assert length(response["data"]) == 2
@@ -34,24 +34,25 @@ defmodule PrikkeWeb.Api.JobControllerTest do
     end
 
     test "returns empty list when no jobs", %{conn: conn} do
-      conn = get(conn, ~p"/api/jobs")
+      conn = get(conn, ~p"/api/v1/jobs")
       assert json_response(conn, 200)["data"] == []
     end
 
     test "returns 401 without auth", %{org: _org} do
-      conn = build_conn()
-      |> put_req_header("accept", "application/json")
-      |> get(~p"/api/jobs")
+      conn =
+        build_conn()
+        |> put_req_header("accept", "application/json")
+        |> get(~p"/api/v1/jobs")
 
       assert json_response(conn, 401)["error"]["code"] == "unauthorized"
     end
   end
 
-  describe "GET /api/jobs/:id" do
+  describe "GET /api/v1/jobs/:id" do
     test "returns the job", %{conn: conn, org: org} do
       job = job_fixture(org, %{name: "Test Job"})
 
-      conn = get(conn, ~p"/api/jobs/#{job.id}")
+      conn = get(conn, ~p"/api/v1/jobs/#{job.id}")
       response = json_response(conn, 200)
 
       assert response["data"]["id"] == job.id
@@ -59,7 +60,7 @@ defmodule PrikkeWeb.Api.JobControllerTest do
     end
 
     test "returns 404 for non-existent job", %{conn: conn} do
-      conn = get(conn, ~p"/api/jobs/#{Ecto.UUID.generate()}")
+      conn = get(conn, ~p"/api/v1/jobs/#{Ecto.UUID.generate()}")
       assert json_response(conn, 404)["error"]["code"] == "not_found"
     end
 
@@ -67,12 +68,12 @@ defmodule PrikkeWeb.Api.JobControllerTest do
       other_org = organization_fixture()
       other_job = job_fixture(other_org)
 
-      conn = get(conn, ~p"/api/jobs/#{other_job.id}")
+      conn = get(conn, ~p"/api/v1/jobs/#{other_job.id}")
       assert json_response(conn, 404)["error"]["code"] == "not_found"
     end
   end
 
-  describe "POST /api/jobs" do
+  describe "POST /api/v1/jobs" do
     test "creates a cron job", %{conn: conn} do
       params = %{
         "name" => "New Cron Job",
@@ -82,7 +83,7 @@ defmodule PrikkeWeb.Api.JobControllerTest do
         "cron_expression" => "0 * * * *"
       }
 
-      conn = post(conn, ~p"/api/jobs", params)
+      conn = post(conn, ~p"/api/v1/jobs", params)
       response = json_response(conn, 201)
 
       assert response["data"]["name"] == "New Cron Job"
@@ -100,7 +101,7 @@ defmodule PrikkeWeb.Api.JobControllerTest do
         "scheduled_at" => DateTime.to_iso8601(scheduled_at)
       }
 
-      conn = post(conn, ~p"/api/jobs", params)
+      conn = post(conn, ~p"/api/v1/jobs", params)
       response = json_response(conn, 201)
 
       assert response["data"]["name"] == "One-time Job"
@@ -110,7 +111,7 @@ defmodule PrikkeWeb.Api.JobControllerTest do
     test "returns validation errors", %{conn: conn} do
       params = %{"name" => "", "url" => "not-a-url"}
 
-      conn = post(conn, ~p"/api/jobs", params)
+      conn = post(conn, ~p"/api/v1/jobs", params)
       response = json_response(conn, 422)
 
       assert response["error"]["code"] == "validation_error"
@@ -118,27 +119,27 @@ defmodule PrikkeWeb.Api.JobControllerTest do
     end
   end
 
-  describe "PUT /api/jobs/:id" do
+  describe "PUT /api/v1/jobs/:id" do
     test "updates the job", %{conn: conn, org: org} do
       job = job_fixture(org, %{name: "Original Name"})
 
-      conn = put(conn, ~p"/api/jobs/#{job.id}", %{"name" => "Updated Name"})
+      conn = put(conn, ~p"/api/v1/jobs/#{job.id}", %{"name" => "Updated Name"})
       response = json_response(conn, 200)
 
       assert response["data"]["name"] == "Updated Name"
     end
 
     test "returns 404 for non-existent job", %{conn: conn} do
-      conn = put(conn, ~p"/api/jobs/#{Ecto.UUID.generate()}", %{"name" => "New Name"})
+      conn = put(conn, ~p"/api/v1/jobs/#{Ecto.UUID.generate()}", %{"name" => "New Name"})
       assert json_response(conn, 404)["error"]["code"] == "not_found"
     end
   end
 
-  describe "DELETE /api/jobs/:id" do
+  describe "DELETE /api/v1/jobs/:id" do
     test "deletes the job", %{conn: conn, org: org} do
       job = job_fixture(org)
 
-      conn = delete(conn, ~p"/api/jobs/#{job.id}")
+      conn = delete(conn, ~p"/api/v1/jobs/#{job.id}")
       assert response(conn, 204)
 
       # Verify it's deleted
@@ -146,16 +147,16 @@ defmodule PrikkeWeb.Api.JobControllerTest do
     end
 
     test "returns 404 for non-existent job", %{conn: conn} do
-      conn = delete(conn, ~p"/api/jobs/#{Ecto.UUID.generate()}")
+      conn = delete(conn, ~p"/api/v1/jobs/#{Ecto.UUID.generate()}")
       assert json_response(conn, 404)["error"]["code"] == "not_found"
     end
   end
 
-  describe "POST /api/jobs/:id/trigger" do
+  describe "POST /api/v1/jobs/:id/trigger" do
     test "creates an execution for the job", %{conn: conn, org: org} do
       job = job_fixture(org)
 
-      conn = post(conn, ~p"/api/jobs/#{job.id}/trigger")
+      conn = post(conn, ~p"/api/v1/jobs/#{job.id}/trigger")
       response = json_response(conn, 202)
 
       assert response["data"]["execution_id"]
@@ -164,21 +165,26 @@ defmodule PrikkeWeb.Api.JobControllerTest do
     end
 
     test "returns 404 for non-existent job", %{conn: conn} do
-      conn = post(conn, ~p"/api/jobs/#{Ecto.UUID.generate()}/trigger")
+      conn = post(conn, ~p"/api/v1/jobs/#{Ecto.UUID.generate()}/trigger")
       assert json_response(conn, 404)["error"]["code"] == "not_found"
     end
   end
 
-  describe "GET /api/jobs/:id/executions" do
+  describe "GET /api/v1/jobs/:id/executions" do
     test "returns execution history", %{conn: conn, org: org} do
       job = job_fixture(org)
 
       # Create some executions
       now = DateTime.utc_now() |> DateTime.truncate(:second)
       {:ok, _} = Prikke.Executions.create_execution(%{job_id: job.id, scheduled_for: now})
-      {:ok, _} = Prikke.Executions.create_execution(%{job_id: job.id, scheduled_for: DateTime.add(now, -1, :hour)})
 
-      conn = get(conn, ~p"/api/jobs/#{job.id}/executions")
+      {:ok, _} =
+        Prikke.Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: DateTime.add(now, -1, :hour)
+        })
+
+      conn = get(conn, ~p"/api/v1/jobs/#{job.id}/executions")
       response = json_response(conn, 200)
 
       assert length(response["data"]) == 2
@@ -189,10 +195,14 @@ defmodule PrikkeWeb.Api.JobControllerTest do
       now = DateTime.utc_now() |> DateTime.truncate(:second)
 
       for i <- 1..5 do
-        {:ok, _} = Prikke.Executions.create_execution(%{job_id: job.id, scheduled_for: DateTime.add(now, -i, :hour)})
+        {:ok, _} =
+          Prikke.Executions.create_execution(%{
+            job_id: job.id,
+            scheduled_for: DateTime.add(now, -i, :hour)
+          })
       end
 
-      conn = get(conn, ~p"/api/jobs/#{job.id}/executions?limit=2")
+      conn = get(conn, ~p"/api/v1/jobs/#{job.id}/executions?limit=2")
       response = json_response(conn, 200)
 
       assert length(response["data"]) == 2

@@ -48,15 +48,15 @@ defmodule PrikkeWeb.Router do
   end
 
   # OpenAPI spec and Swagger UI (no auth required)
-  scope "/api" do
+  scope "/api/v1" do
     pipe_through [:api]
 
     get "/openapi", PrikkeWeb.Api.OpenApiController, :spec
-    get "/docs", OpenApiSpex.Plug.SwaggerUI, path: "/api/openapi"
+    get "/docs", OpenApiSpex.Plug.SwaggerUI, path: "/api/v1/openapi"
   end
 
   # API routes - authenticated via API keys
-  scope "/api", PrikkeWeb.Api do
+  scope "/api/v1", PrikkeWeb.Api do
     pipe_through [:api, :api_auth]
 
     # Jobs CRUD
