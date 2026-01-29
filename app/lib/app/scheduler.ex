@@ -252,42 +252,200 @@ defmodule Prikke.Scheduler do
     {:ok, scheduled_count}
   end
 
-  # Schedules a single job by creating a pending execution.
+  # Schedules a single job, handling any missed runs if the scheduler was down.
   #
   # Flow:
-  # 1. Check monthly execution limit for the organization
-  # 2. Create pending execution with scheduled_for = job.next_run_at
-  # 3. Advance next_run_at:
-  #    - Cron jobs: compute next cron time
-  #    - One-time jobs: set to nil (won't run again)
+  # 1. Compute all missed run times from next_run_at to now
+  # 2. For each missed time (except possibly the last):
+  #    - Create a "missed" execution for visibility
+  # 3. For the last missed time (if within grace period):
+  #    - Create a "pending" execution that can still run
+  # 4. Advance next_run_at past all missed times
+  #
+  # Grace period: 50% of interval (min 30s, max 1 hour)
+  # This prevents running stale jobs that are no longer relevant.
   #
   # Returns:
-  # - :ok - execution created successfully
-  # - :skipped - monthly limit reached (next_run_at still advanced)
+  # - :ok - at least one execution created
+  # - :skipped - monthly limit reached or no executions created
   # - :error - failed to create execution
   defp schedule_job(job) do
-    if within_monthly_limit?(job) do
-      case Executions.create_execution_for_job(job, job.next_run_at) do
-        {:ok, _execution} ->
-          # Advance next_run_at for cron jobs, or clear for one-time jobs
-          job
-          |> Job.advance_next_run_changeset()
-          |> Repo.update()
+    now = DateTime.utc_now()
 
-          :ok
+    # Compute all missed run times
+    missed_times = compute_missed_run_times(job, now)
 
-        {:error, reason} ->
-          Logger.error("[Scheduler] Failed to create execution for job #{job.id}: #{inspect(reason)}")
-          :error
+    if Enum.empty?(missed_times) do
+      :skipped
+    else
+      # Create executions for each missed time
+      result = create_catchup_executions(job, missed_times, now)
+
+      # Advance next_run_at past all missed times
+      advance_job_past_missed(job, missed_times)
+
+      result
+    end
+  end
+
+  # Computes all run times that were missed between next_run_at and now.
+  # For cron jobs, this can be multiple times if scheduler was down.
+  # For one-time jobs, this is just the single scheduled time.
+  # Only includes times AFTER the job was created (no backfill for new jobs).
+  defp compute_missed_run_times(job, now) do
+    times = case job.schedule_type do
+      "cron" ->
+        compute_missed_cron_times(job, now, [])
+
+      "once" ->
+        # One-time jobs have only one run time
+        if job.next_run_at && DateTime.compare(job.next_run_at, now) != :gt do
+          [job.next_run_at]
+        else
+          []
+        end
+
+      _ ->
+        []
+    end
+
+    # Filter out any times before the job was created
+    # This prevents backfilling missed executions for newly created jobs
+    Enum.filter(times, fn scheduled_for ->
+      DateTime.compare(scheduled_for, job.inserted_at) != :lt
+    end)
+  end
+
+  # Recursively computes all missed cron times from next_run_at until now.
+  defp compute_missed_cron_times(job, now, acc) do
+    current_run = job.next_run_at
+
+    if current_run && DateTime.compare(current_run, now) != :gt do
+      # This time is due, add it and compute next
+      case compute_next_cron_time(job, current_run) do
+        {:ok, next_run} ->
+          updated_job = %{job | next_run_at: next_run}
+          compute_missed_cron_times(updated_job, now, acc ++ [current_run])
+
+        :error ->
+          acc ++ [current_run]
       end
     else
-      Logger.warning("[Scheduler] Job #{job.id} skipped - monthly limit reached for org #{job.organization_id}")
-      # Still advance next_run_at so we don't keep trying this job
-      job
-      |> Job.advance_next_run_changeset()
-      |> Repo.update()
+      acc
+    end
+  end
 
-      :skipped
+  # Computes the next cron time after a given reference time.
+  defp compute_next_cron_time(job, reference) do
+    case Crontab.CronExpression.Parser.parse(job.cron_expression) do
+      {:ok, cron} ->
+        # Add 1 minute to reference to get the NEXT run, not the same one
+        reference_plus_one = DateTime.add(reference, 60, :second)
+
+        case Crontab.Scheduler.get_next_run_date(cron, DateTime.to_naive(reference_plus_one)) do
+          {:ok, naive_next} ->
+            {:ok, DateTime.from_naive!(naive_next, "Etc/UTC")}
+
+          {:error, _} ->
+            :error
+        end
+
+      {:error, _} ->
+        :error
+    end
+  end
+
+  # Creates executions for all missed times.
+  # - All times except the last: "missed" status (for visibility)
+  # - Last time within grace period: "pending" status (can still run)
+  # - Last time past grace period: "missed" status
+  defp create_catchup_executions(job, missed_times, now) do
+    {all_but_last, last} = split_last(missed_times)
+
+    # Create missed executions for all but the last
+    Enum.each(all_but_last, fn scheduled_for ->
+      Executions.create_missed_execution(job, scheduled_for)
+    end)
+
+    # For the last one, check grace period and monthly limit
+    case last do
+      nil ->
+        :skipped
+
+      scheduled_for ->
+        if within_grace_period?(job, scheduled_for, now) and within_monthly_limit?(job) do
+          case Executions.create_execution_for_job(job, scheduled_for) do
+            {:ok, _} -> :ok
+            {:error, reason} ->
+              Logger.error("[Scheduler] Failed to create execution for job #{job.id}: #{inspect(reason)}")
+              :error
+          end
+        else
+          # Past grace period or over monthly limit - mark as missed
+          if not within_monthly_limit?(job) do
+            Logger.warning("[Scheduler] Job #{job.id} skipped - monthly limit reached for org #{job.organization_id}")
+          end
+          Executions.create_missed_execution(job, scheduled_for)
+          :skipped
+        end
+    end
+  end
+
+  # Splits a list into all elements except the last, and the last element.
+  defp split_last([]), do: {[], nil}
+  defp split_last(list) do
+    {Enum.drop(list, -1), List.last(list)}
+  end
+
+  # Checks if a scheduled time is within the grace period.
+  # Grace period = 50% of interval (min 30s, max 1 hour)
+  # One-time jobs always run (no grace limit) since they're explicitly scheduled.
+  defp within_grace_period?(job, scheduled_for, now) do
+    case job.interval_minutes do
+      nil ->
+        # One-time jobs: always within grace, they should always run
+        true
+
+      interval_minutes ->
+        grace_seconds = compute_grace_period_seconds(interval_minutes)
+        seconds_overdue = DateTime.diff(now, scheduled_for, :second)
+        seconds_overdue < grace_seconds
+    end
+  end
+
+  # Computes grace period in seconds based on job interval.
+  # 50% of interval, minimum 30 seconds, maximum 1 hour.
+  defp compute_grace_period_seconds(interval_minutes) do
+    grace = interval_minutes * 30  # 50% of interval in seconds
+    grace = max(grace, 30)          # Minimum 30 seconds
+    min(grace, 3600)                # Maximum 1 hour
+  end
+
+  # Advances the job's next_run_at past all missed times.
+  defp advance_job_past_missed(job, missed_times) do
+    case job.schedule_type do
+      "cron" ->
+        # Get the last missed time and compute next from there
+        last_missed = List.last(missed_times)
+
+        case compute_next_cron_time(job, last_missed) do
+          {:ok, next_run} ->
+            job
+            |> Ecto.Changeset.change(next_run_at: next_run)
+            |> Repo.update()
+
+          :error ->
+            :ok
+        end
+
+      "once" ->
+        # One-time jobs set next_run_at to nil
+        job
+        |> Ecto.Changeset.change(next_run_at: nil)
+        |> Repo.update()
+
+      _ ->
+        :ok
     end
   end
 

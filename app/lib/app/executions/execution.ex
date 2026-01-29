@@ -20,7 +20,7 @@ defmodule Prikke.Executions.Execution do
     timestamps(type: :utc_datetime)
   end
 
-  @statuses ~w(pending running success failed timeout)
+  @statuses ~w(pending running success failed timeout missed)
 
   @doc false
   def changeset(execution, attrs) do
@@ -106,5 +106,21 @@ defmodule Prikke.Executions.Execution do
       duration_ms: duration,
       error_message: "Request timed out"
     })
+  end
+
+  @doc """
+  Changeset for creating a missed execution.
+  Used when the scheduler was down and couldn't run a job on time.
+  """
+  def missed_changeset(execution, attrs) do
+    now = DateTime.utc_now(:second)
+
+    execution
+    |> cast(attrs, [:job_id, :scheduled_for])
+    |> validate_required([:job_id, :scheduled_for])
+    |> put_change(:status, "missed")
+    |> put_change(:finished_at, now)
+    |> put_change(:error_message, "Scheduler was unavailable at scheduled time")
+    |> foreign_key_constraint(:job_id)
   end
 end

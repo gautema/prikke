@@ -330,6 +330,7 @@ defmodule PrikkeWeb.JobLive.Show do
   defp status_badge_class("timeout"), do: "bg-amber-100 text-amber-700"
   defp status_badge_class("running"), do: "bg-blue-100 text-blue-700"
   defp status_badge_class("pending"), do: "bg-slate-100 text-slate-600"
+  defp status_badge_class("missed"), do: "bg-orange-100 text-orange-700"
   defp status_badge_class(_), do: "bg-slate-100 text-slate-600"
 
   defp status_label("success"), do: "Success"
@@ -337,6 +338,7 @@ defmodule PrikkeWeb.JobLive.Show do
   defp status_label("timeout"), do: "Timeout"
   defp status_label("running"), do: "Running"
   defp status_label("pending"), do: "Pending"
+  defp status_label("missed"), do: "Missed"
   defp status_label(status), do: status
 
   defp format_duration(nil), do: "—"

@@ -33,11 +33,13 @@ defmodule Prikke.SchedulerTest do
         cron_expression: "* * * * *"  # Every minute
       })
 
-      # Manually set next_run_at to the past
-      past = DateTime.utc_now() |> DateTime.add(-120, :second) |> DateTime.truncate(:second)
+      # Manually set next_run_at to just past (within grace period of 30s)
+      # and inserted_at to earlier (simulates existing job)
+      past = DateTime.utc_now() |> DateTime.add(-10, :second) |> DateTime.truncate(:second)
+      created_at = DateTime.utc_now() |> DateTime.add(-300, :second) |> DateTime.truncate(:second)
       job =
         job
-        |> Ecto.Changeset.change(next_run_at: past)
+        |> Ecto.Changeset.change(next_run_at: past, inserted_at: created_at)
         |> Prikke.Repo.update!()
 
       # Verify job is set up correctly
@@ -51,7 +53,8 @@ defmodule Prikke.SchedulerTest do
 
       # Verify execution was created
       executions = Executions.list_job_executions(job)
-      assert length(executions) == 1
+      assert length(executions) >= 1
+      # Should be pending since within grace period
       assert hd(executions).status == "pending"
     end
 
@@ -67,10 +70,12 @@ defmodule Prikke.SchedulerTest do
       })
 
       # Then set it to the past to simulate a due job
-      past = DateTime.utc_now() |> DateTime.add(-60, :second) |> DateTime.truncate(:second)
+      # Also backdate inserted_at to simulate job that existed before
+      past = DateTime.utc_now() |> DateTime.add(-30, :second) |> DateTime.truncate(:second)
+      created_at = DateTime.utc_now() |> DateTime.add(-120, :second) |> DateTime.truncate(:second)
       job =
         job
-        |> Ecto.Changeset.change(scheduled_at: past, next_run_at: past)
+        |> Ecto.Changeset.change(scheduled_at: past, next_run_at: past, inserted_at: created_at)
         |> Prikke.Repo.update!()
 
       {:ok, count} = Scheduler.tick()
@@ -127,10 +132,11 @@ defmodule Prikke.SchedulerTest do
         cron_expression: "* * * * *"
       })
 
-      # Set next_run_at to past
+      # Set next_run_at and inserted_at to past (simulate existing job)
       past = DateTime.utc_now() |> DateTime.add(-60, :second) |> DateTime.truncate(:second)
+      created_at = DateTime.utc_now() |> DateTime.add(-300, :second) |> DateTime.truncate(:second)
       job
-      |> Ecto.Changeset.change(next_run_at: past)
+      |> Ecto.Changeset.change(next_run_at: past, inserted_at: created_at)
       |> Prikke.Repo.update!()
 
       {:ok, _count} = Scheduler.tick()
@@ -142,8 +148,8 @@ defmodule Prikke.SchedulerTest do
     end
 
     test "respects monthly execution limits", %{organization: org} do
-      # org is on free tier (5000 executions/month)
-      # We'll simulate hitting the limit by checking the behavior
+      # org is on Pro tier (upgraded in setup)
+      # We'll verify the job schedules since we're under limit
 
       {:ok, job} = Jobs.create_job(org, %{
         name: "Limited Job",
@@ -152,15 +158,84 @@ defmodule Prikke.SchedulerTest do
         cron_expression: "* * * * *"
       })
 
-      # Set next_run_at to past
-      past = DateTime.utc_now() |> DateTime.add(-60, :second) |> DateTime.truncate(:second)
+      # Set next_run_at and inserted_at to past (simulate existing job)
+      past = DateTime.utc_now() |> DateTime.add(-20, :second) |> DateTime.truncate(:second)
+      created_at = DateTime.utc_now() |> DateTime.add(-120, :second) |> DateTime.truncate(:second)
       job
-      |> Ecto.Changeset.change(next_run_at: past)
+      |> Ecto.Changeset.change(next_run_at: past, inserted_at: created_at)
       |> Prikke.Repo.update!()
 
       # Should schedule since we're under limit
       {:ok, count} = Scheduler.tick()
       assert count == 1
+    end
+
+    test "creates missed executions when scheduler was down", %{organization: org} do
+      {:ok, job} = Jobs.create_job(org, %{
+        name: "Missed Job",
+        url: "https://example.com/webhook",
+        schedule_type: "cron",
+        cron_expression: "* * * * *"  # Every minute
+      })
+
+      # Simulate scheduler down for 3 minutes:
+      # - Job created 5 minutes ago
+      # - Last next_run_at was 3 minutes ago (missed 3 runs: -3min, -2min, -1min)
+      created_at = DateTime.utc_now() |> DateTime.add(-300, :second) |> DateTime.truncate(:second)
+      past = DateTime.utc_now() |> DateTime.add(-180, :second) |> DateTime.truncate(:second)
+
+      job =
+        job
+        |> Ecto.Changeset.change(next_run_at: past, inserted_at: created_at)
+        |> Prikke.Repo.update!()
+
+      {:ok, _count} = Scheduler.tick()
+
+      # Count may be 0 since all runs are past grace period (30s for 1-min cron)
+      # What matters is that executions were created for visibility
+
+      executions = Executions.list_job_executions(job, limit: 10)
+
+      # Should have multiple executions (one for each missed interval)
+      assert length(executions) >= 2
+
+      # All should be "missed" status (past grace period)
+      missed_count = Enum.count(executions, &(&1.status == "missed"))
+      assert missed_count >= 2
+
+      # Verify next_run_at was advanced past now
+      updated_job = Jobs.get_job!(org, job.id)
+      assert DateTime.compare(updated_job.next_run_at, DateTime.utc_now()) == :gt
+    end
+
+    test "does not create missed executions for newly created jobs", %{organization: org} do
+      # Create a cron job - it will have next_run_at in the future
+      {:ok, job} = Jobs.create_job(org, %{
+        name: "New Job",
+        url: "https://example.com/webhook",
+        schedule_type: "cron",
+        cron_expression: "* * * * *"
+      })
+
+      # Job's next_run_at should be in the future (next minute)
+      # Even if we manually set it to the past, no missed executions
+      # should be created for times before inserted_at
+
+      # Set next_run_at to before inserted_at (edge case)
+      way_past = DateTime.utc_now() |> DateTime.add(-600, :second) |> DateTime.truncate(:second)
+      job =
+        job
+        |> Ecto.Changeset.change(next_run_at: way_past)
+        |> Prikke.Repo.update!()
+
+      # inserted_at is still "now", so all those past times should be filtered out
+      {:ok, count} = Scheduler.tick()
+
+      # Should not schedule anything since all times are before job creation
+      assert count == 0
+
+      executions = Executions.list_job_executions(job)
+      assert length(executions) == 0
     end
   end
 end

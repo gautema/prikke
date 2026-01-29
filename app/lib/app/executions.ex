@@ -31,6 +31,19 @@ defmodule Prikke.Executions do
   end
 
   @doc """
+  Creates a missed execution for a job.
+  Used when the scheduler was unavailable at the scheduled time.
+  """
+  def create_missed_execution(%Job{} = job, scheduled_for) do
+    %Execution{}
+    |> Execution.missed_changeset(%{
+      job_id: job.id,
+      scheduled_for: scheduled_for
+    })
+    |> Repo.insert()
+  end
+
+  @doc """
   Gets a single execution.
   """
   def get_execution(id), do: Repo.get(Execution, id)
@@ -165,6 +178,7 @@ defmodule Prikke.Executions do
           timeout: count(fragment("CASE WHEN ? = 'timeout' THEN 1 END", e.status)),
           pending: count(fragment("CASE WHEN ? = 'pending' THEN 1 END", e.status)),
           running: count(fragment("CASE WHEN ? = 'running' THEN 1 END", e.status)),
+          missed: count(fragment("CASE WHEN ? = 'missed' THEN 1 END", e.status)),
           avg_duration_ms: avg(e.duration_ms)
         }
 
@@ -188,6 +202,7 @@ defmodule Prikke.Executions do
           timeout: count(fragment("CASE WHEN ? = 'timeout' THEN 1 END", e.status)),
           pending: count(fragment("CASE WHEN ? = 'pending' THEN 1 END", e.status)),
           running: count(fragment("CASE WHEN ? = 'running' THEN 1 END", e.status)),
+          missed: count(fragment("CASE WHEN ? = 'missed' THEN 1 END", e.status)),
           avg_duration_ms: avg(e.duration_ms)
         }
 
