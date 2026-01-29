@@ -135,7 +135,12 @@ Last updated: 2026-01-29
 - [ ] Lemon Squeezy integration (post-MVP, when ready to charge)
 
 ### Phase 9: Monitoring & Alerting (Partial)
-- [ ] Application error tracking (Sentry or AppSignal)
+- [x] **Admin email notifications** (via `ADMIN_EMAIL` env var)
+  - New user signup notification
+  - Pro upgrade notification
+  - Works in dev (Swoosh mailbox) and production (Mailjet)
+- [x] **Koyeb built-in monitoring** - CPU, memory, request metrics, logs
+- [ ] Application error tracking (Sentry or AppSignal) - using Koyeb logs for now
 - [ ] Performance monitoring (response times, queue depth)
 - [ ] Infrastructure alerts (high CPU, memory, disk)
 - [x] **Public status page for Prikke itself** (`/status`)
@@ -277,6 +282,7 @@ Environment variables:
 - PHX_HOST=prikke.whitenoise.no (without https://)
 - MAILJET_API_KEY
 - MAILJET_SECRET_KEY
+- ADMIN_EMAIL (optional, for signup/upgrade notifications)
 ```
 
 ### URLs
@@ -320,6 +326,8 @@ Environment variables:
 
 ## Recently Completed
 
+- [x] **Admin notifications** - Email alerts for new signups and Pro upgrades (`ADMIN_EMAIL` env var)
+- [x] **Prominent enabled toggle** - Moved to top of job form with large toggle switch
 - [x] **Authorization security fix** - `get_organization_for_user/2` verifies membership before accessing org data
 - [x] **Execution status dots** - colored dots on jobs list and dashboard showing latest execution status
 - [x] **UI improvements** - wider job forms, larger textareas for headers/body, full-width cron input

@@ -398,9 +398,20 @@ defmodule Prikke.Accounts do
   Upgrades an organization to Pro tier.
   """
   def upgrade_organization_to_pro(organization) do
-    organization
-    |> Ecto.Changeset.change(tier: "pro")
-    |> Repo.update()
+    result =
+      organization
+      |> Ecto.Changeset.change(tier: "pro")
+      |> Repo.update()
+
+    case result do
+      {:ok, org} ->
+        # Send admin notification asynchronously
+        Task.start(fn -> UserNotifier.deliver_admin_upgrade_notification(org) end)
+        {:ok, org}
+
+      error ->
+        error
+    end
   end
 
   @doc """
