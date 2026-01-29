@@ -102,10 +102,10 @@
                       <%= if @current_organization do %>
                         <.link
                           href={~p"/organizations/settings"}
-                          class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 no-underline flex items-center gap-2"
+                          class="flex items-center justify-between px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 no-underline"
                         >
-                          <.icon name="hero-cog-6-tooth" class="w-4 h-4 text-slate-400" />
                           Organization settings
+                          <.icon name="hero-chevron-right" class="w-4 h-4 text-slate-400" />
                         </.link>
                       <% end %>
                       <.link
@@ -200,10 +200,10 @@
                   <%= if @current_organization do %>
                     <.link
                       href={~p"/organizations/settings"}
-                      class="block py-3 text-base text-slate-600 no-underline flex items-center gap-2"
+                      class="flex items-center justify-between py-3 text-base text-slate-600 no-underline"
                     >
-                      <.icon name="hero-cog-6-tooth" class="w-5 h-5 text-slate-400" />
                       Organization settings
+                      <.icon name="hero-chevron-right" class="w-5 h-5 text-slate-400" />
                     </.link>
                   <% end %>
                   <.link
