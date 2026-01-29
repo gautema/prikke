@@ -87,6 +87,32 @@ defmodule PrikkeWeb.JobLive.Show do
      |> redirect(to: ~p"/jobs")}
   end
 
+  def handle_event("run_now", _, socket) do
+    job = socket.assigns.job
+    scheduled_for = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    case Executions.create_execution_for_job(job, scheduled_for) do
+      {:ok, _execution} ->
+        # Wake workers to process immediately
+        Jobs.notify_workers()
+
+        # Refresh executions list
+        executions = Executions.list_job_executions(job, limit: 20)
+        stats = Executions.get_job_stats(job)
+        latest_info = get_latest_info(executions)
+
+        {:noreply,
+         socket
+         |> assign(:executions, executions)
+         |> assign(:stats, stats)
+         |> assign(:latest_info, latest_info)
+         |> put_flash(:info, "Job queued for immediate execution")}
+
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Failed to queue job")}
+    end
+  end
+
   defp get_organization(socket, session) do
     user = socket.assigns.current_scope.user
     org_id = session["current_organization_id"]
@@ -123,6 +149,14 @@ defmodule PrikkeWeb.JobLive.Show do
               <p class="text-sm text-slate-500 mt-1">Created <%= Calendar.strftime(@job.inserted_at, "%d %b %Y") %></p>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                phx-click="run_now"
+                class="px-3 py-1.5 text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 rounded-md transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                <.icon name="hero-play" class="w-4 h-4" />
+                Run Now
+              </button>
               <%= if @job.schedule_type == "cron" do %>
                 <button
                   type="button"
