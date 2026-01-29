@@ -333,6 +333,19 @@ defmodule Prikke.JobsTest do
         Jobs.update_job(other_org, job, %{name: "Hacked"})
       end
     end
+
+    test "free tier rejects updating to per-minute cron" do
+      org = organization_fixture(tier: "free")
+      job = job_fixture(org, %{cron_expression: "0 * * * *"})
+
+      # Try to update to per-minute cron
+      assert {:error, changeset} = Jobs.update_job(org, job, %{cron_expression: "* * * * *"})
+      assert "Free plan only allows hourly or less frequent schedules" <> _ = hd(errors_on(changeset).cron_expression)
+
+      # Job should be unchanged
+      unchanged_job = Jobs.get_job!(org, job.id)
+      assert unchanged_job.cron_expression == "0 * * * *"
+    end
   end
 
   describe "delete_job/2" do
