@@ -34,8 +34,11 @@ defmodule Prikke.Application do
   end
 
   # Don't start Scheduler in CI or test mode, and it needs PubSub so add at the end
+  # Uses compile_env because Mix.env() is not available in production releases
+  @start_scheduler Application.compile_env(:app, :start_scheduler, true)
+
   defp maybe_add_scheduler(children) do
-    if Application.get_env(:app, :ci_mode, false) or Mix.env() == :test do
+    if Application.get_env(:app, :ci_mode, false) or not @start_scheduler do
       children
     else
       children ++ [Prikke.Scheduler]

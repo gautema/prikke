@@ -6,6 +6,9 @@ config :bcrypt_elixir, :log_rounds, 1
 # CI mode - skip database for Docker builds
 config :app, :ci_mode, System.get_env("CI") == "true"
 
+# Don't auto-start scheduler in tests (tests start it manually with test_mode: true)
+config :app, :start_scheduler, false
+
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used
