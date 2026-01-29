@@ -184,4 +184,71 @@ defmodule PrikkeWeb.OrganizationController do
       |> redirect(to: ~p"/organizations/settings")
     end
   end
+
+  def api_keys(conn, _params) do
+    organization = conn.assigns.current_organization
+
+    if organization do
+      api_keys = Accounts.list_organization_api_keys(organization)
+      render(conn, :api_keys,
+        organization: organization,
+        api_keys: api_keys,
+        form: to_form(%{}),
+        new_key: nil
+      )
+    else
+      conn
+      |> put_flash(:error, "No organization selected.")
+      |> redirect(to: ~p"/")
+    end
+  end
+
+  def create_api_key(conn, %{"api_key" => %{"name" => name}}) do
+    organization = conn.assigns.current_organization
+    user = conn.assigns.current_scope.user
+
+    case Accounts.create_api_key(organization, user, %{name: name}) do
+      {:ok, api_key, raw_secret} ->
+        api_keys = Accounts.list_organization_api_keys(organization)
+        full_key = "#{api_key.key_id}.#{raw_secret}"
+
+        conn
+        |> put_flash(:info, "API key created successfully.")
+        |> render(:api_keys,
+          organization: organization,
+          api_keys: api_keys,
+          form: to_form(%{}),
+          new_key: full_key
+        )
+
+      {:error, _changeset} ->
+        conn
+        |> put_flash(:error, "Could not create API key.")
+        |> redirect(to: ~p"/organizations/api-keys")
+    end
+  end
+
+  def delete_api_key(conn, %{"id" => id}) do
+    organization = conn.assigns.current_organization
+
+    case Accounts.get_api_key(organization, id) do
+      nil ->
+        conn
+        |> put_flash(:error, "API key not found.")
+        |> redirect(to: ~p"/organizations/api-keys")
+
+      api_key ->
+        case Accounts.delete_api_key(api_key) do
+          {:ok, _} ->
+            conn
+            |> put_flash(:info, "API key revoked.")
+            |> redirect(to: ~p"/organizations/api-keys")
+
+          {:error, _} ->
+            conn
+            |> put_flash(:error, "Could not revoke API key.")
+            |> redirect(to: ~p"/organizations/api-keys")
+        end
+    end
+  end
 end

@@ -558,6 +558,16 @@ defmodule Prikke.Accounts do
   end
 
   @doc """
+  Gets an API key by ID for an organization.
+  """
+  def get_api_key(organization, id) do
+    from(a in ApiKey,
+      where: a.id == ^id and a.organization_id == ^organization.id
+    )
+    |> Repo.one()
+  end
+
+  @doc """
   Deletes an API key.
   """
   def delete_api_key(api_key) do

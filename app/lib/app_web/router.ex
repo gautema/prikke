@@ -123,6 +123,9 @@ defmodule PrikkeWeb.Router do
     get "/organizations/notifications", OrganizationController, :notifications
     put "/organizations/notifications", OrganizationController, :update_notifications
     post "/organizations/upgrade", OrganizationController, :upgrade
+    get "/organizations/api-keys", OrganizationController, :api_keys
+    post "/organizations/api-keys", OrganizationController, :create_api_key
+    delete "/organizations/api-keys/:id", OrganizationController, :delete_api_key
 
     # Invites (authenticated)
     get "/invites", InviteController, :index
