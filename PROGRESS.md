@@ -291,7 +291,7 @@ Environment variables:
 
 ## Test Coverage
 
-- **249 tests passing**
+- **251 tests passing**
 - Accounts: user auth, organizations, memberships, invites, API keys
 - Jobs: CRUD, validations, cron parsing, tier limits
 - Executions: creation, claiming, completion, stats
@@ -320,6 +320,10 @@ Environment variables:
 
 ## Recently Completed
 
+- [x] **Authorization security fix** - `get_organization_for_user/2` verifies membership before accessing org data
+- [x] **Execution status dots** - colored dots on jobs list and dashboard showing latest execution status
+- [x] **UI improvements** - wider job forms, larger textareas for headers/body, full-width cron input
+- [x] **Navigation improvements** - back to dashboard links throughout job pages
 - [x] **Execution detail page** - view full request/response details for any execution
 - [x] **Graceful shutdown** - workers finish current request during deploys (60s timeout)
 - [x] **Stale execution recovery** - hourly cleanup of stuck "running" executions
