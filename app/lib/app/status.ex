@@ -201,6 +201,81 @@ defmodule Prikke.Status do
   end
 
   @doc """
+  Returns daily uptime status for the last N days.
+  Returns a list of {date, status} tuples where status is:
+  - :up - no incidents that day
+  - :down - had an incident that day
+  - :unknown - no monitoring data for that day
+
+  The list is ordered from oldest to newest (left to right for display).
+  """
+  def get_daily_uptime(days \\ 90) do
+    today = Date.utc_today()
+    start_date = Date.add(today, -(days - 1))
+
+    # Get the earliest status check to know when monitoring started
+    earliest_check =
+      from(c in StatusCheck,
+        order_by: [asc: c.started_at],
+        limit: 1,
+        select: c.started_at
+      )
+      |> Repo.one()
+
+    monitoring_start_date = if earliest_check do
+      DateTime.to_date(earliest_check)
+    else
+      nil
+    end
+
+    # Get all incidents in the date range
+    incidents =
+      from(i in Incident,
+        where: i.started_at >= ^DateTime.new!(start_date, ~T[00:00:00], "Etc/UTC"),
+        select: i
+      )
+      |> Repo.all()
+
+    # Build a set of dates that had incidents
+    incident_dates =
+      incidents
+      |> Enum.flat_map(fn incident ->
+        incident_start = DateTime.to_date(incident.started_at)
+        incident_end = if incident.resolved_at do
+          DateTime.to_date(incident.resolved_at)
+        else
+          today
+        end
+        Date.range(incident_start, incident_end) |> Enum.to_list()
+      end)
+      |> MapSet.new()
+
+    # Generate status for each day
+    Date.range(start_date, today)
+    |> Enum.map(fn date ->
+      status = cond do
+        # No monitoring data yet
+        is_nil(monitoring_start_date) ->
+          :unknown
+
+        # Before monitoring started
+        Date.compare(date, monitoring_start_date) == :lt ->
+          :unknown
+
+        # Had an incident
+        MapSet.member?(incident_dates, date) ->
+          :down
+
+        # No incident, monitoring was active
+        true ->
+          :up
+      end
+
+      {date, status}
+    end)
+  end
+
+  @doc """
   Detects if the system was down based on a gap since last check.
   If the last check was more than `threshold_minutes` ago, creates a resolved
   incident for the downtime period.

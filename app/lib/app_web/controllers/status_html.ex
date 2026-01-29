@@ -27,26 +27,35 @@ defmodule PrikkeWeb.StatusHTML do
   def component_label("api"), do: "API & Dashboard"
   def component_label(component), do: String.capitalize(component)
 
+  def uptime_status_label(:up), do: "Operational"
+  def uptime_status_label(:down), do: "Incident"
+  def uptime_status_label(:unknown), do: "No data"
+
   def format_time(nil), do: "Never"
+
   def format_time(datetime) do
     Calendar.strftime(datetime, "%d %b %Y, %H:%M UTC")
   end
 
   def format_duration(nil, _), do: ""
+
   def format_duration(started_at, nil) do
     duration = DateTime.diff(DateTime.utc_now(), started_at, :minute)
     "Ongoing for #{format_duration_text(duration)}"
   end
+
   def format_duration(started_at, resolved_at) do
     duration = DateTime.diff(resolved_at, started_at, :minute)
     "Duration: #{format_duration_text(duration)}"
   end
 
   defp format_duration_text(minutes) when minutes < 60, do: "#{minutes} min"
+
   defp format_duration_text(minutes) when minutes < 1440 do
     hours = div(minutes, 60)
     "#{hours} hour#{if hours > 1, do: "s", else: ""}"
   end
+
   defp format_duration_text(minutes) do
     days = div(minutes, 1440)
     "#{days} day#{if days > 1, do: "s", else: ""}"
