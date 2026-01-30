@@ -75,7 +75,7 @@ defmodule PrikkeWeb.OrganizationController do
   def update(conn, %{"organization" => org_params}) do
     organization = conn.assigns.current_organization
 
-    case Accounts.update_organization(organization, org_params) do
+    case Accounts.update_organization(organization, org_params, scope: conn.assigns.current_scope) do
       {:ok, _organization} ->
         conn
         |> put_flash(:info, "Organization updated successfully.")
@@ -154,7 +154,7 @@ defmodule PrikkeWeb.OrganizationController do
   def update_notifications(conn, %{"organization" => notification_params}) do
     organization = conn.assigns.current_organization
 
-    case Accounts.update_notification_settings(organization, notification_params) do
+    case Accounts.update_notification_settings(organization, notification_params, scope: conn.assigns.current_scope) do
       {:ok, _organization} ->
         conn
         |> put_flash(:info, "Notification settings updated.")
@@ -213,7 +213,7 @@ defmodule PrikkeWeb.OrganizationController do
     organization = conn.assigns.current_organization
     user = conn.assigns.current_scope.user
 
-    case Accounts.create_api_key(organization, user, %{name: name}) do
+    case Accounts.create_api_key(organization, user, %{name: name}, scope: conn.assigns.current_scope) do
       {:ok, api_key, raw_secret} ->
         api_keys = Accounts.list_organization_api_keys(organization)
         full_key = "#{api_key.key_id}.#{raw_secret}"
@@ -244,7 +244,7 @@ defmodule PrikkeWeb.OrganizationController do
         |> redirect(to: ~p"/organizations/api-keys")
 
       api_key ->
-        case Accounts.delete_api_key(api_key) do
+        case Accounts.delete_api_key(api_key, scope: conn.assigns.current_scope) do
           {:ok, _} ->
             conn
             |> put_flash(:info, "API key revoked.")
