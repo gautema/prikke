@@ -245,7 +245,7 @@ defmodule PrikkeWeb.JobLive.Show do
                   <span class="font-mono text-base sm:text-lg bg-slate-200 px-3 py-1 rounded w-fit">
                     {@job.cron_expression}
                   </span>
-                  <span class="text-slate-600">{describe_cron(@job.cron_expression)}</span>
+                  <span class="text-slate-600">{Jobs.describe_cron(@job.cron_expression)}</span>
                 </div>
                 <p class="text-sm text-slate-500 mt-2">Timezone: {@job.timezone}</p>
               <% else %>
@@ -354,24 +354,6 @@ defmodule PrikkeWeb.JobLive.Show do
       </div>
     </div>
     """
-  end
-
-  defp describe_cron(expression) do
-    case expression do
-      "* * * * *" -> "Every minute"
-      "*/5 * * * *" -> "Every 5 minutes"
-      "*/15 * * * *" -> "Every 15 minutes"
-      "*/30 * * * *" -> "Every 30 minutes"
-      "0 * * * *" -> "Every hour"
-      "0 */2 * * *" -> "Every 2 hours"
-      "0 */6 * * *" -> "Every 6 hours"
-      "0 */12 * * *" -> "Every 12 hours"
-      "0 0 * * *" -> "Daily at midnight"
-      "0 9 * * *" -> "Daily at 9:00 AM"
-      "0 0 * * 0" -> "Weekly on Sunday"
-      "0 0 1 * *" -> "Monthly on the 1st"
-      _ -> "Custom schedule"
-    end
   end
 
   defp format_timeout(ms) do
