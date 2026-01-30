@@ -1,10 +1,10 @@
 <div class="min-h-screen bg-slate-50">
   <div class="max-w-[680px] mx-auto px-6">
     <%= unless @current_scope do %>
-      <!-- Header (landing page only) -->
-      <header class="py-6 group/menu">
-        <input type="checkbox" id="landing-menu-toggle" class="hidden peer" />
-        <div class="flex justify-between items-center">
+      <!-- Header wrapper with mobile menu group -->
+      <div class="group/menu">
+        <input type="checkbox" id="landing-menu-toggle" class="hidden" />
+        <header class="py-6 flex justify-between items-center">
           <a
             href="/"
             class="flex items-center gap-2.5 text-xl font-semibold text-slate-900 no-underline"
@@ -46,28 +46,30 @@
               Log in
             </a>
           </nav>
+        </header>
+        <!-- Mobile menu (overlay, CSS-only) -->
+        <div class="hidden group-has-[:checked]/menu:block sm:hidden fixed inset-x-0 top-[72px] bottom-0 bg-white border-t border-slate-200 z-50 overflow-y-auto">
+          <nav class="flex flex-col gap-1 px-6 py-4">
+            <a href="/docs" class="block py-3 text-base text-slate-700 no-underline hover:text-emerald-500">
+              Docs
+            </a>
+            <a href="/status" class="block py-3 text-base text-slate-700 no-underline hover:text-emerald-500">
+              Status
+            </a>
+            <div class="border-t border-slate-200 pt-3 mt-2 flex flex-col gap-1">
+              <a
+                href="/users/register"
+                class="block py-3 text-base text-slate-700 no-underline hover:text-emerald-500"
+              >
+                Register
+              </a>
+              <a href="/users/log-in" class="block py-3 text-base font-medium text-emerald-600 no-underline">
+                Log in
+              </a>
+            </div>
+          </nav>
         </div>
-        <!-- Mobile menu (CSS-only toggle) -->
-        <nav class="hidden group-has-[:checked]/menu:flex flex-col gap-3 pt-4 sm:hidden">
-          <a href="/docs" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">
-            Docs
-          </a>
-          <a href="/status" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">
-            Status
-          </a>
-          <div class="border-t border-slate-200 pt-3 mt-1 flex flex-col gap-3">
-            <a
-              href="/users/register"
-              class="text-slate-600 no-underline text-[15px] hover:text-emerald-500"
-            >
-              Register
-            </a>
-            <a href="/users/log-in" class="text-[15px] font-medium text-emerald-600 no-underline">
-              Log in
-            </a>
-          </div>
-        </nav>
-      </header>
+      </div>
     <% end %>
 
 <!-- Hero -->
