@@ -823,7 +823,7 @@ defmodule PrikkeWeb.CoreComponents do
       <footer class="py-10 border-t border-slate-200 text-center text-slate-500 text-sm">
         <div class="flex flex-wrap justify-center gap-4 mb-3">
           <a href="/docs" class="text-slate-600 no-underline hover:text-emerald-500">Docs</a>
-          <a href="/api/docs" class="text-slate-600 no-underline hover:text-emerald-500">
+          <a href="/docs/api" class="text-slate-600 no-underline hover:text-emerald-500">
             API Reference
           </a>
           <a href="/status" class="text-slate-600 no-underline hover:text-emerald-500">Status</a>
@@ -842,7 +842,7 @@ defmodule PrikkeWeb.CoreComponents do
           <div class="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-500">
             <div class="flex flex-wrap justify-center gap-4 sm:gap-6">
               <a href="/docs" class="hover:text-slate-700">Docs</a>
-              <a href="/api/docs" class="hover:text-slate-700">API Reference</a>
+              <a href="/docs/api" class="hover:text-slate-700">API Reference</a>
               <a href="/status" class="hover:text-slate-700">Status</a>
             </div>
             <div>
