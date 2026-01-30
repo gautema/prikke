@@ -3,15 +3,6 @@ defmodule PrikkeWeb.StatusController do
 
   alias Prikke.Status
 
-  plug :put_layout, false
-  plug :assign_hide_header_footer
-
-  defp assign_hide_header_footer(conn, _opts) do
-    conn
-    |> assign(:hide_header, true)
-    |> assign(:hide_footer, true)
-  end
-
   def index(conn, _params) do
     status = Status.get_current_status()
     overall = Status.overall_status()
