@@ -311,11 +311,14 @@ defmodule Prikke.Worker do
     end
   end
 
+  # Max response body size: 256KB
+  @max_response_size 256 * 1024
+
   defp truncate_body(nil), do: nil
 
   defp truncate_body(body) when is_binary(body) do
-    if byte_size(body) > 10_000 do
-      String.slice(body, 0, 10_000) <> "... [truncated]"
+    if byte_size(body) > @max_response_size do
+      String.slice(body, 0, @max_response_size) <> "... [truncated]"
     else
       body
     end

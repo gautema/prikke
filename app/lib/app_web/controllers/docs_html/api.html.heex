@@ -55,7 +55,7 @@
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">body</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
-          <td class="py-2 text-slate-600">Request body (optional)</td>
+          <td class="py-2 text-slate-600">Request body, max 256KB (optional)</td>
         </tr>
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">name</code></td>
@@ -187,7 +187,7 @@
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">body</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
-          <td class="py-2 text-slate-600">Request body (optional)</td>
+          <td class="py-2 text-slate-600">Request body, max 256KB (optional)</td>
         </tr>
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">timeout_ms</code></td>
@@ -395,7 +395,7 @@
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">jobs[].body</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
-          <td class="py-2 text-slate-600">Request body (optional)</td>
+          <td class="py-2 text-slate-600">Request body, max 256KB (optional)</td>
         </tr>
         <tr>
           <td class="py-2 pr-4"><code class="text-sky-600">delete_removed</code></td>
@@ -419,6 +419,41 @@
     }],
     <span class="text-sky-300">"delete_removed"</span>: <span class="text-orange-300">true</span>
   }'</pre>
+  </div>
+
+  <h2>Limits</h2>
+  <div class="overflow-x-auto my-6">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-slate-200">
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Limit</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Value</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600">
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4">Request body size</td>
+          <td class="py-3 px-4"><code class="text-sky-600">256 KB</code></td>
+          <td class="py-3 px-4">Maximum size of the <code>body</code> field sent to webhooks</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4">Response body storage</td>
+          <td class="py-3 px-4"><code class="text-sky-600">256 KB</code></td>
+          <td class="py-3 px-4">Responses larger than this are truncated in execution history</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4">Request timeout</td>
+          <td class="py-3 px-4"><code class="text-sky-600">1s - 5min</code></td>
+          <td class="py-3 px-4">Configurable per job (default: 30s)</td>
+        </tr>
+        <tr>
+          <td class="py-3 px-4">Retry attempts</td>
+          <td class="py-3 px-4"><code class="text-sky-600">0 - 10</code></td>
+          <td class="py-3 px-4">For one-time jobs only (default: 5)</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
   <h2>Errors</h2>

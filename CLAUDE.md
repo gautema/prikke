@@ -280,6 +280,15 @@ Notes:
 - Team member limit includes pending invites
 - Add more tiers later based on real usage patterns
 
+### Technical Limits
+
+| Limit | Value | Notes |
+|-------|-------|-------|
+| Request body | 256 KB | Max size of webhook payload sent to target |
+| Response storage | 256 KB | Responses truncated in execution history |
+| Timeout | 1s - 5min | Configurable per job (default: 30s) |
+| Retry attempts | 0 - 10 | For one-time jobs only (default: 5) |
+
 ## Infrastructure
 
 ### Production Stack

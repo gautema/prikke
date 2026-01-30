@@ -59,6 +59,7 @@ defmodule Prikke.Jobs.Job do
       greater_than_or_equal_to: 1000,
       less_than_or_equal_to: 300_000
     )
+    |> validate_body_size()
     |> validate_schedule()
     |> compute_interval_minutes()
     |> compute_next_run_at()
@@ -82,6 +83,19 @@ defmodule Prikke.Jobs.Job do
 
         _ ->
           [{field, "must be a valid HTTP or HTTPS URL"}]
+      end
+    end)
+  end
+
+  # Max body size: 256KB
+  @max_body_size 256 * 1024
+
+  defp validate_body_size(changeset) do
+    validate_change(changeset, :body, fn _, body ->
+      if is_binary(body) and byte_size(body) > @max_body_size do
+        [{:body, "must be less than 256KB"}]
+      else
+        []
       end
     end)
   end
