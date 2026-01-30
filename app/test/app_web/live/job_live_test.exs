@@ -61,7 +61,7 @@ defmodule PrikkeWeb.JobLiveTest do
 
       {:ok, _view, html} = live(conn, ~p"/jobs/#{job.id}")
 
-      assert html =~ "Recent Executions"
+      assert html =~ "Execution History"
     end
   end
 

@@ -228,16 +228,51 @@ defmodule Prikke.Executions do
 
   @doc """
   Lists executions for a job, ordered by most recent first.
+
+  Options:
+    - :limit - max results (default 50)
+    - :offset - skip first N results (default 0)
+    - :status - filter by status ("success", "failed", "timeout", etc.) or nil for all
   """
   def list_job_executions(job, opts \\ []) do
     limit = Keyword.get(opts, :limit, 50)
+    offset = Keyword.get(opts, :offset, 0)
+    status = Keyword.get(opts, :status)
 
-    from(e in Execution,
-      where: e.job_id == ^job.id,
-      order_by: [desc: e.scheduled_for],
-      limit: ^limit
-    )
-    |> Repo.all()
+    query =
+      from(e in Execution,
+        where: e.job_id == ^job.id,
+        order_by: [desc: e.scheduled_for],
+        limit: ^limit,
+        offset: ^offset
+      )
+
+    query =
+      if status && status != "" do
+        from(e in query, where: e.status == ^status)
+      else
+        query
+      end
+
+    Repo.all(query)
+  end
+
+  @doc """
+  Counts total executions for a job, optionally filtered by status.
+  """
+  def count_job_executions(job, opts \\ []) do
+    status = Keyword.get(opts, :status)
+
+    query = from(e in Execution, where: e.job_id == ^job.id)
+
+    query =
+      if status && status != "" do
+        from(e in query, where: e.status == ^status)
+      else
+        query
+      end
+
+    Repo.aggregate(query, :count)
   end
 
   @doc """

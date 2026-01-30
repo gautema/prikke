@@ -4,13 +4,17 @@ defmodule PrikkeWeb.JobLive.Show do
   alias Prikke.Jobs
   alias Prikke.Executions
 
+  @per_page 20
+
   @impl true
   def mount(%{"id" => id}, session, socket) do
     org = get_organization(socket, session)
 
     if org do
       job = Jobs.get_job!(org, id)
-      executions = Executions.list_job_executions(job, limit: 20)
+      status_filter = nil
+      executions = Executions.list_job_executions(job, limit: @per_page, status: status_filter)
+      total_count = Executions.count_job_executions(job, status: status_filter)
       stats = Executions.get_job_stats(job)
       latest_info = get_latest_info(executions)
 
@@ -26,6 +30,8 @@ defmodule PrikkeWeb.JobLive.Show do
        |> assign(:executions, executions)
        |> assign(:stats, stats)
        |> assign(:latest_info, latest_info)
+       |> assign(:status_filter, status_filter)
+       |> assign(:total_count, total_count)
        |> assign(:page_title, job.name)}
     else
       {:ok,
@@ -38,7 +44,9 @@ defmodule PrikkeWeb.JobLive.Show do
   @impl true
   def handle_info({:updated, job}, socket) do
     if job.id == socket.assigns.job.id do
-      executions = Executions.list_job_executions(job, limit: 20)
+      status_filter = socket.assigns.status_filter
+      executions = Executions.list_job_executions(job, limit: @per_page, status: status_filter)
+      total_count = Executions.count_job_executions(job, status: status_filter)
       stats = Executions.get_job_stats(job)
       latest_info = get_latest_info(executions)
 
@@ -46,6 +54,7 @@ defmodule PrikkeWeb.JobLive.Show do
        socket
        |> assign(:job, job)
        |> assign(:executions, executions)
+       |> assign(:total_count, total_count)
        |> assign(:stats, stats)
        |> assign(:latest_info, latest_info)}
     else
@@ -67,13 +76,16 @@ defmodule PrikkeWeb.JobLive.Show do
   def handle_info({:execution_updated, _execution}, socket) do
     # Refresh executions list when any execution for this job changes
     job = socket.assigns.job
-    executions = Executions.list_job_executions(job, limit: 20)
+    status_filter = socket.assigns.status_filter
+    executions = Executions.list_job_executions(job, limit: @per_page, status: status_filter)
+    total_count = Executions.count_job_executions(job, status: status_filter)
     stats = Executions.get_job_stats(job)
     latest_info = get_latest_info(executions)
 
     {:noreply,
      socket
      |> assign(:executions, executions)
+     |> assign(:total_count, total_count)
      |> assign(:stats, stats)
      |> assign(:latest_info, latest_info)}
   end
@@ -116,13 +128,16 @@ defmodule PrikkeWeb.JobLive.Show do
         Jobs.notify_workers()
 
         # Refresh executions list
-        executions = Executions.list_job_executions(job, limit: 20)
+        status_filter = socket.assigns.status_filter
+        executions = Executions.list_job_executions(job, limit: @per_page, status: status_filter)
+        total_count = Executions.count_job_executions(job, status: status_filter)
         stats = Executions.get_job_stats(job)
         latest_info = get_latest_info(executions)
 
         {:noreply,
          socket
          |> assign(:executions, executions)
+         |> assign(:total_count, total_count)
          |> assign(:stats, stats)
          |> assign(:latest_info, latest_info)
          |> put_flash(:info, "Job queued for immediate execution")}
@@ -130,6 +145,36 @@ defmodule PrikkeWeb.JobLive.Show do
       {:error, _reason} ->
         {:noreply, put_flash(socket, :error, "Failed to queue job")}
     end
+  end
+
+  def handle_event("filter", %{"status" => status}, socket) do
+    job = socket.assigns.job
+    status_filter = if status == "", do: nil, else: status
+    executions = Executions.list_job_executions(job, limit: @per_page, status: status_filter)
+    total_count = Executions.count_job_executions(job, status: status_filter)
+
+    {:noreply,
+     socket
+     |> assign(:status_filter, status_filter)
+     |> assign(:executions, executions)
+     |> assign(:total_count, total_count)}
+  end
+
+  def handle_event("load_more", _, socket) do
+    job = socket.assigns.job
+    status_filter = socket.assigns.status_filter
+    current_count = length(socket.assigns.executions)
+
+    more_executions =
+      Executions.list_job_executions(job,
+        limit: @per_page,
+        offset: current_count,
+        status: status_filter
+      )
+
+    {:noreply,
+     socket
+     |> assign(:executions, socket.assigns.executions ++ more_executions)}
   end
 
   defp get_organization(socket, session) do
@@ -304,14 +349,38 @@ defmodule PrikkeWeb.JobLive.Show do
             </div>
           <% end %>
           
-    <!-- Recent Executions -->
+    <!-- Execution History -->
           <div>
-            <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">
-              Recent Executions
-            </h3>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+              <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide">
+                Execution History
+                <span class="text-slate-400 font-normal normal-case">
+                  ({@total_count} total)
+                </span>
+              </h3>
+              <form phx-change="filter" class="flex items-center gap-2">
+                <label for="status-filter" class="text-sm text-slate-500">Filter:</label>
+                <select
+                  name="status"
+                  id="status-filter"
+                  class="text-sm border-slate-200 rounded-md py-1 pl-2 pr-8 focus:ring-emerald-500 focus:border-emerald-500"
+                >
+                  <option value="" selected={@status_filter == nil}>All</option>
+                  <option value="success" selected={@status_filter == "success"}>Success</option>
+                  <option value="failed" selected={@status_filter == "failed"}>Failed</option>
+                  <option value="timeout" selected={@status_filter == "timeout"}>Timeout</option>
+                  <option value="pending" selected={@status_filter == "pending"}>Pending</option>
+                  <option value="running" selected={@status_filter == "running"}>Running</option>
+                </select>
+              </form>
+            </div>
             <%= if @executions == [] do %>
               <div class="bg-slate-50 rounded-lg p-6 sm:p-8 text-center text-slate-500">
-                No executions yet. This job will run according to its schedule.
+                <%= if @status_filter do %>
+                  No executions matching this filter.
+                <% else %>
+                  No executions yet. This job will run according to its schedule.
+                <% end %>
               </div>
             <% else %>
               <div class="bg-slate-50 rounded-lg overflow-hidden divide-y divide-slate-200">
@@ -348,6 +417,20 @@ defmodule PrikkeWeb.JobLive.Show do
                   </.link>
                 <% end %>
               </div>
+              <%= if length(@executions) < @total_count do %>
+                <div class="mt-4 text-center">
+                  <button
+                    type="button"
+                    phx-click="load_more"
+                    class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors"
+                  >
+                    Load more
+                    <span class="text-slate-400">
+                      (showing {length(@executions)} of {@total_count})
+                    </span>
+                  </button>
+                </div>
+              <% end %>
             <% end %>
           </div>
         </div>
