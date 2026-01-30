@@ -1,9 +1,10 @@
 service: cronly
 
-image: ghcr.io/gautema/cronly
+image: gautema/cronly
 
 builder:
   arch: amd64
+  remote: ssh://root@46.225.66.205
 
 servers:
   web:

@@ -1,7 +1,7 @@
-# Build stage - Elixir 1.17 with Erlang 26 (stable for cross-compilation)
-ARG ELIXIR_VERSION=1.17.3
-ARG OTP_VERSION=26.2.5.6
-ARG ALPINE_VERSION=3.20.3
+# Build stage - Elixir 1.19.5 with Erlang 28
+ARG ELIXIR_VERSION=1.19.5
+ARG OTP_VERSION=28.3.1
+ARG ALPINE_VERSION=3.23.3
 
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-alpine-${ALPINE_VERSION}"
 ARG RUNNER_IMAGE="alpine:${ALPINE_VERSION}"
@@ -11,10 +11,8 @@ FROM ${BUILDER_IMAGE} AS build
 # Install build dependencies
 RUN apk add --no-cache build-base git curl
 
-# Set build environment - TERM=dumb prevents TTY issues in cross-compilation
+# Set build environment
 ENV MIX_ENV=prod
-ENV TERM=dumb
-ENV ERL_FLAGS="+B -noinput"
 
 # Install hex and rebar
 RUN mix local.hex --force && mix local.rebar --force
