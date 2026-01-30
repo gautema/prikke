@@ -64,81 +64,160 @@
 <!-- Hero -->
     <section class="py-12 sm:py-20 text-center">
       <div class="inline-flex items-center gap-1.5 bg-white border border-slate-200 px-4 py-2 rounded-full text-sm text-slate-600 mb-6">
-        <.icon name="hero-clock" class="w-[18px] h-[18px]" /> EU-hosted
+        <.icon name="hero-shield-check" class="w-[18px] h-[18px]" /> EU-hosted · GDPR-native
       </div>
       <h1 class="text-3xl sm:text-5xl font-bold leading-tight tracking-tight mb-6 text-slate-900">
-        Background jobs,<br />made simple.
+        Offload your<br />background jobs.
       </h1>
-      <p class="text-lg sm:text-xl text-slate-600 mb-10 max-w-[500px] mx-auto">
-        Cron scheduling and webhook delivery for developers who ship products, not infrastructure.
+      <p class="text-lg sm:text-xl text-slate-600 mb-8 max-w-[520px] mx-auto">
+        Stop building schedulers. We handle cron jobs, one-time tasks, retries, and webhook delivery. You focus on your product.
       </p>
-      <span class="text-sm text-slate-500 italic">Jobs done, til punkt og prikke.</span>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center mb-10">
+        <a
+          href="/users/register"
+          class="inline-block px-6 py-3 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors no-underline"
+        >
+          Start free
+        </a>
+        <a
+          href="/docs"
+          class="inline-block px-6 py-3 bg-white border border-slate-200 text-slate-700 font-medium rounded-md hover:bg-slate-50 transition-colors no-underline"
+        >
+          View docs
+        </a>
+      </div>
+      <p class="text-sm text-slate-400">No credit card required · 5 jobs free forever</p>
     </section>
     
+<!-- Use cases -->
+    <section class="py-14 border-t border-slate-200">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
+        What you can offload
+      </h2>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div class="bg-white border border-slate-200 rounded-lg p-5">
+          <h3 class="text-base font-semibold mb-2 text-slate-900">Cron jobs</h3>
+          <p class="text-[15px] text-slate-500 m-0">
+            Daily reports, hourly syncs, weekly cleanups. Standard cron expressions, no server needed.
+          </p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-5">
+          <h3 class="text-base font-semibold mb-2 text-slate-900">Delayed tasks</h3>
+          <p class="text-[15px] text-slate-500 m-0">
+            Send a reminder in 24 hours. Process an order in 30 minutes. Schedule once, we deliver.
+          </p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-5">
+          <h3 class="text-base font-semibold mb-2 text-slate-900">Background jobs</h3>
+          <p class="text-[15px] text-slate-500 m-0">
+            Offload heavy work from your request cycle. We ping your endpoint, you do the work async.
+          </p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-5">
+          <h3 class="text-base font-semibold mb-2 text-slate-900">Webhook relay</h3>
+          <p class="text-[15px] text-slate-500 m-0">
+            Forward events with guaranteed delivery. Automatic retries with exponential backoff.
+          </p>
+        </div>
+      </div>
+    </section>
+
 <!-- Features -->
     <section class="py-14 border-t border-slate-200">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
-        What you get
+        We handle the hard parts
       </h2>
-      <div class="grid gap-6">
+      <div class="grid gap-5">
         <div class="flex gap-4">
           <div class="flex-shrink-0 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-            <.icon name="hero-check" class="w-3.5 h-3.5 text-white" />
+            <.icon name="hero-arrow-path" class="w-3.5 h-3.5 text-white" />
           </div>
           <div>
-            <h3 class="text-base font-semibold mb-1 text-slate-900">Cron & scheduled jobs</h3>
+            <h3 class="text-base font-semibold mb-1 text-slate-900">Automatic retries</h3>
             <p class="text-[15px] text-slate-600 m-0">
-              Recurring cron schedules or one-time jobs at a specific time. Run every minute, daily, or just once.
+              Failed request? We retry with exponential backoff. Up to 10 attempts, configurable per job.
             </p>
           </div>
         </div>
         <div class="flex gap-4">
           <div class="flex-shrink-0 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-            <.icon name="hero-check" class="w-3.5 h-3.5 text-white" />
+            <.icon name="hero-clock" class="w-3.5 h-3.5 text-white" />
           </div>
           <div>
-            <h3 class="text-base font-semibold mb-1 text-slate-900">Webhook delivery</h3>
+            <h3 class="text-base font-semibold mb-1 text-slate-900">Precise scheduling</h3>
             <p class="text-[15px] text-slate-600 m-0">
-              We call your endpoint with automatic retries and exponential backoff. You focus on the logic.
+              Minute-level precision. Timezone-aware. Your jobs run exactly when you expect them to.
             </p>
           </div>
         </div>
         <div class="flex gap-4">
           <div class="flex-shrink-0 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-            <.icon name="hero-check" class="w-3.5 h-3.5 text-white" />
+            <.icon name="hero-document-text" class="w-3.5 h-3.5 text-white" />
           </div>
           <div>
-            <h3 class="text-base font-semibold mb-1 text-slate-900">Execution history</h3>
+            <h3 class="text-base font-semibold mb-1 text-slate-900">Full execution history</h3>
             <p class="text-[15px] text-slate-600 m-0">
-              See every run with status, duration, and response. Know exactly what happened and when.
+              Every run logged with status, duration, response body, and errors. Debug with confidence.
             </p>
           </div>
         </div>
         <div class="flex gap-4">
           <div class="flex-shrink-0 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-            <.icon name="hero-check" class="w-3.5 h-3.5 text-white" />
+            <.icon name="hero-bell-alert" class="w-3.5 h-3.5 text-white" />
           </div>
           <div>
             <h3 class="text-base font-semibold mb-1 text-slate-900">Failure alerts</h3>
             <p class="text-[15px] text-slate-600 m-0">
-              Get notified via email or Slack when jobs fail. Fix issues before your users notice.
+              Get notified via email or webhook when jobs fail. Know before your users do.
             </p>
           </div>
         </div>
         <div class="flex gap-4">
           <div class="flex-shrink-0 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-            <.icon name="hero-check" class="w-3.5 h-3.5 text-white" />
+            <.icon name="hero-shield-check" class="w-3.5 h-3.5 text-white" />
           </div>
           <div>
-            <h3 class="text-base font-semibold mb-1 text-slate-900">EU-hosted</h3>
+            <h3 class="text-base font-semibold mb-1 text-slate-900">EU-hosted, GDPR-native</h3>
             <p class="text-[15px] text-slate-600 m-0">
-              Your data stays in Europe. GDPR-native. No US cloud providers in the chain.
+              Infrastructure in Frankfurt. Your data never leaves Europe. No US cloud in the chain.
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="flex-shrink-0 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
+            <.icon name="hero-code-bracket" class="w-3.5 h-3.5 text-white" />
+          </div>
+          <div>
+            <h3 class="text-base font-semibold mb-1 text-slate-900">API + Dashboard</h3>
+            <p class="text-[15px] text-slate-600 m-0">
+              Manage jobs via REST API or our real-time dashboard. Full control, your way.
             </p>
           </div>
         </div>
       </div>
     </section>
-    
+
+<!-- Built for reliability -->
+    <section class="py-14 border-t border-slate-200">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
+        Built for reliability
+      </h2>
+      <div class="bg-white border border-slate-200 rounded-lg p-6">
+        <p class="text-[15px] text-slate-600 mb-4">
+          Prikke runs on <strong class="text-slate-900">Elixir and the BEAM VM</strong> — the same technology that powers WhatsApp, Discord, and telecom systems requiring 99.9999% uptime.
+        </p>
+        <p class="text-[15px] text-slate-600 mb-4">
+          The BEAM was designed for systems that never stop. Lightweight processes, fault isolation, and hot code upgrades mean your scheduled jobs keep running even during deployments.
+        </p>
+        <p class="text-[15px] text-slate-600 mb-4">
+          Combined with our EU-based infrastructure, you get a job scheduler you can actually depend on.
+        </p>
+        <p class="text-[15px] text-slate-600 m-0">
+          <strong class="text-slate-900">Privacy by design.</strong> We don't track your users, sell data, or inject analytics. Your job payloads are yours alone. No third-party processors, no US subprocessors, no surprises in the DPA.
+        </p>
+      </div>
+    </section>
+
 <!-- How it works -->
     <section class="py-14 border-t border-slate-200">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
