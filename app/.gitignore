@@ -35,3 +35,6 @@ app-*.tar
 npm-debug.log
 /assets/node_modules/
 
+# Kamal secrets (contains passwords and tokens)
+.kamal/secrets
+

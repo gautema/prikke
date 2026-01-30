@@ -1,0 +1,44 @@
+service: cronly
+
+image: ghcr.io/gautema/cronly
+
+builder:
+  arch: amd64
+
+servers:
+  web:
+    hosts:
+      - 46.225.66.205
+
+proxy:
+  ssl: true
+  host: cronly.eu
+  app_port: 4000
+
+registry:
+  server: ghcr.io
+  username: gautema
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+env:
+  clear:
+    PHX_HOST: cronly.eu
+    PORT: 4000
+    MIX_ENV: prod
+  secret:
+    - SECRET_KEY_BASE
+    - DATABASE_URL
+
+accessories:
+  db:
+    image: postgres:18
+    host: 46.225.66.205
+    env:
+      clear:
+        POSTGRES_DB: cronly_prod
+      secret:
+        - POSTGRES_USER
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
