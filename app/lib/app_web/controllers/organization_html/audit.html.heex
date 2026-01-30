@@ -61,6 +61,12 @@
                     <span class="text-sm font-medium text-slate-700">
                       {Prikke.Audit.format_resource_type(log.resource_type)}
                     </span>
+                    <%= if log.metadata["job_name"] do %>
+                      <span class="text-sm text-slate-600">"{log.metadata["job_name"]}"</span>
+                    <% end %>
+                    <%= if log.metadata["api_key_name"] && log.resource_type == "api_key" do %>
+                      <span class="text-sm text-slate-600">"{log.metadata["api_key_name"]}"</span>
+                    <% end %>
                   </div>
                   <div class="mt-1 text-sm text-slate-500">
                     <%= case log.actor_type do %>

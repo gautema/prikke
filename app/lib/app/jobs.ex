@@ -156,7 +156,7 @@ defmodule Prikke.Jobs do
          :ok <- check_interval_limit(org, changeset),
          {:ok, job} <- Repo.insert(changeset) do
       broadcast(org, {:created, job})
-      audit_log(opts, :created, :job, job.id, org.id)
+      audit_log(opts, :created, :job, job.id, org.id, metadata: %{"job_name" => job.name})
       {:ok, job}
     else
       {:error, :job_limit_reached} ->
@@ -247,7 +247,10 @@ defmodule Prikke.Jobs do
         :name, :url, :method, :headers, :body, :schedule_type, :cron_expression,
         :scheduled_at, :timezone, :enabled, :timeout_ms, :retry_attempts
       ])
-      audit_log(opts, :updated, :job, updated_job.id, org.id, changes: changes)
+      audit_log(opts, :updated, :job, updated_job.id, org.id,
+        changes: changes,
+        metadata: %{"job_name" => updated_job.name}
+      )
 
       {:ok, updated_job}
     else
@@ -295,7 +298,7 @@ defmodule Prikke.Jobs do
 
     with {:ok, job} <- Repo.delete(job) do
       broadcast(org, {:deleted, job})
-      audit_log(opts, :deleted, :job, job.id, org.id, changes: %{"name" => job.name})
+      audit_log(opts, :deleted, :job, job.id, org.id, metadata: %{"job_name" => job.name})
       {:ok, job}
     end
   end
@@ -333,7 +336,7 @@ defmodule Prikke.Jobs do
         end
 
         # Log toggle for audit trail
-        audit_log(opts, action, :job, updated_job.id, org.id)
+        audit_log(opts, action, :job, updated_job.id, org.id, metadata: %{"job_name" => updated_job.name})
         {:ok, updated_job}
 
       error ->
@@ -459,22 +462,25 @@ defmodule Prikke.Jobs do
 
   ## Private: Audit Logging
 
-  defp audit_log(opts, action, resource_type, resource_id, org_id, extra_opts \\ []) do
+  defp audit_log(opts, action, resource_type, resource_id, org_id, extra_opts) do
     scope = Keyword.get(opts, :scope)
     api_key_name = Keyword.get(opts, :api_key_name)
     changes = Keyword.get(extra_opts, :changes, %{})
+    metadata = Keyword.get(extra_opts, :metadata, %{})
 
     cond do
       scope != nil ->
         Audit.log(scope, action, resource_type, resource_id,
           organization_id: org_id,
-          changes: changes
+          changes: changes,
+          metadata: metadata
         )
 
       api_key_name != nil ->
         Audit.log_api(api_key_name, action, resource_type, resource_id,
           organization_id: org_id,
-          changes: changes
+          changes: changes,
+          metadata: metadata
         )
 
       true ->

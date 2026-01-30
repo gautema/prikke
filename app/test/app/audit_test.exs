@@ -140,7 +140,7 @@ defmodule Prikke.AuditTest do
       logs = Audit.list_organization_logs(org)
       log = hd(logs)
       assert log.action == "deleted"
-      assert log.changes["name"] == job.name
+      assert log.metadata["job_name"] == job.name
     end
   end
 end
