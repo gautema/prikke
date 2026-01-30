@@ -42,6 +42,7 @@ defmodule Prikke.Worker do
   alias Prikke.Executions
   alias Prikke.Jobs
   alias Prikke.Notifications
+  alias Prikke.WebhookSignature
 
   # How long to wait between polls when no work is found (ms)
   # Uses exponential backoff: starts at base, doubles up to max
@@ -214,20 +215,9 @@ defmodule Prikke.Worker do
   end
 
   defp add_cronly_headers(headers, job, execution, body) do
-    # Get webhook secret from the job's organization
     webhook_secret = job.organization.webhook_secret
-
-    # Compute HMAC-SHA256 signature of the body
-    signature =
-      :crypto.mac(:hmac, :sha256, webhook_secret, body)
-      |> Base.encode16(case: :lower)
-
-    headers ++
-      [
-        {"x-cronly-job-id", job.id},
-        {"x-cronly-execution-id", execution.id},
-        {"x-cronly-signature", "sha256=#{signature}"}
-      ]
+    cronly_headers = WebhookSignature.build_headers(job.id, execution.id, body, webhook_secret)
+    headers ++ cronly_headers
   end
 
   defp handle_success(execution, response, duration_ms) do

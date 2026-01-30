@@ -443,10 +443,26 @@ mix ecto.reset
 
 ## Development Rules
 
-**CRITICAL: All features must have tests:**
-- Write tests for all new features and bug fixes
+**CRITICAL: All features must have unit tests:**
+- Every new feature, module, or bug fix MUST include corresponding tests
 - Tests prevent regressions and ensure code quality
 - Failing code must NEVER be committed
+
+**Testing guidelines:**
+- **Unit tests**: Test individual functions and modules in isolation
+  - Business logic (contexts like `Accounts`, `Jobs`, `Executions`)
+  - Utility modules (like `WebhookSignature`, date formatting, etc.)
+  - Schema validations and changesets
+- **Integration tests**: Test controller actions and LiveViews
+  - API endpoints (authentication, CRUD operations)
+  - User flows (registration, login, job management)
+- **Test location**: Tests go in `test/` mirroring the `lib/` structure
+  - `lib/app/webhook_signature.ex` → `test/app/webhook_signature_test.exs`
+  - `lib/app_web/controllers/api/job_controller.ex` → `test/app_web/controllers/api/job_controller_test.exs`
+- **Test coverage expectations**:
+  - All public functions should have tests
+  - Edge cases and error conditions should be covered
+  - Security-sensitive code (auth, signatures) needs thorough testing
 
 **Pre-commit hook (enforces tests before commit):**
 ```bash
