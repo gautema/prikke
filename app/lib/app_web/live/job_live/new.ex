@@ -127,6 +127,7 @@ defmodule PrikkeWeb.JobLive.New do
                 ]}>
                 </span>
               </button>
+              <input type="hidden" name={@form[:enabled].name} value="false" />
               <input
                 type="checkbox"
                 id="job_enabled_checkbox"
