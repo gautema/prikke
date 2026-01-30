@@ -4,6 +4,7 @@ defmodule PrikkeWeb.DashboardLive do
   alias Prikke.Accounts
   alias Prikke.Jobs
   alias Prikke.Executions
+  alias Prikke.Cron
 
   @impl true
   def mount(_params, session, socket) do
@@ -215,9 +216,10 @@ defmodule PrikkeWeb.DashboardLive do
                         <span class="truncate">{job.url}</span>
                       </div>
                     </div>
-                    <div class="text-xs text-slate-400 ml-4">
+                    <div class="text-xs text-slate-400 ml-4 text-right">
                       <%= if job.schedule_type == "cron" do %>
-                        <span class="font-mono">{job.cron_expression}</span>
+                        <div>{Cron.describe(job.cron_expression)}</div>
+                        <div class="font-mono text-slate-300">{job.cron_expression}</div>
                       <% else %>
                         One-time
                       <% end %>

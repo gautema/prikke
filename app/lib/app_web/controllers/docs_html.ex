@@ -19,7 +19,10 @@ defmodule PrikkeWeb.DocsHTML do
             href="/"
             class="flex items-center gap-2.5 text-xl font-semibold text-slate-900 no-underline"
           >
-            <div class="w-4 h-4 bg-emerald-500 rounded-full"></div>
+            <span class="relative flex h-5 w-5 items-center justify-center">
+              <span class="animate-[ping_4s_cubic-bezier(0,0,0.2,1)_infinite] absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
             prikke
           </a>
           <nav class="flex gap-6">
