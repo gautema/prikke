@@ -245,7 +245,7 @@ defmodule PrikkeWeb.JobLive.Show do
                   <span class="font-mono text-base sm:text-lg bg-slate-200 px-3 py-1 rounded w-fit">
                     {@job.cron_expression}
                   </span>
-                  <span class="text-slate-600">{Jobs.describe_cron(@job.cron_expression)}</span>
+                  <span class="text-slate-600">{Prikke.Cron.describe(@job.cron_expression)}</span>
                 </div>
                 <p class="text-sm text-slate-500 mt-2">Timezone: {@job.timezone}</p>
               <% else %>
