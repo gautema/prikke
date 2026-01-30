@@ -813,9 +813,10 @@ defmodule PrikkeWeb.CoreComponents do
   ## Examples
 
       <.marketing_header />
-      <.marketing_header menu_id="login-menu" />
+      <.marketing_header menu_id="login-menu" current_scope={@current_scope} />
   """
   attr :menu_id, :string, default: "marketing-menu-toggle"
+  attr :current_scope, :map, default: nil
 
   def marketing_header(assigns) do
     ~H"""
@@ -851,18 +852,27 @@ defmodule PrikkeWeb.CoreComponents do
             Status
           </a>
           <span class="w-px h-4 bg-slate-300"></span>
-          <a
-            href="/users/register"
-            class="text-slate-600 no-underline text-[15px] hover:text-emerald-500"
-          >
-            Register
-          </a>
-          <a
-            href="/users/log-in"
-            class="text-[15px] font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors no-underline"
-          >
-            Log in
-          </a>
+          <%= if @current_scope do %>
+            <a
+              href="/dashboard"
+              class="text-[15px] font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors no-underline"
+            >
+              Dashboard
+            </a>
+          <% else %>
+            <a
+              href="/users/register"
+              class="text-slate-600 no-underline text-[15px] hover:text-emerald-500"
+            >
+              Register
+            </a>
+            <a
+              href="/users/log-in"
+              class="text-[15px] font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors no-underline"
+            >
+              Log in
+            </a>
+          <% end %>
         </nav>
       </header>
       <!-- Mobile menu (overlay, CSS-only) -->
@@ -881,18 +891,27 @@ defmodule PrikkeWeb.CoreComponents do
             Status
           </a>
           <div class="border-t border-slate-200 pt-3 mt-2 flex flex-col gap-1">
-            <a
-              href="/users/register"
-              class="block py-3 text-base text-slate-700 no-underline hover:text-emerald-500"
-            >
-              Register
-            </a>
-            <a
-              href="/users/log-in"
-              class="block py-3 text-base font-medium text-emerald-600 no-underline"
-            >
-              Log in
-            </a>
+            <%= if @current_scope do %>
+              <a
+                href="/dashboard"
+                class="block py-3 text-base font-medium text-emerald-600 no-underline"
+              >
+                Dashboard
+              </a>
+            <% else %>
+              <a
+                href="/users/register"
+                class="block py-3 text-base text-slate-700 no-underline hover:text-emerald-500"
+              >
+                Register
+              </a>
+              <a
+                href="/users/log-in"
+                class="block py-3 text-base font-medium text-emerald-600 no-underline"
+              >
+                Log in
+              </a>
+            <% end %>
           </div>
         </nav>
       </div>

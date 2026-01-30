@@ -470,8 +470,6 @@ defmodule PrikkeWeb.SuperadminLive do
         </div>
       </div>
     </div>
-
-    <.footer />
     """
   end
 

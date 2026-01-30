@@ -298,8 +298,6 @@ defmodule PrikkeWeb.DashboardLive do
         </div>
       <% end %>
     </div>
-
-    <.footer />
     """
   end
 
