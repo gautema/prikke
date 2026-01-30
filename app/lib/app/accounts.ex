@@ -422,6 +422,25 @@ defmodule Prikke.Accounts do
   end
 
   @doc """
+  Regenerates the webhook secret for an organization.
+  Returns the new secret (only time it's available in plaintext).
+  """
+  def regenerate_webhook_secret(organization, opts \\ []) do
+    new_secret = Organization.generate_webhook_secret()
+
+    case organization
+         |> Ecto.Changeset.change(webhook_secret: new_secret)
+         |> Repo.update() do
+      {:ok, updated_org} ->
+        audit_log(opts, :regenerated_webhook_secret, :organization, updated_org.id, updated_org.id)
+        {:ok, updated_org}
+
+      error ->
+        error
+    end
+  end
+
+  @doc """
   Deletes an organization.
   """
   def delete_organization(organization) do

@@ -9,7 +9,11 @@ defmodule PrikkeWeb.UserRegistrationController do
   plug :put_layout, false
   plug :assign_hide_header
 
-  defp assign_hide_header(conn, _opts), do: assign(conn, :hide_header, true)
+  defp assign_hide_header(conn, _opts) do
+    conn
+    |> assign(:hide_header, true)
+    |> assign(:hide_footer, true)
+  end
 
   def new(conn, _params) do
     changeset = Accounts.change_user_email(%User{})

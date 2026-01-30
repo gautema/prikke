@@ -5,7 +5,9 @@ defmodule PrikkeWeb.DocsController do
   plug :assign_hide_header
 
   defp assign_hide_header(conn, _opts) do
-    assign(conn, :hide_header, true)
+    conn
+    |> assign(:hide_header, true)
+    |> assign(:hide_footer, true)
   end
 
   def index(conn, _params) do

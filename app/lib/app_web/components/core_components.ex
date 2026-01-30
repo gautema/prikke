@@ -808,6 +808,99 @@ defmodule PrikkeWeb.CoreComponents do
   end
 
   @doc """
+  Renders the marketing header with navigation and mobile menu.
+
+  ## Examples
+
+      <.marketing_header />
+      <.marketing_header menu_id="login-menu" />
+  """
+  attr :menu_id, :string, default: "marketing-menu-toggle"
+
+  def marketing_header(assigns) do
+    ~H"""
+    <div class="group/menu">
+      <input type="checkbox" id={@menu_id} class="hidden" />
+      <header class="py-6 flex justify-between items-center">
+        <a
+          href="/"
+          class="flex items-center gap-2.5 text-xl font-semibold text-slate-900 no-underline"
+        >
+          <span class="relative flex h-5 w-5 items-center justify-center">
+            <span class="animate-[ping_4s_cubic-bezier(0,0,0.2,1)_infinite] absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75">
+            </span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+          </span>
+          cronly
+        </a>
+        <!-- Mobile menu toggle (CSS-only) -->
+        <label for={@menu_id} class="sm:hidden p-2 text-slate-600 cursor-pointer">
+          <span class="group-has-[:checked]/menu:hidden">
+            <.icon name="hero-bars-3" class="w-6 h-6" />
+          </span>
+          <span class="hidden group-has-[:checked]/menu:block">
+            <.icon name="hero-x-mark" class="w-6 h-6" />
+          </span>
+        </label>
+        <!-- Desktop nav -->
+        <nav class="hidden sm:flex items-center gap-6">
+          <a href="/docs" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">
+            Docs
+          </a>
+          <a href="/status" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">
+            Status
+          </a>
+          <span class="w-px h-4 bg-slate-300"></span>
+          <a
+            href="/users/register"
+            class="text-slate-600 no-underline text-[15px] hover:text-emerald-500"
+          >
+            Register
+          </a>
+          <a
+            href="/users/log-in"
+            class="text-[15px] font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors no-underline"
+          >
+            Log in
+          </a>
+        </nav>
+      </header>
+      <!-- Mobile menu (overlay, CSS-only) -->
+      <div class="hidden group-has-[:checked]/menu:block sm:hidden fixed inset-x-0 top-[72px] bottom-0 bg-white border-t border-slate-200 z-50 overflow-y-auto">
+        <nav class="flex flex-col gap-1 px-6 py-4">
+          <a
+            href="/docs"
+            class="block py-3 text-base text-slate-700 no-underline hover:text-emerald-500"
+          >
+            Docs
+          </a>
+          <a
+            href="/status"
+            class="block py-3 text-base text-slate-700 no-underline hover:text-emerald-500"
+          >
+            Status
+          </a>
+          <div class="border-t border-slate-200 pt-3 mt-2 flex flex-col gap-1">
+            <a
+              href="/users/register"
+              class="block py-3 text-base text-slate-700 no-underline hover:text-emerald-500"
+            >
+              Register
+            </a>
+            <a
+              href="/users/log-in"
+              class="block py-3 text-base font-medium text-emerald-600 no-underline"
+            >
+              Log in
+            </a>
+          </div>
+        </nav>
+      </div>
+    </div>
+    """
+  end
+
+  @doc """
   Renders the app footer with documentation links.
 
   ## Examples

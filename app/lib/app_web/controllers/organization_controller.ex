@@ -280,4 +280,36 @@ defmodule PrikkeWeb.OrganizationController do
       |> redirect(to: ~p"/")
     end
   end
+
+  def regenerate_webhook_secret(conn, _params) do
+    organization = conn.assigns.current_organization
+    user = conn.assigns.current_scope.user
+
+    if organization do
+      # Check if user is owner or admin
+      membership = Accounts.get_membership(organization, user)
+
+      if membership && membership.role in ["owner", "admin"] do
+        case Accounts.regenerate_webhook_secret(organization, scope: conn.assigns.current_scope) do
+          {:ok, _updated_org} ->
+            conn
+            |> put_flash(:info, "Webhook secret regenerated successfully.")
+            |> redirect(to: ~p"/organizations/api-keys")
+
+          {:error, _} ->
+            conn
+            |> put_flash(:error, "Could not regenerate webhook secret.")
+            |> redirect(to: ~p"/organizations/api-keys")
+        end
+      else
+        conn
+        |> put_flash(:error, "You need to be an admin to regenerate the webhook secret.")
+        |> redirect(to: ~p"/organizations/api-keys")
+      end
+    else
+      conn
+      |> put_flash(:error, "No organization selected.")
+      |> redirect(to: ~p"/")
+    end
+  end
 end

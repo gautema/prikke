@@ -7,6 +7,7 @@ defmodule Prikke.Accounts.Organization do
   schema "organizations" do
     field :name, :string
     field :tier, :string, default: "free"
+    field :webhook_secret, :string
 
     # Notification settings
     field :notify_on_failure, :boolean, default: true
@@ -20,12 +21,29 @@ defmodule Prikke.Accounts.Organization do
     timestamps(type: :utc_datetime)
   end
 
+  @doc """
+  Generates a new webhook secret.
+  Format: whsec_<48 hex chars> (24 random bytes)
+  """
+  def generate_webhook_secret do
+    "whsec_" <> Base.encode16(:crypto.strong_rand_bytes(24), case: :lower)
+  end
+
   @doc false
   def changeset(organization, attrs) do
     organization
     |> cast(attrs, [:name, :tier])
     |> validate_required([:name])
     |> validate_inclusion(:tier, ["free", "pro"])
+    |> maybe_generate_webhook_secret()
+  end
+
+  defp maybe_generate_webhook_secret(changeset) do
+    if get_field(changeset, :webhook_secret) do
+      changeset
+    else
+      put_change(changeset, :webhook_secret, generate_webhook_secret())
+    end
   end
 
   @doc """

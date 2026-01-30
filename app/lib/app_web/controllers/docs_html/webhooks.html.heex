@@ -18,13 +18,19 @@
 
   <h2>Request Format</h2>
   <p>Every webhook request includes these headers:</p>
-  <pre class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">POST</span> /your-endpoint HTTP/1.1
+  <pre
+    phx-no-curly-interpolation
+    class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto"
+  ><span class="text-purple-300">POST</span> /your-endpoint HTTP/1.1
 <span class="text-sky-300">Host</span>: your-app.com
 <span class="text-sky-300">Content-Type</span>: application/json
-<span class="text-sky-300">User-Agent</span>: Cronly/1.0
-<span class="text-sky-300">X-Cronly-Job-Id</span>: job_abc123
-<span class="text-sky-300">X-Cronly-Execution-Id</span>: exec_xyz789
-<span class="text-sky-300">X-Cronly-Signature</span>: sha256=abcdef...</pre>
+<span class="text-sky-300">X-Cronly-Job-Id</span>: 01JJXYZ...
+<span class="text-sky-300">X-Cronly-Execution-Id</span>: 01JJXYZ...
+<span class="text-sky-300">X-Cronly-Signature</span>: sha256=a1b2c3d4...
+<span class="text-sky-300">Authorization</span>: Bearer your-token  <span class="text-slate-500">(if configured)</span>
+
+<span class="text-slate-500">// Your configured body (if any)</span>
+{"action": "sync"}</pre>
 
   <div class="overflow-x-auto my-6">
     <table class="w-full text-sm">
@@ -41,18 +47,25 @@
         </tr>
         <tr class="border-b border-slate-100">
           <td class="py-3 px-4"><code class="text-sky-600">X-Cronly-Execution-Id</code></td>
-          <td class="py-3 px-4">Unique ID for this execution attempt</td>
+          <td class="py-3 px-4">Unique ID for this execution (use for deduplication)</td>
         </tr>
         <tr>
           <td class="py-3 px-4"><code class="text-sky-600">X-Cronly-Signature</code></td>
-          <td class="py-3 px-4">HMAC signature for verifying authenticity</td>
+          <td class="py-3 px-4">HMAC-SHA256 signature of the request body</td>
         </tr>
       </tbody>
     </table>
   </div>
 
   <h2>Verifying Signatures</h2>
-  <p>To ensure requests come from Cronly, verify the signature using your webhook secret:</p>
+  <p>
+    Every request is signed with your organization's webhook secret. Verify the signature to ensure requests are from Cronly.
+  </p>
+  <p class="text-sm text-slate-500 mb-4">
+    Find your webhook secret in
+    <a href="/organizations/api-keys" class="text-emerald-600 hover:underline">Organization Settings → API Keys</a>.
+  </p>
+
   <div class="bg-white border border-slate-200 rounded-lg overflow-hidden my-6">
     <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
       Node.js
@@ -62,29 +75,29 @@
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">const</span> crypto = <span class="text-purple-300">require</span>(<span class="text-green-300">'crypto'</span>);
 
-<span class="text-purple-300">function</span> <span class="text-sky-300">verifySignature</span>(payload, signature, secret) {
+<span class="text-purple-300">function</span> <span class="text-sky-300">verifySignature</span>(body, signature, secret) {
   <span class="text-purple-300">const</span> expected = crypto
     .createHmac(<span class="text-green-300">'sha256'</span>, secret)
-    .update(payload)
+    .update(body)
     .digest(<span class="text-green-300">'hex'</span>);
 
   <span class="text-purple-300">return</span> <span class="text-green-300">`sha256=${expected}`</span> === signature;
 }
 
-<span class="text-slate-500">// In your handler</span>
 app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; {
   <span class="text-purple-300">const</span> signature = req.headers[<span class="text-green-300">'x-cronly-signature'</span>];
-  <span class="text-purple-300">const</span> isValid = verifySignature(
-    JSON.stringify(req.body),
-    signature,
-    process.env.CRONLY_WEBHOOK_SECRET
-  );
+  <span class="text-purple-300">const</span> body = JSON.stringify(req.body); <span class="text-slate-500">// or raw body buffer</span>
 
-  <span class="text-purple-300">if</span> (!isValid) {
+  <span class="text-purple-300">if</span> (!verifySignature(body, signature, process.env.CRONLY_WEBHOOK_SECRET)) {
     <span class="text-purple-300">return</span> res.status(<span class="text-orange-300">401</span>).json({ <span class="text-sky-300">error</span>: <span class="text-green-300">'Invalid signature'</span> });
   }
 
+  <span class="text-slate-500">// Safe to process - request is from Cronly</span>
+  <span class="text-purple-300">const</span> jobId = req.headers[<span class="text-green-300">'x-cronly-job-id'</span>];
+  <span class="text-purple-300">const</span> executionId = req.headers[<span class="text-green-300">'x-cronly-execution-id'</span>];
+
   <span class="text-slate-500">// Process the job...</span>
+  res.json({ <span class="text-sky-300">ok</span>: <span class="text-orange-300">true</span> });
 });</pre>
   </div>
 
@@ -160,23 +173,23 @@ app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; {
       <tbody class="text-slate-600">
         <tr class="border-b border-slate-100">
           <td class="py-3 px-4">1st retry</td>
-          <td class="py-3 px-4">1 minute</td>
+          <td class="py-3 px-4">20 seconds</td>
         </tr>
         <tr class="border-b border-slate-100">
           <td class="py-3 px-4">2nd retry</td>
-          <td class="py-3 px-4">5 minutes</td>
+          <td class="py-3 px-4">45 seconds</td>
         </tr>
         <tr class="border-b border-slate-100">
           <td class="py-3 px-4">3rd retry</td>
-          <td class="py-3 px-4">30 minutes</td>
+          <td class="py-3 px-4">~1.5 minutes</td>
         </tr>
         <tr class="border-b border-slate-100">
           <td class="py-3 px-4">4th retry</td>
-          <td class="py-3 px-4">2 hours</td>
+          <td class="py-3 px-4">~2 minutes</td>
         </tr>
         <tr>
           <td class="py-3 px-4">5th retry</td>
-          <td class="py-3 px-4">8 hours</td>
+          <td class="py-3 px-4">~3 minutes</td>
         </tr>
       </tbody>
     </table>
@@ -243,7 +256,7 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
   <pre
     phx-no-curly-interpolation
     class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto"
-  >curl -X POST https://cronly.eu/api/jobs \
+  >curl -X POST https://cronly.eu/api/v1/jobs \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
@@ -251,7 +264,8 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/webhook"</span>,
     <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 * * * *"</span>,
     <span class="text-sky-300">"headers"</span>: {
-      <span class="text-sky-300">"Authorization"</span>: <span class="text-green-300">"Bearer my-app-token"</span>
+      <span class="text-sky-300">"Authorization"</span>: <span class="text-green-300">"Bearer my-app-token"</span>,
+      <span class="text-sky-300">"X-Custom-Header"</span>: <span class="text-green-300">"custom-value"</span>
     }
   }'</pre>
 </.docs_layout>

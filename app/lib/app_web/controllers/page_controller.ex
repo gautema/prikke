@@ -11,6 +11,7 @@ defmodule PrikkeWeb.PageController do
       # Not logged in (or preview mode): show landing page
       conn
       |> assign(:hide_header, true)
+      |> assign(:hide_footer, true)
       |> assign(:current_scope, if(params["preview"] == "true", do: nil, else: conn.assigns[:current_scope]))
       |> render(:home)
     end

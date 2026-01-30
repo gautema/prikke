@@ -1,20 +1,8 @@
-<div class="min-h-screen bg-slate-50">
-  <div class="max-w-md mx-auto px-6">
-    <!-- Header -->
-    <header class="py-6 flex justify-center">
-      <a
-        href="/"
-        class="flex items-center gap-2.5 text-xl font-semibold text-slate-900 no-underline"
-      >
-        <span class="relative flex h-5 w-5 items-center justify-center">
-          <span class="animate-[ping_4s_cubic-bezier(0,0,0.2,1)_infinite] absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-        </span>
-        cronly
-      </a>
-    </header>
-    
-<!-- Flash Messages -->
+<div class="min-h-screen bg-slate-50 flex flex-col">
+  <div class="max-w-[680px] mx-auto px-6 w-full flex-1">
+    <.marketing_header menu_id="login-menu-toggle" />
+
+    <!-- Flash Messages -->
     <%= if Phoenix.Flash.get(@flash, :info) do %>
       <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-700">
         {Phoenix.Flash.get(@flash, :info)}
@@ -25,9 +13,9 @@
         {Phoenix.Flash.get(@flash, :error)}
       </div>
     <% end %>
-    
-<!-- Login Form -->
-    <div class="py-12">
+
+    <!-- Login Form -->
+    <div class="py-12 max-w-md mx-auto">
       <div class="bg-white border border-slate-200 rounded-lg p-8">
         <h1 class="text-2xl font-bold text-slate-900 text-center mb-2">
           {if @current_scope, do: "Confirm your identity", else: "Welcome back"}
@@ -39,8 +27,8 @@
             Log in to your account
           <% end %>
         </p>
-        
-<!-- Magic Link Login -->
+
+        <!-- Magic Link Login -->
         <.form
           :let={f}
           for={@form}
@@ -83,8 +71,8 @@
             <span class="px-4 bg-white text-slate-400">or continue with password</span>
           </div>
         </div>
-        
-<!-- Password Login -->
+
+        <!-- Password Login -->
         <.form
           :let={f}
           for={@form}
@@ -160,5 +148,9 @@
         </div>
       <% end %>
     </div>
+  </div>
+
+  <div class="max-w-[680px] mx-auto px-6 w-full">
+    <.footer variant="marketing" />
   </div>
 </div>

@@ -262,5 +262,8 @@
       </header>
     <% end %>
     {@inner_content}
+    <%= unless assigns[:hide_footer] do %>
+      <.footer />
+    <% end %>
   </body>
 </html>

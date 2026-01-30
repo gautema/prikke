@@ -161,7 +161,7 @@ defmodule Prikke.Worker do
       # Track start time with millisecond precision for accurate duration
       start_time = System.monotonic_time(:millisecond)
 
-      result = make_request(job)
+      result = make_request(job, execution)
 
       # Calculate duration from monotonic clock (more accurate than timestamps)
       duration_ms = System.monotonic_time(:millisecond) - start_time
@@ -179,8 +179,12 @@ defmodule Prikke.Worker do
     end
   end
 
-  defp make_request(job) do
-    headers = build_headers(job.headers)
+  defp make_request(job, execution) do
+    body = if job.method in ["POST", "PUT", "PATCH"], do: job.body || "", else: ""
+
+    headers =
+      build_headers(job.headers)
+      |> add_cronly_headers(job, execution, body)
 
     opts = [
       method: String.downcase(job.method) |> String.to_existing_atom(),
@@ -207,6 +211,23 @@ defmodule Prikke.Worker do
 
   defp build_headers(headers) when is_map(headers) do
     Enum.map(headers, fn {k, v} -> {to_string(k), to_string(v)} end)
+  end
+
+  defp add_cronly_headers(headers, job, execution, body) do
+    # Get webhook secret from the job's organization
+    webhook_secret = job.organization.webhook_secret
+
+    # Compute HMAC-SHA256 signature of the body
+    signature =
+      :crypto.mac(:hmac, :sha256, webhook_secret, body)
+      |> Base.encode16(case: :lower)
+
+    headers ++
+      [
+        {"x-cronly-job-id", job.id},
+        {"x-cronly-execution-id", execution.id},
+        {"x-cronly-signature", "sha256=#{signature}"}
+      ]
   end
 
   defp handle_success(execution, response, duration_ms) do

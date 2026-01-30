@@ -4,7 +4,7 @@
       <h1 class="text-2xl font-bold text-slate-900">Organization Settings</h1>
       <p class="text-slate-500 mt-1">Manage {@organization.name}</p>
     </div>
-    
+
 <!-- Tabs -->
     <div class="flex gap-4 mb-6 border-b border-slate-200">
       <a
@@ -38,7 +38,7 @@
         Audit Log
       </a>
     </div>
-    
+
 <!-- New API Key Form -->
     <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
       <h2 class="text-lg font-semibold text-slate-900 mb-4">Create API Key</h2>
@@ -61,7 +61,7 @@
         </button>
       </.form>
     </div>
-    
+
 <!-- Newly Created Key (shown only once) -->
     <%= if @new_key do %>
       <div class="bg-amber-50 border border-amber-200 rounded-lg p-6 mb-6">
@@ -78,9 +78,9 @@
         </p>
       </div>
     <% end %>
-    
+
 <!-- Existing API Keys -->
-    <div class="bg-white border border-slate-200 rounded-lg">
+    <div class="bg-white border border-slate-200 rounded-lg mb-6">
       <div class="px-6 py-4 border-b border-slate-200">
         <h2 class="text-lg font-semibold text-slate-900">API Keys</h2>
       </div>
@@ -117,6 +117,34 @@
           <% end %>
         </div>
       <% end %>
+    </div>
+
+    <!-- Webhook Secret -->
+    <div class="bg-white border border-slate-200 rounded-lg p-6">
+      <h2 class="text-lg font-semibold text-slate-900 mb-2">Webhook Secret</h2>
+      <p class="text-sm text-slate-500 mb-4">
+        This secret is used to sign all webhook requests. Verify the
+        <code class="bg-slate-100 px-1.5 py-0.5 rounded text-xs">X-Cronly-Signature</code>
+        header to ensure requests are from Cronly.
+      </p>
+      <div class="flex items-center gap-3">
+        <div class="flex-1 bg-slate-50 border border-slate-200 rounded-md p-3 font-mono text-sm break-all select-all">
+          {@organization.webhook_secret}
+        </div>
+        <.form for={%{}} action={~p"/organizations/webhook-secret/regenerate"} method="post">
+          <button
+            type="submit"
+            data-confirm="Are you sure? This will invalidate the current secret. You'll need to update your webhook verification code."
+            class="py-2.5 px-4 bg-slate-100 text-slate-700 font-medium rounded-md hover:bg-slate-200 transition-colors whitespace-nowrap text-sm"
+          >
+            Regenerate
+          </button>
+        </.form>
+      </div>
+      <p class="text-xs text-slate-400 mt-3">
+        See <a href="/docs/webhooks" class="text-emerald-600 hover:underline">webhook documentation</a>
+        for verification examples.
+      </p>
     </div>
   </div>
 </Layouts.app>
