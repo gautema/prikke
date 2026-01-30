@@ -502,24 +502,35 @@ defmodule Prikke.Executions do
 
   @doc """
   Gets execution counts by day for the last N days (platform-wide).
+  Returns all days, including days with zero executions.
   """
   def executions_by_day(days) do
     since = DateTime.utc_now() |> DateTime.add(-days, :day)
+    today = Date.utc_today()
 
-    from(e in Execution,
-      where: e.scheduled_for >= ^since,
-      group_by: fragment("DATE(?)", e.scheduled_for),
-      select: {
-        fragment("DATE(?)", e.scheduled_for),
-        %{
-          total: count(e.id),
-          success: count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status)),
-          failed: count(fragment("CASE WHEN ? = 'failed' THEN 1 END", e.status))
+    # Query actual execution data
+    data =
+      from(e in Execution,
+        where: e.scheduled_for >= ^since,
+        group_by: fragment("DATE(?)", e.scheduled_for),
+        select: {
+          fragment("DATE(?)", e.scheduled_for),
+          %{
+            total: count(e.id),
+            success: count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status)),
+            failed: count(fragment("CASE WHEN ? = 'failed' THEN 1 END", e.status))
+          }
         }
-      },
-      order_by: [asc: fragment("DATE(?)", e.scheduled_for)]
-    )
-    |> Repo.all()
+      )
+      |> Repo.all()
+      |> Map.new()
+
+    # Fill in all days with zeros for missing days
+    Enum.map(0..(days - 1), fn offset ->
+      date = Date.add(today, -days + 1 + offset)
+      stats = Map.get(data, date, %{total: 0, success: 0, failed: 0})
+      {date, stats}
+    end)
   end
 
   @doc """

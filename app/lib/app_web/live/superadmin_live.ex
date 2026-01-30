@@ -178,38 +178,55 @@ defmodule PrikkeWeb.SuperadminLive do
     <!-- Execution Trend Chart -->
       <div class="bg-white border border-slate-200 rounded-lg p-6 mb-8">
         <h2 class="text-lg font-semibold text-slate-900 mb-4">Execution Trend (14 days)</h2>
-        <div class="h-32 flex items-end gap-1">
-          <%= for {_date, stats} <- @execution_trend do %>
+        <%= if @execution_trend == [] do %>
+          <div class="h-32 flex items-center justify-center text-slate-400">
+            No executions in the last 14 days
+          </div>
+        <% else %>
+          <div class="h-32 flex items-end gap-1">
             <% max_val =
               Enum.max_by(@execution_trend, fn {_, s} -> s.total end)
               |> elem(1)
               |> Map.get(:total)
               |> max(1) %>
-            <% height = if stats.total > 0, do: max(round(stats.total / max_val * 100), 4), else: 0 %>
-            <% success_height =
-              if stats.total > 0, do: round(stats.success / stats.total * height), else: 0 %>
-            <% failed_height = height - success_height %>
-            <div
-              class="flex-1 flex flex-col justify-end"
-              title={"#{stats.total} total, #{stats.success} success, #{stats.failed} failed"}
-            >
-              <%= if failed_height > 0 do %>
-                <div class="bg-red-400 rounded-t-sm" style={"height: #{failed_height}%"}></div>
-              <% end %>
-              <%= if success_height > 0 do %>
-                <div
-                  class={["bg-emerald-500", if(failed_height == 0, do: "rounded-t-sm", else: "")]}
-                  style={"height: #{success_height}%"}
-                >
+            <%= for {{date, stats}, idx} <- Enum.with_index(@execution_trend) do %>
+              <% height = if stats.total > 0, do: max(round(stats.total / max_val * 100), 4), else: 0 %>
+              <% success_pct =
+                if stats.total > 0, do: round(stats.success / stats.total * 100), else: 0 %>
+              <% failed_pct = 100 - success_pct %>
+              <div class="flex-1 flex flex-col justify-end h-full group relative">
+                <div class="flex flex-col" style={"height: #{height}%"}>
+                  <%= if failed_pct > 0 && stats.failed > 0 do %>
+                    <div class="bg-red-400 rounded-t-sm flex-none" style={"height: #{failed_pct}%"}></div>
+                  <% end %>
+                  <%= if success_pct > 0 && stats.success > 0 do %>
+                    <div
+                      class={["bg-emerald-500 flex-1", if(stats.failed == 0, do: "rounded-t-sm", else: "")]}
+                    >
+                    </div>
+                  <% end %>
+                  <%= if stats.total == 0 do %>
+                    <div class="bg-slate-100 h-1 rounded-sm"></div>
+                  <% end %>
                 </div>
-              <% end %>
-            </div>
-          <% end %>
-        </div>
-        <div class="flex justify-between mt-2 text-xs text-slate-400">
-          <span>14 days ago</span>
-          <span>Today</span>
-        </div>
+                <!-- Tooltip -->
+                <div class={[
+                  "hidden group-hover:block absolute bottom-full mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap z-10",
+                  if(idx < 3, do: "left-0", else: if(idx > 10, do: "right-0", else: "left-1/2 -translate-x-1/2"))
+                ]}>
+                  <div class="font-medium">{Calendar.strftime(date, "%b %d")}</div>
+                  <div>{stats.total} total</div>
+                  <%= if stats.success > 0 do %><div class="text-emerald-400">{stats.success} success</div><% end %>
+                  <%= if stats.failed > 0 do %><div class="text-red-400">{stats.failed} failed</div><% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+          <div class="flex justify-between mt-2 text-xs text-slate-400">
+            <span>14 days ago</span>
+            <span>Today</span>
+          </div>
+        <% end %>
       </div>
       
     <!-- Analytics Section -->
@@ -374,91 +391,82 @@ defmodule PrikkeWeb.SuperadminLive do
         </div>
       </div>
       
-    <!-- Recent Executions -->
-      <div class="bg-white border border-slate-200 rounded-lg mb-8">
-        <div class="px-6 py-4 border-b border-slate-200">
-          <h2 class="text-lg font-semibold text-slate-900">Recent Executions</h2>
-        </div>
-        <div class="divide-y divide-slate-200">
-          <%= for execution <- @recent_executions do %>
-            <div class="px-6 py-3 flex items-center justify-between">
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2">
-                  <.status_dot status={execution.status} />
-                  <span class="font-medium text-slate-900 truncate">
-                    {execution.job && execution.job.name}
-                  </span>
-                  <span class="text-xs text-slate-400">
-                    {execution.job && execution.job.organization && execution.job.organization.name}
-                  </span>
-                </div>
-                <div class="text-xs text-slate-500 mt-0.5">
-                  <%= if execution.duration_ms do %>
-                    {format_duration(execution.duration_ms)}
-                    <span class="mx-1">·</span>
-                  <% end %>
-                  <%= if execution.status_code do %>
-                    <span class="font-mono">{execution.status_code}</span>
-                    <span class="mx-1">·</span>
-                  <% end %>
+    <!-- Recent Executions & Audit Logs -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Recent Executions -->
+        <div class="bg-white border border-slate-200 rounded-lg">
+          <div class="px-6 py-4 border-b border-slate-200">
+            <h2 class="text-lg font-semibold text-slate-900">Recent Executions</h2>
+          </div>
+          <div class="divide-y divide-slate-200">
+            <%= for execution <- @recent_executions do %>
+              <div class="px-6 py-3 flex items-center gap-4">
+                <.status_dot status={execution.status} />
+                <%= if execution.status_code do %>
+                  <span class="text-sm font-mono text-slate-500">{execution.status_code}</span>
+                <% end %>
+                <%= if execution.duration_ms do %>
+                  <span class="text-sm text-slate-500">{format_duration(execution.duration_ms)}</span>
+                <% end %>
+                <span class="text-sm text-slate-400">
                   <.relative_time id={"exec-#{execution.id}"} datetime={execution.scheduled_for} />
-                </div>
-              </div>
-            </div>
-          <% end %>
-          <%= if @recent_executions == [] do %>
-            <div class="px-6 py-8 text-center text-slate-400">No executions yet</div>
-          <% end %>
-        </div>
-      </div>
-
-    <!-- Audit Logs -->
-      <div class="bg-white border border-slate-200 rounded-lg mb-8">
-        <div class="px-6 py-4 border-b border-slate-200">
-          <h2 class="text-lg font-semibold text-slate-900">Recent Audit Logs</h2>
-        </div>
-        <div class="divide-y divide-slate-200">
-          <%= for log <- @audit_logs do %>
-            <div class="px-6 py-3">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <span class={["text-xs px-2 py-0.5 rounded-full font-medium", action_badge_class(log.action)]}>
-                    {Audit.format_action(log.action)}
-                  </span>
-                  <span class="text-sm text-slate-600">
-                    {Audit.format_resource_type(log.resource_type)}
-                  </span>
-                </div>
-                <span class="text-xs text-slate-400">
-                  <.relative_time id={"audit-#{log.id}"} datetime={log.inserted_at} />
                 </span>
               </div>
-              <div class="mt-1 text-sm text-slate-500">
-                <%= case log.actor_type do %>
-                  <% "user" -> %>
-                    <span class="text-slate-700">{log.actor && log.actor.email}</span>
-                  <% "api" -> %>
-                    <span class="text-amber-600">API: {log.metadata["api_key_name"]}</span>
-                  <% "system" -> %>
-                    <span class="text-slate-400">System</span>
-                  <% _ -> %>
-                    <span class="text-slate-400">Unknown</span>
-                <% end %>
-                <%= if log.organization do %>
-                  <span class="mx-1">·</span>
-                  <span class="text-slate-400">{log.organization.name}</span>
+            <% end %>
+            <%= if @recent_executions == [] do %>
+              <div class="px-6 py-8 text-center text-slate-400">No executions yet</div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Audit Logs -->
+        <div class="bg-white border border-slate-200 rounded-lg">
+          <div class="px-6 py-4 border-b border-slate-200">
+            <h2 class="text-lg font-semibold text-slate-900">Recent Audit Logs</h2>
+          </div>
+          <div class="divide-y divide-slate-200">
+            <%= for log <- @audit_logs do %>
+              <div class="px-6 py-3">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class={["text-xs px-2 py-0.5 rounded-full font-medium", action_badge_class(log.action)]}>
+                      {Audit.format_action(log.action)}
+                    </span>
+                    <span class="text-sm text-slate-600">
+                      {Audit.format_resource_type(log.resource_type)}
+                    </span>
+                  </div>
+                  <span class="text-xs text-slate-400">
+                    <.relative_time id={"audit-#{log.id}"} datetime={log.inserted_at} />
+                  </span>
+                </div>
+                <div class="mt-1 text-sm text-slate-500">
+                  <%= case log.actor_type do %>
+                    <% "user" -> %>
+                      <span class="text-slate-700">{log.actor && log.actor.email}</span>
+                    <% "api" -> %>
+                      <span class="text-amber-600">API: {log.metadata["api_key_name"]}</span>
+                    <% "system" -> %>
+                      <span class="text-slate-400">System</span>
+                    <% _ -> %>
+                      <span class="text-slate-400">Unknown</span>
+                  <% end %>
+                  <%= if log.organization do %>
+                    <span class="mx-1">·</span>
+                    <span class="text-slate-400">{log.organization.name}</span>
+                  <% end %>
+                </div>
+                <%= if log.changes != %{} do %>
+                  <div class="mt-1 text-xs text-slate-400 font-mono truncate">
+                    {inspect(log.changes, limit: 3)}
+                  </div>
                 <% end %>
               </div>
-              <%= if log.changes != %{} do %>
-                <div class="mt-1 text-xs text-slate-400 font-mono truncate">
-                  {inspect(log.changes, limit: 3)}
-                </div>
-              <% end %>
-            </div>
-          <% end %>
-          <%= if @audit_logs == [] do %>
-            <div class="px-6 py-8 text-center text-slate-400">No audit logs yet</div>
-          <% end %>
+            <% end %>
+            <%= if @audit_logs == [] do %>
+              <div class="px-6 py-8 text-center text-slate-400">No audit logs yet</div>
+            <% end %>
+          </div>
         </div>
       </div>
     </div>
