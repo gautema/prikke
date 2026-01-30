@@ -1,25 +1,25 @@
-# Prikke Brand Guidelines
+# Cronly Brand Guidelines
 
 ## Name
 
-**Prikke** - Norwegian for "dot"
+**Cronly** - External brand name for the cron scheduling service
 
-From the expression "til punkt og prikke" meaning "to the letter" or "precisely."
+Internal project name: "Prikke" (from Norwegian "til punkt og prikke" - meaning precisely)
 
 ## Tagline
 
-> Jobs done, til punkt og prikke
+> Cronly - Cron jobs, simply.
 
 Alternative taglines:
-- "Background jobs, done right"
-- "Precisely on time"
+- "Offload your background jobs"
 - "Cron for Europe"
+- "Jobs done, simply"
 
 ## Logo
 
 The logo consists of:
-1. A green dot (●) - represents precision, the "prikk"
-2. The wordmark "prikke" in Inter SemiBold
+1. A green pulsating dot (●) - represents precision and uptime
+2. The wordmark "cronly" in Inter SemiBold
 
 ### Usage
 - `logo.svg` - For light backgrounds
@@ -55,20 +55,24 @@ JetBrains Mono: https://fonts.google.com/specimen/JetBrains+Mono
 
 ## Voice & Tone
 
-- **Precise** - Say what you mean, no fluff
+- **Simple** - Say what you mean, no fluff
 - **Friendly** - Approachable, not corporate
 - **Confident** - We do one thing well
-- **Norwegian** - Subtle nods to origin, not overdone
+- **European** - EU-hosted, GDPR-native
 
-## Domains
+## Domain
 
-- Primary: prikke.io
-- Secondary: prikke.eu (redirects to .io)
+- Primary: cronly.eu
+
+## Contact
+
+- Support: support@cronly.eu
+- Sales: sales@cronly.eu
 
 ## About Text
 
-> Prikke is a European background jobs service. Cron scheduling and webhook
-> delivery, hosted in the EU. Simple, reliable, precisely on time.
+> Cronly is a European background jobs service. Cron scheduling and webhook
+> delivery, hosted in the EU. Simple, reliable, always on time.
 >
-> The name comes from the Norwegian expression "til punkt og prikke" -
-> meaning to do something to the letter, with precision. That's our promise.
+> Built on Elixir and the BEAM VM - the same technology that powers WhatsApp
+> and Discord. EU-hosted, GDPR-native, no US cloud in the chain.

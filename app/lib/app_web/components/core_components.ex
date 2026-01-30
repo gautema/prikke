@@ -828,13 +828,13 @@ defmodule PrikkeWeb.CoreComponents do
           </a>
           <a href="/status" class="text-slate-600 no-underline hover:text-emerald-500">Status</a>
           <a
-            href="mailto:gaute.magnussen@gmail.com"
+            href="mailto:support@cronly.eu"
             class="text-slate-600 no-underline hover:text-emerald-500"
           >
             Contact
           </a>
         </div>
-        <p class="text-slate-400">Prikke · Made in Norway</p>
+        <p class="text-slate-400">Cronly · Made in Norway</p>
       </footer>
     <% else %>
       <footer class="border-t border-slate-200 mt-12">
@@ -846,7 +846,7 @@ defmodule PrikkeWeb.CoreComponents do
               <a href="/status" class="hover:text-slate-700">Status</a>
             </div>
             <div>
-              <a href="mailto:gaute.magnussen@gmail.com" class="hover:text-slate-700">Contact</a>
+              <a href="mailto:support@cronly.eu" class="hover:text-slate-700">Contact</a>
             </div>
           </div>
         </div>

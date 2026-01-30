@@ -9,7 +9,7 @@ defmodule Prikke.Accounts.UserNotifier do
   defp deliver(recipient, subject, text_body, html_body) do
     config = Application.get_env(:app, Prikke.Mailer, [])
     from_name = Keyword.get(config, :from_name, "Cronly")
-    from_email = Keyword.get(config, :from_email, "noreply@whitenoise.no")
+    from_email = Keyword.get(config, :from_email, "noreply@cronly.eu")
 
     email =
       new()
