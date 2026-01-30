@@ -1,6 +1,6 @@
 # Playwright Testing Guide
 
-This guide explains how to use Playwright for visual testing and browser automation with the Prikke app.
+This guide explains how to use Playwright for visual testing and browser automation with the Cronly app.
 
 ## Prerequisites
 

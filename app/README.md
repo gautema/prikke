@@ -1,4 +1,4 @@
-# Prikke
+# Cronly
 
 To start your Phoenix server:
 
