@@ -7,9 +7,9 @@ defmodule PrikkeWeb.LandingPageTest do
       html = html_response(conn, 200)
 
       # Check hero section
-      assert html =~ "Offload your"
-      assert html =~ "background jobs"
-      assert html =~ "Stop building schedulers"
+      assert html =~ "Cron for the"
+      assert html =~ "serverless era"
+      assert html =~ "Fire and forget"
 
       # Check pulsing logo is present
       assert html =~ "animate-[ping_4s"
@@ -19,24 +19,32 @@ defmodule PrikkeWeb.LandingPageTest do
       assert html =~ "Start free"
       assert html =~ "View docs"
 
-      # Check use cases section
-      assert html =~ "What you can offload"
-      assert html =~ "Cron jobs"
-      assert html =~ "Delayed tasks"
-      assert html =~ "Background jobs"
-      assert html =~ "Webhook relay"
+      # Check problem section
+      assert html =~ "The problem"
+      assert html =~ "serverless"
 
-      # Check features section
-      assert html =~ "We handle the hard parts"
+      # Check what Cronly does section
+      assert html =~ "What Cronly does"
+      assert html =~ "Cron jobs"
+      assert html =~ "One-time tasks"
       assert html =~ "Automatic retries"
-      assert html =~ "Precise scheduling"
-      assert html =~ "Full execution history"
-      assert html =~ "Failure alerts"
+      assert html =~ "Webhook delivery"
+
+      # Check fire and forget section
+      assert html =~ "Fire and forget"
+      assert html =~ "Set it and sleep"
+      assert html =~ "Retries handled"
+      assert html =~ "Alerts when it matters"
+      assert html =~ "Full history"
+
+      # Check why Cronly section
+      assert html =~ "Why Cronly"
       assert html =~ "EU-hosted, GDPR-native"
+      assert html =~ "Built for reliability"
+      assert html =~ "Privacy by design"
       assert html =~ "API + Dashboard"
 
-      # Check tech section
-      assert html =~ "Built for reliability"
+      # Check tech mentions
       assert html =~ "Elixir"
       assert html =~ "BEAM"
 
@@ -54,7 +62,7 @@ defmodule PrikkeWeb.LandingPageTest do
       html = html_response(conn, 200)
 
       # Should show landing page content, not redirect
-      assert html =~ "Offload your"
+      assert html =~ "Cron for the"
       assert html =~ "cronly"
     end
 
