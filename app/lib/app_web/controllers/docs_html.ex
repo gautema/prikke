@@ -49,7 +49,7 @@ defmodule PrikkeWeb.DocsHTML do
     <!-- Footer -->
         <footer class="mt-20 py-10 border-t border-slate-200 text-center text-slate-500 text-sm">
           <p>
-            Prikke · Background jobs, made simple ·
+            Cronly · Cron jobs, simply ·
             <a href="/" class="text-slate-600 no-underline hover:text-emerald-500">Home</a>
           </p>
         </footer>

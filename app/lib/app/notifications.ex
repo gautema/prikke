@@ -83,7 +83,7 @@ defmodule Prikke.Notifications do
     from_name = Keyword.get(config, :from_name, "Cronly")
     from_email = Keyword.get(config, :from_email, "noreply@cronly.eu")
 
-    subject = "[Prikke] Job failed: #{job.name}"
+    subject = "[Cronly] Job failed: #{job.name}"
 
     body = """
     Your job "#{job.name}" has failed.
@@ -99,7 +99,7 @@ defmodule Prikke.Notifications do
     Method: #{job.method}
 
     ---
-    View execution details in your Prikke dashboard.
+    View execution details in your Cronly dashboard.
     """
 
     email =
@@ -131,7 +131,7 @@ defmodule Prikke.Notifications do
 
     headers = [
       {"content-type", content_type},
-      {"user-agent", "Prikke/1.0"}
+      {"user-agent", "Cronly/1.0"}
     ]
 
     case Req.post(webhook_url, body: payload, headers: headers) do
