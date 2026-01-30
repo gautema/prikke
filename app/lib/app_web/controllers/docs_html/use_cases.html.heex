@@ -25,7 +25,7 @@
         phx-no-curly-interpolation
         class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
       ><span class="text-slate-500">// Schedule welcome email 24 hours after signup</span>
-<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://prikke.whitenoise.no/api/jobs'</span>, {
+<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://cronly.eu/api/jobs'</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">'POST'</span>,
   <span class="text-sky-300">headers</span>: { <span class="text-sky-300">'Authorization'</span>: <span class="text-green-300">'Bearer YOUR_API_KEY'</span> },
   <span class="text-sky-300">body</span>: JSON.stringify({
@@ -51,7 +51,7 @@
         phx-no-curly-interpolation
         class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
       ><span class="text-slate-500">// Return immediately, process in background</span>
-<span class="text-purple-300">await</span> prikke.createJob({
+<span class="text-purple-300">await</span> cronly.createJob({
   <span class="text-sky-300">name</span>: <span class="text-green-300">'generate-report'</span>,
   <span class="text-sky-300">url</span>: <span class="text-green-300">'https://myapp.com/api/reports/generate'</span>,
   <span class="text-sky-300">run_at</span>: <span class="text-purple-300">new</span> Date().toISOString(),
@@ -77,7 +77,7 @@
       ><span class="text-slate-500">// Stripe webhook - return 200 immediately</span>
 <span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(req) {
   <span class="text-purple-300">const</span> event = <span class="text-purple-300">await</span> req.json();
-  <span class="text-purple-300">await</span> prikke.createJob({
+  <span class="text-purple-300">await</span> cronly.createJob({
     <span class="text-sky-300">name</span>: <span class="text-green-300">`stripe-${event.id}`</span>,
     <span class="text-sky-300">url</span>: <span class="text-green-300">'https://myapp.com/api/process-stripe'</span>,
     <span class="text-sky-300">run_at</span>: <span class="text-purple-300">new</span> Date().toISOString()

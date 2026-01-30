@@ -23,7 +23,7 @@ defmodule PrikkeWeb.DocsHTML do
               <span class="animate-[ping_4s_cubic-bezier(0,0,0.2,1)_infinite] absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
             </span>
-            prikke
+            cronly
           </a>
           <nav class="flex gap-6">
             <a href="/docs" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">

@@ -73,7 +73,7 @@
 
 <span class="text-slate-500">// In your handler</span>
 app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; {
-  <span class="text-purple-300">const</span> signature = req.headers[<span class="text-green-300">'x-prikke-signature'</span>];
+  <span class="text-purple-300">const</span> signature = req.headers[<span class="text-green-300">'x-cronly-signature'</span>];
   <span class="text-purple-300">const</span> isValid = verifySignature(
     JSON.stringify(req.body),
     signature,
@@ -224,7 +224,7 @@ app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; {
 <span class="text-purple-300">const</span> processed = <span class="text-purple-300">new</span> Set(); <span class="text-slate-500">// Use Redis in production</span>
 
 app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purple-300">async</span> (req, res) =&gt; {
-  <span class="text-purple-300">const</span> executionId = req.headers[<span class="text-green-300">'x-prikke-execution-id'</span>];
+  <span class="text-purple-300">const</span> executionId = req.headers[<span class="text-green-300">'x-cronly-execution-id'</span>];
 
   <span class="text-purple-300">if</span> (processed.has(executionId)) {
     <span class="text-purple-300">return</span> res.json({ <span class="text-sky-300">status</span>: <span class="text-green-300">'already_processed'</span> });
@@ -243,7 +243,7 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
   <pre
     phx-no-curly-interpolation
     class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto"
-  >curl -X POST https://prikke.whitenoise.no/api/jobs \
+  >curl -X POST https://cronly.eu/api/jobs \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{

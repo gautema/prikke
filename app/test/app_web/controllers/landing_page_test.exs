@@ -13,7 +13,7 @@ defmodule PrikkeWeb.LandingPageTest do
 
       # Check pulsing logo is present
       assert html =~ "animate-[ping_4s"
-      assert html =~ "prikke"
+      assert html =~ "cronly"
 
       # Check CTA buttons
       assert html =~ "Start free"
@@ -55,7 +55,7 @@ defmodule PrikkeWeb.LandingPageTest do
 
       # Should show landing page content, not redirect
       assert html =~ "Offload your"
-      assert html =~ "prikke"
+      assert html =~ "cronly"
     end
 
     test "redirects logged in users to dashboard", %{conn: conn} do
@@ -72,7 +72,7 @@ defmodule PrikkeWeb.LandingPageTest do
       html = html_response(conn, 200)
 
       assert html =~ "Documentation"
-      assert html =~ "prikke"
+      assert html =~ "cronly"
     end
 
     test "renders API docs", %{conn: conn} do

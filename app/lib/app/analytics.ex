@@ -104,7 +104,7 @@ defmodule Prikke.Analytics do
   Uses SHA256 with a salt.
   """
   def hash_ip(ip) when is_binary(ip) do
-    salt = Application.get_env(:app, :ip_hash_salt, "prikke-default-salt")
+    salt = Application.get_env(:app, :ip_hash_salt, "cronly-default-salt")
     :crypto.hash(:sha256, ip <> salt) |> Base.encode16(case: :lower) |> String.slice(0, 16)
   end
 

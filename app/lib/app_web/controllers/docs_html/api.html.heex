@@ -3,7 +3,7 @@
   <p class="text-xl text-slate-600 mb-10">
     Base URL:
     <code class="bg-slate-100 px-2 py-1 rounded text-sm">
-      https://prikke.whitenoise.no/api/v1
+      https://cronly.eu/api/v1
     </code>
   </p>
 
@@ -77,7 +77,7 @@
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
-    >curl -X POST https://prikke.whitenoise.no/api/v1/queue \
+    >curl -X POST https://cronly.eu/api/v1/queue \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
@@ -101,7 +101,7 @@
       </div>
       <p class="text-slate-600 m-0">List all jobs for your organization.</p>
     </div>
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://prikke.whitenoise.no/api/v1/jobs \
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://cronly.eu/api/v1/jobs \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
   </div>
 
@@ -115,7 +115,7 @@
       </div>
       <p class="text-slate-600 m-0">Get a single job by ID.</p>
     </div>
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://prikke.whitenoise.no/api/v1/jobs/job_abc123 \
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://cronly.eu/api/v1/jobs/job_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
   </div>
 
@@ -211,7 +211,7 @@
       <pre
         phx-no-curly-interpolation
         class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
-      >curl -X POST https://prikke.whitenoise.no/api/v1/jobs \
+      >curl -X POST https://cronly.eu/api/v1/jobs \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
@@ -227,7 +227,7 @@
       <pre
         phx-no-curly-interpolation
         class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
-      >curl -X POST https://prikke.whitenoise.no/api/v1/jobs \
+      >curl -X POST https://cronly.eu/api/v1/jobs \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
@@ -252,7 +252,7 @@
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
-    >curl -X PUT https://prikke.whitenoise.no/api/v1/jobs/job_abc123 \
+    >curl -X PUT https://cronly.eu/api/v1/jobs/job_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
@@ -271,7 +271,7 @@
       </div>
       <p class="text-slate-600 m-0">Delete a job and all its execution history.</p>
     </div>
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X DELETE https://prikke.whitenoise.no/api/v1/jobs/job_abc123 \
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X DELETE https://cronly.eu/api/v1/jobs/job_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
   </div>
 
@@ -287,7 +287,7 @@
         Trigger a job to run immediately. Creates a new execution that runs right away.
       </p>
     </div>
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://prikke.whitenoise.no/api/v1/jobs/job_abc123/trigger \
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://cronly.eu/api/v1/jobs/job_abc123/trigger \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
   </div>
 
@@ -407,7 +407,7 @@
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
-    >curl -X PUT https://prikke.whitenoise.no/api/v1/sync \
+    >curl -X PUT https://cronly.eu/api/v1/sync \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
