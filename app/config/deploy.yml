@@ -27,9 +27,12 @@ env:
     PHX_HOST: cronly.eu
     PORT: 4000
     MIX_ENV: prod
+    ADMIN_EMAIL: support@cronly.eu
   secret:
     - SECRET_KEY_BASE
     - DATABASE_URL
+    - MAILJET_API_KEY
+    - MAILJET_SECRET_KEY
 
 accessories:
   db:
