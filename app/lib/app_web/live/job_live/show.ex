@@ -363,7 +363,7 @@ defmodule PrikkeWeb.JobLive.Show do
                 <select
                   name="status"
                   id="status-filter"
-                  class="text-sm border-slate-200 rounded-md py-1 pl-2 pr-8 focus:ring-emerald-500 focus:border-emerald-500"
+                  class="text-sm border-slate-200 rounded-md py-1 pl-2 pr-8 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 >
                   <option value="" selected={@status_filter == nil}>All</option>
                   <option value="success" selected={@status_filter == "success"}>Success</option>
