@@ -106,6 +106,6 @@ if config_env() == :prod do
     api_key: System.get_env("MAILJET_API_KEY"),
     secret: System.get_env("MAILJET_SECRET_KEY"),
     from_email: System.get_env("MAIL_FROM_EMAIL", "noreply@cronly.eu"),
-    from_name: System.get_env("MAIL_FROM_NAME", "Prikke"),
+    from_name: System.get_env("MAIL_FROM_NAME", "Cronly"),
     admin_email: System.get_env("ADMIN_EMAIL")
 end

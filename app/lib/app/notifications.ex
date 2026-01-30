@@ -80,7 +80,7 @@ defmodule Prikke.Notifications do
     job = execution.job
 
     config = Application.get_env(:app, Prikke.Mailer, [])
-    from_name = Keyword.get(config, :from_name, "Prikke")
+    from_name = Keyword.get(config, :from_name, "Cronly")
     from_email = Keyword.get(config, :from_email, "noreply@cronly.eu")
 
     subject = "[Prikke] Job failed: #{job.name}"

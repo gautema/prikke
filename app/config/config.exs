@@ -46,7 +46,7 @@ config :app, PrikkeWeb.Endpoint,
 config :app, Prikke.Mailer,
   adapter: Swoosh.Adapters.Local,
   from_email: "noreply@cronly.eu",
-  from_name: "Prikke"
+  from_name: "Cronly"
 
 # Configure esbuild (the version is required)
 config :esbuild,
