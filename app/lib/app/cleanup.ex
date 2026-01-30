@@ -25,8 +25,8 @@ defmodule Prikke.Cleanup do
   # Advisory lock ID for cleanup (different from scheduler)
   @advisory_lock_id 728_492_848
 
-  # Check every hour if it's time to run cleanup
-  @check_interval :timer.hours(1)
+  # Check every 5 minutes for stale executions, daily cleanup at 3 AM
+  @check_interval :timer.minutes(5)
 
   # Run cleanup at 3 AM UTC
   @cleanup_hour 3
