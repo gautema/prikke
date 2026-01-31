@@ -14,9 +14,9 @@ defmodule Prikke.WebhookSignature do
   ## Headers
 
   Three headers are added to every webhook request:
-  - `X-Cronly-Job-Id` - The job ID
-  - `X-Cronly-Execution-Id` - The execution ID (for deduplication)
-  - `X-Cronly-Signature` - HMAC-SHA256 signature of the request body
+  - `X-Runlater-Job-Id` - The job ID
+  - `X-Runlater-Execution-Id` - The execution ID (for deduplication)
+  - `X-Runlater-Signature` - HMAC-SHA256 signature of the request body
   """
 
   @doc """
@@ -61,15 +61,15 @@ defmodule Prikke.WebhookSignature do
   end
 
   @doc """
-  Builds the Cronly-specific headers for a webhook request.
+  Builds the Runlater-specific headers for a webhook request.
 
   Returns a list of header tuples to be added to the request.
 
   ## Examples
 
       iex> headers = Prikke.WebhookSignature.build_headers("job-123", "exec-456", "", "whsec_secret")
-      iex> Enum.find(headers, fn {k, _} -> k == "x-cronly-job-id" end)
-      {"x-cronly-job-id", "job-123"}
+      iex> Enum.find(headers, fn {k, _} -> k == "x-runlater-job-id" end)
+      {"x-runlater-job-id", "job-123"}
 
   """
   @spec build_headers(binary(), binary(), binary(), binary()) :: [{binary(), binary()}]
@@ -77,9 +77,9 @@ defmodule Prikke.WebhookSignature do
     signature = sign(body, webhook_secret)
 
     [
-      {"x-cronly-job-id", job_id},
-      {"x-cronly-execution-id", execution_id},
-      {"x-cronly-signature", signature}
+      {"x-runlater-job-id", job_id},
+      {"x-runlater-execution-id", execution_id},
+      {"x-runlater-signature", signature}
     ]
   end
 

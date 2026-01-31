@@ -13,7 +13,7 @@ defmodule PrikkeWeb.LandingPageTest do
 
       # Check pulsing logo is present
       assert html =~ "animate-[ping_4s"
-      assert html =~ "cronly"
+      assert html =~ "runlater"
 
       # Check CTA buttons
       assert html =~ "Start free"
@@ -23,8 +23,8 @@ defmodule PrikkeWeb.LandingPageTest do
       assert html =~ "The problem"
       assert html =~ "serverless"
 
-      # Check what Cronly does section
-      assert html =~ "What Cronly does"
+      # Check what Runlater does section
+      assert html =~ "What Runlater does"
       assert html =~ "Cron jobs"
       assert html =~ "One-time tasks"
       assert html =~ "Automatic retries"
@@ -37,8 +37,8 @@ defmodule PrikkeWeb.LandingPageTest do
       assert html =~ "Alerts when it matters"
       assert html =~ "Full history"
 
-      # Check why Cronly section
-      assert html =~ "Why Cronly"
+      # Check why Runlater section
+      assert html =~ "Why Runlater"
       assert html =~ "EU-hosted, GDPR-native"
       assert html =~ "Built for reliability"
       assert html =~ "Privacy by design"
@@ -63,7 +63,7 @@ defmodule PrikkeWeb.LandingPageTest do
 
       # Should show landing page content, not redirect
       assert html =~ "Cron for the"
-      assert html =~ "cronly"
+      assert html =~ "runlater"
     end
 
     test "redirects logged in users to dashboard", %{conn: conn} do
@@ -80,7 +80,7 @@ defmodule PrikkeWeb.LandingPageTest do
       html = html_response(conn, 200)
 
       assert html =~ "Documentation"
-      assert html =~ "cronly"
+      assert html =~ "runlater"
     end
 
     test "renders API docs", %{conn: conn} do

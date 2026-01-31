@@ -50,7 +50,7 @@
 <!-- What we do -->
     <section class="py-14 border-t border-slate-200">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
-        What Cronly does
+        What Runlater does
       </h2>
       <div class="grid sm:grid-cols-2 gap-4">
         <div class="bg-white border border-slate-200 rounded-lg p-5">
@@ -142,7 +142,7 @@
         phx-no-curly-interpolation
         class="bg-slate-900 text-slate-100 p-4 sm:p-6 rounded-lg font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto"
       ><span class="text-slate-500"># Schedule a cron job - runs every day at 06:00 UTC</span>
-curl -X POST https://cronly.eu/api/v1/jobs \
+curl -X POST https://runlater.eu/api/v1/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
   -d '{
     <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Daily backup"</span>,
@@ -151,7 +151,7 @@ curl -X POST https://cronly.eu/api/v1/jobs \
   }'
 
 <span class="text-slate-500"># Schedule a one-time task</span>
-curl -X POST https://cronly.eu/api/v1/jobs \
+curl -X POST https://runlater.eu/api/v1/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
   -d '{
     <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Send reminder"</span>,
@@ -169,7 +169,7 @@ curl -X POST https://cronly.eu/api/v1/jobs \
       </h2>
       <div class="bg-white border border-slate-200 rounded-lg p-6">
         <p class="text-[15px] text-slate-600 mb-4">
-          Cronly runs on <strong class="text-slate-900">Elixir and the BEAM VM</strong> — the same technology that powers WhatsApp, Discord, and telecom systems requiring 99.9999% uptime.
+          Runlater runs on <strong class="text-slate-900">Elixir and the BEAM VM</strong> — the same technology that powers WhatsApp, Discord, and telecom systems requiring 99.9999% uptime.
         </p>
         <p class="text-[15px] text-slate-600 mb-4">
           The BEAM was designed for systems that never stop. Lightweight processes, fault isolation, and hot code upgrades mean your scheduled jobs keep running even during deployments.
@@ -180,10 +180,10 @@ curl -X POST https://cronly.eu/api/v1/jobs \
       </div>
     </section>
 
-<!-- Why Cronly -->
+<!-- Why Runlater -->
     <section class="py-14 border-t border-slate-200">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
-        Why Cronly
+        Why Runlater
       </h2>
       <div class="grid gap-5">
         <div class="flex gap-4">
@@ -251,7 +251,7 @@ curl -X POST https://cronly.eu/api/v1/jobs \
             Higher limits, SLA, priority support
           </p>
           <a
-            href="mailto:sales@cronly.eu"
+            href="mailto:sales@runlater.eu"
             class="text-sm font-medium text-emerald-600 hover:text-emerald-700"
           >
             Contact sales →

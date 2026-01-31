@@ -105,7 +105,7 @@ if config_env() == :prod do
     adapter: Swoosh.Adapters.Mailjet,
     api_key: System.get_env("MAILJET_API_KEY"),
     secret: System.get_env("MAILJET_SECRET_KEY"),
-    from_email: System.get_env("MAIL_FROM_EMAIL", "noreply@cronly.eu"),
-    from_name: System.get_env("MAIL_FROM_NAME", "Cronly"),
+    from_email: System.get_env("MAIL_FROM_EMAIL", "noreply@runlater.eu"),
+    from_name: System.get_env("MAIL_FROM_NAME", "Runlater"),
     admin_email: System.get_env("ADMIN_EMAIL")
 end

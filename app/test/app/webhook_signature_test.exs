@@ -103,17 +103,17 @@ defmodule Prikke.WebhookSignatureTest do
 
     test "includes job id header" do
       headers = WebhookSignature.build_headers("job-123", "exec-456", "body", "secret")
-      assert {"x-cronly-job-id", "job-123"} in headers
+      assert {"x-runlater-job-id", "job-123"} in headers
     end
 
     test "includes execution id header" do
       headers = WebhookSignature.build_headers("job-123", "exec-456", "body", "secret")
-      assert {"x-cronly-execution-id", "exec-456"} in headers
+      assert {"x-runlater-execution-id", "exec-456"} in headers
     end
 
     test "includes signature header with correct format" do
       headers = WebhookSignature.build_headers("job-123", "exec-456", "body", "secret")
-      {_, signature} = Enum.find(headers, fn {k, _} -> k == "x-cronly-signature" end)
+      {_, signature} = Enum.find(headers, fn {k, _} -> k == "x-runlater-signature" end)
 
       assert String.starts_with?(signature, "sha256=")
     end
@@ -123,7 +123,7 @@ defmodule Prikke.WebhookSignatureTest do
       secret = "whsec_abc123"
 
       headers = WebhookSignature.build_headers("j1", "e1", body, secret)
-      {_, signature} = Enum.find(headers, fn {k, _} -> k == "x-cronly-signature" end)
+      {_, signature} = Enum.find(headers, fn {k, _} -> k == "x-runlater-signature" end)
 
       # Verify the signature is correct for this body
       assert WebhookSignature.verify(body, secret, signature) == true
@@ -131,7 +131,7 @@ defmodule Prikke.WebhookSignatureTest do
 
     test "empty body produces valid signature" do
       headers = WebhookSignature.build_headers("j1", "e1", "", "secret")
-      {_, signature} = Enum.find(headers, fn {k, _} -> k == "x-cronly-signature" end)
+      {_, signature} = Enum.find(headers, fn {k, _} -> k == "x-runlater-signature" end)
 
       assert WebhookSignature.verify("", "secret", signature) == true
     end

@@ -80,10 +80,10 @@ defmodule Prikke.Notifications do
     job = execution.job
 
     config = Application.get_env(:app, Prikke.Mailer, [])
-    from_name = Keyword.get(config, :from_name, "Cronly")
-    from_email = Keyword.get(config, :from_email, "noreply@cronly.eu")
+    from_name = Keyword.get(config, :from_name, "Runlater")
+    from_email = Keyword.get(config, :from_email, "noreply@runlater.eu")
 
-    subject = "[Cronly] Job failed: #{job.name}"
+    subject = "[Runlater] Job failed: #{job.name}"
 
     body = """
     Your job "#{job.name}" has failed.
@@ -99,7 +99,7 @@ defmodule Prikke.Notifications do
     Method: #{job.method}
 
     ---
-    View execution details in your Cronly dashboard.
+    View execution details in your Runlater dashboard.
     """
 
     email =
@@ -131,7 +131,7 @@ defmodule Prikke.Notifications do
 
     headers = [
       {"content-type", content_type},
-      {"user-agent", "Cronly/1.0"}
+      {"user-agent", "Runlater/1.0"}
     ]
 
     case Req.post(webhook_url, body: payload, headers: headers) do

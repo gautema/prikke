@@ -1,6 +1,6 @@
 defmodule PrikkeWeb.ApiSpec do
   @moduledoc """
-  OpenAPI specification for the Cronly API.
+  OpenAPI specification for the Runlater API.
   """
   alias OpenApiSpex.{Info, OpenApi, Paths, Server, Components, SecurityScheme}
   alias PrikkeWeb.{Endpoint, Router}
@@ -13,7 +13,7 @@ defmodule PrikkeWeb.ApiSpec do
         Server.from_endpoint(Endpoint)
       ],
       info: %Info{
-        title: "Cronly API",
+        title: "Runlater API",
         version: "1.0.0",
         description: """
         API for managing scheduled jobs and webhooks.
@@ -26,7 +26,7 @@ defmodule PrikkeWeb.ApiSpec do
         Authorization: Bearer pk_live_xxx.sk_live_yyy
         ```
 
-        API keys can be created in the Cronly dashboard under Organization Settings.
+        API keys can be created in the Runlater dashboard under Organization Settings.
         """
       },
       paths: Paths.from_router(Router),

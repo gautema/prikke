@@ -103,7 +103,7 @@ defmodule PrikkeWeb.UserSessionControllerTest do
           }
         })
 
-      assert conn.resp_cookies["_cronly_web_user_remember_me"]
+      assert conn.resp_cookies["_runlater_web_user_remember_me"]
       assert redirected_to(conn) == ~p"/"
     end
 

@@ -1,6 +1,6 @@
-service: cronly
+service: runlater
 
-image: gautema/cronly
+image: gautema/runlater
 
 builder:
   arch: amd64
@@ -13,7 +13,7 @@ servers:
 
 proxy:
   ssl: true
-  host: cronly.eu
+  host: runlater.eu
   app_port: 4000
   healthcheck:
     path: /health
@@ -26,10 +26,10 @@ registry:
 
 env:
   clear:
-    PHX_HOST: cronly.eu
+    PHX_HOST: runlater.eu
     PORT: 4000
     MIX_ENV: prod
-    ADMIN_EMAIL: support@cronly.eu
+    ADMIN_EMAIL: support@runlater.eu
   secret:
     - SECRET_KEY_BASE
     - DATABASE_URL
@@ -42,7 +42,7 @@ accessories:
     host: 46.225.66.205
     env:
       clear:
-        POSTGRES_DB: cronly_prod
+        POSTGRES_DB: runlater_prod
       secret:
         - POSTGRES_USER
         - POSTGRES_PASSWORD

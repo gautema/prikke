@@ -25,7 +25,7 @@
         phx-no-curly-interpolation
         class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
       ><span class="text-slate-500">// Schedule welcome email 24 hours after signup</span>
-<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://cronly.eu/api/v1/jobs'</span>, {
+<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/jobs'</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">'POST'</span>,
   <span class="text-sky-300">headers</span>: { <span class="text-sky-300">'Authorization'</span>: <span class="text-green-300">'Bearer YOUR_API_KEY'</span> },
   <span class="text-sky-300">body</span>: JSON.stringify({
@@ -51,7 +51,7 @@
         phx-no-curly-interpolation
         class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
       ><span class="text-slate-500">// Return immediately, process in background</span>
-<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://cronly.eu/api/v1/jobs'</span>, {
+<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/jobs'</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">'POST'</span>,
   <span class="text-sky-300">headers</span>: { <span class="text-sky-300">'Authorization'</span>: <span class="text-green-300">'Bearer YOUR_API_KEY'</span> },
   <span class="text-sky-300">body</span>: JSON.stringify({
@@ -81,7 +81,7 @@
       ><span class="text-slate-500">// Stripe webhook - return 200 immediately</span>
 <span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(req) {
   <span class="text-purple-300">const</span> event = <span class="text-purple-300">await</span> req.json();
-  <span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://cronly.eu/api/v1/jobs'</span>, {
+  <span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/jobs'</span>, {
     <span class="text-sky-300">method</span>: <span class="text-green-300">'POST'</span>,
     <span class="text-sky-300">headers</span>: { <span class="text-sky-300">'Authorization'</span>: <span class="text-green-300">'Bearer YOUR_API_KEY'</span> },
     <span class="text-sky-300">body</span>: JSON.stringify({
@@ -156,7 +156,7 @@
     </div>
   </div>
 
-  <h2>Why Cronly?</h2>
+  <h2>Why Runlater?</h2>
 
   <div class="grid gap-5 my-8">
     <div class="flex gap-4 items-start">

@@ -832,7 +832,7 @@ defmodule PrikkeWeb.CoreComponents do
             </span>
             <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
           </span>
-          cronly
+          runlater
         </a>
         <!-- Mobile menu toggle (CSS-only) -->
         <label for={@menu_id} class="sm:hidden p-2 text-slate-600 cursor-pointer">
@@ -940,13 +940,13 @@ defmodule PrikkeWeb.CoreComponents do
           </a>
           <a href="/status" class="text-slate-600 no-underline hover:text-emerald-500">Status</a>
           <a
-            href="mailto:support@cronly.eu"
+            href="mailto:support@runlater.eu"
             class="text-slate-600 no-underline hover:text-emerald-500"
           >
             Contact
           </a>
         </div>
-        <p class="text-slate-400">Cronly · Made in Norway</p>
+        <p class="text-slate-400">Runlater · Made in Norway</p>
       </footer>
     <% else %>
       <footer class="border-t border-slate-200 mt-12">
@@ -958,7 +958,7 @@ defmodule PrikkeWeb.CoreComponents do
               <a href="/status" class="hover:text-slate-700">Status</a>
             </div>
             <div>
-              <a href="mailto:support@cronly.eu" class="hover:text-slate-700">Contact</a>
+              <a href="mailto:support@runlater.eu" class="hover:text-slate-700">Contact</a>
             </div>
           </div>
         </div>

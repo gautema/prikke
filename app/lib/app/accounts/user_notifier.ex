@@ -8,8 +8,8 @@ defmodule Prikke.Accounts.UserNotifier do
   # Delivers the email using the application mailer.
   defp deliver(recipient, subject, text_body, html_body) do
     config = Application.get_env(:app, Prikke.Mailer, [])
-    from_name = Keyword.get(config, :from_name, "Cronly")
-    from_email = Keyword.get(config, :from_email, "noreply@cronly.eu")
+    from_name = Keyword.get(config, :from_name, "Runlater")
+    from_email = Keyword.get(config, :from_email, "noreply@runlater.eu")
 
     email =
       new()
@@ -50,7 +50,7 @@ defmodule Prikke.Accounts.UserNotifier do
                 <td style="padding: 32px 32px 24px 32px; text-align: center; border-bottom: 1px solid #e2e8f0;">
                   <div style="display: inline-flex; align-items: center;">
                     <span style="display: inline-block; width: 12px; height: 12px; background-color: #10b981; border-radius: 50%; margin-right: 8px;"></span>
-                    <span style="font-size: 20px; font-weight: 600; color: #0f172a;">cronly</span>
+                    <span style="font-size: 20px; font-weight: 600; color: #0f172a;">runlater</span>
                   </div>
                 </td>
               </tr>
@@ -77,7 +77,7 @@ defmodule Prikke.Accounts.UserNotifier do
               <tr>
                 <td style="padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
                   <p style="margin: 0; font-size: 12px; color: #94a3b8;">
-                    Cronly - Cron jobs, simply.
+                    Runlater - Schedule jobs, simply.
                   </p>
                 </td>
               </tr>
@@ -97,7 +97,7 @@ defmodule Prikke.Accounts.UserNotifier do
     text = """
     Hi,
 
-    You requested to change your email address on Cronly.
+    You requested to change your email address on Runlater.
 
     Click the link below to confirm the change:
 
@@ -105,13 +105,13 @@ defmodule Prikke.Accounts.UserNotifier do
 
     If you didn't request this, you can safely ignore this email.
 
-    - The Cronly Team
+    - The Runlater Team
     """
 
     html_content = """
     <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #0f172a;">Change your email</h2>
     <p style="margin: 0 0 8px 0; font-size: 14px; color: #475569; line-height: 1.6;">
-      You requested to change your email address on Cronly.
+      You requested to change your email address on Runlater.
     </p>
     <p style="margin: 0; font-size: 14px; color: #475569; line-height: 1.6;">
       Click the button below to confirm the change. If you didn't request this, you can safely ignore this email.
@@ -119,7 +119,7 @@ defmodule Prikke.Accounts.UserNotifier do
     """
 
     html = email_template(html_content, "Confirm email change", url)
-    deliver(user.email, "Confirm your new email - Cronly", text, html)
+    deliver(user.email, "Confirm your new email - Runlater", text, html)
   end
 
   @doc """
@@ -136,7 +136,7 @@ defmodule Prikke.Accounts.UserNotifier do
     text = """
     Hi,
 
-    Click the link below to log in to Cronly:
+    Click the link below to log in to Runlater:
 
     #{url}
 
@@ -144,11 +144,11 @@ defmodule Prikke.Accounts.UserNotifier do
 
     If you didn't request this, you can safely ignore this email.
 
-    - The Cronly Team
+    - The Runlater Team
     """
 
     html_content = """
-    <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #0f172a;">Log in to Cronly</h2>
+    <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #0f172a;">Log in to Runlater</h2>
     <p style="margin: 0 0 8px 0; font-size: 14px; color: #475569; line-height: 1.6;">
       Click the button below to log in to your account.
     </p>
@@ -157,25 +157,25 @@ defmodule Prikke.Accounts.UserNotifier do
     </p>
     """
 
-    html = email_template(html_content, "Log in to Cronly", url)
-    deliver(user.email, "Log in to Cronly", text, html)
+    html = email_template(html_content, "Log in to Runlater", url)
+    deliver(user.email, "Log in to Runlater", text, html)
   end
 
   defp deliver_confirmation_instructions(user, url) do
     text = """
     Hi,
 
-    Welcome to Cronly! Click the link below to confirm your account:
+    Welcome to Runlater! Click the link below to confirm your account:
 
     #{url}
 
     If you didn't create an account, you can safely ignore this email.
 
-    - The Cronly Team
+    - The Runlater Team
     """
 
     html_content = """
-    <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #0f172a;">Welcome to Cronly!</h2>
+    <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #0f172a;">Welcome to Runlater!</h2>
     <p style="margin: 0 0 8px 0; font-size: 14px; color: #475569; line-height: 1.6;">
       Thanks for signing up. Click the button below to confirm your account and get started.
     </p>
@@ -185,7 +185,7 @@ defmodule Prikke.Accounts.UserNotifier do
     """
 
     html = email_template(html_content, "Confirm your account", url)
-    deliver(user.email, "Welcome to Cronly - Confirm your account", text, html)
+    deliver(user.email, "Welcome to Runlater - Confirm your account", text, html)
   end
 
   @doc """
@@ -197,15 +197,15 @@ defmodule Prikke.Accounts.UserNotifier do
     text = """
     Hi,
 
-    You've been invited#{invited_by_text} to join #{org_name} on Cronly.
+    You've been invited#{invited_by_text} to join #{org_name} on Runlater.
 
     Click the link below to accept the invitation:
 
     #{url}
 
-    If you don't have a Cronly account yet, you'll be able to create one.
+    If you don't have a Runlater account yet, you'll be able to create one.
 
-    - The Cronly Team
+    - The Runlater Team
     """
 
     invited_html = if invited_by_email, do: " by <strong>#{invited_by_email}</strong>", else: ""
@@ -213,15 +213,15 @@ defmodule Prikke.Accounts.UserNotifier do
     html_content = """
     <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #0f172a;">You're invited!</h2>
     <p style="margin: 0 0 8px 0; font-size: 14px; color: #475569; line-height: 1.6;">
-      You've been invited#{invited_html} to join <strong>#{org_name}</strong> on Cronly.
+      You've been invited#{invited_html} to join <strong>#{org_name}</strong> on Runlater.
     </p>
     <p style="margin: 0; font-size: 14px; color: #475569; line-height: 1.6;">
-      Click the button below to accept. If you don't have a Cronly account yet, you'll be able to create one.
+      Click the button below to accept. If you don't have a Runlater account yet, you'll be able to create one.
     </p>
     """
 
     html = email_template(html_content, "Accept invitation", url)
-    deliver(email, "You're invited to #{org_name} on Cronly", text, html)
+    deliver(email, "You're invited to #{org_name} on Runlater", text, html)
   end
 
   @doc """
@@ -233,13 +233,13 @@ defmodule Prikke.Accounts.UserNotifier do
 
     if admin_email do
       text = """
-      New user signup on Cronly!
+      New user signup on Runlater!
 
       Email: #{user.email}
       User ID: #{user.id}
       Signed up at: #{Calendar.strftime(user.inserted_at, "%Y-%m-%d %H:%M:%S UTC")}
 
-      - Cronly System
+      - Runlater System
       """
 
       html = admin_notification_template(user)
@@ -259,7 +259,7 @@ defmodule Prikke.Accounts.UserNotifier do
 
     if admin_email do
       text = """
-      Organization upgraded to Pro on Cronly!
+      Organization upgraded to Pro on Runlater!
 
       Organization: #{organization.name}
       Organization ID: #{organization.id}
@@ -267,7 +267,7 @@ defmodule Prikke.Accounts.UserNotifier do
 
       Action needed: Set up billing for this customer.
 
-      - Cronly System
+      - Runlater System
       """
 
       html = admin_upgrade_template(organization)
@@ -296,7 +296,7 @@ defmodule Prikke.Accounts.UserNotifier do
                 <td style="padding: 32px 32px 24px 32px; text-align: center; border-bottom: 1px solid #e2e8f0;">
                   <div style="display: inline-flex; align-items: center;">
                     <span style="display: inline-block; width: 12px; height: 12px; background-color: #10b981; border-radius: 50%; margin-right: 8px;"></span>
-                    <span style="font-size: 20px; font-weight: 600; color: #0f172a;">cronly</span>
+                    <span style="font-size: 20px; font-weight: 600; color: #0f172a;">runlater</span>
                   </div>
                 </td>
               </tr>
@@ -327,7 +327,7 @@ defmodule Prikke.Accounts.UserNotifier do
               <tr>
                 <td style="padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
                   <p style="margin: 0; font-size: 12px; color: #94a3b8;">
-                    Cronly Admin Notification
+                    Runlater Admin Notification
                   </p>
                 </td>
               </tr>
@@ -358,7 +358,7 @@ defmodule Prikke.Accounts.UserNotifier do
                 <td style="padding: 32px 32px 24px 32px; text-align: center; border-bottom: 1px solid #e2e8f0;">
                   <div style="display: inline-flex; align-items: center;">
                     <span style="display: inline-block; width: 12px; height: 12px; background-color: #10b981; border-radius: 50%; margin-right: 8px;"></span>
-                    <span style="font-size: 20px; font-weight: 600; color: #0f172a;">cronly</span>
+                    <span style="font-size: 20px; font-weight: 600; color: #0f172a;">runlater</span>
                   </div>
                 </td>
               </tr>
@@ -392,7 +392,7 @@ defmodule Prikke.Accounts.UserNotifier do
               <tr>
                 <td style="padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
                   <p style="margin: 0; font-size: 12px; color: #94a3b8;">
-                    Cronly Admin Notification
+                    Runlater Admin Notification
                   </p>
                 </td>
               </tr>

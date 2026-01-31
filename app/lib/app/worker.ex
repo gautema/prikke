@@ -185,7 +185,7 @@ defmodule Prikke.Worker do
 
     headers =
       build_headers(job.headers)
-      |> add_cronly_headers(job, execution, body)
+      |> add_runlater_headers(job, execution, body)
 
     opts = [
       method: String.downcase(job.method) |> String.to_existing_atom(),
@@ -214,10 +214,10 @@ defmodule Prikke.Worker do
     Enum.map(headers, fn {k, v} -> {to_string(k), to_string(v)} end)
   end
 
-  defp add_cronly_headers(headers, job, execution, body) do
+  defp add_runlater_headers(headers, job, execution, body) do
     webhook_secret = job.organization.webhook_secret
-    cronly_headers = WebhookSignature.build_headers(job.id, execution.id, body, webhook_secret)
-    headers ++ cronly_headers
+    runlater_headers = WebhookSignature.build_headers(job.id, execution.id, body, webhook_secret)
+    headers ++ runlater_headers
   end
 
   defp handle_success(execution, response, duration_ms) do
