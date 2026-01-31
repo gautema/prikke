@@ -7,12 +7,11 @@ defmodule PrikkeWeb.LandingPageTest do
       html = html_response(conn, 200)
 
       # Check hero section
-      assert html =~ "Cron for the"
-      assert html =~ "serverless era"
+      assert html =~ "Run it later"
+      assert html =~ "We'll handle the rest"
       assert html =~ "Fire and forget"
 
-      # Check pulsing logo is present
-      assert html =~ "animate-[ping_4s"
+      # Check marketing header is present
       assert html =~ "runlater"
 
       # Check CTA buttons
@@ -26,7 +25,7 @@ defmodule PrikkeWeb.LandingPageTest do
       # Check what Runlater does section
       assert html =~ "What Runlater does"
       assert html =~ "Cron jobs"
-      assert html =~ "One-time tasks"
+      assert html =~ "Deferred tasks"
       assert html =~ "Automatic retries"
       assert html =~ "Webhook delivery"
 
@@ -62,7 +61,7 @@ defmodule PrikkeWeb.LandingPageTest do
       html = html_response(conn, 200)
 
       # Should show landing page content, not redirect
-      assert html =~ "Cron for the"
+      assert html =~ "Run it later"
       assert html =~ "runlater"
     end
 

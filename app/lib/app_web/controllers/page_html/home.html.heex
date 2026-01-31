@@ -10,10 +10,10 @@
         <.icon name="hero-shield-check" class="w-[18px] h-[18px]" /> EU-hosted · GDPR-native
       </div>
       <h1 class="text-3xl sm:text-5xl font-bold leading-tight tracking-tight mb-6 text-slate-900">
-        Cron for the<br />serverless era.
+        Run it later.<br />We'll handle the rest.
       </h1>
       <p class="text-lg sm:text-xl text-slate-600 mb-8 max-w-[520px] mx-auto">
-        Serverless made background tasks hard. We make them easy. Scheduled jobs, one-time tasks, webhook delivery. Retries built in. Fire and forget.
+        Defer any task to run in 5 minutes or 5 months. Schedule recurring crons. Deliver webhooks reliably. Built-in retries. Fire and forget.
       </p>
       <div class="flex flex-col sm:flex-row gap-3 justify-center mb-10">
         <a
@@ -54,15 +54,15 @@
       </h2>
       <div class="grid sm:grid-cols-2 gap-4">
         <div class="bg-white border border-slate-200 rounded-lg p-5">
-          <h3 class="text-base font-semibold mb-2 text-slate-900">Cron jobs</h3>
+          <h3 class="text-base font-semibold mb-2 text-slate-900">Deferred tasks</h3>
           <p class="text-[15px] text-slate-500 m-0">
-            Daily reports, hourly syncs, weekly cleanups. Standard cron expressions. We call your endpoint on schedule.
+            Send a reminder in 24 hours. Process a payment tomorrow. Expire a session next week. Just POST with a timestamp.
           </p>
         </div>
         <div class="bg-white border border-slate-200 rounded-lg p-5">
-          <h3 class="text-base font-semibold mb-2 text-slate-900">One-time tasks</h3>
+          <h3 class="text-base font-semibold mb-2 text-slate-900">Cron jobs</h3>
           <p class="text-[15px] text-slate-500 m-0">
-            Send a reminder in 24 hours. Expire a token next week. Schedule once, we deliver exactly on time.
+            Daily reports, hourly syncs, weekly cleanups. Standard cron expressions. We call your endpoint on schedule.
           </p>
         </div>
         <div class="bg-white border border-slate-200 rounded-lg p-5">
@@ -141,22 +141,22 @@
       <pre
         phx-no-curly-interpolation
         class="bg-slate-900 text-slate-100 p-4 sm:p-6 rounded-lg font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto"
-      ><span class="text-slate-500"># Schedule a cron job - runs every day at 06:00 UTC</span>
-curl -X POST https://runlater.eu/api/v1/jobs \
-  -H "Authorization: Bearer pk_live_xxx" \
-  -d '{
-    <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Daily backup"</span>,
-    <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/backup"</span>,
-    <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 6 * * *"</span>
-  }'
-
-<span class="text-slate-500"># Schedule a one-time task</span>
+      ><span class="text-slate-500"># Defer a task - run it in 24 hours</span>
 curl -X POST https://runlater.eu/api/v1/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
   -d '{
     <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Send reminder"</span>,
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/remind"</span>,
     <span class="text-sky-300">"run_at"</span>: <span class="text-green-300">"2025-02-01T09:00:00Z"</span>
+  }'
+
+<span class="text-slate-500"># Or schedule a recurring cron job</span>
+curl -X POST https://runlater.eu/api/v1/jobs \
+  -H "Authorization: Bearer pk_live_xxx" \
+  -d '{
+    <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Daily backup"</span>,
+    <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/backup"</span>,
+    <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 6 * * *"</span>
   }'
 
 <span class="text-slate-500"># That's it. We handle the rest.</span></pre>
@@ -262,7 +262,7 @@ curl -X POST https://runlater.eu/api/v1/jobs \
 
 <!-- CTA -->
     <section class="py-20 text-center border-t border-slate-200">
-      <h2 class="text-2xl font-bold mb-4 text-slate-900">Ready to simplify your cron?</h2>
+      <h2 class="text-2xl font-bold mb-4 text-slate-900">Ready to defer your first task?</h2>
       <p class="text-slate-600 mb-8">Create your free account and schedule your first job in minutes.</p>
       <a
         href="/users/register"

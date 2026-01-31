@@ -3,6 +3,6 @@ defmodule PrikkeWeb.PageControllerTest do
 
   test "GET /", %{conn: conn} do
     conn = get(conn, ~p"/")
-    assert html_response(conn, 200) =~ "Cron for the"
+    assert html_response(conn, 200) =~ "Run it later"
   end
 end
