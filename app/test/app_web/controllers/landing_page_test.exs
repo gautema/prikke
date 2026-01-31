@@ -7,8 +7,8 @@ defmodule PrikkeWeb.LandingPageTest do
       html = html_response(conn, 200)
 
       # Check hero section
-      assert html =~ "Run it later"
-      assert html =~ "We'll handle the rest"
+      assert html =~ "Defer anything"
+      assert html =~ "We'll make sure it runs"
       assert html =~ "Fire and forget"
 
       # Check marketing header is present
@@ -61,7 +61,7 @@ defmodule PrikkeWeb.LandingPageTest do
       html = html_response(conn, 200)
 
       # Should show landing page content, not redirect
-      assert html =~ "Run it later"
+      assert html =~ "Defer anything"
       assert html =~ "runlater"
     end
 
