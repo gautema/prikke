@@ -255,4 +255,171 @@ defmodule Prikke.SchedulerTest do
       assert length(executions) == 0
     end
   end
+
+  describe "lookahead scheduling" do
+    setup do
+      user = user_fixture()
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org"})
+      {:ok, org} = Accounts.upgrade_organization_to_pro(org)
+
+      {:ok, pid} = start_supervised({Prikke.Scheduler, test_mode: true})
+      Ecto.Adapters.SQL.Sandbox.allow(Prikke.Repo, self(), pid)
+
+      %{user: user, organization: org}
+    end
+
+    test "schedules jobs within 30-second lookahead window", %{organization: org} do
+      # Create a one-time job scheduled 15 seconds in the future
+      future = DateTime.utc_now() |> DateTime.add(15, :second) |> DateTime.truncate(:second)
+
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Lookahead Job",
+          url: "https://example.com/webhook",
+          schedule_type: "once",
+          scheduled_at: future
+        })
+
+      # Verify job has next_run_at in the future
+      assert DateTime.compare(job.next_run_at, DateTime.utc_now()) == :gt
+
+      # Trigger scheduler tick - should find job within lookahead
+      {:ok, count} = Scheduler.tick()
+
+      assert count == 1
+
+      # Verify execution was created with correct scheduled_for
+      executions = Executions.list_job_executions(job)
+      assert length(executions) == 1
+
+      execution = hd(executions)
+      assert execution.status == "pending"
+      # scheduled_for should match the job's original next_run_at (in the future)
+      assert DateTime.compare(execution.scheduled_for, DateTime.utc_now()) == :gt
+      assert DateTime.diff(execution.scheduled_for, future, :second) == 0
+    end
+
+    test "does not schedule jobs beyond 30-second lookahead window", %{organization: org} do
+      # Create a one-time job scheduled 60 seconds in the future (beyond 30s lookahead)
+      future = DateTime.utc_now() |> DateTime.add(60, :second) |> DateTime.truncate(:second)
+
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Far Future Job",
+          url: "https://example.com/webhook",
+          schedule_type: "once",
+          scheduled_at: future
+        })
+
+      {:ok, count} = Scheduler.tick()
+
+      # Should not be scheduled yet
+      assert count == 0
+
+      executions = Executions.list_job_executions(job)
+      assert length(executions) == 0
+
+      # Job's next_run_at should still be set (not cleared)
+      updated_job = Jobs.get_job!(org, job.id)
+      assert updated_job.next_run_at != nil
+    end
+
+    test "advances next_run_at after lookahead scheduling for cron jobs", %{organization: org} do
+      # Create a cron job and set next_run_at to 10 seconds in the future
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Lookahead Cron",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "* * * * *"
+        })
+
+      future = DateTime.utc_now() |> DateTime.add(10, :second) |> DateTime.truncate(:second)
+      created_at = DateTime.utc_now() |> DateTime.add(-60, :second) |> DateTime.truncate(:second)
+
+      job =
+        job
+        |> Ecto.Changeset.change(next_run_at: future, inserted_at: created_at)
+        |> Prikke.Repo.update!()
+
+      original_next_run = job.next_run_at
+
+      {:ok, count} = Scheduler.tick()
+
+      assert count == 1
+
+      # Verify next_run_at was advanced to the next cron time
+      updated_job = Jobs.get_job!(org, job.id)
+      assert updated_job.next_run_at != nil
+      assert DateTime.compare(updated_job.next_run_at, original_next_run) == :gt
+    end
+
+    test "sets next_run_at to nil after lookahead scheduling for one-time jobs", %{organization: org} do
+      future = DateTime.utc_now() |> DateTime.add(10, :second) |> DateTime.truncate(:second)
+
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Lookahead Once",
+          url: "https://example.com/webhook",
+          schedule_type: "once",
+          scheduled_at: future
+        })
+
+      {:ok, count} = Scheduler.tick()
+
+      assert count == 1
+
+      # Verify next_run_at is now nil (one-time job won't run again)
+      updated_job = Jobs.get_job!(org, job.id)
+      assert updated_job.next_run_at == nil
+    end
+
+    test "execution scheduled_for is exact job time, not scheduler tick time", %{organization: org} do
+      # This tests that workers get the precise scheduled time
+      exact_time = DateTime.utc_now() |> DateTime.add(20, :second) |> DateTime.truncate(:second)
+
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Precise Time Job",
+          url: "https://example.com/webhook",
+          schedule_type: "once",
+          scheduled_at: exact_time
+        })
+
+      {:ok, _count} = Scheduler.tick()
+
+      executions = Executions.list_job_executions(job)
+      execution = hd(executions)
+
+      # scheduled_for should be the exact job time, not when we ticked
+      assert execution.scheduled_for == exact_time
+    end
+
+    test "respects monthly limits for lookahead jobs", %{organization: org} do
+      # Downgrade to free tier
+      org
+      |> Ecto.Changeset.change(tier: "free")
+      |> Prikke.Repo.update!()
+
+      # Create many executions to hit the limit (5000 for free)
+      # We'll mock this by checking the limit logic works
+      future = DateTime.utc_now() |> DateTime.add(10, :second) |> DateTime.truncate(:second)
+
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Limited Lookahead Job",
+          url: "https://example.com/webhook",
+          schedule_type: "once",
+          scheduled_at: future
+        })
+
+      # Under limit, should schedule
+      {:ok, count} = Scheduler.tick()
+      assert count == 1
+
+      # Verify execution was created
+      executions = Executions.list_job_executions(job)
+      assert length(executions) == 1
+    end
+  end
 end

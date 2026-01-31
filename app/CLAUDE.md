@@ -478,3 +478,44 @@ And **never** do this:
 <!-- phoenix:liveview-end -->
 
 <!-- usage-rules-end -->
+
+## Job Execution Architecture
+
+This app has three types of jobs with different execution flows:
+
+### Job Types
+
+| Type | Description | Uses Scheduler? |
+|------|-------------|-----------------|
+| **Cron** | Recurring jobs with cron expression | Yes |
+| **One-time scheduled** | Run once at a specific time | Yes |
+| **Queued (immediate)** | Run immediately via API | No |
+
+### Execution Flows
+
+```
+Cron jobs:           Scheduler → creates execution → Workers claim via SKIP LOCKED
+One-time scheduled:  Scheduler → creates execution → Workers claim via SKIP LOCKED
+Queued (immediate):  API → creates execution directly → notifies workers → Workers claim
+```
+
+### Key Components
+
+- **Scheduler** (`lib/app/scheduler.ex`): Ticks every 10 seconds, finds jobs due within 30-second lookahead window, creates pending executions with `scheduled_for` timestamp. Uses advisory lock for leader election across multiple nodes. The lookahead allows precise timing - workers only claim executions when `scheduled_for <= now`.
+
+- **Workers** (`lib/app/worker.ex`): Poll for pending executions using `FOR UPDATE SKIP LOCKED`. Multiple workers across multiple servers can safely claim different jobs.
+
+- **Queue API** (`lib/app_web/controllers/api/queue_controller.ex`): Bypasses scheduler entirely:
+  1. Creates job with `schedule_type: "once"`
+  2. Creates execution directly via `Executions.create_execution_for_job/2`
+  3. Clears `next_run_at` so scheduler ignores it
+  4. Calls `Jobs.notify_workers()` to wake workers immediately
+
+- **Queue UI** (`lib/app_web/live/queue_live.ex`): Same flow as Queue API but via LiveView form.
+
+### Multi-Server Support
+
+The architecture works with multiple app servers out of the box:
+- Advisory locks ensure only one scheduler runs at a time
+- `FOR UPDATE SKIP LOCKED` ensures workers don't claim the same job
+- Postgres is the coordination point - no direct server-to-server communication
