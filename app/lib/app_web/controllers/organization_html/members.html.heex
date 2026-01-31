@@ -6,34 +6,34 @@
     </div>
     
 <!-- Tabs -->
-    <div class="flex gap-4 mb-6 border-b border-slate-200">
+    <div class="flex gap-1 sm:gap-4 mb-6 border-b border-slate-200 overflow-x-auto -mx-4 px-4 scrollbar-hide">
       <a
         href={~p"/organizations/settings"}
-        class="pb-3 px-1 text-sm font-medium text-slate-500 hover:text-slate-700"
+        class="pb-3 px-2 sm:px-1 text-sm font-medium text-slate-500 hover:text-slate-700 whitespace-nowrap"
       >
         General
       </a>
       <a
         href={~p"/organizations/members"}
-        class="pb-3 px-1 text-sm font-medium text-emerald-600 border-b-2 border-emerald-500"
+        class="pb-3 px-2 sm:px-1 text-sm font-medium text-emerald-600 border-b-2 border-emerald-500 whitespace-nowrap"
       >
         Members
       </a>
       <a
         href={~p"/organizations/notifications"}
-        class="pb-3 px-1 text-sm font-medium text-slate-500 hover:text-slate-700"
+        class="pb-3 px-2 sm:px-1 text-sm font-medium text-slate-500 hover:text-slate-700 whitespace-nowrap"
       >
         Notifications
       </a>
       <a
         href={~p"/organizations/api-keys"}
-        class="pb-3 px-1 text-sm font-medium text-slate-500 hover:text-slate-700"
+        class="pb-3 px-2 sm:px-1 text-sm font-medium text-slate-500 hover:text-slate-700 whitespace-nowrap"
       >
         API Keys
       </a>
       <a
         href={~p"/organizations/audit"}
-        class="pb-3 px-1 text-sm font-medium text-slate-500 hover:text-slate-700"
+        class="pb-3 px-2 sm:px-1 text-sm font-medium text-slate-500 hover:text-slate-700 whitespace-nowrap"
       >
         Audit Log
       </a>
@@ -42,7 +42,7 @@
 <!-- Invite Form -->
     <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
       <h2 class="text-lg font-semibold text-slate-900 mb-4">Invite new member</h2>
-      <.form for={%{}} action={~p"/invites"} method="post" class="flex gap-3">
+      <.form for={%{}} action={~p"/invites"} method="post" class="flex flex-col sm:flex-row gap-3">
         <div class="flex-1">
           <input
             type="email"
@@ -52,21 +52,21 @@
             class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           />
         </div>
-        <div>
+        <div class="flex gap-3">
           <select
             name="invite[role]"
-            class="px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            class="flex-1 sm:flex-none px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           >
             <option value="member">Member</option>
             <option value="admin">Admin</option>
           </select>
+          <button
+            type="submit"
+            class="px-4 py-2.5 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors whitespace-nowrap"
+          >
+            Send Invite
+          </button>
         </div>
-        <button
-          type="submit"
-          class="px-4 py-2.5 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors"
-        >
-          Send Invite
-        </button>
       </.form>
     </div>
     
@@ -77,9 +77,9 @@
       </div>
       <div class="divide-y divide-slate-200">
         <%= for member <- @members do %>
-          <div class="px-6 py-4 flex justify-between items-center">
-            <div>
-              <div class="font-medium text-slate-900">
+          <div class="px-6 py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+            <div class="min-w-0">
+              <div class="font-medium text-slate-900 truncate">
                 {member.user.email}
                 <%= if member.user.id == @current_scope.user.id do %>
                   <span class="text-slate-400 text-sm">(you)</span>
@@ -89,7 +89,7 @@
                 Joined {Calendar.strftime(member.inserted_at, "%d %b %Y")}
               </div>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 flex-shrink-0">
               <%= if can_change_role?(@current_membership, member) do %>
                 <.form
                   for={%{}}
@@ -125,9 +125,9 @@
         </div>
         <div class="divide-y divide-slate-200">
           <%= for invite <- @invites do %>
-            <div class="px-6 py-4 flex justify-between items-center">
-              <div>
-                <div class="font-medium text-slate-900">{invite.email}</div>
+            <div class="px-6 py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+              <div class="min-w-0">
+                <div class="font-medium text-slate-900 truncate">{invite.email}</div>
                 <div class="text-sm text-slate-500">
                   Invited {Calendar.strftime(invite.inserted_at, "%d %b %Y")}
                   <%= if invite.invited_by do %>
@@ -135,7 +135,7 @@
                   <% end %>
                 </div>
               </div>
-              <div class="flex items-center gap-3">
+              <div class="flex items-center gap-3 flex-shrink-0">
                 <span class={"text-xs font-medium px-2 py-1 rounded #{role_badge_class(invite.role)}"}>
                   {String.capitalize(invite.role)}
                 </span>
