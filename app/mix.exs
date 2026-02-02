@@ -83,6 +83,9 @@ defmodule Prikke.MixProject do
       # Rate limiting
       {:plug_attack, "~> 0.4"},
 
+      # Error tracking (self-hosted Sentry alternative)
+      {:error_tracker, "~> 0.5"},
+
       # Testing
       {:bypass, "~> 2.1", only: :test},
       {:mox, "~> 1.1", only: :test}

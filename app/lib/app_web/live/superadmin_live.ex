@@ -86,9 +86,17 @@ defmodule PrikkeWeb.SuperadminLive do
   def render(assigns) do
     ~H"""
     <div class="max-w-6xl mx-auto py-8 px-4">
-      <div class="mb-8">
-        <h1 class="text-2xl font-bold text-slate-900">Superadmin Dashboard</h1>
-        <p class="text-slate-500 mt-1">Platform-wide analytics and monitoring</p>
+      <div class="mb-8 flex justify-between items-start">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900">Superadmin Dashboard</h1>
+          <p class="text-slate-500 mt-1">Platform-wide analytics and monitoring</p>
+        </div>
+        <a
+          href="/errors"
+          class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+        >
+          View Errors
+        </a>
       </div>
       
     <!-- Platform Stats -->

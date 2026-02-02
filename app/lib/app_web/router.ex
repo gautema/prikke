@@ -158,6 +158,14 @@ defmodule PrikkeWeb.Router do
     end
   end
 
+  # Error tracker dashboard (superadmin only)
+  scope "/", PrikkeWeb do
+    pipe_through [:browser, :require_authenticated_user, PrikkeWeb.Plugs.RequireSuperadmin]
+
+    import ErrorTracker.Web.Router
+    error_tracker_dashboard("/errors")
+  end
+
   # Invites (public - for viewing/accepting invites)
   scope "/", PrikkeWeb do
     pipe_through [:browser]
