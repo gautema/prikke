@@ -12,6 +12,8 @@ defmodule Prikke.Application do
         PrikkeWeb.Telemetry,
         {DNSCluster, query: Application.get_env(:app, :dns_cluster_query) || :ignore},
         {Phoenix.PubSub, name: Prikke.PubSub},
+        # Rate limiting storage
+        {PlugAttack.Storage.Ets, name: PrikkeWeb.RateLimit.Storage, clean_period: 60_000},
         # Task supervisor for async notifications
         {Task.Supervisor, name: Prikke.TaskSupervisor},
         # Start to serve requests, typically the last entry

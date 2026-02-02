@@ -80,6 +80,9 @@ defmodule Prikke.MixProject do
       # Time zones
       {:tz, "~> 0.28"},
 
+      # Rate limiting
+      {:plug_attack, "~> 0.4"},
+
       # Testing
       {:bypass, "~> 2.1", only: :test},
       {:mox, "~> 1.1", only: :test}

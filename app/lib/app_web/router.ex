@@ -17,6 +17,7 @@ defmodule PrikkeWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug PrikkeWeb.RateLimit
   end
 
   scope "/", PrikkeWeb do
