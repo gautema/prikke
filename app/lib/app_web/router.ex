@@ -158,9 +158,16 @@ defmodule PrikkeWeb.Router do
     end
   end
 
-  # Error tracker dashboard (superadmin only)
-  scope "/", PrikkeWeb do
+  # Error tracker and LiveDashboard (superadmin only)
+  scope "/" do
     pipe_through [:browser, :require_authenticated_user, PrikkeWeb.Plugs.RequireSuperadmin]
+
+    import Phoenix.LiveDashboard.Router
+
+    live_dashboard "/live-dashboard",
+      metrics: PrikkeWeb.Telemetry,
+      ecto_repos: [Prikke.Repo],
+      live_session_name: :superadmin_live_dashboard
 
     import ErrorTracker.Web.Router
     error_tracker_dashboard("/errors")

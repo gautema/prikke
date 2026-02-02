@@ -91,12 +91,20 @@ defmodule PrikkeWeb.SuperadminLive do
           <h1 class="text-2xl font-bold text-slate-900">Superadmin Dashboard</h1>
           <p class="text-slate-500 mt-1">Platform-wide analytics and monitoring</p>
         </div>
-        <a
-          href="/errors"
-          class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
-        >
-          View Errors
-        </a>
+        <div class="flex gap-2">
+          <a
+            href="/live-dashboard"
+            class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-md transition-colors"
+          >
+            Live Dashboard
+          </a>
+          <a
+            href="/errors"
+            class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+          >
+            View Errors
+          </a>
+        </div>
       </div>
       
     <!-- Platform Stats -->
