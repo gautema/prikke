@@ -658,9 +658,9 @@ defmodule Prikke.Accounts do
       end)
     end
 
-    # Update the sent_at timestamp
+    # Update the sent_at timestamp (truncate to second for utc_datetime field)
     organization
-    |> Ecto.Changeset.change(limit_warning_sent_at: now)
+    |> Ecto.Changeset.change(limit_warning_sent_at: DateTime.truncate(now, :second))
     |> Repo.update()
 
     :ok
@@ -675,9 +675,9 @@ defmodule Prikke.Accounts do
       end)
     end
 
-    # Update the sent_at timestamp
+    # Update the sent_at timestamp (truncate to second for utc_datetime field)
     organization
-    |> Ecto.Changeset.change(limit_reached_sent_at: now)
+    |> Ecto.Changeset.change(limit_reached_sent_at: DateTime.truncate(now, :second))
     |> Repo.update()
 
     :ok

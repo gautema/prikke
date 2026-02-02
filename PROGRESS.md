@@ -2,7 +2,7 @@
 
 ## Current Status: MVP Complete
 
-Last updated: 2026-01-29
+Last updated: 2026-02-02
 
 ---
 
@@ -259,6 +259,7 @@ app/lib/app_web/
 │       └── edit.ex
 ├── plugs/
 │   ├── api_auth.ex
+│   ├── rate_limit.ex           # API rate limiting (PlugAttack)
 │   ├── require_superadmin.ex   # Superadmin route protection
 │   └── track_pageview.ex       # Pageview tracking
 ├── live/
@@ -299,18 +300,19 @@ Environment variables:
 ```
 
 ### URLs
-- Production: https://prikke.whitenoise.no
-- Status: https://prikke.whitenoise.no/status
-- Register: https://prikke.whitenoise.no/users/register
-- Dashboard: https://prikke.whitenoise.no/dashboard
-- Jobs: https://prikke.whitenoise.no/jobs
-- API Docs: https://prikke.whitenoise.no/api/docs
+- Production: https://runlater.eu
+- Status: https://runlater.eu/status
+- Register: https://runlater.eu/users/register
+- Dashboard: https://runlater.eu/dashboard
+- Jobs: https://runlater.eu/jobs
+- API Docs: https://runlater.eu/docs/api
+- Swagger UI: https://runlater.eu/api/v1/docs
 
 ---
 
 ## Test Coverage
 
-- **277 tests passing**
+- **343 tests passing**
 - Accounts: user auth, organizations, memberships, invites, API keys
 - Jobs: CRUD, validations, cron parsing, tier limits
 - Executions: creation, claiming, completion, stats
@@ -326,6 +328,7 @@ Environment variables:
 ```elixir
 {:crontab, "~> 1.1"},      # Cron expression parsing
 {:req, "~> 0.5"},          # HTTP client (for job execution)
+{:plug_attack, "~> 0.4"},  # Rate limiting
 ```
 
 ---
@@ -339,6 +342,23 @@ Environment variables:
 
 ## Recently Completed
 
+- [x] **Rebrand to Runlater** - Changed from Cronly to Runlater (runlater.eu)
+  - All branding, emails, headers (X-Runlater-*), cookies updated
+  - Deployed to Hetzner via Kamal
+- [x] **API Rate Limiting** - PlugAttack-based IP throttling
+  - 300 requests/minute per IP
+  - 5000 requests/hour per IP
+  - Returns 429 with JSON error when exceeded
+  - Configurable limits via app config
+- [x] **Monthly Limit Notifications** - Email alerts for execution limits
+  - Warning at 80%: "Approaching monthly limit"
+  - Alert at 100%: "Monthly limit reached, jobs will be skipped"
+  - Tier-appropriate messaging (free: upgrade, pro: contact us)
+  - Tracked to avoid spam (once per threshold per month)
+- [x] **Landing Page Updates** - Focused on deferred jobs messaging
+  - New headline: "Defer anything. We'll make sure it runs."
+  - Problem section rewritten for async background tasks
+  - Swagger UI linked from API docs page
 - [x] **Superadmin Dashboard** (`/superadmin`) - Platform-wide analytics and monitoring
   - is_superadmin flag on users, set via migration for designated admins
   - RequireSuperadmin plug for route protection
