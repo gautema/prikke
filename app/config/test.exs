@@ -11,6 +11,12 @@ config :app, :ci_mode, System.get_env("CI") == "true"
 # Don't auto-start scheduler in tests (tests start it manually with test_mode: true)
 config :app, :start_scheduler, false
 
+# Higher rate limits to not interfere with other tests
+# Rate limit tests override these via ETS manipulation
+config :app, PrikkeWeb.RateLimit,
+  limit_per_minute: 1000,
+  limit_per_hour: 5000
+
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used
