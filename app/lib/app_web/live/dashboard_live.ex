@@ -157,11 +157,19 @@ defmodule PrikkeWeb.DashboardLive do
             ]}>
               <%= if usage_percent(@stats.monthly_executions, @stats.monthly_limit) >= 100 do %>
                 Monthly limit reached. Jobs will be skipped until next month.
-                <.link navigate={~p"/organizations/settings"} class="underline">Upgrade to Pro</.link>
+                <%= if @current_organization.tier == "free" do %>
+                  <.link navigate={~p"/organizations/settings"} class="underline">Upgrade to Pro</.link>
+                <% else %>
+                  <a href="mailto:support@runlater.eu" class="underline">Contact us</a> for higher limits.
+                <% end %>
               <% else %>
                 Approaching monthly limit.
-                <.link navigate={~p"/organizations/settings"} class="underline">Upgrade to Pro</.link>
-                for 250k executions.
+                <%= if @current_organization.tier == "free" do %>
+                  <.link navigate={~p"/organizations/settings"} class="underline">Upgrade to Pro</.link>
+                  for 250k executions.
+                <% else %>
+                  <a href="mailto:support@runlater.eu" class="underline">Contact us</a> for higher limits.
+                <% end %>
               <% end %>
             </p>
           <% end %>
