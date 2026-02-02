@@ -686,7 +686,7 @@ defmodule Prikke.AccountsTest do
           notification_webhook_url: "not-a-url"
         })
 
-      assert "must be a valid HTTP or HTTPS URL" in errors_on(changeset).notification_webhook_url
+      assert "must use HTTP or HTTPS" in errors_on(changeset).notification_webhook_url
     end
 
     test "update_notification_settings/2 allows empty/nil values" do

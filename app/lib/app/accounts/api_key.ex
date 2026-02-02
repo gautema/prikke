@@ -50,9 +50,11 @@ defmodule Prikke.Accounts.ApiKey do
 
   @doc """
   Verifies a secret against a stored hash.
+  Uses constant-time comparison to prevent timing attacks.
   """
   def verify_secret(secret, hash) do
-    hash_secret(secret) == hash
+    computed_hash = hash_secret(secret)
+    Plug.Crypto.secure_compare(computed_hash, hash)
   end
 
   defp random_string(length) do

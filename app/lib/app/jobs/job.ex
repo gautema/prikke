@@ -54,6 +54,7 @@ defmodule Prikke.Jobs.Job do
     |> validate_inclusion(:method, @http_methods)
     |> validate_inclusion(:schedule_type, @schedule_types)
     |> validate_url(:url)
+    |> Prikke.UrlValidator.validate_webhook_url_safe(:url)
     |> validate_number(:retry_attempts, greater_than_or_equal_to: 0, less_than_or_equal_to: 10)
     |> validate_number(:timeout_ms,
       greater_than_or_equal_to: 1000,

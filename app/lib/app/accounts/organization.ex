@@ -57,26 +57,7 @@ defmodule Prikke.Accounts.Organization do
     organization
     |> cast(attrs, [:notify_on_failure, :notification_email, :notification_webhook_url])
     |> validate_format(:notification_email, ~r/^[^\s]+@[^\s]+$/, message: "must be a valid email")
-    |> validate_webhook_url()
-  end
-
-  defp validate_webhook_url(changeset) do
-    case get_change(changeset, :notification_webhook_url) do
-      nil ->
-        changeset
-
-      "" ->
-        changeset
-
-      url ->
-        uri = URI.parse(url)
-
-        if uri.scheme in ["http", "https"] and uri.host do
-          changeset
-        else
-          add_error(changeset, :notification_webhook_url, "must be a valid HTTP or HTTPS URL")
-        end
-    end
+    |> Prikke.UrlValidator.validate_webhook_url_safe(:notification_webhook_url)
   end
 
 end
