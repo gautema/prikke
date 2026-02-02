@@ -302,6 +302,8 @@ defmodule Prikke.Scheduler do
       case Executions.create_execution_for_job(job, job.next_run_at) do
         {:ok, _} ->
           advance_next_run_at(job)
+          # Check if we should notify about approaching/reaching limit
+          check_limit_notification(job.organization)
           :ok
 
         {:error, reason} ->
@@ -316,8 +318,16 @@ defmodule Prikke.Scheduler do
       )
       # Still advance to prevent infinite retries
       advance_next_run_at(job)
+      # Notify that limit was reached
+      check_limit_notification(job.organization)
       :skipped
     end
+  end
+
+  # Checks if we should send a limit notification (80% warning or 100% reached)
+  defp check_limit_notification(organization) do
+    current_count = Executions.count_current_month_executions(organization)
+    Prikke.Accounts.maybe_send_limit_notification(organization, current_count)
   end
 
   # Schedules an overdue job, handling any missed runs if the scheduler was down.

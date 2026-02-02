@@ -605,6 +605,89 @@ defmodule Prikke.Accounts do
     |> Repo.one()
   end
 
+  ## Limit Notifications
+
+  @doc """
+  Checks if the organization has crossed a limit threshold and sends notification if needed.
+  Called by the scheduler after creating executions.
+
+  Thresholds:
+  - 80%: Warning notification
+  - 100%: Limit reached notification
+
+  Only sends one notification per threshold per month.
+  """
+  def maybe_send_limit_notification(organization, current_count) do
+    tier_limits = Prikke.Jobs.get_tier_limits(organization.tier)
+    limit = tier_limits.max_monthly_executions
+
+    # Skip if unlimited
+    if limit == :unlimited do
+      :ok
+    else
+      percent = current_count / limit * 100
+      now = DateTime.utc_now()
+
+      cond do
+        # At or over 100% - send limit reached notification
+        percent >= 100 and not sent_this_month?(organization.limit_reached_sent_at, now) ->
+          send_limit_reached_notification(organization, limit, now)
+
+        # At or over 80% but under 100% - send warning notification
+        percent >= 80 and not sent_this_month?(organization.limit_warning_sent_at, now) ->
+          send_limit_warning_notification(organization, current_count, limit, now)
+
+        true ->
+          :ok
+      end
+    end
+  end
+
+  defp sent_this_month?(nil, _now), do: false
+
+  defp sent_this_month?(sent_at, now) do
+    sent_at.year == now.year and sent_at.month == now.month
+  end
+
+  defp send_limit_warning_notification(organization, current, limit, now) do
+    email = get_notification_email(organization)
+
+    if email do
+      Task.Supervisor.start_child(Prikke.TaskSupervisor, fn ->
+        UserNotifier.deliver_limit_warning(email, organization, current, limit)
+      end)
+    end
+
+    # Update the sent_at timestamp
+    organization
+    |> Ecto.Changeset.change(limit_warning_sent_at: now)
+    |> Repo.update()
+
+    :ok
+  end
+
+  defp send_limit_reached_notification(organization, limit, now) do
+    email = get_notification_email(organization)
+
+    if email do
+      Task.Supervisor.start_child(Prikke.TaskSupervisor, fn ->
+        UserNotifier.deliver_limit_reached(email, organization, limit)
+      end)
+    end
+
+    # Update the sent_at timestamp
+    organization
+    |> Ecto.Changeset.change(limit_reached_sent_at: now)
+    |> Repo.update()
+
+    :ok
+  end
+
+  defp get_notification_email(organization) do
+    # Prefer org notification email, fall back to owner email
+    organization.notification_email || get_organization_owner_email(organization)
+  end
+
   ## API Keys
 
   @doc """

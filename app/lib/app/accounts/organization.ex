@@ -14,6 +14,10 @@ defmodule Prikke.Accounts.Organization do
     field :notification_email, :string
     field :notification_webhook_url, :string
 
+    # Limit notification tracking (to avoid spamming)
+    field :limit_warning_sent_at, :utc_datetime
+    field :limit_reached_sent_at, :utc_datetime
+
     has_many :memberships, Prikke.Accounts.Membership
     has_many :users, through: [:memberships, :user]
     has_many :api_keys, Prikke.Accounts.ApiKey

@@ -340,6 +340,117 @@ defmodule Prikke.Accounts.UserNotifier do
     """
   end
 
+  @doc """
+  Deliver warning when organization approaches monthly execution limit (80%).
+  """
+  def deliver_limit_warning(email, organization, current, limit) do
+    percent = round(current / limit * 100)
+    upgrade_text = if organization.tier == "free", do: " Upgrade to Pro for 250k executions/month.", else: ""
+
+    text = """
+    Hi,
+
+    Your organization "#{organization.name}" has used #{percent}% of your monthly execution limit on Runlater.
+
+    Current usage: #{format_number(current)} / #{format_number(limit)} executions
+
+    #{upgrade_text}
+
+    View your dashboard: https://runlater.eu/dashboard
+
+    - The Runlater Team
+    """
+
+    upgrade_html = if organization.tier == "free" do
+      """
+      <p style="margin: 16px 0 0 0; font-size: 14px; color: #475569;">
+        <a href="https://runlater.eu/organizations/settings" style="color: #10b981; font-weight: 500;">Upgrade to Pro</a> for 250k executions/month.
+      </p>
+      """
+    else
+      ""
+    end
+
+    html_content = """
+    <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #f59e0b;">Approaching Monthly Limit</h2>
+    <p style="margin: 0 0 8px 0; font-size: 14px; color: #475569; line-height: 1.6;">
+      Your organization <strong>#{organization.name}</strong> has used <strong>#{percent}%</strong> of your monthly execution limit.
+    </p>
+    <div style="margin: 16px 0; padding: 16px; background-color: #fef3c7; border-radius: 6px;">
+      <p style="margin: 0; font-size: 14px; color: #92400e;">
+        <strong>#{format_number(current)}</strong> / #{format_number(limit)} executions used
+      </p>
+    </div>
+    #{upgrade_html}
+    """
+
+    html = email_template(html_content, "View Dashboard", "https://runlater.eu/dashboard")
+    deliver(email, "Approaching monthly limit - #{organization.name}", text, html)
+  end
+
+  @doc """
+  Deliver alert when organization reaches monthly execution limit (100%).
+  """
+  def deliver_limit_reached(email, organization, limit) do
+    upgrade_text = if organization.tier == "free", do: " Upgrade to Pro for 250k executions/month.", else: " Contact us for higher limits."
+
+    text = """
+    Hi,
+
+    Your organization "#{organization.name}" has reached its monthly execution limit on Runlater.
+
+    Limit: #{format_number(limit)} executions/month
+
+    Jobs will be skipped until the limit resets next month.#{upgrade_text}
+
+    View your dashboard: https://runlater.eu/dashboard
+
+    - The Runlater Team
+    """
+
+    upgrade_html = if organization.tier == "free" do
+      """
+      <p style="margin: 16px 0 0 0; font-size: 14px; color: #475569;">
+        <a href="https://runlater.eu/organizations/settings" style="color: #10b981; font-weight: 500;">Upgrade to Pro</a> for 250k executions/month.
+      </p>
+      """
+    else
+      """
+      <p style="margin: 16px 0 0 0; font-size: 14px; color: #475569;">
+        <a href="mailto:support@runlater.eu" style="color: #10b981; font-weight: 500;">Contact us</a> for higher limits.
+      </p>
+      """
+    end
+
+    html_content = """
+    <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #dc2626;">Monthly Limit Reached</h2>
+    <p style="margin: 0 0 8px 0; font-size: 14px; color: #475569; line-height: 1.6;">
+      Your organization <strong>#{organization.name}</strong> has reached its monthly execution limit.
+    </p>
+    <div style="margin: 16px 0; padding: 16px; background-color: #fee2e2; border-radius: 6px;">
+      <p style="margin: 0; font-size: 14px; color: #991b1b;">
+        <strong>#{format_number(limit)}</strong> executions/month limit reached.<br>
+        Jobs will be skipped until next month.
+      </p>
+    </div>
+    #{upgrade_html}
+    """
+
+    html = email_template(html_content, "View Dashboard", "https://runlater.eu/dashboard")
+    deliver(email, "Monthly limit reached - #{organization.name}", text, html)
+  end
+
+  defp format_number(n) when n >= 1000 do
+    Integer.to_string(n)
+    |> String.reverse()
+    |> String.graphemes()
+    |> Enum.chunk_every(3)
+    |> Enum.join(",")
+    |> String.reverse()
+  end
+
+  defp format_number(n), do: Integer.to_string(n)
+
   defp admin_notification_template(user) do
     """
     <!DOCTYPE html>
