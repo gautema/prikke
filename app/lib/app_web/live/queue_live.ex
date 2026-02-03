@@ -1,8 +1,19 @@
 defmodule PrikkeWeb.QueueLive do
   use PrikkeWeb, :live_view
 
+  import Ecto.Changeset
+
   alias Prikke.Jobs
   alias Prikke.Executions
+
+  # Define the fields and types for schemaless changeset
+  @queue_types %{
+    url: :string,
+    method: :string,
+    headers_json: :string,
+    body: :string,
+    name: :string
+  }
 
   @impl true
   def mount(_params, session, socket) do
@@ -14,7 +25,7 @@ defmodule PrikkeWeb.QueueLive do
        |> assign(:organization, org)
        |> assign(:page_title, "Queue Request")
        |> assign(:result, nil)
-       |> assign_form(initial_params())}
+       |> assign_form(changeset(initial_params()))}
     else
       {:ok,
        socket
@@ -32,12 +43,52 @@ defmodule PrikkeWeb.QueueLive do
     }
   end
 
+  defp changeset(params, action \\ nil) do
+    {%{}, @queue_types}
+    |> cast(params, Map.keys(@queue_types))
+    |> validate_required([:url])
+    |> validate_url(:url)
+    |> then(fn cs -> if action, do: Map.put(cs, :action, action), else: cs end)
+  end
+
+  defp validate_url(changeset, field) do
+    validate_change(changeset, field, fn _, url ->
+      url = String.trim(url || "")
+
+      case URI.parse(url) do
+        %URI{scheme: scheme, host: host} when scheme in ["http", "https"] and not is_nil(host) ->
+          []
+
+        _ ->
+          [{field, "must be a valid HTTP or HTTPS URL"}]
+      end
+    end)
+  end
+
   @impl true
   def handle_event("validate", %{"queue" => params}, socket) do
-    {:noreply, assign_form(socket, params)}
+    cs = changeset(params, :validate)
+    {:noreply, assign_form(socket, cs)}
   end
 
   def handle_event("queue", %{"queue" => params}, socket) do
+    cs = changeset(params, :validate)
+
+    if cs.valid? do
+      do_queue(socket, params)
+    else
+      {:noreply, assign_form(socket, cs)}
+    end
+  end
+
+  def handle_event("reset", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:result, nil)
+     |> assign_form(changeset(initial_params()))}
+  end
+
+  defp do_queue(socket, params) do
     org = socket.assigns.organization
 
     # Parse headers JSON
@@ -53,7 +104,7 @@ defmodule PrikkeWeb.QueueLive do
       |> DateTime.add(1, :second)
       |> DateTime.truncate(:second)
 
-    url = params["url"]
+    url = String.trim(params["url"] || "")
     pretty_time = Calendar.strftime(scheduled_at, "%d %b, %H:%M")
     default_name = "#{url} · #{pretty_time}"
 
@@ -104,13 +155,6 @@ defmodule PrikkeWeb.QueueLive do
     end
   end
 
-  def handle_event("reset", _params, socket) do
-    {:noreply,
-     socket
-     |> assign(:result, nil)
-     |> assign_form(initial_params())}
-  end
-
   defp format_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
       Enum.reduce(opts, msg, fn {key, value}, acc ->
@@ -135,8 +179,8 @@ defmodule PrikkeWeb.QueueLive do
     end
   end
 
-  defp assign_form(socket, params) do
-    assign(socket, :form, to_form(params, as: :queue))
+  defp assign_form(socket, %Ecto.Changeset{} = changeset) do
+    assign(socket, :form, to_form(changeset, as: :queue))
   end
 
   @impl true
