@@ -116,7 +116,6 @@ body:has(#mobile-menu-toggle:checked) {
 .docs-content p { @apply text-slate-700 leading-relaxed my-4; }
 .docs-content a { @apply text-emerald-500 no-underline hover:underline; }
 .docs-content code { @apply bg-slate-100 px-1.5 py-0.5 rounded text-sm font-mono; }
-.docs-content pre { @apply bg-slate-900 text-slate-100 rounded-lg p-5 overflow-x-auto my-6; }
 .docs-content pre code { @apply bg-transparent p-0 text-sm; }
 .docs-content ul, .docs-content ol { @apply my-4 pl-6 text-slate-700; }
 .docs-content li { @apply my-2 leading-relaxed; }
