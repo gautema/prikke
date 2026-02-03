@@ -2,7 +2,7 @@
 
 ## Current Status: MVP Complete
 
-Last updated: 2026-02-02
+Last updated: 2026-02-03
 
 ---
 
@@ -312,7 +312,7 @@ Environment variables:
 
 ## Test Coverage
 
-- **343 tests passing**
+- **371 tests passing**
 - Accounts: user auth, organizations, memberships, invites, API keys
 - Jobs: CRUD, validations, cron parsing, tier limits
 - Executions: creation, claiming, completion, stats
@@ -342,6 +342,11 @@ Environment variables:
 
 ## Recently Completed
 
+- [x] **Form validation feedback** - Added `phx-feedback-for` to all input components in core_components.ex for proper real-time validation display
+- [x] **Queue page validation** - Implemented schemaless Ecto changeset for URL validation on `/queue` form
+- [x] **URL whitespace trimming** - URLs are now trimmed before validation to prevent "invalid URL" errors from accidental whitespace
+- [x] **One-time job datetime fix** - Server-side default for scheduled_at when switching to "once" schedule type (no more "can't be blank" errors)
+- [x] **Landing page tagline** - Updated "Set it and sleep" to "Set it and sleep well"
 - [x] **Rebrand to Runlater** - Changed from Cronly to Runlater (runlater.eu)
   - All branding, emails, headers (X-Runlater-*), cookies updated
   - Deployed to Hetzner via Kamal
