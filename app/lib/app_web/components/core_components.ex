@@ -219,7 +219,7 @@ defmodule PrikkeWeb.CoreComponents do
       end)
 
     ~H"""
-    <div class="mb-4">
+    <div class="mb-4" phx-feedback-for={@name}>
       <label class="flex items-center gap-3 cursor-pointer">
         <input
           type="hidden"
@@ -242,14 +242,14 @@ defmodule PrikkeWeb.CoreComponents do
         />
         <span :if={@label} class="text-base text-slate-700">{@label}</span>
       </label>
-      <.error :for={msg <- @errors}>{msg}</.error>
+      <.error :for={msg <- @errors} class="phx-no-feedback:hidden">{msg}</.error>
     </div>
     """
   end
 
   def input(%{type: "select"} = assigns) do
     ~H"""
-    <div class="mb-4">
+    <div class="mb-4" phx-feedback-for={@name}>
       <label>
         <span :if={@label} class="block text-base font-medium text-slate-700 mb-2">{@label}</span>
         <select
@@ -268,14 +268,14 @@ defmodule PrikkeWeb.CoreComponents do
           {Phoenix.HTML.Form.options_for_select(@options, @value)}
         </select>
       </label>
-      <.error :for={msg <- @errors}>{msg}</.error>
+      <.error :for={msg <- @errors} class="phx-no-feedback:hidden">{msg}</.error>
     </div>
     """
   end
 
   def input(%{type: "textarea"} = assigns) do
     ~H"""
-    <div class="mb-4">
+    <div class="mb-4" phx-feedback-for={@name}>
       <label>
         <span :if={@label} class="block text-base font-medium text-slate-700 mb-2">{@label}</span>
         <textarea
@@ -290,7 +290,7 @@ defmodule PrikkeWeb.CoreComponents do
           {@rest}
         >{Phoenix.HTML.Form.normalize_value("textarea", @value)}</textarea>
       </label>
-      <.error :for={msg <- @errors}>{msg}</.error>
+      <.error :for={msg <- @errors} class="phx-no-feedback:hidden">{msg}</.error>
     </div>
     """
   end
@@ -298,7 +298,7 @@ defmodule PrikkeWeb.CoreComponents do
   # All other inputs text, datetime-local, url, password, etc. are handled here...
   def input(assigns) do
     ~H"""
-    <div class="mb-4">
+    <div class="mb-4" phx-feedback-for={@name}>
       <label>
         <span :if={@label} class="block text-base font-medium text-slate-700 mb-2">{@label}</span>
         <input
@@ -315,15 +315,18 @@ defmodule PrikkeWeb.CoreComponents do
           {@rest}
         />
       </label>
-      <.error :for={msg <- @errors}>{msg}</.error>
+      <.error :for={msg <- @errors} class="phx-no-feedback:hidden">{msg}</.error>
     </div>
     """
   end
 
   # Helper used by inputs to generate form errors
+  attr :class, :string, default: nil
+  slot :inner_block, required: true
+
   defp error(assigns) do
     ~H"""
-    <p class="mt-1.5 flex gap-2 items-center text-sm text-error">
+    <p class={["mt-1.5 flex gap-2 items-center text-sm text-error", @class]}>
       <.icon name="hero-exclamation-circle" class="size-5" />
       {render_slot(@inner_block)}
     </p>
