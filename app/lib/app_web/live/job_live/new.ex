@@ -202,8 +202,31 @@ defmodule PrikkeWeb.JobLive.New do
                 <label for="job_scheduled_at" class="block text-sm font-medium text-slate-700 mb-1">
                   Scheduled Time (UTC)
                 </label>
-                <.input field={@form[:scheduled_at]} type="datetime-local" />
+                <input
+                  type="datetime-local"
+                  name={@form[:scheduled_at].name}
+                  id="job_scheduled_at"
+                  phx-hook=".UtcDatetimePicker"
+                  class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                />
+                <%= for msg <- Enum.map(@form[:scheduled_at].errors, &translate_error/1) do %>
+                  <p class="mt-1 text-sm text-red-600">{msg}</p>
+                <% end %>
               </div>
+              <script :type={Phoenix.LiveView.ColocatedHook} name=".UtcDatetimePicker">
+                export default {
+                  mounted() {
+                    const input = this.el;
+                    // Set min and default to current UTC time
+                    const now = new Date();
+                    const utcString = now.toISOString().slice(0, 16);
+                    input.min = utcString;
+                    if (!input.value) {
+                      input.value = utcString;
+                    }
+                  }
+                }
+              </script>
             <% end %>
           </div>
         </div>
