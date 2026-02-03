@@ -946,6 +946,10 @@ defmodule PrikkeWeb.CoreComponents do
             Contact
           </a>
         </div>
+        <div class="flex flex-wrap justify-center gap-4 mb-3">
+          <a href="/terms" class="text-slate-400 no-underline hover:text-emerald-500">Terms</a>
+          <a href="/privacy" class="text-slate-400 no-underline hover:text-emerald-500">Privacy</a>
+        </div>
         <p class="text-slate-400">Runlater · Made in Norway</p>
       </footer>
     <% else %>
@@ -956,6 +960,8 @@ defmodule PrikkeWeb.CoreComponents do
               <a href="/docs" class="hover:text-slate-700">Docs</a>
               <a href="/docs/api" class="hover:text-slate-700">API Reference</a>
               <a href="/status" class="hover:text-slate-700">Status</a>
+              <a href="/terms" class="hover:text-slate-700">Terms</a>
+              <a href="/privacy" class="hover:text-slate-700">Privacy</a>
             </div>
             <div>
               <a href="mailto:support@runlater.eu" class="hover:text-slate-700">Contact</a>

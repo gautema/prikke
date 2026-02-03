@@ -16,4 +16,16 @@ defmodule PrikkeWeb.PageController do
       |> render(:home)
     end
   end
+
+  def terms(conn, _params) do
+    conn
+    |> assign(:page_title, "Terms of Service")
+    |> render(:terms)
+  end
+
+  def privacy(conn, _params) do
+    conn
+    |> assign(:page_title, "Privacy Policy")
+    |> render(:privacy)
+  end
 end

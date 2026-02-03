@@ -35,6 +35,10 @@ defmodule PrikkeWeb.Router do
 
     # Public status page
     get "/status", StatusController, :index
+
+    # Legal pages
+    get "/terms", PageController, :terms
+    get "/privacy", PageController, :privacy
   end
 
   # Health check endpoint for Koyeb
