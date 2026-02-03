@@ -50,6 +50,7 @@ defmodule Prikke.Jobs.Job do
       :retry_attempts,
       :timeout_ms
     ])
+    |> trim_url()
     |> validate_required([:name, :url, :schedule_type])
     |> validate_inclusion(:method, @http_methods)
     |> validate_inclusion(:schedule_type, @schedule_types)
@@ -74,6 +75,13 @@ defmodule Prikke.Jobs.Job do
     |> changeset(attrs)
     |> put_change(:organization_id, organization_id)
     |> validate_required([:organization_id])
+  end
+
+  defp trim_url(changeset) do
+    case get_change(changeset, :url) do
+      nil -> changeset
+      url -> put_change(changeset, :url, String.trim(url))
+    end
   end
 
   defp validate_url(changeset, field) do

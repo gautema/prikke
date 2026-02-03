@@ -29,6 +29,21 @@ defmodule PrikkeWeb.JobLive.New do
   def handle_event("validate", %{"job" => job_params}, socket) do
     schedule_type = job_params["schedule_type"] || socket.assigns.schedule_type
 
+    # Default scheduled_at to current UTC time for one-time jobs if not set
+    job_params =
+      if schedule_type == "once" and
+           (job_params["scheduled_at"] == "" or is_nil(job_params["scheduled_at"])) do
+        # Default to 5 minutes from now to ensure it's in the future
+        default_time =
+          DateTime.utc_now()
+          |> DateTime.add(5, :minute)
+          |> Calendar.strftime("%Y-%m-%dT%H:%M")
+
+        Map.put(job_params, "scheduled_at", default_time)
+      else
+        job_params
+      end
+
     changeset =
       %Job{}
       |> Jobs.change_job(job_params)
@@ -41,7 +56,9 @@ defmodule PrikkeWeb.JobLive.New do
   end
 
   def handle_event("save", %{"job" => job_params}, socket) do
-    case Jobs.create_job(socket.assigns.organization, job_params, scope: socket.assigns.current_scope) do
+    case Jobs.create_job(socket.assigns.organization, job_params,
+           scope: socket.assigns.current_scope
+         ) do
       {:ok, job} ->
         {:noreply,
          socket
@@ -198,7 +215,7 @@ defmodule PrikkeWeb.JobLive.New do
                 </p>
               </div>
             <% else %>
-              <div>
+              <div phx-feedback-for={@form[:scheduled_at].name}>
                 <label for="job_scheduled_at" class="block text-sm font-medium text-slate-700 mb-1">
                   Scheduled Time (UTC)
                 </label>
@@ -206,24 +223,26 @@ defmodule PrikkeWeb.JobLive.New do
                   type="datetime-local"
                   name={@form[:scheduled_at].name}
                   id="job_scheduled_at"
+                  value={@form[:scheduled_at].value}
                   phx-hook=".UtcDatetimePicker"
-                  class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  class={[
+                    "w-full px-4 py-2.5 border rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500",
+                    @form[:scheduled_at].errors != [] && "border-red-500",
+                    @form[:scheduled_at].errors == [] && "border-slate-300"
+                  ]}
                 />
                 <%= for msg <- Enum.map(@form[:scheduled_at].errors, &translate_error/1) do %>
-                  <p class="mt-1 text-sm text-red-600">{msg}</p>
+                  <p class="mt-1 text-sm text-red-600 phx-no-feedback:hidden">{msg}</p>
                 <% end %>
               </div>
               <script :type={Phoenix.LiveView.ColocatedHook} name=".UtcDatetimePicker">
                 export default {
                   mounted() {
                     const input = this.el;
-                    // Set min and default to current UTC time
+                    // Set min to current UTC time
                     const now = new Date();
                     const utcString = now.toISOString().slice(0, 16);
                     input.min = utcString;
-                    if (!input.value) {
-                      input.value = utcString;
-                    }
                   }
                 }
               </script>
