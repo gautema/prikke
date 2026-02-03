@@ -31,7 +31,7 @@ defmodule PrikkeWeb.LandingPageTest do
 
       # Check fire and forget section
       assert html =~ "Fire and forget"
-      assert html =~ "Set it and sleep"
+      assert html =~ "Set it and sleep well"
       assert html =~ "Retries handled"
       assert html =~ "Alerts when it matters"
       assert html =~ "Full history"
