@@ -354,7 +354,9 @@ defmodule Prikke.SchedulerTest do
       assert DateTime.compare(updated_job.next_run_at, original_next_run) == :gt
     end
 
-    test "sets next_run_at to nil after lookahead scheduling for one-time jobs", %{organization: org} do
+    test "sets next_run_at to nil after lookahead scheduling for one-time jobs", %{
+      organization: org
+    } do
       future = DateTime.utc_now() |> DateTime.add(10, :second) |> DateTime.truncate(:second)
 
       {:ok, job} =
@@ -374,7 +376,9 @@ defmodule Prikke.SchedulerTest do
       assert updated_job.next_run_at == nil
     end
 
-    test "execution scheduled_for is exact job time, not scheduler tick time", %{organization: org} do
+    test "execution scheduled_for is exact job time, not scheduler tick time", %{
+      organization: org
+    } do
       # This tests that workers get the precise scheduled time
       exact_time = DateTime.utc_now() |> DateTime.add(20, :second) |> DateTime.truncate(:second)
 

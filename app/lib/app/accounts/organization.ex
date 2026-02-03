@@ -59,5 +59,4 @@ defmodule Prikke.Accounts.Organization do
     |> validate_format(:notification_email, ~r/^[^\s]+@[^\s]+$/, message: "must be a valid email")
     |> Prikke.UrlValidator.validate_webhook_url_safe(:notification_webhook_url)
   end
-
 end

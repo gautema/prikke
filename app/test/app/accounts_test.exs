@@ -498,7 +498,10 @@ defmodule Prikke.AccountsTest do
       assert String.starts_with?(raw_secret, "sk_live_")
     end
 
-    test "verify_api_key/1 validates key and returns organization and key name", %{user: user, org: org} do
+    test "verify_api_key/1 validates key and returns organization and key name", %{
+      user: user,
+      org: org
+    } do
       {:ok, api_key, raw_secret} = Accounts.create_api_key(org, user, %{name: "Test Key"})
       full_key = "#{api_key.key_id}.#{raw_secret}"
 

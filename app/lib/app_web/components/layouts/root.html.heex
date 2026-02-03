@@ -41,7 +41,8 @@
             class="flex items-center gap-2 text-lg font-semibold text-slate-900 no-underline"
           >
             <span class="relative flex h-4 w-4 items-center justify-center">
-              <span class="animate-[ping_4s_cubic-bezier(0,0,0.2,1)_infinite] absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="animate-[ping_4s_cubic-bezier(0,0,0.2,1)_infinite] absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75">
+              </span>
               <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
             </span>
             runlater
@@ -253,7 +254,10 @@
               <.link href={~p"/users/register"} class="block py-3 text-base text-slate-600">
                 Register
               </.link>
-              <.link href={~p"/users/log-in"} class="block py-3 text-base font-medium text-emerald-600">
+              <.link
+                href={~p"/users/log-in"}
+                class="block py-3 text-base font-medium text-emerald-600"
+              >
                 Log in
               </.link>
             <% end %>

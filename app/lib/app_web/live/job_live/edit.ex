@@ -58,7 +58,9 @@ defmodule PrikkeWeb.JobLive.Edit do
 
     job_params = parse_headers(job_params)
 
-    case Jobs.update_job(socket.assigns.organization, socket.assigns.job, job_params, scope: socket.assigns.current_scope) do
+    case Jobs.update_job(socket.assigns.organization, socket.assigns.job, job_params,
+           scope: socket.assigns.current_scope
+         ) do
       {:ok, job} ->
         Logger.info(
           "[JobLive.Edit] Job updated successfully, redirecting to #{~p"/jobs/#{job.id}"}"
@@ -239,7 +241,9 @@ defmodule PrikkeWeb.JobLive.Edit do
                 <label for="job_scheduled_at" class="block text-sm font-medium text-slate-700 mb-1">
                   Scheduled Time (UTC)
                 </label>
-                <% existing_value = @form[:scheduled_at].value && Calendar.strftime(@form[:scheduled_at].value, "%Y-%m-%dT%H:%M") %>
+                <% existing_value =
+                  @form[:scheduled_at].value &&
+                    Calendar.strftime(@form[:scheduled_at].value, "%Y-%m-%dT%H:%M") %>
                 <input
                   type="datetime-local"
                   name={@form[:scheduled_at].name}

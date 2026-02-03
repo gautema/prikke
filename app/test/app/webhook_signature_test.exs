@@ -51,7 +51,9 @@ defmodule Prikke.WebhookSignatureTest do
       # echo -n "test" | openssl dgst -sha256 -hmac "key"
       # => 02afb56304902c656fcb737cdd03de6205bb6d401da2812efd9b2d36a08af159
       signature = WebhookSignature.sign("test", "key")
-      assert signature == "sha256=02afb56304902c656fcb737cdd03de6205bb6d401da2812efd9b2d36a08af159"
+
+      assert signature ==
+               "sha256=02afb56304902c656fcb737cdd03de6205bb6d401da2812efd9b2d36a08af159"
     end
   end
 

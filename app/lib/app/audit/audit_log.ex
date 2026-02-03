@@ -25,7 +25,16 @@ defmodule Prikke.Audit.AuditLog do
   @doc false
   def changeset(audit_log, attrs) do
     audit_log
-    |> cast(attrs, [:actor_id, :actor_type, :action, :resource_type, :resource_id, :organization_id, :changes, :metadata])
+    |> cast(attrs, [
+      :actor_id,
+      :actor_type,
+      :action,
+      :resource_type,
+      :resource_id,
+      :organization_id,
+      :changes,
+      :metadata
+    ])
     |> validate_required([:actor_type, :action, :resource_type, :resource_id])
     |> validate_inclusion(:actor_type, @actor_types)
     |> validate_inclusion(:action, @actions)

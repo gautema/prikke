@@ -345,7 +345,9 @@ defmodule Prikke.Accounts.UserNotifier do
   """
   def deliver_limit_warning(email, organization, current, limit) do
     percent = round(current / limit * 100)
-    upgrade_text = if organization.tier == "free", do: " Upgrade to Pro for 250k executions/month.", else: ""
+
+    upgrade_text =
+      if organization.tier == "free", do: " Upgrade to Pro for 250k executions/month.", else: ""
 
     text = """
     Hi,
@@ -361,15 +363,16 @@ defmodule Prikke.Accounts.UserNotifier do
     - The Runlater Team
     """
 
-    upgrade_html = if organization.tier == "free" do
-      """
-      <p style="margin: 16px 0 0 0; font-size: 14px; color: #475569;">
-        <a href="https://runlater.eu/organizations/settings" style="color: #10b981; font-weight: 500;">Upgrade to Pro</a> for 250k executions/month.
-      </p>
-      """
-    else
-      ""
-    end
+    upgrade_html =
+      if organization.tier == "free" do
+        """
+        <p style="margin: 16px 0 0 0; font-size: 14px; color: #475569;">
+          <a href="https://runlater.eu/organizations/settings" style="color: #10b981; font-weight: 500;">Upgrade to Pro</a> for 250k executions/month.
+        </p>
+        """
+      else
+        ""
+      end
 
     html_content = """
     <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #f59e0b;">Approaching Monthly Limit</h2>
@@ -392,7 +395,10 @@ defmodule Prikke.Accounts.UserNotifier do
   Deliver alert when organization reaches monthly execution limit (100%).
   """
   def deliver_limit_reached(email, organization, limit) do
-    upgrade_text = if organization.tier == "free", do: " Upgrade to Pro for 250k executions/month.", else: " Contact us for higher limits."
+    upgrade_text =
+      if organization.tier == "free",
+        do: " Upgrade to Pro for 250k executions/month.",
+        else: " Contact us for higher limits."
 
     text = """
     Hi,
@@ -408,19 +414,20 @@ defmodule Prikke.Accounts.UserNotifier do
     - The Runlater Team
     """
 
-    upgrade_html = if organization.tier == "free" do
-      """
-      <p style="margin: 16px 0 0 0; font-size: 14px; color: #475569;">
-        <a href="https://runlater.eu/organizations/settings" style="color: #10b981; font-weight: 500;">Upgrade to Pro</a> for 250k executions/month.
-      </p>
-      """
-    else
-      """
-      <p style="margin: 16px 0 0 0; font-size: 14px; color: #475569;">
-        <a href="mailto:support@runlater.eu" style="color: #10b981; font-weight: 500;">Contact us</a> for higher limits.
-      </p>
-      """
-    end
+    upgrade_html =
+      if organization.tier == "free" do
+        """
+        <p style="margin: 16px 0 0 0; font-size: 14px; color: #475569;">
+          <a href="https://runlater.eu/organizations/settings" style="color: #10b981; font-weight: 500;">Upgrade to Pro</a> for 250k executions/month.
+        </p>
+        """
+      else
+        """
+        <p style="margin: 16px 0 0 0; font-size: 14px; color: #475569;">
+          <a href="mailto:support@runlater.eu" style="color: #10b981; font-weight: 500;">Contact us</a> for higher limits.
+        </p>
+        """
+      end
 
     html_content = """
     <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #dc2626;">Monthly Limit Reached</h2>

@@ -310,12 +310,14 @@ defmodule Prikke.Scheduler do
           Logger.error(
             "[Scheduler] Failed to create execution for job #{job.id}: #{inspect(reason)}"
           )
+
           :error
       end
     else
       Logger.warning(
         "[Scheduler] Job #{job.id} skipped - monthly limit reached for org #{job.organization_id}"
       )
+
       # Still advance to prevent infinite retries
       advance_next_run_at(job)
       # Notify that limit was reached

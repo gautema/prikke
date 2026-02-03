@@ -15,8 +15,8 @@ defmodule PrikkeWeb.DocsHTML do
     <div class="min-h-screen bg-slate-50 flex flex-col">
       <div class="max-w-[800px] mx-auto px-6 w-full flex-1">
         <.marketing_header menu_id="docs-menu-toggle" current_scope={@current_scope} />
-
-        <!-- Content -->
+        
+    <!-- Content -->
         <main class="docs-content py-8">
           {render_slot(@inner_block)}
         </main>

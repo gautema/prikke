@@ -141,7 +141,10 @@ defmodule Prikke.Audit do
       new_val = Map.get(new_map, field)
 
       if old_val != new_val do
-        Map.put(acc, to_string(field), %{"from" => format_value(old_val), "to" => format_value(new_val)})
+        Map.put(acc, to_string(field), %{
+          "from" => format_value(old_val),
+          "to" => format_value(new_val)
+        })
       else
         acc
       end
@@ -150,7 +153,10 @@ defmodule Prikke.Audit do
 
   defp format_value(%DateTime{} = dt), do: DateTime.to_iso8601(dt)
   defp format_value(%NaiveDateTime{} = dt), do: NaiveDateTime.to_iso8601(dt)
-  defp format_value(val) when is_binary(val) and byte_size(val) > 500, do: String.slice(val, 0, 500) <> "..."
+
+  defp format_value(val) when is_binary(val) and byte_size(val) > 500,
+    do: String.slice(val, 0, 500) <> "..."
+
   defp format_value(val), do: val
 
   @doc """

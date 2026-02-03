@@ -65,7 +65,10 @@ defmodule PrikkeWeb.RateLimitTest do
         |> get(~p"/api/v1/jobs")
 
       assert response.status == 429
-      assert Jason.decode!(response.resp_body) == %{"error" => "Rate limit exceeded. Try again later."}
+
+      assert Jason.decode!(response.resp_body) == %{
+               "error" => "Rate limit exceeded. Try again later."
+             }
     end
   end
 end

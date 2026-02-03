@@ -110,7 +110,10 @@ defmodule PrikkeWeb.JobLive.Show do
   end
 
   def handle_event("delete", _, socket) do
-    {:ok, _} = Jobs.delete_job(socket.assigns.organization, socket.assigns.job, scope: socket.assigns.current_scope)
+    {:ok, _} =
+      Jobs.delete_job(socket.assigns.organization, socket.assigns.job,
+        scope: socket.assigns.current_scope
+      )
 
     {:noreply,
      socket

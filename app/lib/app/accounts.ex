@@ -432,7 +432,14 @@ defmodule Prikke.Accounts do
          |> Ecto.Changeset.change(webhook_secret: new_secret)
          |> Repo.update() do
       {:ok, updated_org} ->
-        audit_log(opts, :regenerated_webhook_secret, :organization, updated_org.id, updated_org.id)
+        audit_log(
+          opts,
+          :regenerated_webhook_secret,
+          :organization,
+          updated_org.id,
+          updated_org.id
+        )
+
         {:ok, updated_org}
 
       error ->
@@ -464,9 +471,13 @@ defmodule Prikke.Accounts do
          |> Organization.notification_changeset(attrs)
          |> Repo.update() do
       {:ok, updated_org} ->
-        changes = Audit.compute_changes(old_org, Map.from_struct(updated_org), [
-          :notify_on_failure, :notification_email, :notification_webhook_url
-        ])
+        changes =
+          Audit.compute_changes(old_org, Map.from_struct(updated_org), [
+            :notify_on_failure,
+            :notification_email,
+            :notification_webhook_url
+          ])
+
         audit_log(opts, :updated, :organization, updated_org.id, updated_org.id, changes: changes)
         {:ok, updated_org}
 
@@ -548,8 +559,15 @@ defmodule Prikke.Accounts do
          |> Membership.changeset(%{role: role})
          |> Repo.update() do
       {:ok, updated} ->
-        changes = %{"role" => %{"from" => old_role, "to" => role}, "user_email" => membership.user.email}
-        audit_log(opts, :role_changed, :membership, updated.id, membership.organization_id, changes: changes)
+        changes = %{
+          "role" => %{"from" => old_role, "to" => role},
+          "user_email" => membership.user.email
+        }
+
+        audit_log(opts, :role_changed, :membership, updated.id, membership.organization_id,
+          changes: changes
+        )
+
         {:ok, updated}
 
       error ->
@@ -568,6 +586,7 @@ defmodule Prikke.Accounts do
         audit_log(opts, :removed, :membership, deleted.id, membership.organization_id,
           changes: %{"user_email" => membership.user.email}
         )
+
         {:ok, deleted}
 
       error ->
@@ -710,6 +729,7 @@ defmodule Prikke.Accounts do
         audit_log(opts, :api_key_created, :api_key, api_key.id, organization.id,
           changes: %{"name" => api_key.name, "key_id" => key_id}
         )
+
         {:ok, api_key, raw_secret}
 
       {:error, changeset} ->
@@ -786,6 +806,7 @@ defmodule Prikke.Accounts do
         audit_log(opts, :api_key_deleted, :api_key, deleted.id, deleted.organization_id,
           changes: %{"name" => deleted.name, "key_id" => deleted.key_id}
         )
+
         {:ok, deleted}
 
       error ->

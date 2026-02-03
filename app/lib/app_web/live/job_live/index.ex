@@ -77,14 +77,18 @@ defmodule PrikkeWeb.JobLive.Index do
   @impl true
   def handle_event("delete", %{"id" => id}, socket) do
     job = Jobs.get_job!(socket.assigns.organization, id)
-    {:ok, _} = Jobs.delete_job(socket.assigns.organization, job, scope: socket.assigns.current_scope)
+
+    {:ok, _} =
+      Jobs.delete_job(socket.assigns.organization, job, scope: socket.assigns.current_scope)
 
     {:noreply, put_flash(socket, :info, "Job deleted successfully")}
   end
 
   def handle_event("toggle", %{"id" => id}, socket) do
     job = Jobs.get_job!(socket.assigns.organization, id)
-    {:ok, _} = Jobs.toggle_job(socket.assigns.organization, job, scope: socket.assigns.current_scope)
+
+    {:ok, _} =
+      Jobs.toggle_job(socket.assigns.organization, job, scope: socket.assigns.current_scope)
 
     {:noreply, socket}
   end
@@ -243,7 +247,9 @@ defmodule PrikkeWeb.JobLive.Index do
                   <div class="text-xs sm:text-sm text-slate-400 mt-1">
                     <%= if job.schedule_type == "cron" do %>
                       <span class="font-mono">{job.cron_expression}</span>
-                      <span class="text-slate-500 ml-1">· {Prikke.Cron.describe(job.cron_expression)}</span>
+                      <span class="text-slate-500 ml-1">
+                        · {Prikke.Cron.describe(job.cron_expression)}
+                      </span>
                     <% else %>
                       <span class="hidden sm:inline">One-time: </span>
                       <.local_time id={"job-#{job.id}-scheduled"} datetime={job.scheduled_at} />

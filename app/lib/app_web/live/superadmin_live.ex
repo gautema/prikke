@@ -213,12 +213,14 @@ defmodule PrikkeWeb.SuperadminLive do
               <div class="flex-1 flex flex-col justify-end h-full group relative">
                 <div class="flex flex-col" style={"height: #{height}%"}>
                   <%= if failed_pct > 0 && stats.failed > 0 do %>
-                    <div class="bg-red-400 rounded-t-sm flex-none" style={"height: #{failed_pct}%"}></div>
+                    <div class="bg-red-400 rounded-t-sm flex-none" style={"height: #{failed_pct}%"}>
+                    </div>
                   <% end %>
                   <%= if success_pct > 0 && stats.success > 0 do %>
-                    <div
-                      class={["bg-emerald-500 flex-1", if(stats.failed == 0, do: "rounded-t-sm", else: "")]}
-                    >
+                    <div class={[
+                      "bg-emerald-500 flex-1",
+                      if(stats.failed == 0, do: "rounded-t-sm", else: "")
+                    ]}>
                     </div>
                   <% end %>
                   <%= if stats.total == 0 do %>
@@ -228,12 +230,19 @@ defmodule PrikkeWeb.SuperadminLive do
                 <!-- Tooltip -->
                 <div class={[
                   "hidden group-hover:block absolute bottom-full mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap z-10",
-                  if(idx < 3, do: "left-0", else: if(idx > 10, do: "right-0", else: "left-1/2 -translate-x-1/2"))
+                  if(idx < 3,
+                    do: "left-0",
+                    else: if(idx > 10, do: "right-0", else: "left-1/2 -translate-x-1/2")
+                  )
                 ]}>
                   <div class="font-medium">{Calendar.strftime(date, "%b %d")}</div>
                   <div>{stats.total} total</div>
-                  <%= if stats.success > 0 do %><div class="text-emerald-400">{stats.success} success</div><% end %>
-                  <%= if stats.failed > 0 do %><div class="text-red-400">{stats.failed} failed</div><% end %>
+                  <%= if stats.success > 0 do %>
+                    <div class="text-emerald-400">{stats.success} success</div>
+                  <% end %>
+                  <%= if stats.failed > 0 do %>
+                    <div class="text-red-400">{stats.failed} failed</div>
+                  <% end %>
                 </div>
               </div>
             <% end %>
@@ -326,7 +335,10 @@ defmodule PrikkeWeb.SuperadminLive do
                   <td class="py-2">
                     <span class={[
                       "text-xs px-2 py-0.5 rounded-full",
-                      if(org.tier == "pro", do: "bg-emerald-100 text-emerald-700", else: "bg-slate-100 text-slate-600")
+                      if(org.tier == "pro",
+                        do: "bg-emerald-100 text-emerald-700",
+                        else: "bg-slate-100 text-slate-600"
+                      )
                     ]}>
                       {org.tier}
                     </span>
@@ -434,8 +446,8 @@ defmodule PrikkeWeb.SuperadminLive do
             <% end %>
           </div>
         </div>
-
-        <!-- Audit Logs -->
+        
+    <!-- Audit Logs -->
         <div class="bg-white border border-slate-200 rounded-lg">
           <div class="px-6 py-4 border-b border-slate-200">
             <h2 class="text-lg font-semibold text-slate-900">Recent Audit Logs</h2>
@@ -445,7 +457,10 @@ defmodule PrikkeWeb.SuperadminLive do
               <div class="px-6 py-3">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
-                    <span class={["text-xs px-2 py-0.5 rounded-full font-medium", action_badge_class(log.action)]}>
+                    <span class={[
+                      "text-xs px-2 py-0.5 rounded-full font-medium",
+                      action_badge_class(log.action)
+                    ]}>
                       {Audit.format_action(log.action)}
                     </span>
                     <span class="text-sm text-slate-600">

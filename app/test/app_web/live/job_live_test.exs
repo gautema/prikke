@@ -32,17 +32,20 @@ defmodule PrikkeWeb.JobLiveTest do
 
     test "renders job details", %{conn: conn, user: user} do
       org = organization_fixture(%{user: user})
-      job = job_fixture(org, %{
-        name: "My Cron Job",
-        url: "https://example.com/webhook",
-        cron_expression: "0 9 * * *"
-      })
+
+      job =
+        job_fixture(org, %{
+          name: "My Cron Job",
+          url: "https://example.com/webhook",
+          cron_expression: "0 9 * * *"
+        })
 
       {:ok, _view, html} = live(conn, ~p"/jobs/#{job.id}")
 
       assert html =~ job.name
       assert html =~ job.url
-      assert html =~ "daily at 9:00"  # Human-readable cron
+      # Human-readable cron
+      assert html =~ "daily at 9:00"
     end
 
     test "shows edit and delete buttons", %{conn: conn, user: user} do
@@ -84,9 +87,17 @@ defmodule PrikkeWeb.JobLiveTest do
       {:ok, view, _html} = live(conn, ~p"/jobs/new")
 
       # Submit with empty name
-      html = view
-      |> form("#job-form", job: %{name: "", url: "https://example.com", schedule_type: "cron", cron_expression: "* * * * *"})
-      |> render_change()
+      html =
+        view
+        |> form("#job-form",
+          job: %{
+            name: "",
+            url: "https://example.com",
+            schedule_type: "cron",
+            cron_expression: "* * * * *"
+          }
+        )
+        |> render_change()
 
       assert html =~ "can't be blank" or html =~ "can&#39;t be blank"
     end

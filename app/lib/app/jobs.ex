@@ -243,10 +243,22 @@ defmodule Prikke.Jobs do
       end
 
       # Audit log with changes
-      changes = Audit.compute_changes(old_job, Map.from_struct(updated_job), [
-        :name, :url, :method, :headers, :body, :schedule_type, :cron_expression,
-        :scheduled_at, :timezone, :enabled, :timeout_ms, :retry_attempts
-      ])
+      changes =
+        Audit.compute_changes(old_job, Map.from_struct(updated_job), [
+          :name,
+          :url,
+          :method,
+          :headers,
+          :body,
+          :schedule_type,
+          :cron_expression,
+          :scheduled_at,
+          :timezone,
+          :enabled,
+          :timeout_ms,
+          :retry_attempts
+        ])
+
       audit_log(opts, :updated, :job, updated_job.id, org.id,
         changes: changes,
         metadata: %{"job_name" => updated_job.name}
@@ -336,7 +348,10 @@ defmodule Prikke.Jobs do
         end
 
         # Log toggle for audit trail
-        audit_log(opts, action, :job, updated_job.id, org.id, metadata: %{"job_name" => updated_job.name})
+        audit_log(opts, action, :job, updated_job.id, org.id,
+          metadata: %{"job_name" => updated_job.name}
+        )
+
         {:ok, updated_job}
 
       error ->

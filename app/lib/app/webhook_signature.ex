@@ -55,7 +55,8 @@ defmodule Prikke.WebhookSignature do
 
   """
   @spec verify(binary(), binary(), binary()) :: boolean()
-  def verify(body, secret, signature) when is_binary(body) and is_binary(secret) and is_binary(signature) do
+  def verify(body, secret, signature)
+      when is_binary(body) and is_binary(secret) and is_binary(signature) do
     expected = sign(body, secret)
     secure_compare(expected, signature)
   end

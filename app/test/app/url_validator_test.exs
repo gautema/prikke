@@ -19,14 +19,21 @@ defmodule Prikke.UrlValidatorTest do
     end
 
     test "rejects non-HTTP/HTTPS schemes" do
-      assert {:error, "must use HTTP or HTTPS"} = UrlValidator.validate_webhook_url("ftp://example.com")
-      assert {:error, "must use HTTP or HTTPS"} = UrlValidator.validate_webhook_url("file:///etc/passwd")
-      assert {:error, "must use HTTP or HTTPS"} = UrlValidator.validate_webhook_url("javascript:alert(1)")
+      assert {:error, "must use HTTP or HTTPS"} =
+               UrlValidator.validate_webhook_url("ftp://example.com")
+
+      assert {:error, "must use HTTP or HTTPS"} =
+               UrlValidator.validate_webhook_url("file:///etc/passwd")
+
+      assert {:error, "must use HTTP or HTTPS"} =
+               UrlValidator.validate_webhook_url("javascript:alert(1)")
     end
 
     test "rejects URLs without host" do
       assert {:error, "must have a valid host"} = UrlValidator.validate_webhook_url("http://")
-      assert {:error, "must have a valid host"} = UrlValidator.validate_webhook_url("https:///path")
+
+      assert {:error, "must have a valid host"} =
+               UrlValidator.validate_webhook_url("https:///path")
     end
 
     # SSRF protection tests

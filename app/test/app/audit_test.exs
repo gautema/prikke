@@ -12,10 +12,11 @@ defmodule Prikke.AuditTest do
       org = organization_fixture(%{user: user})
       scope = Scope.for_user(user)
 
-      {:ok, log} = Audit.log(scope, :created, :job, Ecto.UUID.generate(),
-        organization_id: org.id,
-        changes: %{"name" => "Test Job"}
-      )
+      {:ok, log} =
+        Audit.log(scope, :created, :job, Ecto.UUID.generate(),
+          organization_id: org.id,
+          changes: %{"name" => "Test Job"}
+        )
 
       assert log.actor_id == user.id
       assert log.actor_type == "user"
@@ -30,10 +31,11 @@ defmodule Prikke.AuditTest do
     test "creates an audit log for an API action" do
       org = organization_fixture()
 
-      {:ok, log} = Audit.log_api("my-api-key", :updated, :job, Ecto.UUID.generate(),
-        organization_id: org.id,
-        changes: %{"enabled" => %{"from" => false, "to" => true}}
-      )
+      {:ok, log} =
+        Audit.log_api("my-api-key", :updated, :job, Ecto.UUID.generate(),
+          organization_id: org.id,
+          changes: %{"enabled" => %{"from" => false, "to" => true}}
+        )
 
       assert log.actor_id == nil
       assert log.actor_type == "api"
@@ -74,9 +76,9 @@ defmodule Prikke.AuditTest do
       changes = Audit.compute_changes(old, new, [:name, :enabled, :url])
 
       assert changes == %{
-        "name" => %{"from" => "Old Name", "to" => "New Name"},
-        "url" => %{"from" => "https://example.com", "to" => "https://newurl.com"}
-      }
+               "name" => %{"from" => "Old Name", "to" => "New Name"},
+               "url" => %{"from" => "https://example.com", "to" => "https://newurl.com"}
+             }
     end
 
     test "excludes unchanged fields" do
@@ -86,8 +88,8 @@ defmodule Prikke.AuditTest do
       changes = Audit.compute_changes(old, new, [:name, :enabled])
 
       assert changes == %{
-        "enabled" => %{"from" => true, "to" => false}
-      }
+               "enabled" => %{"from" => true, "to" => false}
+             }
     end
   end
 
@@ -97,12 +99,17 @@ defmodule Prikke.AuditTest do
       org = organization_fixture(%{user: user})
       scope = Scope.for_user(user)
 
-      {:ok, job} = Prikke.Jobs.create_job(org, %{
-        name: "Test Job",
-        url: "https://example.com/webhook",
-        schedule_type: "cron",
-        cron_expression: "0 * * * *"
-      }, scope: scope)
+      {:ok, job} =
+        Prikke.Jobs.create_job(
+          org,
+          %{
+            name: "Test Job",
+            url: "https://example.com/webhook",
+            schedule_type: "cron",
+            cron_expression: "0 * * * *"
+          },
+          scope: scope
+        )
 
       logs = Audit.list_organization_logs(org)
       assert length(logs) == 1

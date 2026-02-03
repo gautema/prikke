@@ -92,15 +92,24 @@ defmodule Prikke.UrlValidator do
 
   # Check if an IP address is in a private/reserved range
   # RFC 1918 private ranges + other reserved ranges
-  defp private_ip?({127, _, _, _}), do: true  # Loopback
-  defp private_ip?({10, _, _, _}), do: true   # Class A private
-  defp private_ip?({172, b, _, _}) when b >= 16 and b <= 31, do: true  # Class B private
-  defp private_ip?({192, 168, _, _}), do: true  # Class C private
-  defp private_ip?({169, 254, _, _}), do: true  # Link-local / AWS metadata
-  defp private_ip?({0, _, _, _}), do: true      # "This" network
-  defp private_ip?({224, _, _, _}), do: true    # Multicast
-  defp private_ip?({240, _, _, _}), do: true    # Reserved
-  defp private_ip?({255, 255, 255, 255}), do: true  # Broadcast
+  # Loopback
+  defp private_ip?({127, _, _, _}), do: true
+  # Class A private
+  defp private_ip?({10, _, _, _}), do: true
+  # Class B private
+  defp private_ip?({172, b, _, _}) when b >= 16 and b <= 31, do: true
+  # Class C private
+  defp private_ip?({192, 168, _, _}), do: true
+  # Link-local / AWS metadata
+  defp private_ip?({169, 254, _, _}), do: true
+  # "This" network
+  defp private_ip?({0, _, _, _}), do: true
+  # Multicast
+  defp private_ip?({224, _, _, _}), do: true
+  # Reserved
+  defp private_ip?({240, _, _, _}), do: true
+  # Broadcast
+  defp private_ip?({255, 255, 255, 255}), do: true
   defp private_ip?(_), do: false
 
   @doc """

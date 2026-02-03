@@ -39,7 +39,8 @@ defmodule PrikkeWeb.DashboardLiveTest do
       {:ok, _view, html} = live(conn, ~p"/dashboard")
 
       assert html =~ job.name
-      assert html =~ "every hour"  # Human-readable cron
+      # Human-readable cron
+      assert html =~ "every hour"
     end
 
     test "shows new job button", %{conn: conn, user: user} do

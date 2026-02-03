@@ -450,6 +450,7 @@ defmodule Prikke.JobsTest do
 
     test "re-enabling a one-time job with past scheduled_at does not schedule it" do
       org = organization_fixture()
+
       future_time =
         DateTime.utc_now()
         |> DateTime.add(3600, :second)

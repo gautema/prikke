@@ -12,7 +12,10 @@ defmodule PrikkeWeb.PageController do
       conn
       |> assign(:hide_header, true)
       |> assign(:hide_footer, true)
-      |> assign(:current_scope, if(params["preview"] == "true", do: nil, else: conn.assigns[:current_scope]))
+      |> assign(
+        :current_scope,
+        if(params["preview"] == "true", do: nil, else: conn.assigns[:current_scope])
+      )
       |> render(:home)
     end
   end
