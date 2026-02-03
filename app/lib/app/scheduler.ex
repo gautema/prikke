@@ -29,13 +29,13 @@ defmodule Prikke.Scheduler do
   ## Leader Election (Clustering)
 
   In a multi-node cluster, only one scheduler should create executions to avoid
-  duplicates. We use Postgres advisory locks for leader election:
+  duplicates. We use Postgres transaction-level advisory locks:
 
-  - `pg_try_advisory_lock(id)` - non-blocking, returns true if acquired
-  - `pg_advisory_unlock(id)` - releases the lock on shutdown
-  - Lock is tied to the database connection, auto-releases if connection drops
+  - `pg_try_advisory_xact_lock(id)` - non-blocking, returns true if acquired
+  - Lock auto-releases when transaction commits
+  - Each tick competes for the lock; no persistent leader
 
-  If a node can't acquire the lock, it stays passive until the leader fails.
+  This avoids connection pool issues with session-level locks.
 
   ## Wake-up Mechanism
 
@@ -161,17 +161,12 @@ defmodule Prikke.Scheduler do
       send(self(), :tick)
     end
 
-    # In test mode, skip advisory lock (each test has its own scheduler)
-    {:ok, %{has_lock: test_mode, test_mode: test_mode}}
+    {:ok, %{test_mode: test_mode}}
   end
 
   @impl true
   def handle_info(:tick, state) do
-    state = maybe_acquire_lock(state)
-
-    if state.has_lock do
-      schedule_due_jobs()
-    end
+    run_with_lock(state)
 
     # Schedule next tick
     Process.send_after(self(), :tick, @tick_interval)
@@ -181,55 +176,40 @@ defmodule Prikke.Scheduler do
   @impl true
   def handle_info(:wake, state) do
     # Immediately check for due jobs when notified
-    state = maybe_acquire_lock(state)
-
-    if state.has_lock do
-      schedule_due_jobs()
-    end
-
+    run_with_lock(state)
     {:noreply, state}
   end
 
   @impl true
   def handle_call(:tick, _from, state) do
-    state = maybe_acquire_lock(state)
-
-    result =
-      if state.has_lock do
-        schedule_due_jobs()
-      else
-        {:ok, 0}
-      end
-
+    result = run_with_lock(state)
     {:reply, result, state}
   end
 
-  @impl true
-  def terminate(_reason, %{has_lock: true}) do
-    # Release advisory lock on shutdown
-    Repo.query("SELECT pg_advisory_unlock($1)", [@advisory_lock_id])
-    :ok
-  end
-
-  def terminate(_reason, _state), do: :ok
-
   ## Private Functions
 
-  # Attempts to acquire the Postgres advisory lock for leader election.
-  # Returns state unchanged if already holding lock or in test mode.
-  # Uses pg_try_advisory_lock which is non-blocking.
-  defp maybe_acquire_lock(%{has_lock: true} = state), do: state
-  defp maybe_acquire_lock(%{test_mode: true} = state), do: %{state | has_lock: true}
+  # Runs schedule_due_jobs inside a transaction with an advisory lock.
+  # Uses pg_try_advisory_xact_lock which auto-releases when transaction commits.
+  # This avoids connection pool issues with session-level locks.
+  defp run_with_lock(%{test_mode: true}) do
+    # In test mode, skip advisory lock (each test has its own scheduler)
+    schedule_due_jobs()
+  end
 
-  defp maybe_acquire_lock(%{has_lock: false} = state) do
-    case Repo.query("SELECT pg_try_advisory_lock($1)", [@advisory_lock_id]) do
-      {:ok, %{rows: [[true]]}} ->
-        Logger.info("[Scheduler] Acquired advisory lock, becoming leader")
-        %{state | has_lock: true}
+  defp run_with_lock(_state) do
+    Repo.transaction(fn ->
+      case Repo.query("SELECT pg_try_advisory_xact_lock($1)", [@advisory_lock_id]) do
+        {:ok, %{rows: [[true]]}} ->
+          schedule_due_jobs()
 
-      _ ->
-        # Another node holds the lock, stay passive
-        state
+        _ ->
+          # Another node holds the lock for this tick
+          {:ok, 0}
+      end
+    end)
+    |> case do
+      {:ok, result} -> result
+      {:error, _} -> {:ok, 0}
     end
   end
 
