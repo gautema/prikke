@@ -26,8 +26,8 @@
 | Frontend | Phoenix LiveView + Tailwind | Real-time dashboard with minimal JS |
 | HTTP Client | Req (uses Finch) | Modern, connection pooling |
 | Auth | phx.gen.auth + API keys | Sessions for dashboard, API keys for programmatic access |
-| Hosting | Koyeb (Frankfurt) | French company, managed containers, EU region |
-| Database | Koyeb Managed Postgres | Same provider as compute, low latency |
+| Hosting | VPS + Kamal | Single server, full control, EU region |
+| Database | PostgreSQL 18 (self-hosted) | Same server, managed via Kamal accessories |
 | Payments | Manual (MVP) / Lemon Squeezy (future) | Manual upgrade + sales contact for MVP |
 | Email | Mailjet | French company, good free tier |
 | Domain + DNS | Porkbun | Cheap domains, free DNS hosting |
@@ -295,57 +295,62 @@ Notes:
 
 ```
 ┌─────────────────────────────────────────┐
-│    Porkbun (domain + DNS)               │
-│    prikke.whitenoise.no                 │
+│    Domain: runlater.eu                  │
 └─────────────────┬───────────────────────┘
                   │
 ┌─────────────────▼───────────────────────┐
-│        Koyeb (Frankfurt) 🇫🇷            │
+│        VPS (EU) 🇪🇺                      │
 │  ┌─────────────────────────────────┐    │
-│  │  Container: Phoenix app         │    │
-│  │  Small (1 vCPU, 1GB) - €10/mo   │    │
+│  │  kamal-proxy (TLS termination)  │    │
 │  └───────────────┬─────────────────┘    │
-│                  │ same network         │
+│                  │                       │
 │  ┌───────────────▼─────────────────┐    │
-│  │  Managed Postgres               │    │
-│  │  Starter (1GB) - €7/mo          │    │
+│  │  Phoenix app container          │    │
+│  │  (ghcr.io/gautema/runlater)     │    │
+│  └───────────────┬─────────────────┘    │
+│                  │                       │
+│  ┌───────────────▼─────────────────┐    │
+│  │  PostgreSQL 18 container        │    │
+│  │  (Kamal accessory)              │    │
 │  └─────────────────────────────────┘    │
 └─────────────────────────────────────────┘
 ```
 
-### Monthly Costs
+### Deployment with Kamal
 
-| Service | Provider | Price |
-|---------|----------|-------|
-| Domain | Porkbun | ~€10/yr |
-| DNS | Porkbun | Free |
-| Container | Koyeb Small 🇫🇷 | ~€10/mo |
-| Database | Koyeb Postgres 🇫🇷 | ~€7/mo |
-| Email | Mailjet 🇫🇷 | Free tier (6k/mo) |
-| Payments | Manual (MVP) | Free |
-| Monitoring | Better Stack | Free tier |
-| **Total** | | **~€18/mo** |
+Kamal is used for zero-downtime deployments. Config in `app/config/deploy.yml`.
 
-### Why Koyeb?
-- French company (EU data story)
-- Container + Postgres on same network (low latency)
-- No server management (push to deploy)
-- Frankfurt region
-- Simple pricing
-
-### Deploy Flow
 ```bash
-# Connect GitHub repo to Koyeb, auto-deploys on push
-# Or manually push Docker image:
-docker build -t prikke .
-docker push registry.koyeb.com/your-org/prikke
+# Deploy (from app/ directory)
+cd app && kamal deploy
+
+# Other useful commands
+kamal app logs              # View app logs
+kamal app exec -i 'bin/app remote'  # Remote IEx console
+kamal accessory logs db     # View database logs
+kamal rollback              # Rollback to previous version
 ```
+
+**How it works:**
+1. Builds Docker image on remote server (via SSH)
+2. Pushes to GitHub Container Registry (ghcr.io)
+3. Pulls image on production server
+4. Starts new container, health checks pass
+5. kamal-proxy routes traffic to new container
+6. Old container is stopped and cleaned up
+
+**Secrets:** Stored in `app/.kamal/secrets` (git-ignored). Contains:
+- `KAMAL_REGISTRY_PASSWORD` - GitHub token for ghcr.io
+- `SECRET_KEY_BASE` - Phoenix secret
+- `DATABASE_URL` - Postgres connection string
+- `POSTGRES_USER` / `POSTGRES_PASSWORD` - DB credentials
+- `MAILJET_API_KEY` / `MAILJET_SECRET_KEY` - Email credentials
 
 ### Services Not Needed (Yet)
 - Redis (Postgres handles job queue)
 - SMS (email alerts are enough)
 - Object storage (until log archival needed)
-- Load balancer (Koyeb handles this)
+- CDN (static assets served from app)
 
 ## Payments
 
@@ -414,7 +419,7 @@ Using Lemon Squeezy (Merchant of Record):
 - **Colors:** Slate 900 (#0f172a) + Emerald 500 (#10b981)
 - **Font:** Inter
 - **Logo:** Green dot + "prikke" wordmark
-- **Domain:** prikke.whitenoise.no
+- **Domain:** runlater.eu
 
 See `/brand/BRAND.md` for full guidelines.
 
@@ -534,7 +539,7 @@ lib/app/
 1. **Elixir over Kotlin/.NET** - Best fit for concurrent job execution
 2. **No Oban, custom GenServer pool** - Postgres SKIP LOCKED for queue, advisory locks for clustering, no dependencies
 3. **No Redis** - Postgres handles everything, simpler infra
-4. **Koyeb over Scaleway/Hetzner** - Managed containers, no Linux management, EU company
+4. **Kamal on VPS** - Full control, simple deployment, EU-hosted server
 5. **Lemon Squeezy over Stripe** - MoR handles EU VAT, simpler for solo founder
 6. **Mailjet over Resend/Postmark** - French company, good free tier
 7. **Two pricing tiers** - Simple: Free and Pro (€29/mo)
@@ -558,7 +563,7 @@ lib/app/
 
 ## Go-to-Market
 
-1. Launch on prikke.whitenoise.no
+1. Launch on runlater.eu
 2. Free tier to get users
 3. Dev communities (Reddit, HN, Twitter/X)
 4. Content: "EU alternative to Inngest"
