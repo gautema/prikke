@@ -1,7 +1,7 @@
 defmodule PrikkeWeb.PageController do
   use PrikkeWeb, :controller
 
-  plug :put_layout, false when action in [:home]
+  plug :put_layout, false when action in [:home, :presentation]
 
   def home(conn, params) do
     if conn.assigns[:current_scope] && params["preview"] != "true" do
@@ -30,5 +30,11 @@ defmodule PrikkeWeb.PageController do
     conn
     |> assign(:page_title, "Privacy Policy")
     |> render(:privacy)
+  end
+
+  def presentation(conn, _params) do
+    conn
+    |> put_resp_content_type("text/html")
+    |> send_file(200, Application.app_dir(:app, "priv/static/presentation.html"))
   end
 end

@@ -39,6 +39,9 @@ defmodule PrikkeWeb.Router do
     # Legal pages
     get "/terms", PageController, :terms
     get "/privacy", PageController, :privacy
+
+    # Presentation
+    get "/presentation", PageController, :presentation
   end
 
   # Health check endpoint for Koyeb
