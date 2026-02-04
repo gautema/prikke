@@ -284,7 +284,7 @@ p {
   </pre>
   <p class="prompt">building runlater with ai</p>
   <p class="title">From idea to production<span class="cursor"></span></p>
-  <p class="subtitle">// 3 days · 343 tests · ~90% AI-generated</p>
+  <p class="subtitle">// 3 days · 371 tests · 100% AI-written</p>
   <p style="color: #444; margin-top: 48px;">gaute magnussen</p>
 </div>
 
@@ -403,55 +403,11 @@ curl -X POST https://api.runlater.eu/v1/queue \
   </div>
 </div>
 
-<!-- Slide 11: No Redis -->
-<div class="slide">
-  <p class="prompt">SELECT * FROM executions FOR UPDATE SKIP LOCKED</p>
-  <p class="title">Why No Redis? No Oban?</p>
-  <div class="content">
-    <ul>
-      <li><b>Postgres can do it all</b> — FOR UPDATE SKIP LOCKED = atomic job claiming. Advisory locks = leader election.</li>
-      <li><b>Fewer moving parts</b> — One database to manage. No Redis cluster. Simpler = fewer failures.</li>
-      <li><b>Full control</b> — Custom priority (Pro users first). Adaptive pool. Exactly what we need.</li>
-    </ul>
-    <div class="code"><span class="comment">-- Claim next job atomically</span>
-<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> executions
-<span class="keyword">WHERE</span> status = <span class="string">'pending'</span>
-  <span class="keyword">AND</span> scheduled_for <= <span class="function">now</span>()
-<span class="keyword">ORDER BY</span> priority <span class="keyword">DESC</span>
-<span class="keyword">LIMIT</span> <span class="number">1</span>
-<span class="keyword">FOR UPDATE SKIP LOCKED</span></div>
-  </div>
-</div>
-
 <!-- Slide 12: Section -->
 <div class="slide section-title">
   <p class="prompt">cd ai/</p>
   <p class="title">AI Development</p>
   <p class="subtitle">how claude code changed everything</p>
-</div>
-
-<!-- Slide 13: Claude Code -->
-<div class="slide">
-  <p class="prompt">claude --help</p>
-  <p class="title">What is Claude Code?</p>
-  <div class="content">
-    <ul>
-      <li><b>Terminal-based AI</b> — Runs in your terminal. Sees entire codebase. Reads, writes, executes.</li>
-      <li><b>Full project context</b> — Understands structure, conventions, dependencies. Follows existing patterns.</li>
-      <li><b>Pair programming</b> — Conversation about what you want. It implements, you review. Iterate.</li>
-    </ul>
-    <div class="code"><span class="comment"># Example session</span>
-$ claude
-
-<span class="keyword">You:</span> Add rate limiting plug that blocks IPs after 300 req/min
-
-<span class="keyword">Claude:</span> I'll create a rate limiting plug using PlugAttack...
-
-<span class="function">[Creates lib/plugs/rate_limit.ex]</span>
-<span class="function">[Updates router.ex]</span>
-<span class="function">[Creates tests]</span>
-<span class="function">[Runs mix test - all pass]</span></div>
-  </div>
 </div>
 
 <!-- Slide 14: Workflow -->
@@ -512,33 +468,23 @@ Runlater is a European-hosted background jobs service...
     <div class="stats">
       <div class="stat">
         <div class="number">3</div>
-        <div class="label">days with AI</div>
+        <div class="label">days</div>
       </div>
-      <div class="stat">
-        <div class="number">2-3</div>
-        <div class="label">weeks without</div>
-      </div>
-      <div class="stat">
-        <div class="number">5-10x</div>
-        <div class="label">speedup</div>
-      </div>
-    </div>
-    <div class="stats">
       <div class="stat">
         <div class="number">~8k</div>
         <div class="label">lines of code</div>
       </div>
       <div class="stat">
-        <div class="number">343</div>
+        <div class="number">371</div>
         <div class="label">tests</div>
       </div>
       <div class="stat">
-        <div class="number">~90%</div>
-        <div class="label">AI written</div>
+        <div class="number">0</div>
+        <div class="label">lines I typed</div>
       </div>
     </div>
 
-    <p style="margin-top: 32px;">Domain expertise mattered as much as AI. Knowing what to build and what to skip. AI accelerated execution, experience guided architecture.</p>
+    <p style="margin-top: 48px;">I didn't write a single line. But I directed every feature, shaped architecture through discussion, caught mistakes. Real collaboration.</p>
   </div>
 </div>
 
@@ -556,21 +502,21 @@ Runlater is a European-hosted background jobs service...
   <div class="content">
     <h2>core product</h2>
     <ul>
-      <li><b>Job scheduler</b> — GenServer with leader election</li>
-      <li><b>Worker pool</b> — Adaptive scaling 2-20 workers</li>
-      <li><b>Execution retries</b> — Exponential backoff</li>
-      <li><b>REST API + keys</b> — Queue jobs programmatically</li>
-      <li><b>Realtime dashboard</b> — LiveView execution history</li>
+      <li><b>Cron scheduling</b> — Recurring jobs with cron expressions</li>
+      <li><b>One-time jobs</b> — Run once at specific time</li>
+      <li><b>Job queues</b> — Immediate execution via API</li>
+      <li><b>Automatic retries</b> — Exponential backoff on failure</li>
+      <li><b>Real-time dashboard</b> — Execution history, status, logs</li>
+      <li><b>REST API</b> — Full programmatic access</li>
     </ul>
 
-    <h2>platform hygiene</h2>
+    <h2>platform</h2>
     <ul>
-      <li><b>Marketing site</b> — Landing page, pricing, docs</li>
-      <li><b>Sign up + magic link auth</b> — Passwordless login via email</li>
-      <li><b>Organizations + teams</b> — Multi-tenant with invites, roles</li>
-      <li><b>Rate limiting</b> — PlugAttack: 300/min, 5k/hour</li>
-      <li><b>Usage alerts</b> — Email at 80% and 100%</li>
-      <li><b>Tier limits</b> — Free: 5k/mo, Pro: 250k/mo</li>
+      <li><b>Marketing site</b> — Landing page, pricing, documentation</li>
+      <li><b>Auth</b> — Magic link login, API keys</li>
+      <li><b>Organizations</b> — Teams, invites, roles</li>
+      <li><b>Notifications</b> — Email + Slack/Discord on failure</li>
+      <li><b>Status page</b> — Public system health</li>
     </ul>
   </div>
 </div>
@@ -659,71 +605,81 @@ Runlater is a European-hosted background jobs service...
     <ul>
       <li><b>Exceptional on big technical tasks</b> — Scheduler, worker pool, API auth. Complex features done fast and correct.</li>
       <li><b>CLAUDE.md is essential</b> — Detailed context file. Stack, architecture, conventions. AI reads and follows.</li>
-      <li><b>Tests enable velocity</b> — 343 tests catch regressions. AI writes tests too. Pre-commit hook enforces.</li>
+      <li><b>Tests enable velocity</b> — 371 tests catch regressions. AI writes tests too. Pre-commit hook enforces.</li>
       <li><b>Describe intent, not steps</b> — Tell what you want, not how. "Add rate limiting" > step-by-step instructions.</li>
     </ul>
   </div>
 </div>
 
-<!-- Slide 25: AI Programming Best Practices -->
+<!-- Slide 25: The Prerequisite -->
 <div class="slide">
-  <p class="prompt">cat ai-best-practices.md</p>
-  <p class="title">AI Programming Best Practices</p>
+  <p class="prompt">cat prerequisites.md</p>
+  <p class="title">The Uncomfortable Truth</p>
   <div class="content">
+    <p style="font-size: 20px; color: #00ff00; margin-bottom: 32px;">AI requires stronger fundamentals, not weaker ones.</p>
+
     <ul>
-      <li><b>Give AI many tools</b> — File access, shell commands, web search, code execution. More tools = more capable. Let it help itself.</li>
-      <li><b>Let it verify itself</b> — AI should run its own code. See errors. Fix them. Self-correction is faster than back-and-forth.</li>
-      <li><b>Tests for every change</b> — Tell AI: "write and run tests." Pre-commit hooks enforce. No untested code lands.</li>
-      <li><b>AI needs feedback loops</b> — Compiler output. Test results. Runtime errors. AI improves when it sees consequences.</li>
+      <li><b>I didn't write any code</b> — Not a single line. But I directed every feature, shaped every discussion.</li>
+      <li><b>Architecture was a collaboration</b> — Some ideas mine, some AI's. SKIP LOCKED, advisory locks — emerged from back-and-forth discussion.</li>
+      <li><b>20 years of context</b> — Two decades of knowing what good systems look like. That guides the conversation.</li>
+      <li><b>Catching mistakes requires knowledge</b> — Session locks had connection pool bug. I spotted it because I understood the problem space.</li>
     </ul>
+
+    <p style="margin-top: 32px; color: #888;">Real collaboration. Human directs, AI executes. Both contribute ideas.</p>
   </div>
 </div>
 
-<!-- Slide 26: Watch Out For -->
+<!-- Slide 26: The Risks -->
 <div class="slide">
-  <p class="prompt">echo $LESSONS_BAD</p>
-  <p class="title">What to Watch Out For</p>
+  <p class="prompt">cat risks.md</p>
+  <p class="title">Where AI Goes Wrong</p>
   <div class="content">
     <ul>
-      <li><span class="warn">⚠</span> <b>Small UI tasks take longer</b> — Pixel-perfect tweaks, alignment, spacing. More iterations than complex logic.</li>
-      <li><span class="warn">⚠</span> <b>Context gets lost</b> — Long sessions, AI forgets earlier decisions. Re-explain or start fresh conversation.</li>
-      <li><span class="warn">⚠</span> <b>AI makes mistakes</b> — Check edge cases. Check error handling. Check security. Review everything.</li>
-      <li><span class="warn">⚠</span> <b>Know your stack</b> — AI accelerates, doesn't replace expertise. Guide decisions, catch bad patterns.</li>
+      <li><span class="warn">⚠</span> <b>Diagnostic intuition atrophies</b> — Temptation to prompt at first error instead of thinking through root cause. Fight this.</li>
+      <li><span class="warn">⚠</span> <b>Open-ended requests drift</b> — "Refactor this" produces chaos. "Change X to Y" works. Be specific, stay in control.</li>
+      <li><span class="warn">⚠</span> <b>Stochastic, not sentient</b> — AI hallucinates on small tasks. Mostly-correct but subtly wrong. Always verify.</li>
+      <li><span class="warn">⚠</span> <b>Context window is finite</b> — Long sessions lose earlier decisions. Fresh conversations for complex changes.</li>
     </ul>
+
+    <h2>the pattern that works</h2>
+    <p>Targeted requests. Human direction. AI execution. Verify output. Repeat.</p>
   </div>
 </div>
 
-<!-- Slide 27: Takeaways -->
+<!-- Slide 27: Effective AI Use -->
 <div class="slide">
-  <p class="prompt">cat takeaways.md</p>
-  <p class="title">Key Takeaways</p>
+  <p class="prompt">cat effective-ai.md</p>
+  <p class="title">Effective AI Programming</p>
   <div class="content">
     <ul>
-      <li><b>AI is a force multiplier</b> — Doesn't replace developers, amplifies them. Better skills = more leverage.</li>
-      <li><b>Invest in context</b> — CLAUDE.md, docs, conventions. Upfront investment pays off in every interaction.</li>
-      <li><b>Tests are non-negotiable</b> — AI code needs validation. Tests are safety net. Pre-commit hooks enforce.</li>
-      <li><b>Stay in the loop</b> — Review every change. Understand the code. You own what ships to production.</li>
+      <li><b>Give AI tools + feedback</b> — File access, shell, tests. Let it run code, see errors, self-correct. Faster than back-and-forth.</li>
+      <li><b>Tests are the safety net</b> — AI writes tests too. Pre-commit hooks enforce. No untested code lands. 371 tests and counting.</li>
+      <li><b>CLAUDE.md is essential</b> — Stack, architecture, conventions, decisions. Upfront investment pays off every interaction.</li>
+      <li><b>Review everything</b> — Understand what shipped. You own production. AI is powerful machinery, you're the pilot.</li>
     </ul>
+
+    <h2>the real skill shift</h2>
+    <p>From typing code to directing conversations. Experience shapes the discussion. AI executes, you steer.</p>
   </div>
 </div>
 
 <!-- Slide 28: Future -->
 <div class="slide">
   <p class="prompt">cat future.txt</p>
-  <p class="title">The Future of Programming?</p>
+  <p class="title">What Does This Mean?</p>
   <div class="content">
-    <p style="font-size: 24px; color: #00ff00; margin: 48px 0;">Is the developer still needed?</p>
+    <p style="font-size: 20px; color: #00ff00; margin-bottom: 32px;">The transition isn't code → no-code. It's typing → directing and validating.</p>
 
     <ul>
-      <li><b>AI wrote ~90% of the code</b> — But I directed every feature, reviewed every line, made every decision.</li>
-      <li><b>Domain knowledge matters</b> — Knowing what to build is harder than building it.</li>
-      <li><b>Taste and judgment</b> — When to push back, when to simplify, what's "good enough".</li>
-      <li><b>The loop still needs a human</b> — Someone to set direction, verify correctness, own the result.</li>
-      <li><b>Shift from code to product</b> — Less "writing code", more "delivering products". Ownership and responsibility still required.</li>
-      <li><b>Architects still needed</b> — System design, trade-offs, integration. AI executes, humans architect.</li>
+      <li><b>Real collaboration</b> — Both contribute ideas. Human directs, AI executes. Architecture emerges from discussion.</li>
+      <li><b>Understanding is non-negotiable</b> — Can't validate what you don't understand. Expertise becomes more valuable, not less.</li>
+      <li><b>The gap widens</b> — Same AI, different results. Experienced devs get more out of it. Juniors risk learning nothing.</li>
+      <li><b>Responsibility stays human</b> — AI doesn't own production outages. You do. Act accordingly.</li>
     </ul>
 
-    <p style="margin-top: 48px; color: #888;">The tools change. The craft remains.</p>
+    <h2>the real question</h2>
+    <p>Not "will AI replace developers?" but "what kind of developer thrives with AI?"<br>
+    <span class="dim">Answer: One who understands enough to validate, guide, and take responsibility.</span></p>
   </div>
 </div>
 
