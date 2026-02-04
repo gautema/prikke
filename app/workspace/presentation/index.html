@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Building Runlater with AI</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
   height: 100%;
   overflow: hidden;
-  font-family: 'JetBrains Mono', monospace;
-  background: #0a0a0a;
-  color: #00ff00;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f8fafc; /* slate-50 */
+  color: #0f172a; /* slate-900 */
 }
 
 .slide {
@@ -27,215 +27,164 @@ html, body {
 }
 .slide.active { display: flex; }
 
-/* Terminal chrome */
-.terminal-bar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 32px;
-  background: #1a1a1a;
-  border-bottom: 1px solid #333;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  gap: 8px;
-  z-index: 100;
-}
-.terminal-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-.dot-red { background: #ff5f56; }
-.dot-yellow { background: #ffbd2e; }
-.dot-green { background: #27ca40; }
-.terminal-title {
-  color: #666;
-  font-size: 12px;
-  margin-left: 16px;
-}
-
 /* Navigation */
 .nav {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: 24px;
+  right: 24px;
   display: flex;
   gap: 8px;
   z-index: 100;
 }
 .nav button {
-  background: transparent;
-  color: #00ff00;
-  border: 1px solid #00ff00;
-  padding: 8px 16px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
+  background: #10b981; /* emerald-500 */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  border-radius: 6px;
   transition: all 0.2s;
 }
 .nav button:hover {
-  background: #00ff00;
-  color: #0a0a0a;
+  background: #059669; /* emerald-600 */
 }
 .slide-counter {
   position: fixed;
-  bottom: 24px;
-  left: 20px;
-  color: #444;
-  font-size: 12px;
-}
-
-/* Prompt */
-.prompt {
-  color: #00ff00;
-  margin-bottom: 24px;
+  bottom: 28px;
+  left: 24px;
+  color: #94a3b8; /* slate-400 */
   font-size: 14px;
 }
-.prompt::before {
-  content: "$ ";
-  color: #666;
+
+/* Section label */
+.section-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #94a3b8; /* slate-400 */
+  margin-bottom: 16px;
 }
 
 /* Title styles */
 .title {
-  font-size: 42px;
+  font-size: 48px;
   font-weight: 700;
-  margin-bottom: 24px;
-  text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+  margin-bottom: 16px;
+  color: #0f172a;
+  line-height: 1.1;
 }
 .subtitle {
-  font-size: 18px;
-  color: #666;
+  font-size: 20px;
+  color: #64748b; /* slate-500 */
   margin-bottom: 32px;
-}
-.cursor {
-  display: inline-block;
-  width: 10px;
-  height: 20px;
-  background: #00ff00;
-  animation: blink 1s infinite;
-  vertical-align: middle;
-  margin-left: 4px;
-}
-@keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
 }
 
 /* Content */
 .content {
   flex: 1;
   margin-top: 16px;
-  font-size: 16px;
-  line-height: 1.8;
+  font-size: 18px;
+  line-height: 1.7;
 }
 
 /* Lists */
 ul {
   list-style: none;
   padding: 0;
-  margin: 16px 0;
+  margin: 20px 0;
 }
 li {
-  color: #ccc;
-  margin-bottom: 12px;
-  padding-left: 24px;
+  color: #475569; /* slate-600 */
+  margin-bottom: 16px;
+  padding-left: 28px;
   position: relative;
+  font-size: 18px;
 }
 li::before {
-  content: "→";
-  color: #00ff00;
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
   position: absolute;
   left: 0;
+  top: 10px;
 }
 li strong, li b {
-  color: #00ff00;
-  font-weight: 400;
+  color: #0f172a;
+  font-weight: 600;
 }
 
 /* Headings in content */
 h2 {
-  color: #00ff00;
-  font-size: 18px;
-  margin: 32px 0 16px 0;
-  font-weight: 700;
-}
-h2::before {
-  content: "# ";
-  color: #666;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 40px 0 20px 0;
 }
 
 /* Plain text */
 p {
-  color: #888;
+  color: #64748b;
   margin-bottom: 16px;
-  max-width: 900px;
+  max-width: 800px;
+  font-size: 18px;
 }
 
-/* Code block */
-.code {
-  background: #111;
-  border-left: 3px solid #00ff00;
-  padding: 16px 24px;
-  font-size: 14px;
-  overflow-x: auto;
-  white-space: pre;
+/* Card */
+.card {
+  background: white;
+  border: 1px solid #e2e8f0; /* slate-200 */
+  border-radius: 12px;
+  padding: 24px 32px;
   margin: 24px 0;
-  color: #ccc;
 }
-.code .comment { color: #555; }
-.code .keyword { color: #ff79c6; }
-.code .string { color: #f1fa8c; }
-.code .function { color: #8be9fd; }
-.code .number { color: #bd93f9; }
 
 /* Stats row */
 .stats {
   display: flex;
-  gap: 64px;
-  margin: 32px 0;
+  gap: 48px;
+  margin: 40px 0;
+  flex-wrap: wrap;
 }
 .stat {
   text-align: center;
 }
 .stat .number {
-  font-size: 56px;
+  font-size: 64px;
   font-weight: 700;
-  color: #00ff00;
-  text-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+  color: #10b981;
+  line-height: 1;
 }
 .stat .label {
   font-size: 14px;
-  color: #666;
+  color: #94a3b8;
   margin-top: 8px;
+  font-weight: 500;
 }
 
-/* Section title */
+/* Section title slide */
 .section-title {
   justify-content: center;
   align-items: center;
   text-align: center;
 }
 .section-title .title {
-  font-size: 56px;
-}
-
-/* ASCII decorations */
-.ascii {
-  color: #333;
-  font-size: 10px;
-  line-height: 1.2;
-  white-space: pre;
+  font-size: 64px;
 }
 
 /* Highlight */
-.hl { color: #00ff00; }
-.dim { color: #555; }
-.warn { color: #ffbd2e; }
+.hl { color: #10b981; }
+.dim { color: #94a3b8; }
+.warn { color: #f59e0b; } /* amber-500 */
 
-/* Two column for specific slides */
+/* Two column */
 .two-col {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -247,66 +196,89 @@ p {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  margin: 32px 0;
+  gap: 20px;
+  margin: 40px 0;
   flex-wrap: wrap;
 }
 .diagram-box {
-  border: 1px solid #00ff00;
-  padding: 12px 24px;
+  background: white;
+  border: 2px solid #10b981;
+  padding: 16px 32px;
   text-align: center;
-  color: #00ff00;
-  font-size: 14px;
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+.diagram-box.primary {
+  background: #10b981;
+  color: white;
 }
 .diagram-arrow {
-  color: #00ff00;
-  font-size: 24px;
+  color: #10b981;
+  font-size: 28px;
+}
+.diagram-label {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* Logo placeholder */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 48px;
+}
+.logo-dot {
+  width: 12px;
+  height: 12px;
+  background: #10b981;
+  border-radius: 50%;
+}
+.logo-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
 }
 </style>
 </head>
 <body>
 
-<div class="terminal-bar">
-  <div class="terminal-dot dot-red"></div>
-  <div class="terminal-dot dot-yellow"></div>
-  <div class="terminal-dot dot-green"></div>
-  <span class="terminal-title">presentation.exe — runlater</span>
-</div>
-
 <!-- Slide 1: Title -->
 <div class="slide active" style="justify-content: center; padding-top: 80px;">
-  <pre class="ascii" style="margin-bottom: 32px;">
-    ____              __      __
-   / __ \__  ______  / /___ _/ /____  _____
-  / /_/ / / / / __ \/ / __ `/ __/ _ \/ ___/
- / _, _/ /_/ / / / / / /_/ / /_/  __/ /
-/_/ |_|\__,_/_/ /_/_/\__,_/\__/\___/_/
-  </pre>
-  <p class="prompt">building runlater with ai</p>
-  <p class="title">From idea to production<span class="cursor"></span></p>
-  <p class="subtitle">// 3 days · 371 tests · 100% AI-written</p>
-  <p style="color: #444; margin-top: 48px;">gaute magnussen</p>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <span class="logo-text">runlater</span>
+  </div>
+  <p class="section-label">Tech Meetup</p>
+  <p class="title">Building Runlater with AI</p>
+  <p class="subtitle">From idea to production in 3 days</p>
+  <p style="color: #94a3b8; margin-top: 48px; font-size: 16px;">371 tests · ~8k lines · 0 lines I typed</p>
 </div>
 
 <!-- Slide 2: The Experiment -->
 <div class="slide">
-  <p class="prompt">./experiment.sh</p>
+  <p class="section-label">Introduction</p>
   <p class="title">The Experiment</p>
   <div class="content">
-    <p>Build a complete SaaS in 3 days using AI pair programming.<br>Ship to production. See what happens.</p>
+    <p style="font-size: 22px; color: #0f172a; margin-bottom: 32px;">Build a complete SaaS in 3 days using AI pair programming. Ship to production. See what happens.</p>
 
-    <ul>
-      <li><b>Time:</b> 3 days</li>
-      <li><b>Tool:</b> Claude Code CLI</li>
-      <li><b>Result:</b> Production SaaS</li>
-      <li><b>Live:</b> runlater.eu</li>
-    </ul>
+    <div class="card">
+      <ul style="margin: 0;">
+        <li><b>Time:</b> 3 days</li>
+        <li><b>Tool:</b> Claude Code CLI</li>
+        <li><b>Result:</b> Production SaaS at runlater.eu</li>
+        <li><b>Code written by me:</b> 0 lines</li>
+      </ul>
+    </div>
   </div>
 </div>
 
-<!-- Slide 4: The Problem -->
+<!-- Slide 3: The Problem -->
 <div class="slide">
-  <p class="prompt">cat problem.txt</p>
+  <p class="section-label">Context</p>
   <p class="title">The Problem</p>
   <p class="subtitle">Background jobs shouldn't be this hard</p>
   <div class="content">
@@ -317,60 +289,43 @@ p {
       <li><b>EU hosting is rare</b> — Most services US-based. GDPR compliance becomes your problem.</li>
     </ul>
 
-    <h2>personal itch</h2>
-    <p>3 projects in the last year needed this. Built it myself twice, helped build it a third time. Why keep rebuilding?</p>
+    <h2>Personal itch</h2>
+    <p>3 projects in the last year needed this. Built it myself twice. Why keep rebuilding?</p>
   </div>
 </div>
 
-<!-- Slide 5: Section -->
+<!-- Slide 4: Section -->
 <div class="slide section-title">
-  <p class="prompt">cd product/</p>
-  <p class="title">The Product</p>
-  <p class="subtitle">what does runlater do?</p>
-</div>
-
-<!-- Slide 6: What is Runlater -->
-<div class="slide">
-  <p class="prompt">runlater --help</p>
+  <p class="section-label">Product</p>
   <p class="title">What is Runlater?</p>
   <p class="subtitle">Background jobs and cron scheduling as a service</p>
+</div>
+
+<!-- Slide 5: What is Runlater -->
+<div class="slide">
+  <p class="section-label">Product</p>
+  <p class="title">What Runlater Does</p>
   <div class="content">
     <ul>
       <li><b>Cron jobs</b> — Schedule recurring tasks with cron expressions. Daily reports, hourly syncs.</li>
       <li><b>One-time jobs</b> — Run once at specific time. Scheduled notifications, delayed processing.</li>
       <li><b>Job queues</b> — Push via API for immediate execution. Fire and forget.</li>
+      <li><b>Automatic retries</b> — Exponential backoff on failure. Your task runs even when things go wrong.</li>
     </ul>
-    <p style="margin-top: 32px; color: #00ff00;">Hosted in Europe · GDPR native · Data never leaves the EU</p>
+    <p style="margin-top: 40px;"><span class="hl" style="font-weight: 600;">Hosted in Europe · GDPR native · Data never leaves the EU</span></p>
   </div>
 </div>
 
-<!-- Slide 7: How it works -->
-<div class="slide">
-  <p class="prompt">curl -X POST api.runlater.eu/v1/queue</p>
-  <p class="title">How It Works</p>
-  <div class="content">
-    <ul>
-      <li><b>1. Create</b> — Define webhook URL and schedule via dashboard or API</li>
-      <li><b>2. Execute</b> — We make HTTP request at scheduled time. Retries included.</li>
-      <li><b>3. Monitor</b> — Real-time dashboard shows status, response times, history</li>
-    </ul>
-    <div class="code"><span class="comment"># Queue a job via API</span>
-curl -X POST https://api.runlater.eu/v1/queue \
-  -H <span class="string">"Authorization: Bearer sk_live_..."</span> \
-  -d <span class="string">'{"url": "https://myapp.com/webhook"}'</span></div>
-  </div>
-</div>
-
-<!-- Slide 8: Section -->
+<!-- Slide 6: Section -->
 <div class="slide section-title">
-  <p class="prompt">cd stack/</p>
+  <p class="section-label">Technology</p>
   <p class="title">The Stack</p>
-  <p class="subtitle">technology choices</p>
+  <p class="subtitle">Technology choices</p>
 </div>
 
-<!-- Slide 9: Tech Stack -->
+<!-- Slide 7: Tech Stack -->
 <div class="slide">
-  <p class="prompt">cat mix.exs | grep deps</p>
+  <p class="section-label">Technology</p>
   <p class="title">The Tech Stack</p>
   <div class="content">
     <ul>
@@ -379,90 +334,61 @@ curl -X POST https://api.runlater.eu/v1/queue \
       <li><b>PostgreSQL</b> — Job queue via FOR UPDATE SKIP LOCKED. No Redis needed.</li>
       <li><b>Tailwind CSS</b> — Utility-first styling. Fast iteration.</li>
       <li><b>Kamal</b> — Docker deploys to Hetzner EU. Zero downtime.</li>
-      <li><b>Mailjet</b> — Transactional email. French company, EU hosted.</li>
     </ul>
 
-    <h2>why elixir?</h2>
-    <p>BEAM VM runs forever. Lightweight processes. Fault tolerance built-in.<br>GenServer + Postgres = job queue. No Redis, no external dependencies.</p>
+    <h2>Why Elixir?</h2>
+    <p>BEAM VM runs forever. Lightweight processes. Fault tolerance built-in. GenServer + Postgres = job queue with no external dependencies.</p>
   </div>
 </div>
 
-<!-- Slide 10: Elixir + AI -->
-<div class="slide">
-  <p class="prompt">cat CLAUDE.md</p>
-  <p class="title">Elixir: AI-Friendly by Design</p>
-  <div class="content">
-    <ul>
-      <li><b>Phoenix ships with CLAUDE.md</b> — Phoenix 1.8 generates agents.md out of the box. Project conventions ready for AI.</li>
-      <li><b>Inline documentation culture</b> — @moduledoc and @doc are standard. Every function self-documents.</li>
-      <li><b>Excellent official docs</b> — Elixir, Phoenix, Ecto, LiveView. AI references accurate info.</li>
-      <li><b>Explicit, readable code</b> — Pattern matching is self-documenting. Pipe operator shows data flow.</li>
-      <li><b>Convention over configuration</b> — Contexts, schemas, LiveViews. Predictable patterns AI follows.</li>
-      <li><b>Compiler catches mistakes</b> — Warnings as errors. Dialyzer types. AI code validated immediately.</li>
-    </ul>
-  </div>
-</div>
-
-<!-- Slide 12: Section -->
+<!-- Slide 8: Section -->
 <div class="slide section-title">
-  <p class="prompt">cd ai/</p>
-  <p class="title">AI Development</p>
-  <p class="subtitle">how claude code changed everything</p>
+  <p class="section-label">AI Development</p>
+  <p class="title">Working with AI</p>
+  <p class="subtitle">How Claude Code changed everything</p>
 </div>
 
-<!-- Slide 14: Workflow -->
+<!-- Slide 9: Workflow -->
 <div class="slide">
-  <p class="prompt">./workflow.sh</p>
+  <p class="section-label">AI Development</p>
   <p class="title">The Workflow</p>
   <div class="content">
     <ul>
       <li><b>1. Describe</b> — Write clear description. Context, behavior, edge cases. Better prompt = better result.</li>
-      <li><b>2. Generate</b> — Claude writes schemas, contexts, LiveViews, tests. Follows project patterns.</li>
-      <li><b>3. Refine</b> — Review output. Ask for changes. "Make async." "Add error handling." Quick iterations.</li>
-      <li><b>4. Deploy</b> — Tests pass. Code reviewed. Push to production. Multiple deploys per day.</li>
+      <li><b>2. Discuss</b> — Back-and-forth on approach. Both contribute ideas. Architecture emerges from conversation.</li>
+      <li><b>3. Generate</b> — AI writes schemas, contexts, LiveViews, tests. Follows project patterns.</li>
+      <li><b>4. Validate</b> — Review output. Understand it. Catch mistakes. You own what ships.</li>
     </ul>
 
-    <h2>scaling the approach</h2>
+    <h2>Scaling the approach</h2>
     <p><b>Large features:</b> Use plan mode. AI explores codebase, writes implementation plan, you approve before coding.<br>
-    <b>Small features:</b> Just ask. "Add a loading spinner here." Direct question, direct answer.</p>
+    <b>Small features:</b> Just ask. Direct question, direct answer.</p>
   </div>
 </div>
 
-<!-- Slide 15: CLAUDE.md -->
+<!-- Slide 10: CLAUDE.md -->
 <div class="slide">
-  <p class="prompt">cat CLAUDE.md | head -30</p>
+  <p class="section-label">AI Development</p>
   <p class="title">The Secret: CLAUDE.md</p>
   <div class="content">
     <p>Markdown file at project root. Everything the AI needs to know.</p>
-    <ul>
-      <li>Product overview</li>
-      <li>Tech stack + rationale</li>
-      <li>Architecture decisions</li>
-      <li>Database schema</li>
-      <li>Coding conventions</li>
-      <li>Key commands</li>
-    </ul>
-    <div class="code"><span class="comment"># CLAUDE.md - Runlater Guide</span>
-
-<span class="keyword">## Product Overview</span>
-Runlater is a European-hosted background jobs service...
-
-<span class="keyword">## Tech Stack</span>
-| Component | Technology     |
-|-----------|----------------|
-| Backend   | Elixir+Phoenix |
-| Database  | PostgreSQL     |
-
-<span class="keyword">## Key Decisions</span>
-1. No Redis - Postgres only
-2. No Oban - custom GenServer
-3. FOR UPDATE SKIP LOCKED</div>
+    <div class="card">
+      <ul style="margin: 0;">
+        <li>Product overview and goals</li>
+        <li>Tech stack + rationale</li>
+        <li>Architecture decisions</li>
+        <li>Database schema</li>
+        <li>Coding conventions</li>
+        <li>Key commands</li>
+      </ul>
+    </div>
+    <p style="margin-top: 24px;">Upfront investment pays off in every interaction. AI reads and follows the conventions you set.</p>
   </div>
 </div>
 
-<!-- Slide 16: Stats -->
+<!-- Slide 11: Stats -->
 <div class="slide">
-  <p class="prompt">wc -l **/*.ex | tail -1</p>
+  <p class="section-label">Results</p>
   <p class="title">By the Numbers</p>
   <div class="content">
     <div class="stats">
@@ -484,105 +410,98 @@ Runlater is a European-hosted background jobs service...
       </div>
     </div>
 
-    <p style="margin-top: 48px;">I didn't write a single line. But I directed every feature, shaped architecture through discussion, caught mistakes. Real collaboration.</p>
+    <p style="margin-top: 48px; font-size: 20px; color: #0f172a;">I didn't write a single line. But I directed every feature, shaped architecture through discussion, caught mistakes. Real collaboration.</p>
   </div>
 </div>
 
-<!-- Slide 17: Section -->
+<!-- Slide 12: Section -->
 <div class="slide section-title">
-  <p class="prompt">cd features/</p>
-  <p class="title">Features Built</p>
-  <p class="subtitle">what shipped in 3 days</p>
+  <p class="section-label">Features</p>
+  <p class="title">What Shipped</p>
+  <p class="subtitle">In 3 days</p>
 </div>
 
-<!-- Slide 18: Features -->
+<!-- Slide 13: Features -->
 <div class="slide">
-  <p class="prompt">git log --oneline | wc -l</p>
+  <p class="section-label">Features</p>
   <p class="title">Features Built</p>
-  <div class="content">
-    <h2>core product</h2>
-    <ul>
-      <li><b>Cron scheduling</b> — Recurring jobs with cron expressions</li>
-      <li><b>One-time jobs</b> — Run once at specific time</li>
-      <li><b>Job queues</b> — Immediate execution via API</li>
-      <li><b>Automatic retries</b> — Exponential backoff on failure</li>
-      <li><b>Real-time dashboard</b> — Execution history, status, logs</li>
-      <li><b>REST API</b> — Full programmatic access</li>
-    </ul>
-
-    <h2>platform</h2>
-    <ul>
-      <li><b>Marketing site</b> — Landing page, pricing, documentation</li>
-      <li><b>Auth</b> — Magic link login, API keys</li>
-      <li><b>Organizations</b> — Teams, invites, roles</li>
-      <li><b>Notifications</b> — Email + Slack/Discord on failure</li>
-      <li><b>Status page</b> — Public system health</li>
-    </ul>
+  <div class="content two-col">
+    <div>
+      <h2>Core Product</h2>
+      <ul>
+        <li><b>Cron scheduling</b> — Recurring jobs with cron expressions</li>
+        <li><b>One-time jobs</b> — Run once at specific time</li>
+        <li><b>Job queues</b> — Immediate execution via API</li>
+        <li><b>Automatic retries</b> — Exponential backoff on failure</li>
+        <li><b>Real-time dashboard</b> — Execution history, status, logs</li>
+        <li><b>REST API</b> — Full programmatic access</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Platform</h2>
+      <ul>
+        <li><b>Marketing site</b> — Landing page, pricing, docs</li>
+        <li><b>Auth</b> — Magic link login, API keys</li>
+        <li><b>Organizations</b> — Teams, invites, roles</li>
+        <li><b>Notifications</b> — Email + Slack/Discord on failure</li>
+        <li><b>Status page</b> — Public system health</li>
+      </ul>
+    </div>
   </div>
 </div>
 
-<!-- Slide 19: Timeline -->
+<!-- Slide 14: Timeline -->
 <div class="slide">
-  <p class="prompt">git log --since="3 days ago"</p>
+  <p class="section-label">Features</p>
   <p class="title">The 3-Day Timeline</p>
   <div class="content">
-    <h2>day 1: foundation</h2>
+    <h2>Day 1: Foundation</h2>
     <p class="dim">Marketing site + product design · Phoenix setup · Authentication · Organizations · Team invitations · Job CRUD · Basic dashboard</p>
 
-    <h2>day 2: core engine</h2>
+    <h2>Day 2: Core Engine</h2>
     <p class="dim">Scheduler GenServer · Worker pool · Execution tracking · REST API · API key auth · Retry logic</p>
 
-    <h2>day 3: polish + deploy</h2>
+    <h2>Day 3: Polish + Deploy</h2>
     <p class="dim">Rate limiting · Usage alerts · Landing page · Documentation · Kamal setup · Production launch</p>
   </div>
 </div>
 
-<!-- Slide 20: Infrastructure -->
-<div class="slide">
-  <p class="prompt">kamal deploy</p>
-  <p class="title">Evolution & Pivots</p>
-  <div class="content">
-    <h2>name changes</h2>
-    <p><span class="dim">prikke → cronly → runlater</span><br>
-    "Prikke" (Norwegian for dot), then "Cronly", finally "Runlater" for global appeal.</p>
-
-    <h2>started: koyeb <span class="dim">(€17/mo)</span></h2>
-    <p>French company, EU hosted. Managed containers + Postgres. Easy start, expensive long-term.</p>
-
-    <h2>now: hetzner + kamal <span class="hl">(€3.75/mo)</span></h2>
-    <p>CX23 server in Nuremberg. Kamal zero-downtime deploys. Postgres in Docker. <span class="hl">78% cost reduction.</span></p>
-
-    <p style="margin-top: 24px;">AI helped the migration: "Set up Kamal for Hetzner" — Claude configured Dockerfile, deploy.yml, proxy, health checks.</p>
-  </div>
-</div>
-
-<!-- Slide 21: Section -->
+<!-- Slide 15: Section -->
 <div class="slide section-title">
-  <p class="prompt">cd architecture/</p>
-  <p class="title">Architecture</p>
-  <p class="subtitle">how the job engine works</p>
+  <p class="section-label">Architecture</p>
+  <p class="title">How It Works</p>
+  <p class="subtitle">The job engine</p>
 </div>
 
-<!-- Slide 22: Architecture -->
+<!-- Slide 16: Architecture -->
 <div class="slide">
-  <p class="prompt">cat lib/app/scheduler.ex</p>
+  <p class="section-label">Architecture</p>
   <p class="title">Architecture Overview</p>
   <div class="content">
     <div class="diagram">
-      <div class="diagram-box">Scheduler<br><span class="dim" style="font-size: 12px;">1 leader</span></div>
+      <div>
+        <div class="diagram-box">Scheduler</div>
+        <div class="diagram-label">1 leader</div>
+      </div>
       <div class="diagram-arrow">→</div>
-      <div class="diagram-box">Executions<br><span class="dim" style="font-size: 12px;">queue</span></div>
+      <div>
+        <div class="diagram-box">Executions</div>
+        <div class="diagram-label">queue</div>
+      </div>
       <div class="diagram-arrow">←</div>
-      <div class="diagram-box">Workers<br><span class="dim" style="font-size: 12px;">2-20</span></div>
+      <div>
+        <div class="diagram-box">Workers</div>
+        <div class="diagram-label">2-20</div>
+      </div>
     </div>
     <div class="diagram">
       <div class="diagram-arrow">↓</div>
     </div>
     <div class="diagram">
-      <div class="diagram-box" style="background: #00ff00; color: #0a0a0a;">PostgreSQL</div>
+      <div class="diagram-box primary">PostgreSQL</div>
     </div>
-    <ul style="margin-top: 32px;">
-      <li><b>Scheduler</b> — Ticks every 10s. Finds due jobs. Creates pending executions. Advisory lock for leader.</li>
+    <ul style="margin-top: 40px;">
+      <li><b>Scheduler</b> — Ticks every 10s. Finds due jobs. Creates pending executions.</li>
       <li><b>Executions queue</b> — Postgres table. Workers claim with FOR UPDATE SKIP LOCKED.</li>
       <li><b>Worker pool</b> — DynamicSupervisor. 2-20 workers based on queue depth.</li>
       <li><b>Multi-server ready</b> — Multiple nodes work safely. Postgres coordinates.</li>
@@ -590,20 +509,20 @@ Runlater is a European-hosted background jobs service...
   </div>
 </div>
 
-<!-- Slide 23: Section -->
+<!-- Slide 17: Section -->
 <div class="slide section-title">
-  <p class="prompt">cd lessons/</p>
-  <p class="title">Lessons Learned</p>
-  <p class="subtitle">what worked and what didn't</p>
+  <p class="section-label">Lessons</p>
+  <p class="title">What I Learned</p>
+  <p class="subtitle">The honest version</p>
 </div>
 
-<!-- Slide 24: What Worked -->
+<!-- Slide 18: What Worked -->
 <div class="slide">
-  <p class="prompt">echo $LESSONS_GOOD</p>
+  <p class="section-label">Lessons</p>
   <p class="title">What Worked Well</p>
   <div class="content">
     <ul>
-      <li><b>Exceptional on big technical tasks</b> — Scheduler, worker pool, API auth. Complex features done fast and correct.</li>
+      <li><b>Big technical tasks shine</b> — Scheduler, worker pool, API auth. Complex features done fast and correct.</li>
       <li><b>CLAUDE.md is essential</b> — Detailed context file. Stack, architecture, conventions. AI reads and follows.</li>
       <li><b>Tests enable velocity</b> — 371 tests catch regressions. AI writes tests too. Pre-commit hook enforces.</li>
       <li><b>Describe intent, not steps</b> — Tell what you want, not how. "Add rate limiting" > step-by-step instructions.</li>
@@ -611,27 +530,27 @@ Runlater is a European-hosted background jobs service...
   </div>
 </div>
 
-<!-- Slide 25: The Prerequisite -->
+<!-- Slide 19: The Prerequisite -->
 <div class="slide">
-  <p class="prompt">cat prerequisites.md</p>
+  <p class="section-label">Lessons</p>
   <p class="title">The Uncomfortable Truth</p>
   <div class="content">
-    <p style="font-size: 20px; color: #00ff00; margin-bottom: 32px;">AI requires stronger fundamentals, not weaker ones.</p>
+    <p style="font-size: 22px; color: #10b981; margin-bottom: 32px; font-weight: 600;">AI requires stronger fundamentals, not weaker ones.</p>
 
     <ul>
       <li><b>I didn't write any code</b> — Not a single line. But I directed every feature, shaped every discussion.</li>
-      <li><b>Architecture was a collaboration</b> — Some ideas mine, some AI's. SKIP LOCKED, advisory locks — emerged from back-and-forth discussion.</li>
+      <li><b>Architecture was a collaboration</b> — Some ideas mine, some AI's. Emerged from back-and-forth discussion.</li>
       <li><b>20 years of context</b> — Two decades of knowing what good systems look like. That guides the conversation.</li>
       <li><b>Catching mistakes requires knowledge</b> — Session locks had connection pool bug. I spotted it because I understood the problem space.</li>
     </ul>
 
-    <p style="margin-top: 32px; color: #888;">Real collaboration. Human directs, AI executes. Both contribute ideas.</p>
+    <p style="margin-top: 40px; font-size: 20px; color: #0f172a;">Real collaboration. Human directs, AI executes. Both contribute ideas.</p>
   </div>
 </div>
 
-<!-- Slide 26: The Risks -->
+<!-- Slide 20: The Risks -->
 <div class="slide">
-  <p class="prompt">cat risks.md</p>
+  <p class="section-label">Lessons</p>
   <p class="title">Where AI Goes Wrong</p>
   <div class="content">
     <ul>
@@ -641,34 +560,34 @@ Runlater is a European-hosted background jobs service...
       <li><span class="warn">⚠</span> <b>Context window is finite</b> — Long sessions lose earlier decisions. Fresh conversations for complex changes.</li>
     </ul>
 
-    <h2>the pattern that works</h2>
+    <h2>The pattern that works</h2>
     <p>Targeted requests. Human direction. AI execution. Verify output. Repeat.</p>
   </div>
 </div>
 
-<!-- Slide 27: Effective AI Use -->
+<!-- Slide 21: Effective AI -->
 <div class="slide">
-  <p class="prompt">cat effective-ai.md</p>
+  <p class="section-label">Lessons</p>
   <p class="title">Effective AI Programming</p>
   <div class="content">
     <ul>
-      <li><b>Give AI tools + feedback</b> — File access, shell, tests. Let it run code, see errors, self-correct. Faster than back-and-forth.</li>
-      <li><b>Tests are the safety net</b> — AI writes tests too. Pre-commit hooks enforce. No untested code lands. 371 tests and counting.</li>
+      <li><b>Give AI tools + feedback</b> — File access, shell, tests. Let it run code, see errors, self-correct.</li>
+      <li><b>Tests are the safety net</b> — AI writes tests too. Pre-commit hooks enforce. No untested code lands.</li>
       <li><b>CLAUDE.md is essential</b> — Stack, architecture, conventions, decisions. Upfront investment pays off every interaction.</li>
       <li><b>Review everything</b> — Understand what shipped. You own production. AI is powerful machinery, you're the pilot.</li>
     </ul>
 
-    <h2>the real skill shift</h2>
+    <h2>The real skill shift</h2>
     <p>From typing code to directing conversations. Experience shapes the discussion. AI executes, you steer.</p>
   </div>
 </div>
 
-<!-- Slide 28: Future -->
+<!-- Slide 22: Future -->
 <div class="slide">
-  <p class="prompt">cat future.txt</p>
+  <p class="section-label">Takeaway</p>
   <p class="title">What Does This Mean?</p>
   <div class="content">
-    <p style="font-size: 20px; color: #00ff00; margin-bottom: 32px;">The transition isn't code → no-code. It's typing → directing and validating.</p>
+    <p style="font-size: 22px; color: #10b981; margin-bottom: 32px; font-weight: 600;">The transition isn't code → no-code. It's typing → directing and validating.</p>
 
     <ul>
       <li><b>Real collaboration</b> — Both contribute ideas. Human directs, AI executes. Architecture emerges from discussion.</li>
@@ -677,20 +596,23 @@ Runlater is a European-hosted background jobs service...
       <li><b>Responsibility stays human</b> — AI doesn't own production outages. You do. Act accordingly.</li>
     </ul>
 
-    <h2>the real question</h2>
+    <h2>The real question</h2>
     <p>Not "will AI replace developers?" but "what kind of developer thrives with AI?"<br>
     <span class="dim">Answer: One who understands enough to validate, guide, and take responsibility.</span></p>
   </div>
 </div>
 
-<!-- Slide 29: End -->
+<!-- Slide 23: End -->
 <div class="slide" style="justify-content: center; align-items: center; text-align: center;">
-  <p class="prompt">exit</p>
-  <p class="title">Thank You<span class="cursor"></span></p>
-  <p class="subtitle">// questions?</p>
+  <div class="logo" style="justify-content: center;">
+    <div class="logo-dot"></div>
+    <span class="logo-text">runlater</span>
+  </div>
+  <p class="title">Thank You</p>
+  <p class="subtitle">Questions?</p>
   <div style="margin-top: 48px;">
-    <p><span class="dim">website:</span> <span class="hl">runlater.eu</span></p>
-    <p><span class="dim">ai tool:</span> <span class="hl">claude.ai/code</span></p>
+    <p style="color: #94a3b8;"><span class="dim">website:</span> <span class="hl" style="font-weight: 600;">runlater.eu</span></p>
+    <p style="color: #94a3b8;"><span class="dim">ai tool:</span> <span class="hl" style="font-weight: 600;">claude.ai/code</span></p>
   </div>
 </div>
 
@@ -699,8 +621,8 @@ Runlater is a European-hosted background jobs service...
 </div>
 
 <div class="nav">
-  <button onclick="prevSlide()">[prev]</button>
-  <button onclick="nextSlide()">[next]</button>
+  <button onclick="prevSlide()">← Prev</button>
+  <button onclick="nextSlide()">Next →</button>
 </div>
 
 <script>
