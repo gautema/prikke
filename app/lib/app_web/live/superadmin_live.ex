@@ -378,13 +378,13 @@ defmodule PrikkeWeb.SuperadminLive do
     <!-- Recent Activity -->
       <div class="grid md:grid-cols-2 gap-8 mb-8">
         <!-- Recent Signups -->
-        <div class="bg-white border border-slate-200 rounded-lg p-6">
+        <div class="bg-white border border-slate-200 rounded-lg p-6 overflow-hidden">
           <h2 class="text-lg font-semibold text-slate-900 mb-4">Recent Signups</h2>
           <div class="space-y-3">
             <%= for user <- @recent_users do %>
-              <div class="flex justify-between items-center">
-                <span class="text-slate-900">{user.email}</span>
-                <span class="text-xs text-slate-400">
+              <div class="flex justify-between items-center gap-2">
+                <span class="text-slate-900 truncate min-w-0">{user.email}</span>
+                <span class="text-xs text-slate-400 whitespace-nowrap">
                   <.relative_time id={"user-#{user.id}"} datetime={user.inserted_at} />
                 </span>
               </div>
@@ -396,18 +396,18 @@ defmodule PrikkeWeb.SuperadminLive do
         </div>
         
     <!-- Recent Jobs -->
-        <div class="bg-white border border-slate-200 rounded-lg p-6">
+        <div class="bg-white border border-slate-200 rounded-lg p-6 overflow-hidden">
           <h2 class="text-lg font-semibold text-slate-900 mb-4">Recent Jobs</h2>
           <div class="space-y-3">
             <%= for job <- @recent_jobs do %>
-              <div class="flex justify-between items-center">
-                <div class="min-w-0 flex-1 mr-2">
+              <div class="flex justify-between items-center gap-2">
+                <div class="min-w-0 flex-1">
                   <div class="font-medium text-slate-900 truncate">{job.name}</div>
                   <div class="text-xs text-slate-500 truncate">
                     {job.organization && job.organization.name}
                   </div>
                 </div>
-                <span class="text-xs text-slate-400 shrink-0">
+                <span class="text-xs text-slate-400 whitespace-nowrap">
                   <.relative_time id={"job-#{job.id}"} datetime={job.inserted_at} />
                 </span>
               </div>
