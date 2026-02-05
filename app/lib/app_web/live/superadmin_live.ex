@@ -94,7 +94,7 @@ defmodule PrikkeWeb.SuperadminLive do
         <div class="flex gap-2">
           <a
             href="/live-dashboard"
-            class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-md transition-colors"
+            class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-white/50 rounded-md transition-colors"
           >
             Live Dashboard
           </a>

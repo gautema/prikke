@@ -292,7 +292,7 @@ defmodule PrikkeWeb.QueueLive do
                 type="textarea"
                 rows="6"
                 placeholder='{"Content-Type": "application/json"}'
-                class="w-full px-4 py-3 font-mono text-sm bg-slate-50 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 min-h-[140px]"
+                class="w-full px-4 py-3 font-mono text-sm bg-white/70 border border-white/50 rounded-md text-slate-900 placeholder-slate-400 min-h-[140px]"
               />
             </div>
 
@@ -305,7 +305,7 @@ defmodule PrikkeWeb.QueueLive do
                 type="textarea"
                 rows="10"
                 placeholder='{"key": "value"}'
-                class="w-full px-4 py-3 font-mono text-sm bg-slate-50 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 min-h-[200px]"
+                class="w-full px-4 py-3 font-mono text-sm bg-white/70 border border-white/50 rounded-md text-slate-900 placeholder-slate-400 min-h-[200px]"
               />
             </div>
 

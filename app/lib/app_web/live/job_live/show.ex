@@ -262,7 +262,7 @@ defmodule PrikkeWeb.JobLive.Show do
           <!-- Webhook Details -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Webhook</h3>
-            <div class="bg-slate-50 rounded-lg p-3 sm:p-4 space-y-3">
+            <div class="bg-white/30 rounded-xl p-3 sm:p-4 space-y-3">
               <div class="flex items-start sm:items-center gap-2 flex-col sm:flex-row">
                 <span class="font-mono text-sm bg-slate-200 px-2 py-1 rounded font-medium shrink-0">
                   {@job.method}
@@ -287,7 +287,7 @@ defmodule PrikkeWeb.JobLive.Show do
     <!-- Schedule -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Schedule</h3>
-            <div class="bg-slate-50 rounded-lg p-3 sm:p-4">
+            <div class="bg-white/30 rounded-xl p-3 sm:p-4">
               <%= if @job.schedule_type == "cron" do %>
                 <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                   <span class="font-mono text-base sm:text-lg bg-slate-200 px-3 py-1 rounded w-fit">
@@ -311,7 +311,7 @@ defmodule PrikkeWeb.JobLive.Show do
     <!-- Settings -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Settings</h3>
-            <div class="bg-slate-50 rounded-lg p-3 sm:p-4 grid grid-cols-2 gap-4">
+            <div class="bg-white/30 rounded-xl p-3 sm:p-4 grid grid-cols-2 gap-4">
               <div>
                 <span class="text-xs text-slate-500 uppercase">Timeout</span>
                 <p class="text-slate-900">{format_timeout(@job.timeout_ms)}</p>
@@ -335,7 +335,7 @@ defmodule PrikkeWeb.JobLive.Show do
               <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">
                 Last 24 Hours
               </h3>
-              <div class="bg-slate-50 rounded-lg p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div class="bg-white/30 rounded-xl p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div>
                   <span class="text-xs text-slate-500 uppercase">Total</span>
                   <p class="text-xl font-bold text-slate-900">{@stats.total}</p>
@@ -384,7 +384,7 @@ defmodule PrikkeWeb.JobLive.Show do
               </form>
             </div>
             <%= if @executions == [] do %>
-              <div class="bg-slate-50 rounded-lg p-6 sm:p-8 text-center text-slate-500">
+              <div class="bg-white/30 rounded-xl p-6 sm:p-8 text-center text-slate-500">
                 <%= if @status_filter do %>
                   No executions matching this filter.
                 <% else %>
@@ -392,7 +392,7 @@ defmodule PrikkeWeb.JobLive.Show do
                 <% end %>
               </div>
             <% else %>
-              <div class="bg-slate-50 rounded-lg overflow-hidden divide-y divide-white/30">
+              <div class="bg-white/30 rounded-xl overflow-hidden divide-y divide-white/30">
                 <%= for exec <- @executions do %>
                   <.link
                     navigate={~p"/jobs/#{@job.id}/executions/#{exec.id}"}
@@ -431,7 +431,7 @@ defmodule PrikkeWeb.JobLive.Show do
                   <button
                     type="button"
                     phx-click="load_more"
-                    class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors"
+                    class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-white/50 transition-colors"
                   >
                     Load more
                     <span class="text-slate-400">

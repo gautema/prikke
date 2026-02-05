@@ -107,7 +107,7 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
           <!-- Timing -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Timing</h3>
-            <div class="bg-slate-50 rounded-lg p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="bg-white/30 rounded-xl p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
                 <span class="text-xs text-slate-500 uppercase">Scheduled For</span>
                 <p class="text-slate-900 text-sm">
@@ -138,7 +138,7 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
     <!-- Request Details -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Request</h3>
-            <div class="bg-slate-50 rounded-lg p-3 sm:p-4 space-y-3">
+            <div class="bg-white/30 rounded-xl p-3 sm:p-4 space-y-3">
               <div class="flex items-start sm:items-center gap-2 flex-col sm:flex-row">
                 <span class="font-mono text-sm bg-slate-200 px-2 py-1 rounded font-medium shrink-0">
                   {@job.method}
@@ -163,7 +163,7 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
     <!-- Response Details -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Response</h3>
-            <div class="bg-slate-50 rounded-lg p-3 sm:p-4 space-y-3">
+            <div class="bg-white/30 rounded-xl p-3 sm:p-4 space-y-3">
               <div class="flex items-center gap-4">
                 <%= if @execution.status_code do %>
                   <div>
@@ -208,7 +208,7 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
     <!-- Metadata -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Metadata</h3>
-            <div class="bg-slate-50 rounded-lg p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div class="bg-white/30 rounded-xl p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
                 <span class="text-xs text-slate-500 uppercase">Execution ID</span>
                 <p class="font-mono text-slate-700 text-xs break-all">{@execution.id}</p>

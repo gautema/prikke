@@ -218,7 +218,7 @@ defmodule PrikkeWeb.JobLive.Edit do
                   field={@form[:cron_expression]}
                   type="text"
                   placeholder="0 * * * *"
-                  class="w-full px-4 py-3 font-mono text-base bg-slate-50 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400"
+                  class="w-full px-4 py-3 font-mono text-base bg-white/70 border border-white/50 rounded-md text-slate-900 placeholder-slate-400"
                 />
                 <p class="text-sm text-slate-500 mt-2">
                   Examples:
@@ -305,7 +305,7 @@ defmodule PrikkeWeb.JobLive.Edit do
                 type="textarea"
                 rows="6"
                 placeholder='{"Content-Type": "application/json"}'
-                class="w-full px-4 py-3 font-mono text-sm bg-slate-50 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 min-h-[140px]"
+                class="w-full px-4 py-3 font-mono text-sm bg-white/70 border border-white/50 rounded-md text-slate-900 placeholder-slate-400 min-h-[140px]"
               />
               <p class="text-xs text-slate-500 mt-1">Optional. JSON object with custom headers.</p>
             </div>
@@ -319,7 +319,7 @@ defmodule PrikkeWeb.JobLive.Edit do
                 type="textarea"
                 rows="10"
                 placeholder='{"key": "value"}'
-                class="w-full px-4 py-3 font-mono text-sm bg-slate-50 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 min-h-[200px]"
+                class="w-full px-4 py-3 font-mono text-sm bg-white/70 border border-white/50 rounded-md text-slate-900 placeholder-slate-400 min-h-[200px]"
               />
               <p class="text-xs text-slate-500 mt-1">Optional. For POST/PUT/PATCH requests.</p>
             </div>

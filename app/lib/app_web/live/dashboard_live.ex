@@ -216,7 +216,7 @@ defmodule PrikkeWeb.DashboardLive do
               <%= for job <- @recent_jobs do %>
                 <.link
                   navigate={~p"/jobs/#{job.id}"}
-                  class="block px-6 py-4 hover:bg-slate-50 transition-colors"
+                  class="block px-6 py-4 hover:bg-white/50 transition-colors"
                 >
                   <div class="flex items-center justify-between">
                     <div class="min-w-0 flex-1">
@@ -266,7 +266,7 @@ defmodule PrikkeWeb.DashboardLive do
               <%= for execution <- @recent_executions do %>
                 <.link
                   navigate={~p"/jobs/#{execution.job_id}"}
-                  class="block px-6 py-3 hover:bg-slate-50 transition-colors"
+                  class="block px-6 py-3 hover:bg-white/50 transition-colors"
                 >
                   <div class="flex items-center justify-between">
                     <div class="min-w-0 flex-1">

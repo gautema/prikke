@@ -89,7 +89,7 @@
                   >
                     <%= for org <- @organizations do %>
                       <%= if @current_organization && org.id == @current_organization.id do %>
-                        <div class="px-4 py-2 text-sm text-slate-900 bg-slate-50 flex items-center justify-between">
+                        <div class="px-4 py-2 text-sm text-slate-900 bg-white/50 flex items-center justify-between">
                           <span>{org.name}</span>
                           <.icon name="hero-check" class="w-4 h-4 text-emerald-600" />
                         </div>
@@ -97,7 +97,7 @@
                         <.link
                           href={~p"/organizations/#{org.id}/switch"}
                           method="post"
-                          class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 no-underline"
+                          class="block px-4 py-2 text-sm text-slate-700 hover:bg-white/50 no-underline"
                         >
                           {org.name}
                         </.link>
@@ -107,7 +107,7 @@
                       <%= if @current_organization do %>
                         <.link
                           href={~p"/organizations/settings"}
-                          class="flex items-center justify-between px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 no-underline"
+                          class="flex items-center justify-between px-4 py-2 text-sm text-slate-700 hover:bg-white/50 no-underline"
                         >
                           Organization settings
                           <.icon name="hero-chevron-right" class="w-4 h-4 text-slate-400" />
@@ -115,7 +115,7 @@
                       <% end %>
                       <.link
                         href={~p"/organizations/new"}
-                        class="block px-4 py-2 text-sm text-emerald-600 hover:bg-slate-50 no-underline"
+                        class="block px-4 py-2 text-sm text-emerald-600 hover:bg-white/50 no-underline"
                       >
                         + New organization
                       </.link>
