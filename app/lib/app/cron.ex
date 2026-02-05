@@ -14,6 +14,9 @@ defmodule Prikke.Cron do
       iex> Prikke.Cron.describe("*/5 * * * *")
       "every 5 minutes"
 
+      iex> Prikke.Cron.describe("0/5 * * * *")
+      "every 5 minutes"
+
       iex> Prikke.Cron.describe("0 * * * *")
       "every hour"
 
@@ -29,9 +32,9 @@ defmodule Prikke.Cron do
           minute == "*" and hour == "*" and day == "*" and weekday == "*" ->
             "every minute"
 
-          # Every N minutes
-          String.starts_with?(minute, "*/") and hour == "*" and day == "*" and weekday == "*" ->
-            n = String.replace_prefix(minute, "*/", "")
+          # Every N minutes (*/5 or 0/5 syntax)
+          String.contains?(minute, "/") and hour == "*" and day == "*" and weekday == "*" ->
+            n = minute |> String.split("/") |> List.last()
             "every #{n} minutes"
 
           # Every hour (at minute 0)
@@ -42,9 +45,9 @@ defmodule Prikke.Cron do
           hour == "*" and day == "*" and weekday == "*" ->
             "every hour at :#{String.pad_leading(minute, 2, "0")}"
 
-          # Every N hours
-          String.starts_with?(hour, "*/") and day == "*" and weekday == "*" ->
-            n = String.replace_prefix(hour, "*/", "")
+          # Every N hours (*/2 or 0/2 syntax)
+          String.contains?(hour, "/") and day == "*" and weekday == "*" ->
+            n = hour |> String.split("/") |> List.last()
             "every #{n} hours"
 
           # Daily at specific time (hour must be numeric)
