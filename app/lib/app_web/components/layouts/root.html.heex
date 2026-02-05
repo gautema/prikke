@@ -31,9 +31,10 @@
       })();
     </script>
   </head>
-  <body class="bg-slate-50 min-h-screen">
+  <body class="min-h-screen relative" style="background: linear-gradient(135deg, #f0fdf4 0%, #f1f5f9 25%, #f8fafc 50%, #ecfeff 75%, #faf5ff 100%);">
+
     <%= unless assigns[:hide_header] do %>
-      <header class="bg-white border-b border-slate-200 group/menu">
+      <header class="glass border-b border-white/50 group/menu relative z-20">
         <input type="checkbox" id="mobile-menu-toggle" class="hidden" />
         <nav class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <a
@@ -43,7 +44,7 @@
             <span class="relative flex h-4 w-4 items-center justify-center">
               <span class="animate-[ping_4s_cubic-bezier(0,0,0.2,1)_infinite] absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75">
               </span>
-              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600"></span>
             </span>
             runlater
           </a>
@@ -90,7 +91,7 @@
                       <%= if @current_organization && org.id == @current_organization.id do %>
                         <div class="px-4 py-2 text-sm text-slate-900 bg-slate-50 flex items-center justify-between">
                           <span>{org.name}</span>
-                          <.icon name="hero-check" class="w-4 h-4 text-emerald-500" />
+                          <.icon name="hero-check" class="w-4 h-4 text-emerald-600" />
                         </div>
                       <% else %>
                         <.link
@@ -132,7 +133,7 @@
                   class="text-sm text-slate-600 hover:text-slate-900 flex items-center gap-1.5"
                 >
                   Invites
-                  <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-emerald-500 rounded-full">
+                  <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-emerald-600 rounded-full">
                     {@pending_invites_count}
                   </span>
                 </.link>
@@ -167,7 +168,7 @@
               </.link>
               <.link
                 href={~p"/users/log-in"}
-                class="text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors"
+                class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors"
               >
                 Log in
               </.link>
@@ -189,7 +190,7 @@
                     <%= if @current_organization && org.id == @current_organization.id do %>
                       <div class="flex items-center justify-between py-3 text-base text-slate-900">
                         <span>{org.name}</span>
-                        <.icon name="hero-check" class="w-5 h-5 text-emerald-500" />
+                        <.icon name="hero-check" class="w-5 h-5 text-emerald-600" />
                       </div>
                     <% else %>
                       <.link
@@ -226,7 +227,7 @@
                     class="block py-3 text-base text-slate-600 flex items-center gap-2"
                   >
                     Invites
-                    <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-emerald-500 rounded-full">
+                    <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-emerald-600 rounded-full">
                       {@pending_invites_count}
                     </span>
                   </.link>

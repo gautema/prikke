@@ -215,7 +215,7 @@ defmodule PrikkeWeb.QueueLive do
       <%= if @result do %>
         <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-6 mb-6">
           <div class="flex items-start gap-3">
-            <.icon name="hero-check-circle" class="w-6 h-6 text-emerald-500 mt-0.5" />
+            <.icon name="hero-check-circle" class="w-6 h-6 text-emerald-600 mt-0.5" />
             <div class="flex-1">
               <h3 class="font-semibold text-emerald-800">Request Queued</h3>
               <p class="text-sm text-emerald-700 mt-1">
@@ -261,7 +261,7 @@ defmodule PrikkeWeb.QueueLive do
           phx-submit="queue"
           class="space-y-6"
         >
-          <div class="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
+          <div class="glass-card rounded-2xl p-6 space-y-4">
             <div>
               <label for="queue_url" class="block text-sm font-medium text-slate-700 mb-1">URL</label>
               <.input
@@ -341,7 +341,7 @@ defmodule PrikkeWeb.QueueLive do
           <div class="flex justify-end">
             <button
               type="submit"
-              class="px-6 py-2.5 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors flex items-center gap-2"
+              class="px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors flex items-center gap-2"
             >
               <.icon name="hero-bolt" class="w-5 h-5" /> Queue Now
             </button>

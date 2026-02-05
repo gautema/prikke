@@ -37,7 +37,7 @@ defmodule PrikkeWeb.OrganizationHTML do
     cond do
       percent >= 100 -> "bg-red-500"
       percent >= 80 -> "bg-amber-500"
-      true -> "bg-emerald-500"
+      true -> "bg-emerald-600"
     end
   end
 

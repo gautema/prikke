@@ -12,7 +12,7 @@ html, body {
   height: 100%;
   overflow: hidden;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #f8fafc; /* slate-50 */
+  background: linear-gradient(135deg, #f0fdf4 0%, #f1f5f9 25%, #f8fafc 50%, #ecfeff 75%, #faf5ff 100%);
   color: #0f172a; /* slate-900 */
 }
 
@@ -24,6 +24,7 @@ html, body {
   flex-direction: column;
   position: relative;
   overflow-y: auto;
+  z-index: 1;
 }
 .slide.active { display: flex; }
 
@@ -37,7 +38,7 @@ html, body {
   z-index: 100;
 }
 .nav button {
-  background: #10b981; /* emerald-500 */
+  background: #059669; /* emerald-600 */
   color: white;
   border: none;
   padding: 10px 20px;
@@ -45,11 +46,11 @@ html, body {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 12px;
   transition: all 0.2s;
 }
 .nav button:hover {
-  background: #059669; /* emerald-600 */
+  background: #047857; /* emerald-700 */
 }
 .slide-counter {
   position: fixed;
@@ -57,6 +58,7 @@ html, body {
   left: 24px;
   color: #94a3b8; /* slate-400 */
   font-size: 14px;
+  z-index: 100;
 }
 
 /* Section label */
@@ -108,7 +110,7 @@ li::before {
   content: "";
   width: 8px;
   height: 8px;
-  background: #10b981;
+  background: #059669;
   border-radius: 50%;
   position: absolute;
   left: 0;
@@ -137,11 +139,13 @@ p {
   font-size: 18px;
 }
 
-/* Card */
+/* Card - Glass effect */
 .card {
-  background: white;
-  border: 1px solid #e2e8f0; /* slate-200 */
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
   padding: 24px 32px;
   margin: 24px 0;
 }
@@ -159,7 +163,7 @@ p {
 .stat .number {
   font-size: 64px;
   font-weight: 700;
-  color: #10b981;
+  color: #059669;
   line-height: 1;
 }
 .stat .label {
@@ -180,7 +184,7 @@ p {
 }
 
 /* Highlight */
-.hl { color: #10b981; }
+.hl { color: #059669; }
 .dim { color: #94a3b8; }
 .warn { color: #f59e0b; } /* amber-500 */
 
@@ -201,21 +205,23 @@ p {
   flex-wrap: wrap;
 }
 .diagram-box {
-  background: white;
-  border: 2px solid #10b981;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 2px solid #059669;
   padding: 16px 32px;
   text-align: center;
   color: #0f172a;
   font-size: 16px;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: 12px;
 }
 .diagram-box.primary {
-  background: #10b981;
+  background: #059669;
   color: white;
 }
 .diagram-arrow {
-  color: #10b981;
+  color: #059669;
   font-size: 28px;
 }
 .diagram-label {
@@ -234,7 +240,7 @@ p {
 .logo-dot {
   width: 12px;
   height: 12px;
-  background: #10b981;
+  background: #059669;
   border-radius: 50%;
 }
 .logo-text {
@@ -541,7 +547,7 @@ p {
   <p class="section-label">Lessons</p>
   <p class="title">The Uncomfortable Truth</p>
   <div class="content">
-    <p style="font-size: 22px; color: #10b981; margin-bottom: 32px; font-weight: 600;">AI requires stronger fundamentals, not weaker ones.</p>
+    <p style="font-size: 22px; color: #059669; margin-bottom: 32px; font-weight: 600;">AI requires stronger fundamentals, not weaker ones.</p>
 
     <ul>
       <li><b>I didn't write any code</b> — Not a single line. But I directed every feature, shaped every discussion.</li>
@@ -593,7 +599,7 @@ p {
   <p class="section-label">Takeaway</p>
   <p class="title">What Does This Mean?</p>
   <div class="content">
-    <p style="font-size: 22px; color: #10b981; margin-bottom: 32px; font-weight: 600;">The transition isn't code → no-code. It's typing → directing and validating.</p>
+    <p style="font-size: 22px; color: #059669; margin-bottom: 32px; font-weight: 600;">The transition isn't code → no-code. It's typing → directing and validating.</p>
 
     <ul>
       <li><b>Real collaboration</b> — Both contribute ideas. Human directs, AI executes. Architecture emerges from discussion.</li>

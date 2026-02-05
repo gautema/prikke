@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-slate-50">
+<div class="min-h-screen" style="background: linear-gradient(135deg, #f0fdf4 0%, #f1f5f9 25%, #f8fafc 50%, #ecfeff 75%, #faf5ff 100%);">
   <div class="max-w-[800px] mx-auto px-6">
     <%= unless @current_scope do %>
       <.marketing_header menu_id="landing-menu-toggle" />
@@ -6,7 +6,7 @@
     
 <!-- Hero -->
     <section class="py-12 sm:py-20 text-center">
-      <div class="inline-flex items-center gap-1.5 bg-white border border-slate-200 px-4 py-2 rounded-full text-sm text-slate-600 mb-6">
+      <div class="inline-flex items-center gap-1.5 glass-button px-4 py-2 rounded-full text-sm text-slate-600 mb-6">
         <.icon name="hero-shield-check" class="w-[18px] h-[18px]" /> EU-hosted · GDPR-native
       </div>
       <h1 class="text-3xl sm:text-5xl font-bold leading-tight tracking-tight mb-6 text-slate-900">
@@ -18,13 +18,13 @@
       <div class="flex flex-col sm:flex-row gap-3 justify-center mb-10">
         <a
           href="/users/register"
-          class="inline-block px-6 py-3 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors no-underline"
+          class="inline-block px-6 py-3 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition-colors no-underline"
         >
           Start free
         </a>
         <a
           href="/docs"
-          class="inline-block px-6 py-3 bg-white border border-slate-200 text-slate-700 font-medium rounded-md hover:bg-slate-50 transition-colors no-underline"
+          class="inline-block px-6 py-3 glass-button text-slate-700 font-medium rounded-xl hover:shadow transition-all no-underline"
         >
           View docs
         </a>
@@ -37,7 +37,7 @@
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-6">
         The problem
       </h2>
-      <div class="bg-white border border-slate-200 rounded-lg p-6">
+      <div class="glass-card rounded-2xl p-6">
         <p class="text-[15px] text-slate-600 mb-4">
           Your app needs to do things later. Send a reminder email in 24 hours. Retry a failed payment tomorrow. Clean up expired sessions every night. Process a webhook without blocking the response.
         </p>
@@ -53,25 +53,25 @@
         What Runlater does
       </h2>
       <div class="grid sm:grid-cols-2 gap-4">
-        <div class="bg-white border border-slate-200 rounded-lg p-5">
+        <div class="glass-card rounded-2xl p-5">
           <h3 class="text-base font-semibold mb-2 text-slate-900">Deferred tasks</h3>
           <p class="text-[15px] text-slate-500 m-0">
             Send a reminder in 24 hours. Process a payment tomorrow. Expire a session next week. Just POST with a timestamp.
           </p>
         </div>
-        <div class="bg-white border border-slate-200 rounded-lg p-5">
+        <div class="glass-card rounded-2xl p-5">
           <h3 class="text-base font-semibold mb-2 text-slate-900">Cron jobs</h3>
           <p class="text-[15px] text-slate-500 m-0">
             Daily reports, hourly syncs, weekly cleanups. Standard cron expressions. We call your endpoint on schedule.
           </p>
         </div>
-        <div class="bg-white border border-slate-200 rounded-lg p-5">
+        <div class="glass-card rounded-2xl p-5">
           <h3 class="text-base font-semibold mb-2 text-slate-900">Automatic retries</h3>
           <p class="text-[15px] text-slate-500 m-0">
             Endpoint down? We retry with exponential backoff. Your task runs even when things go wrong.
           </p>
         </div>
-        <div class="bg-white border border-slate-200 rounded-lg p-5">
+        <div class="glass-card rounded-2xl p-5">
           <h3 class="text-base font-semibold mb-2 text-slate-900">Webhook delivery</h3>
           <p class="text-[15px] text-slate-500 m-0">
             Forward events with guaranteed delivery. We handle the infrastructure, you handle the logic.
@@ -87,8 +87,8 @@
       </h2>
       <div class="grid gap-5">
         <div class="flex gap-4">
-          <div class="flex-shrink-0 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-            <.icon name="hero-clock" class="w-3.5 h-3.5 text-white" />
+          <div class="flex-shrink-0 w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
+            <.icon name="hero-clock" class="w-4 h-4 text-white" />
           </div>
           <div>
             <h3 class="text-base font-semibold mb-1 text-slate-900">Set it and sleep well</h3>
@@ -98,8 +98,8 @@
           </div>
         </div>
         <div class="flex gap-4">
-          <div class="flex-shrink-0 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-            <.icon name="hero-arrow-path" class="w-3.5 h-3.5 text-white" />
+          <div class="flex-shrink-0 w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
+            <.icon name="hero-arrow-path" class="w-4 h-4 text-white" />
           </div>
           <div>
             <h3 class="text-base font-semibold mb-1 text-slate-900">Retries handled</h3>
@@ -109,8 +109,8 @@
           </div>
         </div>
         <div class="flex gap-4">
-          <div class="flex-shrink-0 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-            <.icon name="hero-bell-alert" class="w-3.5 h-3.5 text-white" />
+          <div class="flex-shrink-0 w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
+            <.icon name="hero-bell-alert" class="w-4 h-4 text-white" />
           </div>
           <div>
             <h3 class="text-base font-semibold mb-1 text-slate-900">Alerts when it matters</h3>
@@ -120,8 +120,8 @@
           </div>
         </div>
         <div class="flex gap-4">
-          <div class="flex-shrink-0 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-            <.icon name="hero-document-text" class="w-3.5 h-3.5 text-white" />
+          <div class="flex-shrink-0 w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
+            <.icon name="hero-document-text" class="w-4 h-4 text-white" />
           </div>
           <div>
             <h3 class="text-base font-semibold mb-1 text-slate-900">Full history</h3>
@@ -167,7 +167,7 @@ curl -X POST https://runlater.eu/api/v1/jobs \
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-6">
         Built for reliability
       </h2>
-      <div class="bg-white border border-slate-200 rounded-lg p-6">
+      <div class="glass-card rounded-2xl p-6">
         <p class="text-[15px] text-slate-600 mb-4">
           Runlater runs on <strong class="text-slate-900">Elixir and the BEAM VM</strong>
           — the same technology that powers WhatsApp, Discord, and telecom systems requiring 99.9999% uptime.
@@ -188,8 +188,8 @@ curl -X POST https://runlater.eu/api/v1/jobs \
       </h2>
       <div class="grid gap-5">
         <div class="flex gap-4">
-          <div class="flex-shrink-0 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-            <.icon name="hero-shield-check" class="w-3.5 h-3.5 text-white" />
+          <div class="flex-shrink-0 w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
+            <.icon name="hero-shield-check" class="w-4 h-4 text-white" />
           </div>
           <div>
             <h3 class="text-base font-semibold mb-1 text-slate-900">EU-hosted, GDPR-native</h3>
@@ -199,8 +199,8 @@ curl -X POST https://runlater.eu/api/v1/jobs \
           </div>
         </div>
         <div class="flex gap-4">
-          <div class="flex-shrink-0 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-            <.icon name="hero-lock-closed" class="w-3.5 h-3.5 text-white" />
+          <div class="flex-shrink-0 w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
+            <.icon name="hero-lock-closed" class="w-4 h-4 text-white" />
           </div>
           <div>
             <h3 class="text-base font-semibold mb-1 text-slate-900">Privacy by design</h3>
@@ -210,8 +210,8 @@ curl -X POST https://runlater.eu/api/v1/jobs \
           </div>
         </div>
         <div class="flex gap-4">
-          <div class="flex-shrink-0 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-            <.icon name="hero-code-bracket" class="w-3.5 h-3.5 text-white" />
+          <div class="flex-shrink-0 w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
+            <.icon name="hero-code-bracket" class="w-4 h-4 text-white" />
           </div>
           <div>
             <h3 class="text-base font-semibold mb-1 text-slate-900">API + Dashboard</h3>
@@ -229,14 +229,14 @@ curl -X POST https://runlater.eu/api/v1/jobs \
         Simple pricing
       </h2>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto text-left">
-        <div class="bg-white border border-slate-200 rounded-lg p-6">
+        <div class="glass-card rounded-2xl p-6">
           <h3 class="text-base font-semibold mb-2 text-slate-900">Free</h3>
           <div class="text-3xl font-bold mb-1 text-slate-900">€0</div>
           <p class="text-sm text-slate-500 m-0">
             5 jobs, 2 users, 5k requests/mo, hourly intervals
           </p>
         </div>
-        <div class="bg-white border border-slate-200 rounded-lg p-6">
+        <div class="glass-card rounded-2xl p-6">
           <h3 class="text-base font-semibold mb-2 text-slate-900">Pro</h3>
           <div class="text-3xl font-bold mb-1 text-slate-900">
             €29<span class="text-sm font-normal text-slate-500">/mo</span>
@@ -245,7 +245,7 @@ curl -X POST https://runlater.eu/api/v1/jobs \
             Unlimited jobs & users, 250k requests/mo, per-minute intervals
           </p>
         </div>
-        <div class="bg-white border border-slate-200 rounded-lg p-6">
+        <div class="glass-card rounded-2xl p-6">
           <h3 class="text-base font-semibold mb-2 text-slate-900">Enterprise</h3>
           <div class="text-2xl font-bold mb-1 text-slate-900">Need more?</div>
           <p class="text-sm text-slate-500 mb-3">
@@ -269,7 +269,7 @@ curl -X POST https://runlater.eu/api/v1/jobs \
       </p>
       <a
         href="/users/register"
-        class="inline-block px-6 py-3 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors no-underline"
+        class="inline-block px-6 py-3 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors no-underline"
       >
         Get started free
       </a>

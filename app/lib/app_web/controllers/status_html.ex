@@ -3,8 +3,8 @@ defmodule PrikkeWeb.StatusHTML do
 
   embed_templates "status_html/*"
 
-  def status_color("up"), do: "bg-emerald-500"
-  def status_color("operational"), do: "bg-emerald-500"
+  def status_color("up"), do: "bg-emerald-600"
+  def status_color("operational"), do: "bg-emerald-600"
   def status_color("degraded"), do: "bg-amber-500"
   def status_color("down"), do: "bg-red-500"
   def status_color(_), do: "bg-slate-400"

@@ -67,7 +67,7 @@ defmodule PrikkeWeb.CoreComponents do
         <.icon
           :if={@kind == :info}
           name="hero-check-circle"
-          class={["size-5 shrink-0", "text-emerald-500"]}
+          class={["size-5 shrink-0", "text-emerald-600"]}
         />
         <.icon
           :if={@kind == :error}
@@ -236,7 +236,7 @@ defmodule PrikkeWeb.CoreComponents do
           checked={@checked}
           class={
             @class ||
-              "w-5 h-5 rounded border-slate-300 text-emerald-500 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-4"
+              "w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-2 focus:ring-emerald-600 focus:ring-offset-4"
           }
           {@rest}
         />
@@ -258,7 +258,7 @@ defmodule PrikkeWeb.CoreComponents do
           class={[
             @class ||
               "w-full px-4 py-3 text-base border border-slate-300 rounded-md bg-white text-slate-900",
-            "focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-4",
+            "focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-4",
             @errors != [] && "border-red-500"
           ]}
           multiple={@multiple}
@@ -284,7 +284,7 @@ defmodule PrikkeWeb.CoreComponents do
           class={[
             @class ||
               "w-full px-4 py-3 text-base border border-slate-300 rounded-md text-slate-900 placeholder-slate-400",
-            "focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-4",
+            "focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-4",
             @errors != [] && "border-red-500"
           ]}
           {@rest}
@@ -309,7 +309,7 @@ defmodule PrikkeWeb.CoreComponents do
           class={[
             @class ||
               "w-full px-4 py-3 text-base border border-slate-300 rounded-md text-slate-900 placeholder-slate-400",
-            "focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-4",
+            "focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-4",
             @errors != [] && "border-red-500"
           ]}
           {@rest}
@@ -833,7 +833,7 @@ defmodule PrikkeWeb.CoreComponents do
           <span class="relative flex h-5 w-5 items-center justify-center">
             <span class="animate-[ping_4s_cubic-bezier(0,0,0.2,1)_infinite] absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75">
             </span>
-            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-600"></span>
           </span>
           runlater
         </a>
@@ -848,30 +848,30 @@ defmodule PrikkeWeb.CoreComponents do
         </label>
         <!-- Desktop nav -->
         <nav class="hidden sm:flex items-center gap-6">
-          <a href="/docs" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">
+          <a href="/docs" class="text-slate-600 no-underline text-[15px] hover:text-emerald-600">
             Docs
           </a>
-          <a href="/status" class="text-slate-600 no-underline text-[15px] hover:text-emerald-500">
+          <a href="/status" class="text-slate-600 no-underline text-[15px] hover:text-emerald-600">
             Status
           </a>
           <span class="w-px h-4 bg-slate-300"></span>
           <%= if @current_scope do %>
             <a
               href="/dashboard"
-              class="text-[15px] font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors no-underline"
+              class="text-[15px] font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg transition-colors no-underline"
             >
               Dashboard
             </a>
           <% else %>
             <a
               href="/users/register"
-              class="text-slate-600 no-underline text-[15px] hover:text-emerald-500"
+              class="text-slate-600 no-underline text-[15px] hover:text-emerald-600"
             >
               Register
             </a>
             <a
               href="/users/log-in"
-              class="text-[15px] font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors no-underline"
+              class="text-[15px] font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg transition-colors no-underline"
             >
               Log in
             </a>
@@ -883,13 +883,13 @@ defmodule PrikkeWeb.CoreComponents do
         <nav class="flex flex-col gap-1 px-6 py-4">
           <a
             href="/docs"
-            class="block py-3 text-base text-slate-700 no-underline hover:text-emerald-500"
+            class="block py-3 text-base text-slate-700 no-underline hover:text-emerald-600"
           >
             Docs
           </a>
           <a
             href="/status"
-            class="block py-3 text-base text-slate-700 no-underline hover:text-emerald-500"
+            class="block py-3 text-base text-slate-700 no-underline hover:text-emerald-600"
           >
             Status
           </a>
@@ -904,7 +904,7 @@ defmodule PrikkeWeb.CoreComponents do
             <% else %>
               <a
                 href="/users/register"
-                class="block py-3 text-base text-slate-700 no-underline hover:text-emerald-500"
+                class="block py-3 text-base text-slate-700 no-underline hover:text-emerald-600"
               >
                 Register
               </a>
@@ -937,21 +937,21 @@ defmodule PrikkeWeb.CoreComponents do
     <%= if @variant == "marketing" do %>
       <footer class="py-10 border-t border-slate-200 text-center text-slate-500 text-sm">
         <div class="flex flex-wrap justify-center gap-4 mb-3">
-          <a href="/docs" class="text-slate-600 no-underline hover:text-emerald-500">Docs</a>
-          <a href="/docs/api" class="text-slate-600 no-underline hover:text-emerald-500">
+          <a href="/docs" class="text-slate-600 no-underline hover:text-emerald-600">Docs</a>
+          <a href="/docs/api" class="text-slate-600 no-underline hover:text-emerald-600">
             API Reference
           </a>
-          <a href="/status" class="text-slate-600 no-underline hover:text-emerald-500">Status</a>
+          <a href="/status" class="text-slate-600 no-underline hover:text-emerald-600">Status</a>
           <a
             href="mailto:support@runlater.eu"
-            class="text-slate-600 no-underline hover:text-emerald-500"
+            class="text-slate-600 no-underline hover:text-emerald-600"
           >
             Contact
           </a>
         </div>
         <div class="flex flex-wrap justify-center gap-4 mb-3">
-          <a href="/terms" class="text-slate-400 no-underline hover:text-emerald-500">Terms</a>
-          <a href="/privacy" class="text-slate-400 no-underline hover:text-emerald-500">Privacy</a>
+          <a href="/terms" class="text-slate-400 no-underline hover:text-emerald-600">Terms</a>
+          <a href="/privacy" class="text-slate-400 no-underline hover:text-emerald-600">Privacy</a>
         </div>
         <p class="text-slate-400">Runlater · Made in Norway</p>
       </footer>

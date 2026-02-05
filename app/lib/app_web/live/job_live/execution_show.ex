@@ -79,7 +79,7 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
         </.link>
       </div>
 
-      <div class="bg-white border border-slate-200 rounded-lg">
+      <div class="glass-card rounded-2xl">
         <div class="px-4 sm:px-6 py-4 border-b border-slate-200">
           <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
             <div>
@@ -95,7 +95,7 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
             <%= if @execution.status in ["failed", "timeout", "missed"] do %>
               <button
                 phx-click="retry"
-                class="px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-md hover:bg-emerald-600 transition-colors flex items-center gap-2"
+                class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-600 transition-colors flex items-center gap-2"
               >
                 <.icon name="hero-arrow-path" class="w-4 h-4" /> Retry Now
               </button>

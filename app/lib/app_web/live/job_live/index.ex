@@ -160,7 +160,7 @@ defmodule PrikkeWeb.JobLive.Index do
   end
 
   defp status_dot_color(nil), do: "bg-slate-300"
-  defp status_dot_color("success"), do: "bg-emerald-500"
+  defp status_dot_color("success"), do: "bg-emerald-600"
   defp status_dot_color("failed"), do: "bg-red-500"
   defp status_dot_color("timeout"), do: "bg-amber-500"
   defp status_dot_color("running"), do: "bg-blue-500 animate-pulse"
@@ -204,7 +204,7 @@ defmodule PrikkeWeb.JobLive.Index do
           </.link>
           <.link
             navigate={~p"/jobs/new"}
-            class="font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-3 sm:px-4 py-2 rounded-md transition-colors text-sm sm:text-base"
+            class="font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-3 sm:px-4 py-2 rounded-md transition-colors text-sm sm:text-base"
           >
             New Job
           </.link>
@@ -212,7 +212,7 @@ defmodule PrikkeWeb.JobLive.Index do
       </div>
 
       <%= if @jobs == [] do %>
-        <div class="bg-white border border-slate-200 rounded-lg p-8 sm:p-12 text-center">
+        <div class="glass-card rounded-2xl p-8 sm:p-12 text-center">
           <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <.icon name="hero-clock" class="w-6 h-6 text-slate-400" />
           </div>
@@ -223,7 +223,7 @@ defmodule PrikkeWeb.JobLive.Index do
           </.link>
         </div>
       <% else %>
-        <div class="bg-white border border-slate-200 rounded-lg divide-y divide-slate-200">
+        <div class="glass-card rounded-2xl divide-y divide-slate-200">
           <%= for job <- @jobs do %>
             <div class="px-4 sm:px-6 py-4">
               <div class="flex items-start sm:items-center justify-between gap-3">
@@ -263,8 +263,8 @@ defmodule PrikkeWeb.JobLive.Index do
                       phx-click="toggle"
                       phx-value-id={job.id}
                       class={[
-                        "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2",
-                        job.enabled && "bg-emerald-500",
+                        "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2",
+                        job.enabled && "bg-emerald-600",
                         !job.enabled && "bg-slate-200"
                       ]}
                     >

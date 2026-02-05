@@ -133,7 +133,7 @@ defmodule PrikkeWeb.SuperadminLive do
       </div>
       
     <!-- Execution Stats -->
-      <div class="bg-white border border-slate-200 rounded-lg p-6 mb-8">
+      <div class="glass-card rounded-2xl p-6 mb-8">
         <h2 class="text-lg font-semibold text-slate-900 mb-4">Execution Stats</h2>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
           <div>
@@ -192,7 +192,7 @@ defmodule PrikkeWeb.SuperadminLive do
       </div>
       
     <!-- Execution Trend Chart -->
-      <div class="bg-white border border-slate-200 rounded-lg p-6 mb-8">
+      <div class="glass-card rounded-2xl p-6 mb-8">
         <h2 class="text-lg font-semibold text-slate-900 mb-4">Execution Trend (14 days)</h2>
         <%= if @execution_trend == [] do %>
           <div class="h-32 flex items-center justify-center text-slate-400">
@@ -218,7 +218,7 @@ defmodule PrikkeWeb.SuperadminLive do
                   <% end %>
                   <%= if success_pct > 0 && stats.success > 0 do %>
                     <div class={[
-                      "bg-emerald-500 flex-1",
+                      "bg-emerald-600 flex-1",
                       if(stats.failed == 0, do: "rounded-t-sm", else: "")
                     ]}>
                     </div>
@@ -257,7 +257,7 @@ defmodule PrikkeWeb.SuperadminLive do
     <!-- Analytics Section -->
       <div class="grid md:grid-cols-2 gap-8 mb-8">
         <!-- Pageviews -->
-        <div class="bg-white border border-slate-200 rounded-lg p-6">
+        <div class="glass-card rounded-2xl p-6">
           <h2 class="text-lg font-semibold text-slate-900 mb-4">Pageviews</h2>
           <div class="grid grid-cols-3 gap-4 mb-6">
             <div>
@@ -291,7 +291,7 @@ defmodule PrikkeWeb.SuperadminLive do
         </div>
         
     <!-- Active Organizations -->
-        <div class="bg-white border border-slate-200 rounded-lg p-6">
+        <div class="glass-card rounded-2xl p-6">
           <h2 class="text-lg font-semibold text-slate-900 mb-4">Most Active Organizations</h2>
           <div class="space-y-3">
             <%= for {org, exec_count} <- @active_orgs do %>
@@ -311,7 +311,7 @@ defmodule PrikkeWeb.SuperadminLive do
       </div>
       
     <!-- Monthly Executions by Organization -->
-      <div class="bg-white border border-slate-200 rounded-lg p-6 mb-8">
+      <div class="glass-card rounded-2xl p-6 mb-8">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-lg font-semibold text-slate-900">Monthly Executions by Organization</h2>
           <span class="text-sm text-slate-500">{Calendar.strftime(DateTime.utc_now(), "%B %Y")}</span>
@@ -378,7 +378,7 @@ defmodule PrikkeWeb.SuperadminLive do
     <!-- Recent Activity -->
       <div class="grid md:grid-cols-2 gap-8 mb-8">
         <!-- Recent Signups -->
-        <div class="bg-white border border-slate-200 rounded-lg p-6 overflow-hidden">
+        <div class="glass-card rounded-2xl p-6 overflow-hidden">
           <h2 class="text-lg font-semibold text-slate-900 mb-4">Recent Signups</h2>
           <div class="space-y-3">
             <%= for user <- @recent_users do %>
@@ -396,7 +396,7 @@ defmodule PrikkeWeb.SuperadminLive do
         </div>
         
     <!-- Recent Jobs -->
-        <div class="bg-white border border-slate-200 rounded-lg p-6 overflow-hidden">
+        <div class="glass-card rounded-2xl p-6 overflow-hidden">
           <h2 class="text-lg font-semibold text-slate-900 mb-4">Recent Jobs</h2>
           <div class="space-y-3">
             <%= for job <- @recent_jobs do %>
@@ -422,7 +422,7 @@ defmodule PrikkeWeb.SuperadminLive do
     <!-- Recent Executions & Audit Logs -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <!-- Recent Executions -->
-        <div class="bg-white border border-slate-200 rounded-lg">
+        <div class="glass-card rounded-2xl">
           <div class="px-6 py-4 border-b border-slate-200">
             <h2 class="text-lg font-semibold text-slate-900">Recent Executions</h2>
           </div>
@@ -448,7 +448,7 @@ defmodule PrikkeWeb.SuperadminLive do
         </div>
         
     <!-- Audit Logs -->
-        <div class="bg-white border border-slate-200 rounded-lg">
+        <div class="glass-card rounded-2xl">
           <div class="px-6 py-4 border-b border-slate-200">
             <h2 class="text-lg font-semibold text-slate-900">Recent Audit Logs</h2>
           </div>
@@ -509,7 +509,7 @@ defmodule PrikkeWeb.SuperadminLive do
     assigns = assign_new(assigns, :color, fn -> "text-slate-900" end)
 
     ~H"""
-    <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="glass-card rounded-2xl p-4">
       <div class="text-sm font-medium text-slate-500 mb-1">{@title}</div>
       <div class={["text-2xl font-bold", @color]}>{@value}</div>
       <%= if @subtitle do %>
@@ -525,7 +525,7 @@ defmodule PrikkeWeb.SuperadminLive do
     """
   end
 
-  defp status_dot_color("success"), do: "bg-emerald-500"
+  defp status_dot_color("success"), do: "bg-emerald-600"
   defp status_dot_color("failed"), do: "bg-red-500"
   defp status_dot_color("timeout"), do: "bg-amber-500"
   defp status_dot_color("running"), do: "bg-blue-500 animate-pulse"

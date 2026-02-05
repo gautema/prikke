@@ -21,7 +21,7 @@
               autocomplete="email"
               required
               phx-mounted={JS.focus()}
-              class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
               placeholder="you@example.com"
             />
             <%= for msg <- Enum.map(@form[:email].errors, &translate_error/1) do %>
@@ -31,7 +31,7 @@
 
           <button
             type="submit"
-            class="w-full py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors"
+            class="w-full py-2.5 px-4 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors"
           >
             Create account
           </button>

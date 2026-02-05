@@ -18,7 +18,7 @@
             value={Phoenix.HTML.Form.normalize_value("text", @form[:name].value)}
             required
             phx-mounted={Phoenix.LiveView.JS.focus()}
-            class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
             placeholder="My Company"
           />
           <%= for msg <- Enum.map(@form[:name].errors, &translate_error/1) do %>
@@ -29,7 +29,7 @@
         <div class="flex gap-3 pt-2">
           <button
             type="submit"
-            class="flex-1 py-2.5 px-4 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors"
+            class="flex-1 py-2.5 px-4 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors"
           >
             Create Organization
           </button>

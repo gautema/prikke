@@ -207,7 +207,7 @@ defmodule PrikkeWeb.JobLive.Show do
         </.link>
       </div>
 
-      <div class="bg-white border border-slate-200 rounded-lg">
+      <div class="glass-card rounded-2xl">
         <div class="px-4 sm:px-6 py-4 border-b border-slate-200">
           <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
             <div>
@@ -223,7 +223,7 @@ defmodule PrikkeWeb.JobLive.Show do
               <button
                 type="button"
                 phx-click="run_now"
-                class="px-3 py-1.5 text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 rounded-md transition-colors cursor-pointer flex items-center gap-1.5"
+                class="px-3 py-1.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition-colors cursor-pointer flex items-center gap-1.5"
               >
                 <.icon name="hero-play" class="w-4 h-4" /> Run Now
               </button>
@@ -372,7 +372,7 @@ defmodule PrikkeWeb.JobLive.Show do
                 <select
                   name="status"
                   id="status-filter"
-                  class="text-sm border-slate-200 rounded-md py-1 pl-2 pr-8 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  class="text-sm border-slate-200 rounded-md py-1 pl-2 pr-8 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
                 >
                   <option value="" selected={@status_filter == nil}>All</option>
                   <option value="success" selected={@status_filter == "success"}>Success</option>

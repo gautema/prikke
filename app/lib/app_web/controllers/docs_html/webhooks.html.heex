@@ -139,7 +139,7 @@ app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; {
     </table>
   </div>
 
-  <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg my-6">
+  <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded-r-lg my-6">
     <strong class="text-emerald-800">Tip:</strong>
     <span class="text-emerald-700">
       Return 4xx for permanent failures (bad data, validation errors) and 5xx for temporary failures (database down, external service unavailable).
@@ -206,7 +206,7 @@ app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; {
     retry. If a scheduled run fails, the next scheduled run will execute as normal. This prevents retry storms and duplicate executions.
   </p>
 
-  <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg my-6">
+  <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded-r-lg my-6">
     <strong class="text-emerald-800">Why no retries for cron?</strong>
     <span class="text-emerald-700">
       A minute-interval cron with 5 retries would create chaos - by the time retries finish, hundreds of scheduled runs would have stacked up. The next scheduled run is effectively your retry.
@@ -324,7 +324,7 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
     </table>
   </div>
 
-  <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg my-6">
+  <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded-r-lg my-6">
     <strong class="text-emerald-800">Note:</strong>
     <span class="text-emerald-700">
       Callbacks are signed with the same webhook secret as regular webhook requests. Verify the <code>X-Runlater-Signature</code> header to authenticate callbacks.

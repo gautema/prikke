@@ -150,9 +150,9 @@ defmodule PrikkeWeb.JobLive.Edit do
                 type="button"
                 phx-click={JS.dispatch("click", to: "#job_enabled_checkbox")}
                 class={[
-                  "relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2",
+                  "relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2",
                   Phoenix.HTML.Form.normalize_value("checkbox", @form[:enabled].value) &&
-                    "bg-emerald-500",
+                    "bg-emerald-600",
                   !Phoenix.HTML.Form.normalize_value("checkbox", @form[:enabled].value) &&
                     "bg-slate-200"
                 ]}
@@ -250,7 +250,7 @@ defmodule PrikkeWeb.JobLive.Edit do
                   id="job_scheduled_at_edit"
                   value={existing_value}
                   phx-hook=".UtcDatetimePickerEdit"
-                  class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
                 />
                 <%= for msg <- Enum.map(@form[:scheduled_at].errors, &translate_error/1) do %>
                   <p class="mt-1 text-sm text-red-600">{msg}</p>
@@ -350,7 +350,7 @@ defmodule PrikkeWeb.JobLive.Edit do
           </.link>
           <button
             type="submit"
-            class="px-6 py-2.5 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors"
+            class="px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors"
           >
             Save Changes
           </button>

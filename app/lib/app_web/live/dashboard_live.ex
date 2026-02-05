@@ -114,23 +114,23 @@ defmodule PrikkeWeb.DashboardLive do
         <div class="grid grid-cols-3 gap-4 mb-4">
           <.link
             navigate={~p"/jobs"}
-            class="bg-white border border-slate-200 rounded-lg p-6 hover:border-slate-300 transition-colors"
+            class="glass-card rounded-2xl p-6 hover:border-slate-300 transition-colors"
           >
             <div class="text-sm font-medium text-slate-500 mb-1">Active Jobs</div>
             <div class="text-3xl font-bold text-slate-900">{@stats.active_jobs}</div>
           </.link>
-          <div class="bg-white border border-slate-200 rounded-lg p-6">
+          <div class="glass-card rounded-2xl p-6">
             <div class="text-sm font-medium text-slate-500 mb-1">Executions Today</div>
             <div class="text-3xl font-bold text-slate-900">{@stats.executions_today}</div>
           </div>
-          <div class="bg-white border border-slate-200 rounded-lg p-6">
+          <div class="glass-card rounded-2xl p-6">
             <div class="text-sm font-medium text-slate-500 mb-1">Success Rate</div>
-            <div class="text-3xl font-bold text-emerald-500">{@stats.success_rate}</div>
+            <div class="text-3xl font-bold text-emerald-600">{@stats.success_rate}</div>
           </div>
         </div>
         
     <!-- Monthly Usage -->
-        <div class="bg-white border border-slate-200 rounded-lg p-4 mb-8">
+        <div class="glass-card rounded-2xl p-4 mb-8">
           <div class="flex justify-between items-center mb-2">
             <span class="text-sm font-medium text-slate-600">Monthly Executions</span>
             <span class="text-sm text-slate-500">
@@ -182,7 +182,7 @@ defmodule PrikkeWeb.DashboardLive do
         </div>
         
     <!-- Jobs Section -->
-        <div class="bg-white border border-slate-200 rounded-lg">
+        <div class="glass-card rounded-2xl">
           <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
             <h2 class="text-lg font-semibold text-slate-900">Jobs</h2>
             <div class="flex gap-2">
@@ -194,7 +194,7 @@ defmodule PrikkeWeb.DashboardLive do
               </.link>
               <.link
                 navigate={~p"/jobs/new"}
-                class="text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-md transition-colors no-underline"
+                class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-md transition-colors no-underline"
               >
                 New Job
               </.link>
@@ -253,7 +253,7 @@ defmodule PrikkeWeb.DashboardLive do
         </div>
         
     <!-- Recent Executions -->
-        <div class="bg-white border border-slate-200 rounded-lg mt-6">
+        <div class="glass-card rounded-2xl mt-6">
           <div class="px-6 py-4 border-b border-slate-200">
             <h2 class="text-lg font-semibold text-slate-900">Recent Executions</h2>
           </div>
@@ -297,7 +297,7 @@ defmodule PrikkeWeb.DashboardLive do
         </div>
       <% else %>
         <!-- No organization state -->
-        <div class="bg-white border border-slate-200 rounded-lg p-12 text-center">
+        <div class="glass-card rounded-2xl p-12 text-center">
           <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <.icon name="hero-building-office" class="w-6 h-6 text-emerald-600" />
           </div>
@@ -305,7 +305,7 @@ defmodule PrikkeWeb.DashboardLive do
           <p class="text-slate-500 mb-6">Organizations help you manage jobs and team members.</p>
           <a
             href={~p"/organizations/new"}
-            class="inline-block px-6 py-3 bg-emerald-500 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors no-underline"
+            class="inline-block px-6 py-3 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors no-underline"
           >
             Create Organization
           </a>
@@ -362,7 +362,7 @@ defmodule PrikkeWeb.DashboardLive do
     cond do
       percent >= 100 -> "bg-red-500"
       percent >= 80 -> "bg-amber-500"
-      true -> "bg-emerald-500"
+      true -> "bg-emerald-600"
     end
   end
 
@@ -433,7 +433,7 @@ defmodule PrikkeWeb.DashboardLive do
   end
 
   defp status_dot_color(nil), do: "bg-slate-300"
-  defp status_dot_color("success"), do: "bg-emerald-500"
+  defp status_dot_color("success"), do: "bg-emerald-600"
   defp status_dot_color("failed"), do: "bg-red-500"
   defp status_dot_color("timeout"), do: "bg-amber-500"
   defp status_dot_color("running"), do: "bg-blue-500 animate-pulse"
