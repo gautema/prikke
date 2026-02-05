@@ -176,7 +176,7 @@ body:has(#mobile-menu-toggle:checked) {
 .docs-content h2 { @apply text-2xl font-semibold text-slate-900 mt-8 pt-6 border-t border-slate-200; }
 .docs-content h3 { @apply text-lg font-semibold text-slate-900 mt-4; }
 .docs-content p { @apply text-slate-700 leading-relaxed my-4; }
-.docs-content a { @apply text-emerald-600 no-underline hover:underline; }
+.docs-content a:not(.glass-card) { @apply text-emerald-600 no-underline hover:underline; }
 .docs-content code { @apply bg-slate-100 px-1.5 py-0.5 rounded text-sm font-mono; }
 .docs-content pre code { @apply bg-transparent p-0 text-sm; }
 .docs-content ul, .docs-content ol { @apply my-4 pl-6 text-slate-700; }
