@@ -247,12 +247,12 @@ p {
 <body>
 
 <!-- Slide 1: Title -->
-<div class="slide active" style="justify-content: center; padding-top: 80px;">
+<div class="slide" style="justify-content: center; padding-top: 80px;">
   <div class="logo">
     <div class="logo-dot"></div>
     <span class="logo-text">runlater</span>
   </div>
-  <p class="section-label">Tech Meetup</p>
+  <p class="section-label"></p>
   <p class="title">Building Runlater with AI</p>
   <p class="subtitle">From idea to production in 3 days</p>
   <p style="color: #94a3b8; margin-top: 48px; font-size: 16px;">371 tests · ~24k lines · 0 lines I typed</p>
@@ -331,13 +331,16 @@ p {
     <ul>
       <li><b>Elixir + Phoenix</b> — Fault-tolerant, concurrent. Built for systems that run forever.</li>
       <li><b>Phoenix LiveView</b> — Real-time UI with minimal JavaScript. Server-rendered reactivity.</li>
-      <li><b>PostgreSQL</b> — Job queue via FOR UPDATE SKIP LOCKED. No Redis needed.</li>
+      <li><b>PostgreSQL</b> — Does everything. Job queue, leader election, scheduling. No Kafka, no RabbitMQ, no Redis, no SQS.</li>
       <li><b>Tailwind CSS</b> — Utility-first styling. Fast iteration.</li>
       <li><b>Kamal</b> — Docker deploys to Hetzner EU. Zero downtime.</li>
     </ul>
 
     <h2>Why Elixir?</h2>
     <p>BEAM VM runs forever. Lightweight processes. Fault tolerance built-in. GenServer + Postgres = job queue with no external dependencies.</p>
+
+    <h2>Why no message broker?</h2>
+    <p>Postgres FOR UPDATE SKIP LOCKED is a job queue. Advisory locks are leader election. No Kafka, no RabbitMQ, no Redis to manage, monitor, or pay for.</p>
   </div>
 </div>
 
@@ -429,22 +432,25 @@ p {
     <div>
       <h2>Core Product</h2>
       <ul>
-        <li><b>Cron scheduling</b> — Recurring jobs with cron expressions</li>
+        <li><b>Cron scheduling</b> — Recurring jobs with timezone support</li>
         <li><b>One-time jobs</b> — Run once at specific time</li>
         <li><b>Job queues</b> — Immediate execution via API</li>
         <li><b>Automatic retries</b> — Exponential backoff on failure</li>
-        <li><b>Real-time dashboard</b> — Execution history, status, logs</li>
-        <li><b>REST API</b> — Full programmatic access</li>
+        <li><b>Declarative sync</b> — PUT /api/sync for CI/CD pipelines</li>
+        <li><b>Webhook signing</b> — HMAC-SHA256 per organization</li>
+        <li><b>REST API + OpenAPI</b> — Full API with Swagger docs</li>
       </ul>
     </div>
     <div>
       <h2>Platform</h2>
       <ul>
-        <li><b>Marketing site</b> — Landing page, pricing, docs</li>
         <li><b>Auth</b> — Magic link login, API keys</li>
         <li><b>Organizations</b> — Teams, invites, roles</li>
-        <li><b>Notifications</b> — Email + Slack/Discord on failure</li>
-        <li><b>Status page</b> — Public system health</li>
+        <li><b>Real-time dashboard</b> — LiveView with execution history</li>
+        <li><b>Audit logging</b> — Every action tracked</li>
+        <li><b>SSRF protection</b> — Blocks private IPs in URLs</li>
+        <li><b>Rate limiting</b> — IP-based with configurable limits</li>
+        <li><b>Auto-cleanup</b> — Tier-based retention, stale job recovery</li>
       </ul>
     </div>
   </div>
@@ -501,10 +507,10 @@ p {
       <div class="diagram-box primary">PostgreSQL</div>
     </div>
     <ul style="margin-top: 40px;">
-      <li><b>Scheduler</b> — Ticks every 10s. Finds due jobs. Creates pending executions.</li>
+      <li><b>Scheduler</b> — Ticks every 10s. Leader election via pg_try_advisory_xact_lock — only one node schedules, even across multiple servers.</li>
       <li><b>Executions queue</b> — Postgres table. Workers claim with FOR UPDATE SKIP LOCKED.</li>
       <li><b>Worker pool</b> — DynamicSupervisor. 2-20 workers based on queue depth.</li>
-      <li><b>Multi-server ready</b> — Multiple nodes work safely. Postgres coordinates.</li>
+      <li><b>No Redis, no Oban</b> — Just GenServers and Postgres. Advisory locks for leader election, SKIP LOCKED for job claiming.</li>
     </ul>
   </div>
 </div>
@@ -626,18 +632,26 @@ p {
 </div>
 
 <script>
-let currentSlide = 0;
 const slides = document.querySelectorAll('.slide');
 const total = slides.length;
+let currentSlide = Math.max(0, Math.min(total - 1, (parseInt(location.hash.slice(1)) || 1) - 1));
 
 document.getElementById('total').textContent = total;
+slides[currentSlide].classList.add('active');
+document.getElementById('current').textContent = currentSlide + 1;
 
 function showSlide(n) {
   slides[currentSlide].classList.remove('active');
   currentSlide = (n + total) % total;
   slides[currentSlide].classList.add('active');
   document.getElementById('current').textContent = currentSlide + 1;
+  history.replaceState(null, '', '#' + (currentSlide + 1));
 }
+
+window.addEventListener('hashchange', () => {
+  const n = parseInt(location.hash.slice(1)) || 1;
+  showSlide(n - 1);
+});
 
 function nextSlide() { showSlide(currentSlide + 1); }
 function prevSlide() { showSlide(currentSlide - 1); }
