@@ -13,7 +13,7 @@
       </a>
     </div>
 
-    <div class="bg-white border border-slate-200 rounded-lg divide-y divide-slate-200">
+    <div class="glass-card rounded-2xl divide-y divide-slate-200">
       <%= for org <- @organizations do %>
         <%= if @current_organization && @current_organization.id == org.id do %>
           <div class="p-4 flex justify-between items-center">

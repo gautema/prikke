@@ -34,22 +34,22 @@
   <%= if @current_organization do %>
     <!-- Quick Stats -->
     <div class="grid grid-cols-3 gap-4 mb-8">
-      <div class="bg-white border border-slate-200 rounded-lg p-6">
+      <div class="glass-card rounded-2xl p-6">
         <div class="text-sm font-medium text-slate-500 mb-1">Active Jobs</div>
         <div class="text-3xl font-bold text-slate-900">0</div>
       </div>
-      <div class="bg-white border border-slate-200 rounded-lg p-6">
+      <div class="glass-card rounded-2xl p-6">
         <div class="text-sm font-medium text-slate-500 mb-1">Executions Today</div>
         <div class="text-3xl font-bold text-slate-900">0</div>
       </div>
-      <div class="bg-white border border-slate-200 rounded-lg p-6">
+      <div class="glass-card rounded-2xl p-6">
         <div class="text-sm font-medium text-slate-500 mb-1">Success Rate</div>
         <div class="text-3xl font-bold text-emerald-600">—</div>
       </div>
     </div>
     
 <!-- Jobs Section -->
-    <div class="bg-white border border-slate-200 rounded-lg">
+    <div class="glass-card rounded-2xl">
       <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
         <h2 class="text-lg font-semibold text-slate-900">Jobs</h2>
         <a
@@ -70,7 +70,7 @@
     </div>
     
 <!-- Recent Executions -->
-    <div class="bg-white border border-slate-200 rounded-lg mt-6">
+    <div class="glass-card rounded-2xl mt-6">
       <div class="px-6 py-4 border-b border-slate-200">
         <h2 class="text-lg font-semibold text-slate-900">Recent Executions</h2>
       </div>
@@ -80,7 +80,7 @@
     </div>
   <% else %>
     <!-- No organization state -->
-    <div class="bg-white border border-slate-200 rounded-lg p-12 text-center">
+    <div class="glass-card rounded-2xl p-12 text-center">
       <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
         <.icon name="hero-building-office" class="w-6 h-6 text-emerald-600" />
       </div>

@@ -141,7 +141,7 @@ defmodule PrikkeWeb.JobLive.Edit do
         class="space-y-6"
       >
         <!-- Basic Info -->
-        <div class="bg-white border border-slate-200 rounded-lg p-6">
+        <div class="glass-card rounded-2xl p-6">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-semibold text-slate-900">Basic Info</h2>
             <label class="flex items-center gap-3 cursor-pointer">
@@ -194,7 +194,7 @@ defmodule PrikkeWeb.JobLive.Edit do
         </div>
         
     <!-- Schedule -->
-        <div class="bg-white border border-slate-200 rounded-lg p-6">
+        <div class="glass-card rounded-2xl p-6">
           <h2 class="text-lg font-semibold text-slate-900 mb-4">Schedule</h2>
 
           <div class="space-y-4">
@@ -272,7 +272,7 @@ defmodule PrikkeWeb.JobLive.Edit do
         </div>
         
     <!-- Request Settings -->
-        <div class="bg-white border border-slate-200 rounded-lg p-6">
+        <div class="glass-card rounded-2xl p-6">
           <h2 class="text-lg font-semibold text-slate-900 mb-4">Request Settings</h2>
           <p class="text-sm text-slate-500 mb-4">Configure the HTTP request that will be sent.</p>
 

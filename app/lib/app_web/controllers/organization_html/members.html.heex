@@ -40,7 +40,7 @@
     </div>
     
 <!-- Invite Form -->
-    <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+    <div class="glass-card rounded-2xl p-6 mb-6">
       <h2 class="text-lg font-semibold text-slate-900 mb-4">Invite new member</h2>
       <.form for={%{}} action={~p"/invites"} method="post" class="flex flex-col sm:flex-row gap-3">
         <div class="flex-1">
@@ -71,7 +71,7 @@
     </div>
     
 <!-- Members List -->
-    <div class="bg-white border border-slate-200 rounded-lg mb-6">
+    <div class="glass-card rounded-2xl mb-6">
       <div class="px-6 py-4 border-b border-slate-200">
         <h2 class="text-lg font-semibold text-slate-900">Team members</h2>
       </div>
@@ -119,7 +119,7 @@
     
 <!-- Pending Invites -->
     <%= if @invites != [] do %>
-      <div class="bg-white border border-slate-200 rounded-lg">
+      <div class="glass-card rounded-2xl">
         <div class="px-6 py-4 border-b border-slate-200">
           <h2 class="text-lg font-semibold text-slate-900">Pending invites</h2>
         </div>

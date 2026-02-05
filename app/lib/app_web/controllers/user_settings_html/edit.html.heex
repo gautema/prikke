@@ -6,7 +6,7 @@
     </div>
     
 <!-- Change Email -->
-    <div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+    <div class="glass-card rounded-2xl p-6 mb-6">
       <h2 class="text-lg font-semibold text-slate-900 mb-4">Email</h2>
       <.form for={@email_form} action={~p"/users/settings"} id="update_email" class="space-y-4">
         <input type="hidden" name="action" value="update_email" />
@@ -42,7 +42,7 @@
     </div>
     
 <!-- Change Password -->
-    <div class="bg-white border border-slate-200 rounded-lg p-6">
+    <div class="glass-card rounded-2xl p-6">
       <h2 class="text-lg font-semibold text-slate-900 mb-4">Password</h2>
       <.form
         for={@password_form}

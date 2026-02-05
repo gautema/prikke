@@ -60,7 +60,7 @@ defmodule PrikkeWeb.CoreComponents do
       {@rest}
     >
       <div class={[
-        "flex items-center gap-3 w-80 sm:w-96 px-4 py-3 rounded-lg shadow-lg border text-sm",
+        "flex items-center gap-3 w-80 sm:w-96 px-4 py-3 rounded-2xl border text-sm",
         @kind == :info && "bg-emerald-50 border-emerald-200 text-emerald-800",
         @kind == :error && "bg-red-50 border-red-200 text-red-800"
       ]}>

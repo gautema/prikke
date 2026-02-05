@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-slate-50 flex flex-col">
+<div class="min-h-screen flex flex-col" style="background: linear-gradient(135deg, #f0fdf4 0%, #f1f5f9 25%, #f8fafc 50%, #ecfeff 75%, #faf5ff 100%);">
   <div class="max-w-[800px] mx-auto px-6 w-full flex-1">
     <.marketing_header menu_id="status-menu-toggle" current_scope={@current_scope} />
     
@@ -18,7 +18,7 @@
     </div>
     
 <!-- 90-Day Uptime Bar -->
-    <div class="bg-white rounded-lg border border-slate-200 mb-8">
+    <div class="glass-card rounded-2xl mb-8">
       <div class="px-4 py-3 border-b border-slate-200 flex justify-between items-center">
         <h2 class="text-lg font-semibold text-slate-900">Uptime</h2>
         <span class="text-sm text-slate-500">Last 90 days</span>
@@ -88,7 +88,7 @@
     <% end %>
     
 <!-- Component Status -->
-    <div class="bg-white rounded-lg border border-slate-200 mb-8">
+    <div class="glass-card rounded-2xl mb-8">
       <div class="px-4 py-3 border-b border-slate-200">
         <h2 class="text-lg font-semibold text-slate-900">Components</h2>
       </div>
@@ -112,7 +112,7 @@
     
 <!-- Recent Incidents -->
     <%= if @incidents != [] do %>
-      <div class="bg-white rounded-lg border border-slate-200">
+      <div class="glass-card rounded-2xl">
         <div class="px-4 py-3 border-b border-slate-200">
           <h2 class="text-lg font-semibold text-slate-900">Past Incidents</h2>
         </div>
@@ -142,7 +142,7 @@
         </div>
       </div>
     <% else %>
-      <div class="bg-white rounded-lg border border-slate-200 p-8 text-center">
+      <div class="glass-card rounded-2xl p-8 text-center">
         <p class="text-slate-500">No incidents in the last 90 days</p>
       </div>
     <% end %>

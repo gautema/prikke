@@ -12,7 +12,7 @@ defmodule PrikkeWeb.DocsHTML do
 
   def docs_layout(assigns) do
     ~H"""
-    <div class="min-h-screen bg-slate-50 flex flex-col">
+    <div class="min-h-screen flex flex-col" style="background: linear-gradient(135deg, #f0fdf4 0%, #f1f5f9 25%, #f8fafc 50%, #ecfeff 75%, #faf5ff 100%);">
       <div class="max-w-[800px] mx-auto px-6 w-full flex-1">
         <.marketing_header menu_id="docs-menu-toggle" current_scope={@current_scope} />
         
