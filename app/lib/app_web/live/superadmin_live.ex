@@ -319,7 +319,7 @@ defmodule PrikkeWeb.SuperadminLive do
         <div class="overflow-x-auto">
           <table class="min-w-full">
             <thead>
-              <tr class="border-b border-slate-200">
+              <tr class="border-b border-white/50">
                 <th class="py-2 text-left text-sm font-medium text-slate-500">Organization</th>
                 <th class="py-2 text-left text-sm font-medium text-slate-500">Tier</th>
                 <th class="py-2 text-right text-sm font-medium text-slate-500">Executions</th>
@@ -327,7 +327,7 @@ defmodule PrikkeWeb.SuperadminLive do
                 <th class="py-2 text-right text-sm font-medium text-slate-500">Usage</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody class="divide-y divide-white/30">
               <%= for {org, count, limit} <- @org_monthly_executions do %>
                 <% usage_pct = Float.round(count / limit * 100, 1) %>
                 <tr>
@@ -423,10 +423,10 @@ defmodule PrikkeWeb.SuperadminLive do
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <!-- Recent Executions -->
         <div class="glass-card rounded-2xl">
-          <div class="px-6 py-4 border-b border-slate-200">
+          <div class="px-6 py-4 border-b border-white/50">
             <h2 class="text-lg font-semibold text-slate-900">Recent Executions</h2>
           </div>
-          <div class="divide-y divide-slate-200">
+          <div class="divide-y divide-white/30">
             <%= for execution <- @recent_executions do %>
               <div class="px-6 py-3 flex items-center gap-4">
                 <.status_dot status={execution.status} />
@@ -449,10 +449,10 @@ defmodule PrikkeWeb.SuperadminLive do
         
     <!-- Audit Logs -->
         <div class="glass-card rounded-2xl">
-          <div class="px-6 py-4 border-b border-slate-200">
+          <div class="px-6 py-4 border-b border-white/50">
             <h2 class="text-lg font-semibold text-slate-900">Recent Audit Logs</h2>
           </div>
-          <div class="divide-y divide-slate-200">
+          <div class="divide-y divide-white/30">
             <%= for log <- @audit_logs do %>
               <div class="px-6 py-3">
                 <div class="flex items-center justify-between">

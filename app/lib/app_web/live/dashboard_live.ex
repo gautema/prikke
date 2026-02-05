@@ -183,7 +183,7 @@ defmodule PrikkeWeb.DashboardLive do
         
     <!-- Jobs Section -->
         <div class="glass-card rounded-2xl">
-          <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+          <div class="px-6 py-4 border-b border-white/50 flex justify-between items-center">
             <h2 class="text-lg font-semibold text-slate-900">Jobs</h2>
             <div class="flex gap-2">
               <.link
@@ -212,7 +212,7 @@ defmodule PrikkeWeb.DashboardLive do
               </.link>
             </div>
           <% else %>
-            <div class="divide-y divide-slate-200">
+            <div class="divide-y divide-white/30">
               <%= for job <- @recent_jobs do %>
                 <.link
                   navigate={~p"/jobs/#{job.id}"}
@@ -254,7 +254,7 @@ defmodule PrikkeWeb.DashboardLive do
         
     <!-- Recent Executions -->
         <div class="glass-card rounded-2xl mt-6">
-          <div class="px-6 py-4 border-b border-slate-200">
+          <div class="px-6 py-4 border-b border-white/50">
             <h2 class="text-lg font-semibold text-slate-900">Recent Executions</h2>
           </div>
           <%= if @recent_executions == [] do %>
@@ -262,7 +262,7 @@ defmodule PrikkeWeb.DashboardLive do
               No executions yet. Jobs will appear here once they run.
             </div>
           <% else %>
-            <div class="divide-y divide-slate-200">
+            <div class="divide-y divide-white/30">
               <%= for execution <- @recent_executions do %>
                 <.link
                   navigate={~p"/jobs/#{execution.job_id}"}

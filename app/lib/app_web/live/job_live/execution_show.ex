@@ -80,7 +80,7 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
       </div>
 
       <div class="glass-card rounded-2xl">
-        <div class="px-4 sm:px-6 py-4 border-b border-slate-200">
+        <div class="px-4 sm:px-6 py-4 border-b border-white/50">
           <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
             <div>
               <div class="flex items-center gap-3 flex-wrap">

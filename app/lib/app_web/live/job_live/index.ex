@@ -223,7 +223,7 @@ defmodule PrikkeWeb.JobLive.Index do
           </.link>
         </div>
       <% else %>
-        <div class="glass-card rounded-2xl divide-y divide-slate-200">
+        <div class="glass-card rounded-2xl divide-y divide-white/30">
           <%= for job <- @jobs do %>
             <div class="px-4 sm:px-6 py-4">
               <div class="flex items-start sm:items-center justify-between gap-3">
