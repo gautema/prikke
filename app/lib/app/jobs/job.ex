@@ -19,6 +19,7 @@ defmodule Prikke.Jobs.Job do
     field :retry_attempts, :integer, default: 3
     field :timeout_ms, :integer, default: 30000
     field :next_run_at, :utc_datetime
+    field :callback_url, :string
 
     # Virtual field for form editing
     field :headers_json, :string, virtual: true
@@ -48,7 +49,8 @@ defmodule Prikke.Jobs.Job do
       :timezone,
       :enabled,
       :retry_attempts,
-      :timeout_ms
+      :timeout_ms,
+      :callback_url
     ])
     |> trim_url()
     |> validate_required([:name, :url, :schedule_type])
@@ -56,6 +58,7 @@ defmodule Prikke.Jobs.Job do
     |> validate_inclusion(:schedule_type, @schedule_types)
     |> validate_url(:url)
     |> Prikke.UrlValidator.validate_webhook_url_safe(:url)
+    |> validate_callback_url()
     |> validate_number(:retry_attempts, greater_than_or_equal_to: 0, less_than_or_equal_to: 10)
     |> validate_number(:timeout_ms,
       greater_than_or_equal_to: 1000,
@@ -92,6 +95,18 @@ defmodule Prikke.Jobs.Job do
 
         _ ->
           [{field, "must be a valid HTTP or HTTPS URL"}]
+      end
+    end)
+  end
+
+  defp validate_callback_url(changeset) do
+    validate_change(changeset, :callback_url, fn _, url ->
+      case URI.parse(url) do
+        %URI{scheme: scheme, host: host} when scheme in ["http", "https"] and not is_nil(host) ->
+          []
+
+        _ ->
+          [{:callback_url, "must be a valid HTTP or HTTPS URL"}]
       end
     end)
   end

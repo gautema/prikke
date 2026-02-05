@@ -323,9 +323,23 @@ defmodule PrikkeWeb.JobLive.Edit do
               />
               <p class="text-xs text-slate-500 mt-1">Optional. For POST/PUT/PATCH requests.</p>
             </div>
+
+            <div>
+              <label for="job_callback_url" class="block text-sm font-medium text-slate-700 mb-1">
+                Callback URL <span class="text-slate-400 font-normal">(optional)</span>
+              </label>
+              <.input
+                field={@form[:callback_url]}
+                type="text"
+                placeholder="https://example.com/callback"
+              />
+              <p class="text-xs text-slate-500 mt-1">
+                Receive a POST with execution results after each run completes.
+              </p>
+            </div>
           </div>
         </div>
-        
+
     <!-- Actions -->
         <div class="flex justify-end gap-4">
           <.link

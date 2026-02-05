@@ -14,6 +14,7 @@ defmodule Prikke.Executions.Execution do
     field :response_body, :string
     field :error_message, :string
     field :attempt, :integer, default: 1
+    field :callback_url, :string
 
     belongs_to :job, Prikke.Jobs.Job
 
@@ -47,7 +48,7 @@ defmodule Prikke.Executions.Execution do
   """
   def create_changeset(execution, attrs) do
     execution
-    |> cast(attrs, [:job_id, :scheduled_for, :attempt])
+    |> cast(attrs, [:job_id, :scheduled_for, :attempt, :callback_url])
     |> validate_required([:job_id, :scheduled_for])
     |> put_change(:status, "pending")
     |> foreign_key_constraint(:job_id)

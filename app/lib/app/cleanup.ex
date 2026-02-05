@@ -20,6 +20,7 @@ defmodule Prikke.Cleanup do
   alias Prikke.Repo
   alias Prikke.Accounts
   alias Prikke.Executions
+  alias Prikke.Idempotency
   alias Prikke.Jobs
 
   # Advisory lock ID for cleanup (different from scheduler)
@@ -133,15 +134,18 @@ defmodule Prikke.Cleanup do
         {exec_acc + exec_deleted, job_acc + jobs_deleted}
       end)
 
-    if total_executions > 0 or total_jobs > 0 do
+    # Clean expired idempotency keys (24-hour TTL)
+    {idempotency_deleted, _} = Idempotency.cleanup_expired_keys()
+
+    if total_executions > 0 or total_jobs > 0 or idempotency_deleted > 0 do
       Logger.info(
-        "[Cleanup] Deleted #{total_executions} executions, #{total_jobs} completed one-time jobs"
+        "[Cleanup] Deleted #{total_executions} executions, #{total_jobs} completed one-time jobs, #{idempotency_deleted} idempotency keys"
       )
     else
       Logger.info("[Cleanup] Nothing to clean up")
     end
 
-    {:ok, %{executions: total_executions, jobs: total_jobs}}
+    {:ok, %{executions: total_executions, jobs: total_jobs, idempotency_keys: idempotency_deleted}}
   end
 
   defp get_retention_days(tier) do

@@ -63,6 +63,12 @@ defmodule PrikkeWeb.Schemas do
           default: 3,
           description: "Number of retry attempts for one-time jobs"
         },
+        callback_url: %Schema{
+          type: :string,
+          format: :uri,
+          nullable: true,
+          description: "URL to receive POST with execution results"
+        },
         next_run_at: %Schema{
           type: :string,
           format: :"date-time",
@@ -133,7 +139,13 @@ defmodule PrikkeWeb.Schemas do
         timezone: %Schema{type: :string, default: "UTC"},
         enabled: %Schema{type: :boolean, default: true},
         timeout_ms: %Schema{type: :integer, default: 30000},
-        retry_attempts: %Schema{type: :integer, default: 3}
+        retry_attempts: %Schema{type: :integer, default: 3},
+        callback_url: %Schema{
+          type: :string,
+          format: :uri,
+          nullable: true,
+          description: "URL to receive POST with execution results"
+        }
       },
       example: %{
         name: "Daily cleanup",
@@ -316,6 +328,12 @@ defmodule PrikkeWeb.Schemas do
           type: :integer,
           default: 30000,
           description: "Request timeout in milliseconds"
+        },
+        callback_url: %Schema{
+          type: :string,
+          format: :uri,
+          nullable: true,
+          description: "URL to receive POST with execution results when complete"
         }
       },
       example: %{

@@ -50,7 +50,21 @@ defmodule PrikkeWeb.Api.JobController do
 
   operation(:create,
     summary: "Create a job",
-    description: "Creates a new scheduled job",
+    description: """
+    Creates a new scheduled job.
+
+    Supports idempotency: pass an `Idempotency-Key` header to prevent duplicate
+    job creation. If the same key is sent again within 24 hours, the original
+    response is returned.
+    """,
+    parameters: [
+      "Idempotency-Key": [
+        in: :header,
+        type: :string,
+        description: "Unique key to prevent duplicate requests (valid for 24 hours)",
+        required: false
+      ]
+    ],
     request_body: {"Job parameters", "application/json", Schemas.JobRequest},
     responses: [
       created: {"Job created", "application/json", Schemas.JobResponse},

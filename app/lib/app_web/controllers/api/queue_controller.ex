@@ -24,7 +24,19 @@ defmodule PrikkeWeb.Api.QueueController do
     execute a webhook - just provide the URL and optional settings.
 
     The request is queued and executed by the worker pool, typically within seconds.
+
+    Supports idempotency: pass an `Idempotency-Key` header to prevent duplicate
+    requests. If the same key is sent again within 24 hours, the original response
+    is returned without creating a new job.
     """,
+    parameters: [
+      "Idempotency-Key": [
+        in: :header,
+        type: :string,
+        description: "Unique key to prevent duplicate requests (valid for 24 hours)",
+        required: false
+      ]
+    ],
     request_body: {"Queue request", "application/json", Schemas.QueueRequest, required: true},
     responses: [
       accepted: {"Request queued", "application/json", Schemas.QueueResponse},
@@ -64,11 +76,20 @@ defmodule PrikkeWeb.Api.QueueController do
       "scheduled_at" => scheduled_at,
       "enabled" => true,
       "timeout_ms" => params["timeout_ms"] || 30_000,
-      "retry_attempts" => params["retry_attempts"] || 5
+      "retry_attempts" => params["retry_attempts"] || 5,
+      "callback_url" => params["callback_url"]
     }
 
+    # Per-push callback_url override: pass to execution if provided
+    execution_opts =
+      if params["callback_url"] do
+        [callback_url: params["callback_url"]]
+      else
+        []
+      end
+
     with {:ok, job} <- Jobs.create_job(org, job_params, api_key_name: api_key_name),
-         {:ok, execution} <- Executions.create_execution_for_job(job, scheduled_at),
+         {:ok, execution} <- Executions.create_execution_for_job(job, scheduled_at, execution_opts),
          # Clear next_run_at so scheduler doesn't also create an execution
          {:ok, _job} <- Jobs.clear_next_run(job) do
       # Wake workers to process immediately

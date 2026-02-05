@@ -45,6 +45,51 @@ defmodule Prikke.ExecutionsTest do
       assert execution.status == "pending"
     end
 
+    test "create_execution_for_job/3 copies job callback_url to execution", %{
+      organization: org
+    } do
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Callback Job",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *",
+          callback_url: "https://example.com/job-callback"
+        })
+
+      scheduled_for = DateTime.utc_now()
+      assert {:ok, execution} = Executions.create_execution_for_job(job, scheduled_for)
+      assert execution.callback_url == "https://example.com/job-callback"
+    end
+
+    test "create_execution_for_job/3 allows per-execution callback_url override", %{
+      organization: org
+    } do
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Callback Job",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *",
+          callback_url: "https://example.com/job-callback"
+        })
+
+      scheduled_for = DateTime.utc_now()
+
+      assert {:ok, execution} =
+               Executions.create_execution_for_job(job, scheduled_for,
+                 callback_url: "https://example.com/override-callback"
+               )
+
+      assert execution.callback_url == "https://example.com/override-callback"
+    end
+
+    test "create_execution_for_job/3 with no callback_url leaves it nil", %{job: job} do
+      scheduled_for = DateTime.utc_now()
+      assert {:ok, execution} = Executions.create_execution_for_job(job, scheduled_for)
+      assert execution.callback_url == nil
+    end
+
     test "get_execution/1 returns the execution", %{job: job} do
       {:ok, execution} = Executions.create_execution_for_job(job, DateTime.utc_now())
 

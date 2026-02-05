@@ -12,7 +12,8 @@ defmodule PrikkeWeb.QueueLive do
     method: :string,
     headers_json: :string,
     body: :string,
-    name: :string
+    name: :string,
+    callback_url: :string
   }
 
   @impl true
@@ -115,6 +116,8 @@ defmodule PrikkeWeb.QueueLive do
         n -> n
       end
 
+    callback_url = params["callback_url"]
+
     job_params = %{
       "name" => name,
       "url" => url,
@@ -125,12 +128,20 @@ defmodule PrikkeWeb.QueueLive do
       "scheduled_at" => scheduled_at,
       "enabled" => true,
       "timeout_ms" => 30_000,
-      "retry_attempts" => 5
+      "retry_attempts" => 5,
+      "callback_url" => callback_url
     }
+
+    execution_opts =
+      if callback_url && callback_url != "" do
+        [callback_url: callback_url]
+      else
+        []
+      end
 
     case Jobs.create_job(org, job_params, scope: socket.assigns.current_scope) do
       {:ok, job} ->
-        case Executions.create_execution_for_job(job, scheduled_at) do
+        case Executions.create_execution_for_job(job, scheduled_at, execution_opts) do
           {:ok, execution} ->
             # Clear next_run_at so scheduler doesn't also create an execution
             Jobs.clear_next_run(job)
@@ -309,6 +320,20 @@ defmodule PrikkeWeb.QueueLive do
               />
               <p class="text-xs text-slate-500 mt-1">
                 Optional label for easier identification in history.
+              </p>
+            </div>
+
+            <div>
+              <label for="queue_callback_url" class="block text-sm font-medium text-slate-700 mb-1">
+                Callback URL <span class="text-slate-400 font-normal">(optional)</span>
+              </label>
+              <.input
+                field={@form[:callback_url]}
+                type="text"
+                placeholder="https://example.com/callback"
+              />
+              <p class="text-xs text-slate-500 mt-1">
+                Receive a POST with execution results when the request completes.
               </p>
             </div>
           </div>

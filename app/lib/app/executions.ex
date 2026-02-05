@@ -61,13 +61,38 @@ defmodule Prikke.Executions do
 
   @doc """
   Creates a pending execution for a job struct.
+
+  The third argument can be:
+    - an integer (attempt number, for backwards compatibility)
+    - a keyword list with options:
+      - :attempt - the attempt number (default 1)
+      - :callback_url - override callback URL for this execution
+        (falls back to job's callback_url if not provided)
   """
-  def create_execution_for_job(%Job{} = job, scheduled_for, attempt \\ 1) do
-    create_execution(%{
+  def create_execution_for_job(job, scheduled_for, opts_or_attempt \\ [])
+
+  def create_execution_for_job(%Job{} = job, scheduled_for, attempt) when is_integer(attempt) do
+    create_execution_for_job(job, scheduled_for, attempt: attempt)
+  end
+
+  def create_execution_for_job(%Job{} = job, scheduled_for, opts) when is_list(opts) do
+    attempt = Keyword.get(opts, :attempt, 1)
+    callback_url = Keyword.get(opts, :callback_url) || job.callback_url
+
+    attrs = %{
       job_id: job.id,
       scheduled_for: scheduled_for,
       attempt: attempt
-    })
+    }
+
+    attrs =
+      if callback_url do
+        Map.put(attrs, :callback_url, callback_url)
+      else
+        attrs
+      end
+
+    create_execution(attrs)
   end
 
   @doc """

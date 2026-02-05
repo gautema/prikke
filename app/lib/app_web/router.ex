@@ -54,6 +54,7 @@ defmodule PrikkeWeb.Router do
   # API routes - authenticated via API keys
   pipeline :api_auth do
     plug PrikkeWeb.Plugs.ApiAuth
+    plug PrikkeWeb.Plugs.Idempotency
   end
 
   # OpenAPI spec and Swagger UI (no auth required)

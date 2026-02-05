@@ -135,6 +135,50 @@ defmodule Prikke.JobsTest do
       assert job.interval_minutes == nil
     end
 
+    test "with valid callback_url creates a job" do
+      org = organization_fixture()
+
+      attrs = %{
+        name: "Callback Job",
+        url: "https://example.com/webhook",
+        schedule_type: "cron",
+        cron_expression: "0 * * * *",
+        callback_url: "https://example.com/callback"
+      }
+
+      assert {:ok, %Job{} = job} = Jobs.create_job(org, attrs)
+      assert job.callback_url == "https://example.com/callback"
+    end
+
+    test "with invalid callback_url returns error" do
+      org = organization_fixture()
+
+      attrs = %{
+        name: "Bad Callback Job",
+        url: "https://example.com/webhook",
+        schedule_type: "cron",
+        cron_expression: "0 * * * *",
+        callback_url: "not-a-url"
+      }
+
+      assert {:error, changeset} = Jobs.create_job(org, attrs)
+      assert "must be a valid HTTP or HTTPS URL" in errors_on(changeset).callback_url
+    end
+
+    test "with nil callback_url creates a job without callback" do
+      org = organization_fixture()
+
+      attrs = %{
+        name: "No Callback Job",
+        url: "https://example.com/webhook",
+        schedule_type: "cron",
+        cron_expression: "0 * * * *"
+      }
+
+      assert {:ok, %Job{} = job} = Jobs.create_job(org, attrs)
+      assert job.callback_url == nil
+    end
+
     test "with invalid URL returns error" do
       org = organization_fixture()
 

@@ -39,6 +39,7 @@ defmodule Prikke.Worker do
   use GenServer, restart: :transient
   require Logger
 
+  alias Prikke.Callbacks
   alias Prikke.Executions
   alias Prikke.Jobs
   alias Prikke.Notifications
@@ -225,11 +226,15 @@ defmodule Prikke.Worker do
     if response.status >= 200 and response.status < 300 do
       Logger.info("[Worker] Job succeeded with status #{response.status} in #{duration_ms}ms")
 
-      Executions.complete_execution(execution, %{
-        status_code: response.status,
-        response_body: truncate_body(response.body),
-        duration_ms: duration_ms
-      })
+      {:ok, updated_execution} =
+        Executions.complete_execution(execution, %{
+          status_code: response.status,
+          response_body: truncate_body(response.body),
+          duration_ms: duration_ms
+        })
+
+      # Send callback notification (async)
+      send_callback(updated_execution)
     else
       # Non-2xx is treated as failure
       Logger.warning("[Worker] Job failed with status #{response.status} in #{duration_ms}ms")
@@ -242,8 +247,9 @@ defmodule Prikke.Worker do
           duration_ms: duration_ms
         })
 
-      # Send failure notification (async)
+      # Send failure notification and callback (async)
       notify_failure(updated_execution)
+      send_callback(updated_execution)
 
       maybe_retry(execution)
     end
@@ -254,8 +260,9 @@ defmodule Prikke.Worker do
 
     {:ok, updated_execution} = Executions.timeout_execution(execution, duration_ms)
 
-    # Send failure notification (async)
+    # Send failure notification and callback (async)
     notify_failure(updated_execution)
+    send_callback(updated_execution)
 
     maybe_retry(execution)
   end
@@ -270,8 +277,9 @@ defmodule Prikke.Worker do
         duration_ms: duration_ms
       })
 
-    # Send failure notification (async)
+    # Send failure notification and callback (async)
     notify_failure(updated_execution)
+    send_callback(updated_execution)
 
     maybe_retry(execution)
   end
@@ -281,6 +289,12 @@ defmodule Prikke.Worker do
     # The updated execution loses preloads, so we need to re-fetch with associations
     execution_with_job = Executions.get_execution_with_job(updated_execution.id)
     Notifications.notify_failure(execution_with_job)
+  end
+
+  # Send callback notification if callback_url is configured
+  defp send_callback(updated_execution) do
+    execution_with_job = Executions.get_execution_with_job(updated_execution.id)
+    Callbacks.send_callback(execution_with_job)
   end
 
   defp return_error(nil), do: :ok

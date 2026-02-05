@@ -253,6 +253,84 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
 });</pre>
   </div>
 
+  <h2 id="callbacks">Callbacks</h2>
+  <p>
+    Get notified when an execution completes by setting a <code class="bg-slate-100 px-2 py-1 rounded text-sm">callback_url</code> on your job or queue request. After each execution finishes (success, failure, or timeout), Runlater will POST the result to your callback URL.
+  </p>
+
+  <h3>How Callbacks Work</h3>
+  <ol>
+    <li>Set <code class="bg-slate-100 px-2 py-1 rounded text-sm">callback_url</code> on a job or queue request</li>
+    <li>Runlater executes your webhook as normal</li>
+    <li>After completion, Runlater POSTs the result to your callback URL</li>
+    <li>Callbacks retry up to 3 times with backoff (5s, 20s) on failure</li>
+  </ol>
+
+  <h3>Callback Payload</h3>
+  <pre
+    phx-no-curly-interpolation
+    class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto"
+  ><span class="text-purple-300">POST</span> /your-callback HTTP/1.1
+<span class="text-sky-300">Content-Type</span>: application/json
+<span class="text-sky-300">X-Runlater-Signature</span>: sha256=a1b2c3d4...
+
+{
+  <span class="text-sky-300">"event"</span>: <span class="text-green-300">"execution.completed"</span>,
+  <span class="text-sky-300">"job_id"</span>: <span class="text-green-300">"01JJXYZ..."</span>,
+  <span class="text-sky-300">"execution_id"</span>: <span class="text-green-300">"01JJXYZ..."</span>,
+  <span class="text-sky-300">"status"</span>: <span class="text-green-300">"success"</span>,
+  <span class="text-sky-300">"status_code"</span>: <span class="text-orange-300">200</span>,
+  <span class="text-sky-300">"duration_ms"</span>: <span class="text-orange-300">145</span>,
+  <span class="text-sky-300">"started_at"</span>: <span class="text-green-300">"2025-01-29T10:00:01Z"</span>,
+  <span class="text-sky-300">"finished_at"</span>: <span class="text-green-300">"2025-01-29T10:00:01Z"</span>,
+  <span class="text-sky-300">"attempt"</span>: <span class="text-orange-300">1</span>
+}</pre>
+
+  <h3>Callback Priority</h3>
+  <p>
+    Callbacks can be set at two levels. The execution-level callback (from a queue push) takes priority over the job-level callback:
+  </p>
+  <div class="overflow-x-auto my-6">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-slate-200">
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Job callback_url</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Queue callback_url</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Result</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600">
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4">Set</td>
+          <td class="py-3 px-4">Not set</td>
+          <td class="py-3 px-4">Uses job callback_url</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4">Set</td>
+          <td class="py-3 px-4">Set</td>
+          <td class="py-3 px-4">Uses queue callback_url (override)</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4">Not set</td>
+          <td class="py-3 px-4">Set</td>
+          <td class="py-3 px-4">Uses queue callback_url</td>
+        </tr>
+        <tr>
+          <td class="py-3 px-4">Not set</td>
+          <td class="py-3 px-4">Not set</td>
+          <td class="py-3 px-4">No callback</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg my-6">
+    <strong class="text-emerald-800">Note:</strong>
+    <span class="text-emerald-700">
+      Callbacks are signed with the same webhook secret as regular webhook requests. Verify the <code>X-Runlater-Signature</code> header to authenticate callbacks.
+    </span>
+  </div>
+
   <h2>Custom Headers</h2>
   <p>You can configure custom headers when creating a job:</p>
   <pre

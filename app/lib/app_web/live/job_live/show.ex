@@ -320,6 +320,12 @@ defmodule PrikkeWeb.JobLive.Show do
                 <span class="text-xs text-slate-500 uppercase">Retry Attempts</span>
                 <p class="text-slate-900">{@job.retry_attempts}</p>
               </div>
+              <%= if @job.callback_url do %>
+                <div class="col-span-2">
+                  <span class="text-xs text-slate-500 uppercase">Callback URL</span>
+                  <p class="text-slate-900 font-mono text-sm break-all">{@job.callback_url}</p>
+                </div>
+              <% end %>
             </div>
           </div>
           
