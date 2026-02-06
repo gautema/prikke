@@ -384,6 +384,190 @@ defmodule PrikkeWeb.Schemas do
     })
   end
 
+  defmodule Monitor do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "Monitor",
+      description: "A heartbeat monitor (dead man's switch)",
+      type: :object,
+      required: [:id, :name, :schedule_type],
+      properties: %{
+        id: %Schema{type: :string, format: :uuid, description: "Monitor ID"},
+        name: %Schema{type: :string, description: "Monitor name"},
+        ping_token: %Schema{type: :string, description: "Unique ping token"},
+        ping_url: %Schema{type: :string, format: :uri, description: "Full ping URL"},
+        schedule_type: %Schema{
+          type: :string,
+          enum: ["cron", "interval"],
+          description: "Schedule type"
+        },
+        cron_expression: %Schema{
+          type: :string,
+          nullable: true,
+          description: "Cron expression (for cron monitors)"
+        },
+        interval_seconds: %Schema{
+          type: :integer,
+          nullable: true,
+          description: "Expected interval in seconds (for interval monitors)"
+        },
+        grace_period_seconds: %Schema{
+          type: :integer,
+          default: 300,
+          description: "Grace period before alerting (seconds)"
+        },
+        status: %Schema{
+          type: :string,
+          enum: ["new", "up", "down", "paused"],
+          description: "Current monitor status"
+        },
+        enabled: %Schema{type: :boolean, default: true, description: "Whether the monitor is active"},
+        last_ping_at: %Schema{
+          type: :string,
+          format: :"date-time",
+          nullable: true,
+          description: "When the last ping was received"
+        },
+        next_expected_at: %Schema{
+          type: :string,
+          format: :"date-time",
+          nullable: true,
+          description: "When the next ping is expected"
+        },
+        inserted_at: %Schema{type: :string, format: :"date-time", description: "Creation timestamp"},
+        updated_at: %Schema{type: :string, format: :"date-time", description: "Last update timestamp"}
+      },
+      example: %{
+        id: "019c0123-4567-7890-abcd-ef1234567890",
+        name: "Nightly Backup",
+        ping_token: "pm_abc123def456",
+        ping_url: "https://runlater.eu/ping/pm_abc123def456",
+        schedule_type: "interval",
+        interval_seconds: 86400,
+        grace_period_seconds: 1800,
+        status: "up",
+        enabled: true,
+        last_ping_at: "2026-02-06T02:05:00Z",
+        next_expected_at: "2026-02-07T02:05:00Z",
+        inserted_at: "2026-01-29T10:00:00Z",
+        updated_at: "2026-02-06T02:05:00Z"
+      }
+    })
+  end
+
+  defmodule MonitorRequest do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "MonitorRequest",
+      description: "Request body for creating or updating a monitor",
+      type: :object,
+      required: [:name, :schedule_type],
+      properties: %{
+        name: %Schema{type: :string, description: "Monitor name"},
+        schedule_type: %Schema{type: :string, enum: ["cron", "interval"]},
+        cron_expression: %Schema{
+          type: :string,
+          nullable: true,
+          description: "Required for cron monitors"
+        },
+        interval_seconds: %Schema{
+          type: :integer,
+          nullable: true,
+          description: "Required for interval monitors (60-604800)"
+        },
+        grace_period_seconds: %Schema{
+          type: :integer,
+          default: 300,
+          description: "Grace period in seconds (0-3600)"
+        },
+        enabled: %Schema{type: :boolean, default: true}
+      },
+      example: %{
+        name: "Nightly Backup",
+        schedule_type: "interval",
+        interval_seconds: 86400,
+        grace_period_seconds: 1800
+      }
+    })
+  end
+
+  defmodule MonitorResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "MonitorResponse",
+      description: "Response containing a monitor",
+      type: :object,
+      properties: %{
+        data: Monitor
+      }
+    })
+  end
+
+  defmodule MonitorsResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "MonitorsResponse",
+      description: "Response containing a list of monitors",
+      type: :object,
+      properties: %{
+        data: %Schema{type: :array, items: Monitor}
+      }
+    })
+  end
+
+  defmodule MonitorPing do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "MonitorPing",
+      description: "A ping received by a monitor",
+      type: :object,
+      properties: %{
+        id: %Schema{type: :string, format: :uuid, description: "Ping ID"},
+        received_at: %Schema{
+          type: :string,
+          format: :"date-time",
+          description: "When the ping was received"
+        }
+      }
+    })
+  end
+
+  defmodule MonitorPingsResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "MonitorPingsResponse",
+      description: "Response containing a list of monitor pings",
+      type: :object,
+      properties: %{
+        data: %Schema{type: :array, items: MonitorPing}
+      }
+    })
+  end
+
+  defmodule PingResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "PingResponse",
+      description: "Response from a successful ping",
+      type: :object,
+      properties: %{
+        status: %Schema{type: :string, description: "Always \"ok\""},
+        monitor: %Schema{type: :string, description: "Monitor name"}
+      },
+      example: %{
+        status: "ok",
+        monitor: "Nightly Backup"
+      }
+    })
+  end
+
   defmodule ErrorResponse do
     require OpenApiSpex
 

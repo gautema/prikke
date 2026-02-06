@@ -391,6 +391,215 @@
 }</pre>
   </div>
 
+  <h2>Monitors API</h2>
+  <p>CRUD operations for heartbeat monitors (dead man's switches). See the <a href="/docs/monitors" class="text-emerald-600 hover:underline">Cron Monitoring docs</a> for details.</p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="p-6 border-b border-slate-100">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-blue-500 text-white">
+          GET
+        </span>
+        <span class="font-mono text-sm">/monitors</span>
+      </div>
+      <p class="text-slate-600 m-0">List all monitors for your organization.</p>
+    </div>
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://runlater.eu/api/v1/monitors \
+  -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
+  </div>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="p-6 border-b border-slate-100">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-blue-500 text-white">
+          GET
+        </span>
+        <span class="font-mono text-sm">/monitors/:id</span>
+      </div>
+      <p class="text-slate-600 m-0">Get a single monitor by ID. Response includes the <code class="text-sky-600">ping_url</code>.</p>
+    </div>
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://runlater.eu/api/v1/monitors/mon_abc123 \
+  -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
+  </div>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="p-6 border-b border-slate-100">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-emerald-600 text-white">
+          POST
+        </span>
+        <span class="font-mono text-sm">/monitors</span>
+      </div>
+      <p class="text-slate-600 m-0 mb-4">Create a new monitor.</p>
+
+      <h4 class="text-sm font-semibold mt-4 mb-2 text-slate-900">Request Body</h4>
+      <table class="text-sm w-full">
+        <tr class="border-b border-slate-100">
+          <th class="text-left py-2 pr-4 text-slate-700">Field</th>
+          <th class="text-left py-2 pr-4 text-slate-700">Type</th>
+          <th class="text-left py-2 text-slate-700">Description</th>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">name</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">Display name (required)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">schedule_type</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">"interval" or "cron" (required)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">interval_seconds</code></td>
+          <td class="py-2 pr-4 text-slate-500">integer</td>
+          <td class="py-2 text-slate-600">Expected interval, 60-604800 (required for interval type)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">cron_expression</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">Cron expression (required for cron type)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">grace_period_seconds</code></td>
+          <td class="py-2 pr-4 text-slate-500">integer</td>
+          <td class="py-2 text-slate-600">Grace period before alerting, 0-3600 (default: 300)</td>
+        </tr>
+        <tr>
+          <td class="py-2 pr-4"><code class="text-sky-600">enabled</code></td>
+          <td class="py-2 pr-4 text-slate-500">boolean</td>
+          <td class="py-2 text-slate-600">Whether monitoring is active (default: true)</td>
+        </tr>
+      </table>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X POST https://runlater.eu/api/v1/monitors \
+  -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
+  -H <span class="text-green-300">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Nightly Backup"</span>,
+    <span class="text-sky-300">"schedule_type"</span>: <span class="text-green-300">"interval"</span>,
+    <span class="text-sky-300">"interval_seconds"</span>: <span class="text-orange-300">86400</span>,
+    <span class="text-sky-300">"grace_period_seconds"</span>: <span class="text-orange-300">1800</span>
+  }'</pre>
+  </div>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="p-6 border-b border-slate-100">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-amber-500 text-white">
+          PUT
+        </span>
+        <span class="font-mono text-sm">/monitors/:id</span>
+      </div>
+      <p class="text-slate-600 m-0">Update a monitor. Only include the fields you want to change.</p>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X PUT https://runlater.eu/api/v1/monitors/mon_abc123 \
+  -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
+  -H <span class="text-green-300">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="text-sky-300">"grace_period_seconds"</span>: <span class="text-orange-300">3600</span>
+  }'</pre>
+  </div>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="p-6 border-b border-slate-100">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-red-500 text-white">
+          DELETE
+        </span>
+        <span class="font-mono text-sm">/monitors/:id</span>
+      </div>
+      <p class="text-slate-600 m-0">Delete a monitor and all its ping history.</p>
+    </div>
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X DELETE https://runlater.eu/api/v1/monitors/mon_abc123 \
+  -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
+  </div>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="p-6 border-b border-slate-100">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-blue-500 text-white">
+          GET
+        </span>
+        <span class="font-mono text-sm">/monitors/:id/pings</span>
+      </div>
+      <p class="text-slate-600 m-0 mb-4">Get recent ping history for a monitor.</p>
+
+      <h4 class="text-sm font-semibold mt-4 mb-2 text-slate-900">Query Parameters</h4>
+      <table class="text-sm w-full">
+        <tr class="border-b border-slate-100">
+          <th class="text-left py-2 pr-4 text-slate-700">Field</th>
+          <th class="text-left py-2 pr-4 text-slate-700">Type</th>
+          <th class="text-left py-2 text-slate-700">Description</th>
+        </tr>
+        <tr>
+          <td class="py-2 pr-4"><code class="text-sky-600">limit</code></td>
+          <td class="py-2 pr-4 text-slate-500">integer</td>
+          <td class="py-2 text-slate-600">Max results to return, 1-100 (default: 50)</td>
+        </tr>
+      </table>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500"># Response</span>
+{
+  <span class="text-sky-300">"data"</span>: [{
+    <span class="text-sky-300">"id"</span>: <span class="text-green-300">"ping_123"</span>,
+    <span class="text-sky-300">"received_at"</span>: <span class="text-green-300">"2026-02-06T02:05:00Z"</span>
+  }]
+}</pre>
+  </div>
+
+  <h2>Ping Endpoint</h2>
+  <p>
+    Record a ping from your cron job. No API key needed &mdash; the token in the URL is the authentication.
+    Accepts both GET and POST.
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="p-6 border-b border-slate-100">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-blue-500 text-white">
+          GET
+        </span>
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-emerald-600 text-white">
+          POST
+        </span>
+        <span class="font-mono text-sm">/ping/:token</span>
+      </div>
+      <p class="text-slate-600 m-0 mb-4">
+        Record a ping. Returns the monitor name and status. No authentication header needed.
+      </p>
+
+      <h4 class="text-sm font-semibold mt-4 mb-2 text-slate-900">Responses</h4>
+      <table class="text-sm w-full">
+        <tr class="border-b border-slate-100">
+          <th class="text-left py-2 pr-4 text-slate-700">Status</th>
+          <th class="text-left py-2 text-slate-700">Meaning</th>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-emerald-600">200</code></td>
+          <td class="py-2 text-slate-600">Ping recorded successfully</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-red-600">404</code></td>
+          <td class="py-2 text-slate-600">Invalid token</td>
+        </tr>
+        <tr>
+          <td class="py-2 pr-4"><code class="text-amber-600">410</code></td>
+          <td class="py-2 text-slate-600">Monitor is paused/disabled</td>
+        </tr>
+      </table>
+    </div>
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -fsS --retry 3 https://runlater.eu/ping/<span class="text-green-300">pm_your_token_here</span></pre>
+  </div>
+
   <h2>Declarative Sync</h2>
   <p>Push your entire configuration in one call. Perfect for infrastructure-as-code workflows.</p>
 

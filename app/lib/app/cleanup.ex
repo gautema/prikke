@@ -22,6 +22,7 @@ defmodule Prikke.Cleanup do
   alias Prikke.Executions
   alias Prikke.Idempotency
   alias Prikke.Jobs
+  alias Prikke.Monitors
 
   # Advisory lock ID for cleanup (different from scheduler)
   @advisory_lock_id 728_492_848
@@ -69,13 +70,11 @@ defmodule Prikke.Cleanup do
 
     state =
       if should_run_cleanup?(now, state.last_cleanup_date) do
-        case try_acquire_lock() do
-          true ->
-            do_cleanup()
-            release_lock()
+        case run_with_lock() do
+          {:ok, _result} ->
             %{state | last_cleanup_date: today}
 
-          false ->
+          :skipped ->
             # Another node is handling cleanup
             state
         end
@@ -105,15 +104,18 @@ defmodule Prikke.Cleanup do
     hour == @cleanup_hour and last_cleanup_date != today
   end
 
-  defp try_acquire_lock do
-    case Repo.query("SELECT pg_try_advisory_lock($1)", [@advisory_lock_id]) do
-      {:ok, %{rows: [[true]]}} -> true
-      _ -> false
+  defp run_with_lock do
+    Repo.transaction(fn ->
+      case Repo.query("SELECT pg_try_advisory_xact_lock($1)", [@advisory_lock_id]) do
+        {:ok, %{rows: [[true]]}} -> do_cleanup()
+        _ -> Repo.rollback(:skipped)
+      end
+    end)
+    |> case do
+      {:ok, result} -> {:ok, result}
+      {:error, :skipped} -> :skipped
+      {:error, _} -> :skipped
     end
-  end
-
-  defp release_lock do
-    Repo.query("SELECT pg_advisory_unlock($1)", [@advisory_lock_id])
   end
 
   defp do_cleanup do
@@ -121,8 +123,8 @@ defmodule Prikke.Cleanup do
 
     organizations = Accounts.list_all_organizations()
 
-    {total_executions, total_jobs} =
-      Enum.reduce(organizations, {0, 0}, fn org, {exec_acc, job_acc} ->
+    {total_executions, total_jobs, total_pings} =
+      Enum.reduce(organizations, {0, 0, 0}, fn org, {exec_acc, job_acc, ping_acc} ->
         retention_days = get_retention_days(org.tier)
 
         # Clean old executions
@@ -131,21 +133,26 @@ defmodule Prikke.Cleanup do
         # Clean completed one-time jobs
         {jobs_deleted, _} = Jobs.cleanup_completed_once_jobs(org, retention_days)
 
-        {exec_acc + exec_deleted, job_acc + jobs_deleted}
+        # Clean old monitor pings (respects tier retention)
+        {pings_deleted, _} = Monitors.cleanup_old_pings(org, retention_days)
+
+        {exec_acc + exec_deleted, job_acc + jobs_deleted, ping_acc + pings_deleted}
       end)
 
     # Clean expired idempotency keys (24-hour TTL)
     {idempotency_deleted, _} = Idempotency.cleanup_expired_keys()
 
-    if total_executions > 0 or total_jobs > 0 or idempotency_deleted > 0 do
+    pings_deleted = total_pings
+
+    if total_executions > 0 or total_jobs > 0 or idempotency_deleted > 0 or pings_deleted > 0 do
       Logger.info(
-        "[Cleanup] Deleted #{total_executions} executions, #{total_jobs} completed one-time jobs, #{idempotency_deleted} idempotency keys"
+        "[Cleanup] Deleted #{total_executions} executions, #{total_jobs} completed one-time jobs, #{idempotency_deleted} idempotency keys, #{pings_deleted} monitor pings"
       )
     else
       Logger.info("[Cleanup] Nothing to clean up")
     end
 
-    {:ok, %{executions: total_executions, jobs: total_jobs, idempotency_keys: idempotency_deleted}}
+    {:ok, %{executions: total_executions, jobs: total_jobs, idempotency_keys: idempotency_deleted, monitor_pings: pings_deleted}}
   end
 
   defp get_retention_days(tier) do

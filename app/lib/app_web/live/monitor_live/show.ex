@@ -1,0 +1,310 @@
+defmodule PrikkeWeb.MonitorLive.Show do
+  use PrikkeWeb, :live_view
+
+  alias Prikke.Monitors
+
+  @impl true
+  def mount(%{"id" => id}, session, socket) do
+    org = get_organization(socket, session)
+
+    if org do
+      monitor = Monitors.get_monitor!(org, id)
+
+      if connected?(socket) do
+        Monitors.subscribe_monitors(org)
+      end
+
+      pings = Monitors.list_recent_pings(monitor, limit: 20)
+      host = Application.get_env(:app, PrikkeWeb.Endpoint)[:url][:host] || "runlater.eu"
+      ping_url = "https://#{host}/ping/#{monitor.ping_token}"
+
+      {:ok,
+       socket
+       |> assign(:organization, org)
+       |> assign(:monitor, monitor)
+       |> assign(:pings, pings)
+       |> assign(:ping_url, ping_url)
+       |> assign(:page_title, monitor.name)
+       |> assign(:menu_open, false)}
+    else
+      {:ok,
+       socket
+       |> put_flash(:error, "Please select an organization first")
+       |> redirect(to: ~p"/organizations")}
+    end
+  end
+
+  @impl true
+  def handle_info({:monitor_updated, monitor}, socket) do
+    if monitor.id == socket.assigns.monitor.id do
+      pings = Monitors.list_recent_pings(monitor, limit: 20)
+      {:noreply, socket |> assign(:monitor, monitor) |> assign(:pings, pings)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info({:monitor_deleted, monitor}, socket) do
+    if monitor.id == socket.assigns.monitor.id do
+      {:noreply,
+       socket
+       |> put_flash(:info, "Monitor was deleted")
+       |> push_navigate(to: ~p"/monitors")}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info(_, socket), do: {:noreply, socket}
+
+  @impl true
+  def handle_event("toggle_menu", _, socket) do
+    {:noreply, assign(socket, :menu_open, !socket.assigns.menu_open)}
+  end
+
+  def handle_event("close_menu", _, socket) do
+    {:noreply, assign(socket, :menu_open, false)}
+  end
+
+  def handle_event("toggle", _, socket) do
+    org = socket.assigns.organization
+    monitor = socket.assigns.monitor
+    {:ok, updated} = Monitors.toggle_monitor(org, monitor)
+    {:noreply, assign(socket, :monitor, updated)}
+  end
+
+  def handle_event("delete", _, socket) do
+    org = socket.assigns.organization
+    monitor = socket.assigns.monitor
+    {:ok, _} = Monitors.delete_monitor(org, monitor)
+
+    {:noreply,
+     socket
+     |> put_flash(:info, "Monitor deleted")
+     |> push_navigate(to: ~p"/monitors")}
+  end
+
+  defp get_organization(socket, session) do
+    user = socket.assigns.current_scope.user
+    org_id = session["current_organization_id"]
+
+    if org_id do
+      Prikke.Accounts.get_organization_for_user(user, org_id)
+    else
+      case Prikke.Accounts.list_user_organizations(user) do
+        [org | _] -> org
+        [] -> nil
+      end
+    end
+  end
+
+  defp status_color("up"), do: "bg-emerald-100 text-emerald-700"
+  defp status_color("down"), do: "bg-red-100 text-red-700"
+  defp status_color("new"), do: "bg-slate-100 text-slate-600"
+  defp status_color("paused"), do: "bg-amber-100 text-amber-700"
+  defp status_color(_), do: "bg-slate-100 text-slate-600"
+
+  defp status_label("up"), do: "Up"
+  defp status_label("down"), do: "Down"
+  defp status_label("new"), do: "Awaiting first ping"
+  defp status_label("paused"), do: "Paused"
+  defp status_label(_), do: "Unknown"
+
+  defp format_schedule(%{schedule_type: "cron", cron_expression: expr}), do: "Cron: #{expr}"
+  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}) when s < 120, do: "Every #{s} seconds"
+  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}) when s < 7200, do: "Every #{div(s, 60)} minutes"
+  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}) when s < 172_800, do: "Every #{div(s, 3600)} hours"
+  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}), do: "Every #{div(s, 86400)} days"
+  defp format_schedule(_), do: "Unknown"
+
+  defp format_grace(%{grace_period_seconds: 0}), do: "None"
+  defp format_grace(%{grace_period_seconds: s}) when s < 120, do: "#{s} seconds"
+  defp format_grace(%{grace_period_seconds: s}) when s < 7200, do: "#{div(s, 60)} minutes"
+  defp format_grace(%{grace_period_seconds: s}), do: "#{div(s, 3600)} hours"
+
+  @impl true
+  def render(assigns) do
+    ~H"""
+    <Layouts.app flash={@flash} current_scope={@current_scope}>
+      <div class="max-w-4xl mx-auto py-6 sm:py-8 px-4">
+        <div class="mb-4">
+          <.link
+            navigate={~p"/monitors"}
+            class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
+          >
+            <.icon name="hero-chevron-left" class="w-4 h-4" /> Back to Monitors
+          </.link>
+        </div>
+
+        <div class="flex justify-between items-center mb-6">
+          <div class="flex items-center gap-3">
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-900">{@monitor.name}</h1>
+            <span class={["text-xs font-medium px-2 py-0.5 rounded", status_color(@monitor.status)]}>
+              {status_label(@monitor.status)}
+            </span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <div id="monitor-actions-menu" class="relative" phx-hook=".ClickOutside">
+              <button
+                type="button"
+                phx-click="toggle_menu"
+                class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
+              >
+                <.icon name="hero-ellipsis-vertical" class="w-5 h-5" />
+              </button>
+              <%= if @menu_open do %>
+                <div class="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
+                  <.link
+                    navigate={~p"/monitors/#{@monitor.id}/edit"}
+                    class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    Edit
+                  </.link>
+                  <button
+                    type="button"
+                    phx-click="toggle"
+                    class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <%= if @monitor.enabled, do: "Pause", else: "Enable" %>
+                  </button>
+                  <button
+                    type="button"
+                    phx-click="delete"
+                    data-confirm="Are you sure you want to delete this monitor?"
+                    class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    Delete
+                  </button>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+        <%!-- Ping URL card --%>
+        <div class="glass-card rounded-2xl p-6 mb-6">
+          <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-3">Ping URL</h2>
+          <div class="flex items-center gap-2 bg-slate-50 rounded-lg p-3">
+            <code class="flex-1 text-sm text-slate-800 font-mono break-all">{@ping_url}</code>
+            <button
+              type="button"
+              id="copy-ping-url"
+              phx-hook=".CopyToClipboard"
+              data-clipboard-text={@ping_url}
+              class="shrink-0 text-slate-400 hover:text-emerald-600 p-1.5 rounded transition-colors"
+              title="Copy to clipboard"
+            >
+              <.icon name="hero-clipboard-document" class="w-5 h-5" />
+            </button>
+          </div>
+          <div class="mt-3 text-sm text-slate-500">
+            <p class="mb-1">Add this to the end of your cron job:</p>
+            <code class="block bg-slate-800 text-emerald-400 rounded-lg p-3 text-xs font-mono">
+              curl -fsS --retry 3 {@ping_url}
+            </code>
+          </div>
+        </div>
+
+        <%!-- Details --%>
+        <div class="glass-card rounded-2xl p-6 mb-6">
+          <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Details</h2>
+          <dl class="grid grid-cols-2 gap-4">
+            <div>
+              <dt class="text-sm text-slate-500">Schedule</dt>
+              <dd class="text-sm font-medium text-slate-900 mt-0.5">{format_schedule(@monitor)}</dd>
+            </div>
+            <div>
+              <dt class="text-sm text-slate-500">Grace Period</dt>
+              <dd class="text-sm font-medium text-slate-900 mt-0.5">{format_grace(@monitor)}</dd>
+            </div>
+            <div>
+              <dt class="text-sm text-slate-500">Last Ping</dt>
+              <dd class="text-sm font-medium text-slate-900 mt-0.5">
+                <%= if @monitor.last_ping_at do %>
+                  <.local_time id="monitor-last-ping" datetime={@monitor.last_ping_at} />
+                <% else %>
+                  Never
+                <% end %>
+              </dd>
+            </div>
+            <div>
+              <dt class="text-sm text-slate-500">Next Expected</dt>
+              <dd class="text-sm font-medium text-slate-900 mt-0.5">
+                <%= if @monitor.next_expected_at do %>
+                  <.local_time id="monitor-next-expected" datetime={@monitor.next_expected_at} />
+                <% else %>
+                  Awaiting first ping
+                <% end %>
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <%!-- Recent Pings --%>
+        <div class="glass-card rounded-2xl p-6">
+          <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Recent Pings</h2>
+          <%= if @pings == [] do %>
+            <p class="text-sm text-slate-400 text-center py-4">No pings received yet</p>
+          <% else %>
+            <div class="divide-y divide-slate-100">
+              <%= for ping <- @pings do %>
+                <div class="py-2 flex items-center gap-3">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                  <span class="text-sm text-slate-700">
+                    <.local_time id={"ping-#{ping.id}"} datetime={ping.received_at} />
+                  </span>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <script :type={Phoenix.LiveView.ColocatedHook} name=".ClickOutside">
+        export default {
+          mounted() {
+            this.handler = (e) => {
+              if (!this.el.contains(e.target)) {
+                this.pushEvent("close_menu", {})
+              }
+            }
+            document.addEventListener("click", this.handler)
+          },
+          destroyed() {
+            document.removeEventListener("click", this.handler)
+          }
+        }
+      </script>
+
+      <script :type={Phoenix.LiveView.ColocatedHook} name=".CopyToClipboard">
+        export default {
+          mounted() {
+            this.el.addEventListener("click", () => {
+              const text = this.el.getAttribute("data-clipboard-text")
+              if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => this.flash())
+              } else {
+                const ta = document.createElement("textarea")
+                ta.value = text
+                ta.style.position = "fixed"
+                ta.style.left = "-9999px"
+                document.body.appendChild(ta)
+                ta.select()
+                document.execCommand("copy")
+                document.body.removeChild(ta)
+                this.flash()
+              }
+            })
+          },
+          flash() {
+            const icon = this.el.querySelector("svg")
+            if (icon) icon.style.color = "#10b981"
+            setTimeout(() => { if (icon) icon.style.color = "" }, 1500)
+          }
+        }
+      </script>
+    </Layouts.app>
+    """
+  end
+end

@@ -4,6 +4,7 @@ defmodule PrikkeWeb.DashboardLive do
   alias Prikke.Accounts
   alias Prikke.Jobs
   alias Prikke.Executions
+  alias Prikke.Monitors
   alias Prikke.Cron
 
   @impl true
@@ -22,10 +23,11 @@ defmodule PrikkeWeb.DashboardLive do
 
     current_org = current_org || List.first(organizations)
 
-    # Subscribe to job and execution updates if we have an organization
+    # Subscribe to job, execution, and monitor updates if we have an organization
     if current_org && connected?(socket) do
       Jobs.subscribe_jobs(current_org)
       Executions.subscribe_organization_executions(current_org.id)
+      Monitors.subscribe_monitors(current_org)
     end
 
     recent_jobs = load_recent_jobs(current_org)
@@ -42,6 +44,7 @@ defmodule PrikkeWeb.DashboardLive do
       |> assign(:recent_jobs, recent_jobs)
       |> assign(:latest_statuses, latest_statuses)
       |> assign(:recent_executions, load_recent_executions(current_org))
+      |> assign(:monitor_stats, load_monitor_stats(current_org))
 
     {:ok, socket}
   end
@@ -67,6 +70,21 @@ defmodule PrikkeWeb.DashboardLive do
     {:noreply, reload_data(socket, org)}
   end
 
+  def handle_info({:monitor_updated, _monitor}, socket) do
+    org = socket.assigns.current_organization
+    {:noreply, assign(socket, :monitor_stats, load_monitor_stats(org))}
+  end
+
+  def handle_info({:monitor_created, _monitor}, socket) do
+    org = socket.assigns.current_organization
+    {:noreply, assign(socket, :monitor_stats, load_monitor_stats(org))}
+  end
+
+  def handle_info({:monitor_deleted, _monitor}, socket) do
+    org = socket.assigns.current_organization
+    {:noreply, assign(socket, :monitor_stats, load_monitor_stats(org))}
+  end
+
   defp reload_data(socket, org) do
     recent_jobs = load_recent_jobs(org)
     job_ids = Enum.map(recent_jobs, & &1.id)
@@ -77,6 +95,7 @@ defmodule PrikkeWeb.DashboardLive do
     |> assign(:recent_jobs, recent_jobs)
     |> assign(:latest_statuses, latest_statuses)
     |> assign(:recent_executions, load_recent_executions(org))
+    |> assign(:monitor_stats, load_monitor_stats(org))
   end
 
   @impl true
@@ -129,6 +148,36 @@ defmodule PrikkeWeb.DashboardLive do
             <div class="text-3xl font-bold text-emerald-600">{@stats.success_rate}</div>
           </div>
         </div>
+
+        <%= if @monitor_stats.total > 0 do %>
+          <!-- Monitors Summary -->
+          <.link
+            navigate={~p"/monitors"}
+            class="block glass-card rounded-2xl p-4 mb-4 hover:border-slate-300 transition-colors"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <.icon name="hero-heart" class="w-5 h-5 text-slate-400" />
+                <span class="text-sm font-medium text-slate-700">Monitors</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <%= if @monitor_stats.down > 0 do %>
+                  <span class="flex items-center gap-1.5 text-sm font-medium text-red-600">
+                    <span class="w-2 h-2 rounded-full bg-red-500" />
+                    {@monitor_stats.down} down
+                  </span>
+                <% end %>
+                <span class="flex items-center gap-1.5 text-sm text-slate-500">
+                  <span class={[
+                    "w-2 h-2 rounded-full",
+                    if(@monitor_stats.down > 0, do: "bg-slate-300", else: "bg-emerald-500")
+                  ]} />
+                  {@monitor_stats.total} total
+                </span>
+              </div>
+            </div>
+          </.link>
+        <% end %>
         
     <!-- Monthly Usage -->
         <div class="glass-card rounded-2xl p-4 mb-8">
@@ -365,6 +414,15 @@ defmodule PrikkeWeb.DashboardLive do
       percent >= 80 -> "bg-amber-500"
       true -> "bg-emerald-600"
     end
+  end
+
+  defp load_monitor_stats(nil), do: %{total: 0, down: 0}
+
+  defp load_monitor_stats(organization) do
+    %{
+      total: Monitors.count_monitors(organization),
+      down: Monitors.count_down_monitors(organization)
+    }
   end
 
   defp load_recent_jobs(nil), do: []

@@ -134,6 +134,28 @@ Last updated: 2026-02-06
   - Green "Job Recovered" email template
   - Slack/Discord/generic webhook payloads with `job.recovered` event
 
+### Phase 7b: Cron Monitoring (Complete)
+- [x] **Heartbeat / Dead Man's Switch monitoring** (Cronitor/Dead Man's Snitch style)
+  - Monitors expect periodic HTTP pings from external cron jobs
+  - Alert if ping doesn't arrive within expected window + grace period
+  - Recovery notifications when pings resume after downtime
+- [x] Monitor schema with ping tokens (`pm_` prefix), schedule types (cron/interval)
+- [x] MonitorPing schema for ping history
+- [x] Monitors context (CRUD, tier limits: Free 3, Pro unlimited)
+- [x] Public ping endpoint (`GET/POST /ping/:token`) — no auth, token IS the auth
+- [x] MonitorChecker GenServer — 60s tick, advisory lock for clustering
+  - Detects overdue monitors (expected + grace < now)
+  - Marks down, sends failure notifications
+- [x] Monitor notifications (email + webhook for down/recovery)
+  - Reuses org's existing notification channels
+- [x] LiveView pages (index, show, new, edit)
+  - Status dots (green=up, red=down, grey=new, yellow=paused)
+  - Ping URL with copy button and cURL example
+  - Recent pings history
+- [x] Dashboard monitors summary card (total count, down count)
+- [x] Monitor ping cleanup (30-day retention via Cleanup GenServer)
+- [x] 44 tests covering context, checker, controller, LiveView
+
 ### Phase 8: Billing (MVP Approach)
 - [x] Manual upgrade flow (user clicks upgrade → tier changes → "sales will contact you" message)
 - [ ] Usage tracking (monthly executions) - enforced in Phase 4
@@ -145,7 +167,7 @@ Last updated: 2026-02-06
   - Pro upgrade notification
   - Works in dev (Swoosh mailbox) and production (Mailjet)
 - [x] **Koyeb built-in monitoring** - CPU, memory, request metrics, logs
-- [ ] Application error tracking (Sentry or AppSignal) - using Koyeb logs for now
+- [x] Application error tracking (Elixir ErrorTracker)
 - [ ] Performance monitoring (response times, queue depth)
 - [ ] Infrastructure alerts (high CPU, memory, disk)
 - [x] **Public status page for Prikke itself** (`/status`)
@@ -155,7 +177,7 @@ Last updated: 2026-02-06
   - Automatic incident creation when components go down
   - Automatic incident resolution when components recover
   - Shows overall status, component health, active & past incidents
-- [ ] Uptime monitoring (external ping service)
+- [x] Uptime monitoring (status page + health checks sufficient)
 - [ ] Alert channels (email, Slack/Discord webhook)
 - [ ] Dashboard for system health metrics
 
@@ -166,6 +188,7 @@ Last updated: 2026-02-06
 | | Free | Pro |
 |---|------|-----|
 | **Jobs** | 5 | Unlimited |
+| **Monitors** | 3 | Unlimited |
 | **Requests** | 5k/mo | 250k/mo |
 | **Min interval** | Hourly | 1 minute |
 | **History** | 7 days | 30 days |
@@ -180,20 +203,22 @@ Last updated: 2026-02-06
 
 ---
 
+## Planned
+
+1. **Per-job notification overrides** - Override org-level notification settings on individual jobs
+2. **Rate limit handling** - Auto-retry on 429 responses with backoff from `Retry-After` header
+3. **Bulk push API** - Queue multiple jobs in a single API call (transaction-safe)
+
 ## Potential Next Steps
 
-### Zeplo Feature Parity (Priority)
+### Zeplo Feature Parity
 1. **On-demand queues** - Simple API for immediate job execution (`POST /api/queues/:name` with pass-through body)
 2. **URL proxy API** - Prefix any URL to queue it (`POST /q/https://api.example.com/webhook`)
-3. **Rate limit handling** - Auto-retry on 429 responses with backoff from `Retry-After` header
-4. **Bulk push** - Queue multiple jobs in a single API call (transaction-safe)
 
 ### Post-MVP Enhancements
-1. **Error tracking** - Add Sentry or AppSignal for application monitoring
-2. **External uptime monitoring** - Better Stack or similar for external pings
-3. **Lemon Squeezy integration** - When ready to charge, replace manual upgrade
-4. **Customer-facing status pages** - Let users create status pages for their own services
-5. **Workflows** - Multi-step jobs with dependencies
+1. **Lemon Squeezy integration** - When ready to charge, replace manual upgrade
+2. **Customer-facing status pages** - Let users create status pages for their own services
+3. **Workflows** - Multi-step jobs with dependencies
 
 ---
 
@@ -224,8 +249,13 @@ app/lib/app/
 ├── worker.ex                  # Job executor (HTTP requests)
 ├── worker_pool.ex             # Scales workers based on queue
 ├── worker_supervisor.ex       # DynamicSupervisor for workers
+├── monitors/
+│   ├── monitor.ex             # Monitor schema (heartbeat monitoring)
+│   └── monitor_ping.ex        # MonitorPing schema
+├── monitors.ex                # Monitors context (CRUD, pings, overdue)
+├── monitor_checker.ex         # Overdue monitor detection GenServer
 ├── cleanup.ex                 # Daily cleanup of old data
-├── notifications.ex           # Email and webhook failure alerts
+├── notifications.ex           # Email and webhook alerts (jobs + monitors)
 ├── status_monitor.ex          # Health check GenServer
 ├── analytics/
 │   └── pageview.ex            # Pageview tracking schema
@@ -253,10 +283,16 @@ app/lib/app_web/
 │   │   ├── 403.html.heex
 │   │   ├── 404.html.heex
 │   │   └── 500.html.heex
+│   ├── ping_controller.ex     # Public ping endpoint (/ping/:token)
 │   ├── user_*.ex               # Auth controllers
 │   └── organization_controller.ex
 ├── live/
 │   ├── dashboard_live.ex
+│   ├── monitor_live/
+│   │   ├── index.ex
+│   │   ├── show.ex
+│   │   ├── new.ex
+│   │   └── edit.ex
 │   └── job_live/
 │       ├── index.ex
 │       ├── show.ex
@@ -310,6 +346,7 @@ Environment variables:
 - Register: https://runlater.eu/users/register
 - Dashboard: https://runlater.eu/dashboard
 - Jobs: https://runlater.eu/jobs
+- Monitors: https://runlater.eu/monitors
 - API Docs: https://runlater.eu/docs/api
 - Swagger UI: https://runlater.eu/api/v1/docs
 
@@ -317,14 +354,15 @@ Environment variables:
 
 ## Test Coverage
 
-- **451 tests passing**
+- **495 tests passing**
 - Accounts: user auth, organizations, memberships, invites, API keys
 - Jobs: CRUD, validations, cron parsing, tier limits
 - Executions: creation, claiming, completion, stats
-- Notifications: email and webhook delivery
+- Notifications: email and webhook delivery (jobs + monitors)
 - Status: health checks, incidents, status page
+- Monitors: CRUD, tier limits, ping handling, overdue detection, checker
 - API Auth Plug: bearer token validation
-- LiveView: basic rendering tests
+- LiveView: basic rendering tests (jobs + monitors)
 
 ---
 
@@ -340,8 +378,7 @@ Environment variables:
 
 ## Known Issues / TODOs
 
-1. **No error tracking** - Sentry/AppSignal not configured yet
-2. **No external uptime monitoring** - Should add Better Stack or similar
+_None currently — error tracking (Elixir ErrorTracker) and uptime monitoring (status page) are in place._
 
 ---
 

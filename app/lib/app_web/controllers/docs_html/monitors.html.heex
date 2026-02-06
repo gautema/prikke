@@ -1,0 +1,363 @@
+<.docs_layout current_scope={@current_scope}>
+  <h1>Cron Monitoring</h1>
+  <p class="text-xl text-slate-600 mb-10">
+    Dead man's switch for your cron jobs. Get alerted when they stop running.
+  </p>
+
+  <h2>How It Works</h2>
+  <p>
+    Create a monitor and add a ping to the end of your cron job. Runlater expects
+    periodic pings and alerts you if they stop arriving within the expected window.
+  </p>
+  <ol>
+    <li>Create a monitor with an expected schedule (interval or cron)</li>
+    <li>Add a ping to your cron job (one cURL command)</li>
+    <li>Runlater tracks each ping and calculates when the next one is due</li>
+    <li>If a ping is late (beyond the grace period), you get an alert</li>
+    <li>When pings resume after downtime, you get a recovery notification</li>
+  </ol>
+
+  <h2>Adding a Ping</h2>
+  <p>
+    Each monitor has a unique ping URL. Add it to the end of your cron job:
+  </p>
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      Crontab
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500"># Example: nightly backup with ping</span>
+<span class="text-orange-300">0 2 * * *</span> /usr/local/bin/backup.sh <span class="text-purple-300">&&</span> curl -fsS --retry 3 <span class="text-green-300">https://runlater.eu/ping/pm_your_token_here</span></pre>
+  </div>
+
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      Docker / Kubernetes CronJob
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500"># Run your task, then ping on success</span>
+<span class="text-sky-300">command</span>: [<span class="text-green-300">"/bin/sh"</span>, <span class="text-green-300">"-c"</span>, <span class="text-green-300">"python manage.py clearsessions && curl -fsS https://runlater.eu/ping/pm_xxx"</span>]</pre>
+  </div>
+
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      GitHub Actions
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-sky-300">steps</span>:
+  - <span class="text-sky-300">name</span>: <span class="text-green-300">Run database backup</span>
+    <span class="text-sky-300">run</span>: <span class="text-green-300">./scripts/backup.sh</span>
+
+  - <span class="text-sky-300">name</span>: <span class="text-green-300">Ping Runlater</span>
+    <span class="text-sky-300">run</span>: <span class="text-green-300">curl -fsS --retry 3 https://runlater.eu/ping/pm_xxx</span></pre>
+  </div>
+
+  <p>
+    The <code class="bg-slate-100 px-2 py-1 rounded text-sm">-fsS</code> flags make cURL fail silently on errors but show server errors.
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">--retry 3</code> retries transient network failures.
+  </p>
+
+  <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded-r-lg my-6">
+    <strong class="text-emerald-800">Tip:</strong>
+    <span class="text-emerald-700">
+      Place the ping <strong>after</strong> your main command using <code>&&</code>. This way, the ping only fires if the job succeeded.
+    </span>
+  </div>
+
+  <h2>Schedule Types</h2>
+  <h3>Fixed Interval</h3>
+  <p>
+    Expect a ping every N seconds. After each ping, the next expected time is
+    calculated as: <code class="bg-slate-100 px-2 py-1 rounded text-sm">last_ping + interval</code>.
+  </p>
+  <p>Available presets: 1 min, 5 min, 15 min, 30 min, 1 hour, 6 hours, 12 hours, 24 hours, 7 days.</p>
+
+  <h3>Cron Expression</h3>
+  <p>
+    Use a cron expression to match your job's schedule. Runlater calculates the
+    next expected ping time from the cron expression. See the
+    <a href="/docs/cron" class="text-emerald-600 hover:underline">cron syntax docs</a>
+    for expression reference.
+  </p>
+
+  <h2>Grace Period</h2>
+  <p>
+    The grace period is extra time allowed after the expected ping time before
+    an alert is triggered. This accounts for jobs that take varying amounts of
+    time to complete.
+  </p>
+  <p>Available options: no grace period, 1 min, 5 min, 15 min, 30 min, 1 hour.</p>
+
+  <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg my-6">
+    <strong class="text-amber-800">Example:</strong>
+    <span class="text-amber-700">
+      A backup job runs at 2:00 AM and usually takes 5-20 minutes. Set interval to "24 hours" and grace period to "30 minutes". If the ping doesn't arrive by 2:30 AM, you get an alert.
+    </span>
+  </div>
+
+  <h2>Monitor Statuses</h2>
+  <div class="overflow-x-auto my-6">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-white/50">
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Status</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600">
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4">
+            <span class="inline-flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+              <strong class="text-slate-700">New</strong>
+            </span>
+          </td>
+          <td class="py-3 px-4">Created but no ping received yet. Waiting for first ping.</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4">
+            <span class="inline-flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <strong class="text-emerald-700">Up</strong>
+            </span>
+          </td>
+          <td class="py-3 px-4">Pings arriving on schedule. Everything is healthy.</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4">
+            <span class="inline-flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-red-500"></span>
+              <strong class="text-red-700">Down</strong>
+            </span>
+          </td>
+          <td class="py-3 px-4">Expected ping not received within grace period. Alert sent.</td>
+        </tr>
+        <tr>
+          <td class="py-3 px-4">
+            <span class="inline-flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+              <strong class="text-amber-700">Paused</strong>
+            </span>
+          </td>
+          <td class="py-3 px-4">Monitoring disabled. No alerts will be sent.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Notifications</h2>
+  <p>
+    Monitor alerts use your organization's notification settings (email and webhook).
+    Configure them in
+    <a href="/organizations/notifications" class="text-emerald-600 hover:underline">Organization Settings &rarr; Notifications</a>.
+  </p>
+  <ul>
+    <li><strong>Down alert:</strong> Sent when a monitor misses its expected ping (respects <code class="bg-slate-100 px-2 py-1 rounded text-sm">notify_on_failure</code> setting)</li>
+    <li><strong>Recovery alert:</strong> Sent when pings resume after downtime (respects <code class="bg-slate-100 px-2 py-1 rounded text-sm">notify_on_recovery</code> setting)</li>
+  </ul>
+
+  <h3>Notification Webhook Payloads</h3>
+  <pre
+    phx-no-curly-interpolation
+    class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto"
+  ><span class="text-slate-500">// Monitor down notification</span>
+{
+  <span class="text-sky-300">"event"</span>: <span class="text-green-300">"monitor.down"</span>,
+  <span class="text-sky-300">"monitor"</span>: {
+    <span class="text-sky-300">"id"</span>: <span class="text-green-300">"01JJXYZ..."</span>,
+    <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Nightly Backup"</span>,
+    <span class="text-sky-300">"status"</span>: <span class="text-green-300">"down"</span>,
+    <span class="text-sky-300">"last_ping_at"</span>: <span class="text-green-300">"2025-02-06T02:05:00Z"</span>
+  }
+}
+
+<span class="text-slate-500">// Monitor recovery notification</span>
+{
+  <span class="text-sky-300">"event"</span>: <span class="text-green-300">"monitor.recovered"</span>,
+  <span class="text-sky-300">"monitor"</span>: {
+    <span class="text-sky-300">"id"</span>: <span class="text-green-300">"01JJXYZ..."</span>,
+    <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Nightly Backup"</span>,
+    <span class="text-sky-300">"status"</span>: <span class="text-green-300">"up"</span>,
+    <span class="text-sky-300">"last_ping_at"</span>: <span class="text-green-300">"2025-02-07T02:03:00Z"</span>
+  }
+}</pre>
+
+  <p>Slack and Discord webhook URLs are auto-detected and formatted with appropriate rich messages.</p>
+
+  <h2>Ping Endpoint</h2>
+  <p>
+    The ping endpoint accepts both GET and POST requests. No authentication needed &mdash;
+    the token in the URL is the authentication.
+  </p>
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      cURL
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500"># GET request</span>
+curl <span class="text-green-300">https://runlater.eu/ping/pm_your_token_here</span>
+
+<span class="text-slate-500"># POST request</span>
+curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">https://runlater.eu/ping/pm_your_token_here</span></pre>
+  </div>
+
+  <h3>Responses</h3>
+  <div class="overflow-x-auto my-6">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-white/50">
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Status</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Body</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Meaning</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600">
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-emerald-600">200</code></td>
+          <td class="py-3 px-4" phx-no-curly-interpolation><code class="text-sm">{"status": "ok", "monitor": "..."}</code></td>
+          <td class="py-3 px-4">Ping recorded successfully</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-red-600">404</code></td>
+          <td class="py-3 px-4" phx-no-curly-interpolation><code class="text-sm">{"error": "Monitor not found"}</code></td>
+          <td class="py-3 px-4">Invalid token</td>
+        </tr>
+        <tr>
+          <td class="py-3 px-4"><code class="text-amber-600">410</code></td>
+          <td class="py-3 px-4" phx-no-curly-interpolation><code class="text-sm">{"error": "Monitor is disabled"}</code></td>
+          <td class="py-3 px-4">Monitor is paused/disabled</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Monitors API</h2>
+  <p>
+    Manage monitors programmatically via the REST API. All endpoints require an API key
+    passed as a Bearer token. See the
+    <a href="/docs/api" class="text-emerald-600 hover:underline">API Reference</a>
+    for authentication details.
+  </p>
+
+  <h3>List Monitors</h3>
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      cURL
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl <span class="text-green-300">https://runlater.eu/api/v1/monitors</span> \
+  -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span></pre>
+  </div>
+
+  <h3>Create Monitor</h3>
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      cURL
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">https://runlater.eu/api/v1/monitors</span> \
+  -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span> \
+  -H <span class="text-green-300">"Content-Type: application/json"</span> \
+  -d '{
+    "name": "Nightly Backup",
+    "schedule_type": "interval",
+    "interval_seconds": 86400,
+    "grace_period_seconds": 1800
+  }'</pre>
+  </div>
+
+  <h3>Get Monitor</h3>
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      cURL
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl <span class="text-green-300">https://runlater.eu/api/v1/monitors/:id</span> \
+  -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span></pre>
+  </div>
+
+  <h3>Update Monitor</h3>
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      cURL
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X <span class="text-purple-300">PUT</span> <span class="text-green-300">https://runlater.eu/api/v1/monitors/:id</span> \
+  -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span> \
+  -H <span class="text-green-300">"Content-Type: application/json"</span> \
+  -d '{
+    "name": "Updated Name",
+    "grace_period_seconds": 3600
+  }'</pre>
+  </div>
+
+  <h3>Delete Monitor</h3>
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      cURL
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X <span class="text-purple-300">DELETE</span> <span class="text-green-300">https://runlater.eu/api/v1/monitors/:id</span> \
+  -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span></pre>
+  </div>
+
+  <h3>List Pings</h3>
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      cURL
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl <span class="text-green-300">https://runlater.eu/api/v1/monitors/:id/pings?limit=20</span> \
+  -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span></pre>
+  </div>
+
+  <p>
+    For the full API specification including request/response schemas, visit the
+    <a href="/api/v1/docs" class="text-emerald-600 hover:underline">interactive API docs</a>.
+  </p>
+
+  <h2>Tier Limits</h2>
+  <div class="overflow-x-auto my-6">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-white/50">
+          <th class="text-left py-3 px-4 font-semibold text-slate-700"></th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Free</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Pro</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600">
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4 font-medium text-slate-700">Monitors</td>
+          <td class="py-3 px-4">3</td>
+          <td class="py-3 px-4">Unlimited</td>
+        </tr>
+        <tr>
+          <td class="py-3 px-4 font-medium text-slate-700">Ping history</td>
+          <td class="py-3 px-4">7 days</td>
+          <td class="py-3 px-4">30 days</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</.docs_layout>

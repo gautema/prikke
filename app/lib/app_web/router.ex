@@ -31,6 +31,7 @@ defmodule PrikkeWeb.Router do
     get "/docs/api", DocsController, :api
     get "/docs/cron", DocsController, :cron
     get "/docs/webhooks", DocsController, :webhooks
+    get "/docs/monitors", DocsController, :monitors
     get "/use-cases", DocsController, :use_cases
 
     # Public status page
@@ -49,6 +50,14 @@ defmodule PrikkeWeb.Router do
     pipe_through :api
 
     get "/", HealthController, :check
+  end
+
+  # Monitor ping endpoint (public, token is auth)
+  scope "/ping", PrikkeWeb do
+    pipe_through :api
+
+    get "/:token", PingController, :ping
+    post "/:token", PingController, :ping
   end
 
   # API routes - authenticated via API keys
@@ -74,6 +83,11 @@ defmodule PrikkeWeb.Router do
       # Nested routes
       get "/executions", JobController, :executions
       post "/trigger", JobController, :trigger
+    end
+
+    # Monitors CRUD
+    resources "/monitors", MonitorController, except: [:new, :edit] do
+      get "/pings", MonitorController, :pings
     end
 
     # On-demand queue - simple API for immediate execution
@@ -124,6 +138,11 @@ defmodule PrikkeWeb.Router do
       live "/jobs/:job_id/executions/:id", JobLive.ExecutionShow, :show
 
       live "/queue", QueueLive
+
+      live "/monitors", MonitorLive.Index, :index
+      live "/monitors/new", MonitorLive.New, :new
+      live "/monitors/:id", MonitorLive.Show, :show
+      live "/monitors/:id/edit", MonitorLive.Edit, :edit
     end
 
     get "/users/settings", UserSettingsController, :edit

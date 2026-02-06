@@ -27,7 +27,7 @@ defmodule PrikkeWeb.LandingPageTest do
       assert html =~ "Cron jobs"
       assert html =~ "Deferred tasks"
       assert html =~ "Automatic retries"
-      assert html =~ "Webhook delivery"
+      assert html =~ "Cron monitoring"
 
       # Check fire and forget section
       assert html =~ "Fire and forget"

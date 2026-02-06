@@ -30,6 +30,10 @@ defmodule PrikkeWeb.DocsController do
     render(conn, :webhooks, page_title: "Webhooks")
   end
 
+  def monitors(conn, _params) do
+    render(conn, :monitors, page_title: "Cron Monitoring")
+  end
+
   def use_cases(conn, _params) do
     render(conn, :use_cases, page_title: "Use Cases")
   end

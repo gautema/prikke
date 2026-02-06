@@ -4,6 +4,7 @@ defmodule PrikkeWeb.SuperadminLive do
   alias Prikke.Accounts
   alias Prikke.Jobs
   alias Prikke.Executions
+  alias Prikke.Monitors
   alias Prikke.Analytics
   alias Prikke.Audit
 
@@ -64,6 +65,12 @@ defmodule PrikkeWeb.SuperadminLive do
     # Monthly executions per org
     org_monthly_executions = Executions.list_organization_monthly_executions(limit: 20)
 
+    # Monitor stats
+    monitor_stats = %{
+      total: Monitors.count_all_monitors(),
+      down: Monitors.count_all_down_monitors()
+    }
+
     # Recent audit logs
     audit_logs = Audit.list_all_logs(limit: 20)
 
@@ -79,6 +86,7 @@ defmodule PrikkeWeb.SuperadminLive do
     |> assign(:recent_executions, recent_executions)
     |> assign(:pro_count, pro_count)
     |> assign(:execution_trend, execution_trend)
+    |> assign(:monitor_stats, monitor_stats)
     |> assign(:audit_logs, audit_logs)
   end
 
@@ -108,7 +116,7 @@ defmodule PrikkeWeb.SuperadminLive do
       </div>
       
     <!-- Platform Stats -->
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
         <.stat_card
           title="Total Users"
           value={@platform_stats.total_users}
@@ -123,6 +131,12 @@ defmodule PrikkeWeb.SuperadminLive do
           title="Total Jobs"
           value={@platform_stats.total_jobs}
           subtitle={"#{@platform_stats.enabled_jobs} enabled"}
+        />
+        <.stat_card
+          title="Monitors"
+          value={@monitor_stats.total}
+          subtitle={"#{@monitor_stats.down} down"}
+          color={if @monitor_stats.down > 0, do: "text-red-600", else: "text-slate-900"}
         />
         <.stat_card
           title="Success Rate (7d)"
