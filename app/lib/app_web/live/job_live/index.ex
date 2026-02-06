@@ -17,13 +17,15 @@ defmodule PrikkeWeb.JobLive.Index do
       jobs = Jobs.list_jobs(org)
       job_ids = Enum.map(jobs, & &1.id)
       latest_statuses = Executions.get_latest_statuses(job_ids)
+      job_run_histories = Executions.get_recent_statuses_for_jobs(job_ids, 20)
 
       {:ok,
        socket
        |> assign(:organization, org)
        |> assign(:page_title, "Jobs")
        |> assign(:jobs, jobs)
-       |> assign(:latest_statuses, latest_statuses)}
+       |> assign(:latest_statuses, latest_statuses)
+       |> assign(:job_run_histories, job_run_histories)}
     else
       {:ok,
        socket
@@ -58,20 +60,16 @@ defmodule PrikkeWeb.JobLive.Index do
      |> update(:latest_statuses, fn statuses -> Map.delete(statuses, job.id) end)}
   end
 
-  def handle_info({:execution_updated, execution}, socket) do
-    # Update the status for this job
-    job_id = execution.job_id
-
-    {:noreply,
-     socket
-     |> update(:latest_statuses, fn statuses ->
-       Map.put(statuses, job_id, %{status: execution.status, attempt: execution.attempt})
-     end)}
+  def handle_info({:execution_updated, _execution}, socket) do
+    {:noreply, refresh_latest_statuses(socket)}
   end
 
   defp refresh_latest_statuses(socket) do
     job_ids = Enum.map(socket.assigns.jobs, & &1.id)
-    assign(socket, :latest_statuses, Executions.get_latest_statuses(job_ids))
+
+    socket
+    |> assign(:latest_statuses, Executions.get_latest_statuses(job_ids))
+    |> assign(:job_run_histories, Executions.get_recent_statuses_for_jobs(job_ids, 20))
   end
 
   @impl true
@@ -176,6 +174,45 @@ defmodule PrikkeWeb.JobLive.Index do
   defp status_dot_title("pending"), do: "Pending execution"
   defp status_dot_title("missed"), do: "Last run: Missed"
   defp status_dot_title(_), do: "Unknown status"
+
+  defp run_history_line(%{statuses: []} = assigns) do
+    ~H"""
+    <div class="flex items-center gap-0.5 mt-2 pl-5">
+      <span class="text-xs text-slate-300">No runs yet</span>
+    </div>
+    """
+  end
+
+  defp run_history_line(assigns) do
+    assigns = assign(assigns, :reversed, Enum.reverse(assigns.statuses))
+    total = length(assigns.statuses)
+    success = Enum.count(assigns.statuses, &(&1 == "success"))
+    rate = if total > 0, do: round(success / total * 100), else: 0
+    assigns = assign(assigns, :rate, rate)
+    assigns = assign(assigns, :total, total)
+
+    ~H"""
+    <div class="flex items-center gap-0.5 mt-2 pl-5">
+      <div class="flex items-center gap-px flex-1">
+        <%= for status <- @reversed do %>
+          <div
+            class={["h-5 flex-1 first:rounded-l-sm last:rounded-r-sm", run_status_color(status)]}
+            title={status}
+          />
+        <% end %>
+      </div>
+      <span class="text-xs text-slate-400 ml-2 shrink-0 tabular-nums w-16 text-right">
+        {@rate}% of {@total}
+      </span>
+    </div>
+    """
+  end
+
+  defp run_status_color("success"), do: "bg-emerald-500"
+  defp run_status_color("failed"), do: "bg-red-500"
+  defp run_status_color("timeout"), do: "bg-amber-500"
+  defp run_status_color("missed"), do: "bg-orange-400"
+  defp run_status_color(_), do: "bg-slate-200"
 
   @impl true
   def render(assigns) do
@@ -298,6 +335,7 @@ defmodule PrikkeWeb.JobLive.Index do
                   </button>
                 </div>
               </div>
+              <.run_history_line statuses={Map.get(@job_run_histories, job.id, [])} />
             </div>
           <% end %>
         </div>

@@ -13,12 +13,16 @@ defmodule PrikkeWeb.MonitorLive.Index do
       end
 
       monitors = Monitors.list_monitors(org)
+      status_days = if org.tier == "pro", do: 30, else: 7
+      daily_status = Monitors.get_daily_status(monitors, status_days)
 
       {:ok,
        socket
        |> assign(:organization, org)
        |> assign(:page_title, "Monitors")
-       |> assign(:monitors, monitors)}
+       |> assign(:monitors, monitors)
+       |> assign(:status_days, status_days)
+       |> assign(:daily_status, daily_status)}
     else
       {:ok,
        socket
@@ -29,21 +33,33 @@ defmodule PrikkeWeb.MonitorLive.Index do
 
   @impl true
   def handle_info({:monitor_created, monitor}, socket) do
-    {:noreply, update(socket, :monitors, fn monitors -> [monitor | monitors] end)}
+    monitors = [monitor | socket.assigns.monitors]
+    daily_status = Monitors.get_daily_status(monitors, socket.assigns.status_days)
+
+    {:noreply,
+     socket
+     |> assign(:monitors, monitors)
+     |> assign(:daily_status, daily_status)}
   end
 
   def handle_info({:monitor_updated, monitor}, socket) do
+    monitors = Enum.map(socket.assigns.monitors, fn m -> if m.id == monitor.id, do: monitor, else: m end)
+    daily_status = Monitors.get_daily_status(monitors, socket.assigns.status_days)
+
     {:noreply,
-     update(socket, :monitors, fn monitors ->
-       Enum.map(monitors, fn m -> if m.id == monitor.id, do: monitor, else: m end)
-     end)}
+     socket
+     |> assign(:monitors, monitors)
+     |> assign(:daily_status, daily_status)}
   end
 
   def handle_info({:monitor_deleted, monitor}, socket) do
+    monitors = Enum.reject(socket.assigns.monitors, fn m -> m.id == monitor.id end)
+    daily_status = Monitors.get_daily_status(monitors, socket.assigns.status_days)
+
     {:noreply,
-     update(socket, :monitors, fn monitors ->
-       Enum.reject(monitors, fn m -> m.id == monitor.id end)
-     end)}
+     socket
+     |> assign(:monitors, monitors)
+     |> assign(:daily_status, daily_status)}
   end
 
   def handle_info(_, socket), do: {:noreply, socket}
@@ -74,6 +90,58 @@ defmodule PrikkeWeb.MonitorLive.Index do
       end
     end
   end
+
+  defp uptime_line(%{days: []} = assigns) do
+    ~H"""
+    <div class="flex items-center gap-0.5 pl-5">
+      <span class="text-xs text-slate-300">No data yet</span>
+    </div>
+    """
+  end
+
+  defp uptime_line(assigns) do
+    up_days = Enum.count(assigns.days, fn {_, s} -> s == "up" end)
+    total_active = Enum.count(assigns.days, fn {_, s} -> s != "none" end)
+    uptime_pct = if total_active > 0, do: round(up_days / total_active * 100), else: 0
+    assigns = assign(assigns, :uptime_pct, uptime_pct)
+
+    ~H"""
+    <div class="flex items-center gap-0.5 pl-5">
+      <div class="flex items-center gap-px flex-1">
+        <%= for {{date, status}, idx} <- Enum.with_index(@days) do %>
+          <div class="flex-1 group relative">
+            <div class={["h-5 first:rounded-l-sm last:rounded-r-sm", day_status_color(status)]} />
+            <div class={[
+              "hidden group-hover:block absolute bottom-full mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap z-10",
+              if(idx < 3,
+                do: "left-0",
+                else: if(idx > length(@days) - 4, do: "right-0", else: "left-1/2 -translate-x-1/2")
+              )
+            ]}>
+              <div class="font-medium">{Calendar.strftime(date, "%b %d")}</div>
+              <div>{day_status_label(status)}</div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      <span class="text-xs text-slate-400 ml-2 shrink-0 tabular-nums w-20 text-right">
+        {@uptime_pct}% · {@label}
+      </span>
+    </div>
+    """
+  end
+
+  defp day_status_color("up"), do: "bg-emerald-500"
+  defp day_status_color("degraded"), do: "bg-amber-400"
+  defp day_status_color("down"), do: "bg-red-500"
+  defp day_status_color("none"), do: "bg-slate-100"
+  defp day_status_color(_), do: "bg-slate-100"
+
+  defp day_status_label("up"), do: "Operational"
+  defp day_status_label("degraded"), do: "Degraded"
+  defp day_status_label("down"), do: "Down"
+  defp day_status_label("none"), do: "No data"
+  defp day_status_label(_), do: "Unknown"
 
   defp status_dot_color("up"), do: "bg-emerald-500"
   defp status_dot_color("down"), do: "bg-red-500"
@@ -137,18 +205,15 @@ defmodule PrikkeWeb.MonitorLive.Index do
         <% else %>
           <div class="glass-card rounded-2xl divide-y divide-white/30">
             <%= for monitor <- @monitors do %>
-              <div class="px-4 sm:px-6 py-4">
-                <div class="flex items-center justify-between gap-3">
+              <.link navigate={~p"/monitors/#{monitor.id}"} class="block px-4 sm:px-6 py-4 hover:bg-white/50 transition-colors">
+                <div class="flex items-center justify-between gap-3 mb-2">
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 sm:gap-3">
                       <span class={["w-2.5 h-2.5 rounded-full shrink-0", status_dot_color(monitor.status)]}
                             title={status_label(monitor.status)} />
-                      <.link
-                        navigate={~p"/monitors/#{monitor.id}"}
-                        class="font-medium text-slate-900 hover:text-emerald-600 truncate"
-                      >
+                      <span class="font-medium text-slate-900 truncate">
                         {monitor.name}
-                      </.link>
+                      </span>
                       <%= if monitor.muted do %>
                         <span title="Notifications muted">
                           <.icon name="hero-bell-slash" class="w-4 h-4 text-slate-400" />
@@ -164,16 +229,9 @@ defmodule PrikkeWeb.MonitorLive.Index do
                         {status_label(monitor.status)}
                       </span>
                     </div>
-                    <div class="text-xs sm:text-sm text-slate-400 mt-1">
-                      <span class="font-mono">{format_schedule(monitor)}</span>
-                      <%= if monitor.last_ping_at do %>
-                        <span class="ml-2">
-                          Last ping: <.local_time id={"monitor-#{monitor.id}-ping"} datetime={monitor.last_ping_at} />
-                        </span>
-                      <% end %>
-                    </div>
                   </div>
                   <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                    <span class="text-xs text-slate-400 font-mono">{format_schedule(monitor)}</span>
                     <button
                       type="button"
                       phx-click="toggle"
@@ -201,7 +259,11 @@ defmodule PrikkeWeb.MonitorLive.Index do
                     </button>
                   </div>
                 </div>
-              </div>
+                <.uptime_line
+                  days={Map.get(@daily_status, monitor.id, [])}
+                  label={"Last #{@status_days} days"}
+                />
+              </.link>
             <% end %>
           </div>
         <% end %>

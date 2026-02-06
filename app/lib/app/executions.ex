@@ -355,6 +355,34 @@ defmodule Prikke.Executions do
   end
 
   @doc """
+  Gets the last N execution statuses for multiple jobs.
+  Returns a map of job_id => [status1, status2, ...] (most recent first).
+  Used for status-line visualizations on the dashboard.
+  """
+  def get_recent_statuses_for_jobs(job_ids, limit \\ 20)
+  def get_recent_statuses_for_jobs([], _limit), do: %{}
+
+  def get_recent_statuses_for_jobs(job_ids, limit) when is_list(job_ids) do
+    numbered =
+      from(e in Execution,
+        where: e.job_id in ^job_ids and e.status not in ["pending", "running"],
+        select: %{
+          job_id: e.job_id,
+          status: e.status,
+          rn: over(row_number(), partition_by: e.job_id, order_by: [desc: e.scheduled_for])
+        }
+      )
+
+    from(e in subquery(numbered),
+      where: e.rn <= ^limit,
+      order_by: [asc: e.job_id, asc: e.rn],
+      select: {e.job_id, e.status}
+    )
+    |> Repo.all()
+    |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+  end
+
+  @doc """
   Lists recent executions for an organization.
   """
   def list_organization_executions(organization, opts \\ []) do
@@ -558,6 +586,38 @@ defmodule Prikke.Executions do
       }
     )
     |> Repo.one()
+  end
+
+  @doc """
+  Gets execution counts by day for the last N days for an organization.
+  Returns all days, including days with zero executions.
+  """
+  def executions_by_day_for_org(organization, days \\ 14) do
+    since = DateTime.utc_now() |> DateTime.add(-days, :day)
+    today = Date.utc_today()
+
+    data =
+      from(e in Execution,
+        join: j in Job, on: e.job_id == j.id,
+        where: j.organization_id == ^organization.id and e.scheduled_for >= ^since,
+        group_by: fragment("DATE(?)", e.scheduled_for),
+        select: {
+          fragment("DATE(?)", e.scheduled_for),
+          %{
+            total: count(e.id),
+            success: count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status)),
+            failed: count(fragment("CASE WHEN ? = 'failed' THEN 1 END", e.status))
+          }
+        }
+      )
+      |> Repo.all()
+      |> Map.new()
+
+    Enum.map(0..(days - 1), fn offset ->
+      date = Date.add(today, -days + 1 + offset)
+      stats = Map.get(data, date, %{total: 0, success: 0, failed: 0})
+      {date, stats}
+    end)
   end
 
   @doc """

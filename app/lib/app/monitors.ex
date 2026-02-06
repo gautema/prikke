@@ -254,6 +254,91 @@ defmodule Prikke.Monitors do
     |> Repo.all()
   end
 
+  ## Daily Status
+
+  @doc """
+  Gets daily uptime status for multiple monitors over the last N days.
+  Returns a map of monitor_id => [{date, status}, ...] where status is
+  "up", "degraded", "down", or "none".
+
+  Status is derived by comparing actual ping count vs expected ping count per day:
+  - "up": 100% of expected pings received
+  - "degraded": > 0 but < 100% of expected pings
+  - "down": 0 pings when pings were expected
+  - "none": monitor didn't exist yet or was paused
+  """
+  def get_daily_status(monitors, days) when is_list(monitors) do
+    monitor_ids = Enum.map(monitors, & &1.id)
+    since = DateTime.utc_now() |> DateTime.add(-days, :day)
+    today = Date.utc_today()
+
+    # Query actual ping counts per day per monitor
+    ping_counts =
+      from(p in MonitorPing,
+        where: p.monitor_id in ^monitor_ids and p.received_at >= ^since,
+        group_by: [p.monitor_id, fragment("DATE(?)", p.received_at)],
+        select: {p.monitor_id, fragment("DATE(?)", p.received_at), count(p.id)}
+      )
+      |> Repo.all()
+      |> Enum.reduce(%{}, fn {monitor_id, date, count}, acc ->
+        Map.update(acc, monitor_id, %{date => count}, &Map.put(&1, date, count))
+      end)
+
+    # Build status per day per monitor
+    monitors
+    |> Map.new(fn monitor ->
+      expected = expected_daily_pings(monitor)
+      created_date = DateTime.to_date(monitor.inserted_at)
+
+      days_list =
+        Enum.map(0..(days - 1), fn offset ->
+          date = Date.add(today, -days + 1 + offset)
+          actual = get_in(ping_counts, [monitor.id, date]) || 0
+
+          status =
+            cond do
+              Date.compare(date, created_date) == :lt -> "none"
+              Date.compare(date, today) == :gt -> "none"
+              expected == 0 -> if actual > 0, do: "up", else: "none"
+              actual >= expected -> "up"
+              actual > 0 -> "degraded"
+              true -> "down"
+            end
+
+          {date, status}
+        end)
+
+      {monitor.id, days_list}
+    end)
+  end
+
+  @doc """
+  Computes the expected number of pings per day for a monitor based on its schedule.
+  """
+  def expected_daily_pings(%Monitor{schedule_type: "interval", interval_seconds: seconds})
+      when is_integer(seconds) and seconds > 0 do
+    div(86400, seconds)
+  end
+
+  def expected_daily_pings(%Monitor{schedule_type: "cron", cron_expression: expr})
+      when is_binary(expr) do
+    case Crontab.CronExpression.Parser.parse(expr) do
+      {:ok, cron} ->
+        # Count occurrences in a 24h window
+        start = ~N[2025-01-01 00:00:00]
+        stop = ~N[2025-01-02 00:00:00]
+
+        Crontab.Scheduler.get_next_run_dates(cron, start)
+        |> Enum.take_while(fn dt -> NaiveDateTime.compare(dt, stop) == :lt end)
+        |> length()
+
+      _ ->
+        0
+    end
+  end
+
+  def expected_daily_pings(_), do: 0
+
   ## Cleanup
 
   def cleanup_old_pings(%Organization{} = org, retention_days) do

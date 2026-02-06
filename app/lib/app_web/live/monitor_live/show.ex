@@ -17,6 +17,8 @@ defmodule PrikkeWeb.MonitorLive.Show do
       pings = Monitors.list_recent_pings(monitor, limit: 20)
       host = Application.get_env(:app, PrikkeWeb.Endpoint)[:url][:host] || "runlater.eu"
       ping_url = "https://#{host}/ping/#{monitor.ping_token}"
+      status_days = if org.tier == "pro", do: 30, else: 7
+      daily_status = Monitors.get_daily_status([monitor], status_days)
 
       {:ok,
        socket
@@ -25,7 +27,9 @@ defmodule PrikkeWeb.MonitorLive.Show do
        |> assign(:pings, pings)
        |> assign(:ping_url, ping_url)
        |> assign(:page_title, monitor.name)
-       |> assign(:menu_open, false)}
+       |> assign(:menu_open, false)
+       |> assign(:status_days, status_days)
+       |> assign(:daily_status, daily_status)}
     else
       {:ok,
        socket
@@ -38,7 +42,13 @@ defmodule PrikkeWeb.MonitorLive.Show do
   def handle_info({:monitor_updated, monitor}, socket) do
     if monitor.id == socket.assigns.monitor.id do
       pings = Monitors.list_recent_pings(monitor, limit: 20)
-      {:noreply, socket |> assign(:monitor, monitor) |> assign(:pings, pings)}
+      daily_status = Monitors.get_daily_status([monitor], socket.assigns.status_days)
+
+      {:noreply,
+       socket
+       |> assign(:monitor, monitor)
+       |> assign(:pings, pings)
+       |> assign(:daily_status, daily_status)}
     else
       {:noreply, socket}
     end
@@ -110,6 +120,58 @@ defmodule PrikkeWeb.MonitorLive.Show do
       end
     end
   end
+
+  defp uptime_line(%{days: []} = assigns) do
+    ~H"""
+    <div class="flex items-center">
+      <span class="text-xs text-slate-300">No data yet</span>
+    </div>
+    """
+  end
+
+  defp uptime_line(assigns) do
+    up_days = Enum.count(assigns.days, fn {_, s} -> s == "up" end)
+    total_active = Enum.count(assigns.days, fn {_, s} -> s != "none" end)
+    uptime_pct = if total_active > 0, do: round(up_days / total_active * 100), else: 0
+    assigns = assign(assigns, :uptime_pct, uptime_pct)
+
+    ~H"""
+    <div class="flex items-center gap-0.5">
+      <div class="flex items-center gap-px flex-1">
+        <%= for {{date, status}, idx} <- Enum.with_index(@days) do %>
+          <div class="flex-1 group relative">
+            <div class={["h-7 first:rounded-l-sm last:rounded-r-sm", day_status_color(status)]} />
+            <div class={[
+              "hidden group-hover:block absolute bottom-full mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap z-10",
+              if(idx < 3,
+                do: "left-0",
+                else: if(idx > length(@days) - 4, do: "right-0", else: "left-1/2 -translate-x-1/2")
+              )
+            ]}>
+              <div class="font-medium">{Calendar.strftime(date, "%b %d")}</div>
+              <div>{day_status_label(status)}</div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      <span class="text-xs text-slate-400 ml-3 shrink-0 tabular-nums">
+        {@uptime_pct}% · {@label}
+      </span>
+    </div>
+    """
+  end
+
+  defp day_status_color("up"), do: "bg-emerald-500"
+  defp day_status_color("degraded"), do: "bg-amber-400"
+  defp day_status_color("down"), do: "bg-red-500"
+  defp day_status_color("none"), do: "bg-slate-100"
+  defp day_status_color(_), do: "bg-slate-100"
+
+  defp day_status_label("up"), do: "Operational"
+  defp day_status_label("degraded"), do: "Degraded"
+  defp day_status_label("down"), do: "Down"
+  defp day_status_label("none"), do: "No data"
+  defp day_status_label(_), do: "Unknown"
 
   defp status_color("up"), do: "bg-emerald-100 text-emerald-700"
   defp status_color("down"), do: "bg-red-100 text-red-700"
@@ -209,6 +271,15 @@ defmodule PrikkeWeb.MonitorLive.Show do
               <% end %>
             </div>
           </div>
+        </div>
+
+        <%!-- Uptime status --%>
+        <div class="glass-card rounded-2xl p-6 mb-6">
+          <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-3">Uptime</h2>
+          <.uptime_line
+            days={Map.get(@daily_status, @monitor.id, [])}
+            label={"Last #{@status_days} days"}
+          />
         </div>
 
         <%!-- Ping URL card --%>

@@ -268,15 +268,19 @@ defmodule PrikkeWeb.Schemas do
 
     OpenApiSpex.schema(%{
       title: "SyncRequest",
-      description: "Request body for declarative job sync",
+      description: "Request body for declarative sync of jobs and/or monitors",
       type: :object,
-      required: [:jobs],
       properties: %{
         jobs: %Schema{type: :array, items: JobRequest, description: "List of jobs to sync"},
+        monitors: %Schema{
+          type: :array,
+          items: MonitorRequest,
+          description: "List of monitors to sync"
+        },
         delete_removed: %Schema{
           type: :boolean,
           default: false,
-          description: "Delete jobs not in the list"
+          description: "Delete jobs/monitors not in the list"
         }
       },
       example: %{
@@ -286,15 +290,34 @@ defmodule PrikkeWeb.Schemas do
             url: "https://example.com/a",
             schedule_type: "cron",
             cron_expression: "0 * * * *"
-          },
+          }
+        ],
+        monitors: [
           %{
-            name: "Job B",
-            url: "https://example.com/b",
-            schedule_type: "cron",
-            cron_expression: "0 0 * * *"
+            name: "Heartbeat",
+            schedule_type: "interval",
+            interval_seconds: 300
           }
         ],
         delete_removed: false
+      }
+    })
+  end
+
+  defmodule SyncResourceResult do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "SyncResourceResult",
+      description: "Sync result for a resource type",
+      type: :object,
+      properties: %{
+        created: %Schema{type: :array, items: %Schema{type: :string}},
+        updated: %Schema{type: :array, items: %Schema{type: :string}},
+        deleted: %Schema{type: :array, items: %Schema{type: :string}},
+        created_count: %Schema{type: :integer},
+        updated_count: %Schema{type: :integer},
+        deleted_count: %Schema{type: :integer}
       }
     })
   end
@@ -310,12 +333,35 @@ defmodule PrikkeWeb.Schemas do
         data: %Schema{
           type: :object,
           properties: %{
-            created: %Schema{type: :array, items: %Schema{type: :string}},
-            updated: %Schema{type: :array, items: %Schema{type: :string}},
-            deleted: %Schema{type: :array, items: %Schema{type: :string}},
-            created_count: %Schema{type: :integer},
-            updated_count: %Schema{type: :integer},
-            deleted_count: %Schema{type: :integer}
+            jobs: SyncResourceResult,
+            monitors: SyncResourceResult,
+            created: %Schema{
+              type: :array,
+              items: %Schema{type: :string},
+              description: "Deprecated: use jobs.created"
+            },
+            updated: %Schema{
+              type: :array,
+              items: %Schema{type: :string},
+              description: "Deprecated: use jobs.updated"
+            },
+            deleted: %Schema{
+              type: :array,
+              items: %Schema{type: :string},
+              description: "Deprecated: use jobs.deleted"
+            },
+            created_count: %Schema{
+              type: :integer,
+              description: "Deprecated: use jobs.created_count"
+            },
+            updated_count: %Schema{
+              type: :integer,
+              description: "Deprecated: use jobs.updated_count"
+            },
+            deleted_count: %Schema{
+              type: :integer,
+              description: "Deprecated: use jobs.deleted_count"
+            }
           }
         },
         message: %Schema{type: :string}

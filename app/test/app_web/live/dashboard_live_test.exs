@@ -21,6 +21,7 @@ defmodule PrikkeWeb.DashboardLiveTest do
       assert html =~ "Active Jobs"
       assert html =~ "Executions Today"
       assert html =~ "Success Rate"
+      assert html =~ "Avg Duration"
     end
 
     test "shows empty state when no jobs", %{conn: conn, user: user} do
