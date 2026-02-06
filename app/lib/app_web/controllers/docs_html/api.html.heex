@@ -97,11 +97,25 @@
           <td class="py-2 pr-4 text-slate-500">integer</td>
           <td class="py-2 text-slate-600">Number of retry attempts on failure (default: 5)</td>
         </tr>
-        <tr>
+        <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">callback_url</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
           <td class="py-2 text-slate-600">
             URL to receive a POST callback when execution completes (success, failure, or timeout). See <a href="/docs/webhooks#callbacks" class="text-emerald-600 hover:underline">Callbacks</a>. (optional)
+          </td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">expected_status_codes</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            Comma-separated HTTP status codes that count as success (e.g. "200,201"). Empty means any 2xx. (optional)
+          </td>
+        </tr>
+        <tr>
+          <td class="py-2 pr-4"><code class="text-sky-600">expected_body_pattern</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            Response body must contain this text to count as success. Empty means any body. (optional)
           </td>
         </tr>
       </table>
@@ -260,10 +274,20 @@
             URL to receive a POST callback when each execution completes. See <a href="/docs/webhooks#callbacks" class="text-emerald-600 hover:underline">Callbacks</a>. (optional)
           </td>
         </tr>
-        <tr>
+        <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">muted</code></td>
           <td class="py-2 pr-4 text-slate-500">boolean</td>
           <td class="py-2 text-slate-600">Mute failure/recovery notifications for this job (default: false)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">expected_status_codes</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">Comma-separated HTTP status codes that count as success, e.g. "200,201". Empty means any 2xx. (optional)</td>
+        </tr>
+        <tr>
+          <td class="py-2 pr-4"><code class="text-sky-600">expected_body_pattern</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">Response body must contain this text to count as success. Empty means any body. (optional)</td>
         </tr>
       </table>
     </div>

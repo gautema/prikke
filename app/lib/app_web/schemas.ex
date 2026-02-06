@@ -70,6 +70,16 @@ defmodule PrikkeWeb.Schemas do
           nullable: true,
           description: "URL to receive POST with execution results"
         },
+        expected_status_codes: %Schema{
+          type: :string,
+          nullable: true,
+          description: "Comma-separated HTTP status codes that count as success (e.g. \"200,201\"). Empty means any 2xx."
+        },
+        expected_body_pattern: %Schema{
+          type: :string,
+          nullable: true,
+          description: "Response body must contain this text to count as success. Empty means any body."
+        },
         next_run_at: %Schema{
           type: :string,
           format: :"date-time",
@@ -147,6 +157,16 @@ defmodule PrikkeWeb.Schemas do
           format: :uri,
           nullable: true,
           description: "URL to receive POST with execution results"
+        },
+        expected_status_codes: %Schema{
+          type: :string,
+          nullable: true,
+          description: "Comma-separated HTTP status codes that count as success (e.g. \"200,201\"). Empty means any 2xx."
+        },
+        expected_body_pattern: %Schema{
+          type: :string,
+          nullable: true,
+          description: "Response body must contain this text to count as success. Empty means any body."
         }
       },
       example: %{
@@ -336,6 +356,16 @@ defmodule PrikkeWeb.Schemas do
           format: :uri,
           nullable: true,
           description: "URL to receive POST with execution results when complete"
+        },
+        expected_status_codes: %Schema{
+          type: :string,
+          nullable: true,
+          description: "Comma-separated HTTP status codes that count as success (e.g. \"200,201\"). Empty means any 2xx."
+        },
+        expected_body_pattern: %Schema{
+          type: :string,
+          nullable: true,
+          description: "Response body must contain this text to count as success. Empty means any body."
         }
       },
       example: %{
