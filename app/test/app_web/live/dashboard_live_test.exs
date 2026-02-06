@@ -30,7 +30,7 @@ defmodule PrikkeWeb.DashboardLiveTest do
       {:ok, _view, html} = live(conn, ~p"/dashboard")
 
       assert html =~ "No jobs yet"
-      assert html =~ "Create a job"
+      assert html =~ "Create your first job"
     end
 
     test "shows jobs list when jobs exist", %{conn: conn, user: user} do

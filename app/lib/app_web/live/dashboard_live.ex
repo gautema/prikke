@@ -33,7 +33,7 @@ defmodule PrikkeWeb.DashboardLive do
     recent_jobs = load_recent_jobs(current_org)
     job_ids = Enum.map(recent_jobs, & &1.id)
     latest_statuses = Executions.get_latest_statuses(job_ids)
-    monitors = load_monitors(current_org)
+    {monitors, monitor_trend} = load_monitors_data(current_org)
 
     socket =
       socket
@@ -45,6 +45,7 @@ defmodule PrikkeWeb.DashboardLive do
       |> assign(:recent_jobs, recent_jobs)
       |> assign(:latest_statuses, latest_statuses)
       |> assign(:monitors, monitors)
+      |> assign(:monitor_trend, monitor_trend)
 
     {:ok, socket}
   end
@@ -71,27 +72,32 @@ defmodule PrikkeWeb.DashboardLive do
   end
 
   def handle_info({:monitor_updated, _monitor}, socket) do
-    {:noreply, assign(socket, :monitors, load_monitors(socket.assigns.current_organization))}
+    {monitors, monitor_trend} = load_monitors_data(socket.assigns.current_organization)
+    {:noreply, socket |> assign(:monitors, monitors) |> assign(:monitor_trend, monitor_trend)}
   end
 
   def handle_info({:monitor_created, _monitor}, socket) do
-    {:noreply, assign(socket, :monitors, load_monitors(socket.assigns.current_organization))}
+    {monitors, monitor_trend} = load_monitors_data(socket.assigns.current_organization)
+    {:noreply, socket |> assign(:monitors, monitors) |> assign(:monitor_trend, monitor_trend)}
   end
 
   def handle_info({:monitor_deleted, _monitor}, socket) do
-    {:noreply, assign(socket, :monitors, load_monitors(socket.assigns.current_organization))}
+    {monitors, monitor_trend} = load_monitors_data(socket.assigns.current_organization)
+    {:noreply, socket |> assign(:monitors, monitors) |> assign(:monitor_trend, monitor_trend)}
   end
 
   defp reload_data(socket, org) do
     recent_jobs = load_recent_jobs(org)
     job_ids = Enum.map(recent_jobs, & &1.id)
     latest_statuses = Executions.get_latest_statuses(job_ids)
+    {monitors, monitor_trend} = load_monitors_data(org)
 
     socket
     |> assign(:stats, load_stats(org))
     |> assign(:recent_jobs, recent_jobs)
     |> assign(:latest_statuses, latest_statuses)
-    |> assign(:monitors, load_monitors(org))
+    |> assign(:monitors, monitors)
+    |> assign(:monitor_trend, monitor_trend)
   end
 
   @impl true
@@ -126,152 +132,8 @@ defmodule PrikkeWeb.DashboardLive do
       </div>
 
       <%= if @current_organization do %>
-        <!-- Quick Stats -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-          <.link
-            navigate={~p"/jobs"}
-            class="glass-card rounded-2xl p-6 hover:border-slate-300 transition-colors"
-          >
-            <div class="text-sm font-medium text-slate-500 mb-1">Active Jobs</div>
-            <div class="text-3xl font-bold text-slate-900">{@stats.active_jobs}</div>
-          </.link>
-          <div class="glass-card rounded-2xl p-6">
-            <div class="text-sm font-medium text-slate-500 mb-1">Executions Today</div>
-            <div class="text-3xl font-bold text-slate-900">{@stats.executions_today}</div>
-            <%= if @stats.today_failed > 0 do %>
-              <div class="text-xs text-red-600 mt-1">{@stats.today_failed} failed</div>
-            <% end %>
-          </div>
-          <div class="glass-card rounded-2xl p-6">
-            <div class="text-sm font-medium text-slate-500 mb-1">Success Rate</div>
-            <div class="text-3xl font-bold text-emerald-600">{@stats.success_rate}</div>
-            <%= if @stats.success_rate_7d != "—" do %>
-              <div class="text-xs text-slate-400 mt-1">7d: {@stats.success_rate_7d}</div>
-            <% end %>
-          </div>
-          <div class="glass-card rounded-2xl p-6">
-            <div class="text-sm font-medium text-slate-500 mb-1">Avg Duration</div>
-            <div class="text-3xl font-bold text-slate-900">
-              {format_avg_duration(@stats.avg_duration_ms)}
-            </div>
-            <div class="text-xs text-slate-400 mt-1">today</div>
-          </div>
-        </div>
-
-        <!-- Execution Trend (14 days) -->
-        <div class="glass-card rounded-2xl p-6 mb-4">
-          <h2 class="text-sm font-medium text-slate-600 mb-4">Execution Trend (14 days)</h2>
-          <% max_val =
-            Enum.max_by(@stats.execution_trend, fn {_, s} -> s.total end)
-            |> elem(1)
-            |> Map.get(:total)
-            |> max(1) %>
-          <div class="h-28 flex items-end gap-1">
-            <%= for {{date, stats}, idx} <- Enum.with_index(@stats.execution_trend) do %>
-              <% height = if stats.total > 0, do: max(round(stats.total / max_val * 100), 4), else: 0 %>
-              <% success_pct =
-                if stats.total > 0, do: round(stats.success / stats.total * 100), else: 0 %>
-              <% failed_pct = 100 - success_pct %>
-              <div class="flex-1 flex flex-col justify-end h-full group relative">
-                <div class="flex flex-col" style={"height: #{height}%"}>
-                  <%= if failed_pct > 0 && stats.failed > 0 do %>
-                    <div class="bg-red-400 rounded-t-sm flex-none" style={"height: #{failed_pct}%"}>
-                    </div>
-                  <% end %>
-                  <%= if success_pct > 0 && stats.success > 0 do %>
-                    <div class={[
-                      "bg-emerald-600 flex-1",
-                      if(stats.failed == 0, do: "rounded-t-sm", else: "")
-                    ]}>
-                    </div>
-                  <% end %>
-                  <%= if stats.total == 0 do %>
-                    <div class="bg-slate-100 h-1 rounded-sm"></div>
-                  <% end %>
-                </div>
-                <!-- Tooltip -->
-                <div class={[
-                  "hidden group-hover:block absolute bottom-full mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap z-10",
-                  if(idx < 3,
-                    do: "left-0",
-                    else: if(idx > 10, do: "right-0", else: "left-1/2 -translate-x-1/2")
-                  )
-                ]}>
-                  <div class="font-medium">{Calendar.strftime(date, "%b %d")}</div>
-                  <div>{stats.total} total</div>
-                  <%= if stats.success > 0 do %>
-                    <div class="text-emerald-400">{stats.success} success</div>
-                  <% end %>
-                  <%= if stats.failed > 0 do %>
-                    <div class="text-red-400">{stats.failed} failed</div>
-                  <% end %>
-                </div>
-              </div>
-            <% end %>
-          </div>
-          <div class="flex justify-between mt-2 text-xs text-slate-400">
-            <span>14 days ago</span>
-            <span>Today</span>
-          </div>
-        </div>
-
-        <!-- Monitors -->
-        <div class="glass-card rounded-2xl mb-4">
-          <div class="px-6 py-4 border-b border-white/50 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-              <h2 class="text-lg font-semibold text-slate-900">Monitors</h2>
-              <%= if @monitors != [] do %>
-                <.monitor_summary monitors={@monitors} />
-              <% end %>
-            </div>
-            <.link
-              navigate={~p"/monitors/new"}
-              class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-md transition-colors no-underline"
-            >
-              New Monitor
-            </.link>
-          </div>
-          <%= if @monitors == [] do %>
-            <div class="p-8 text-center">
-              <p class="text-slate-500 mb-2">No monitors yet.</p>
-              <.link navigate={~p"/monitors/new"} class="text-emerald-600 text-sm font-medium hover:underline">
-                Set up heartbeat monitoring →
-              </.link>
-            </div>
-          <% else %>
-            <% down_monitors = Enum.filter(@monitors, &(&1.status == "down")) %>
-            <%= if down_monitors != [] do %>
-              <div class="divide-y divide-white/30">
-                <%= for monitor <- down_monitors do %>
-                  <.link
-                    navigate={~p"/monitors/#{monitor.id}"}
-                    class="block px-6 py-3 hover:bg-white/50 transition-colors"
-                  >
-                    <div class="flex items-center gap-2 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full shrink-0 bg-red-500" />
-                      <span class="font-medium text-slate-900 truncate">{monitor.name}</span>
-                      <span class="text-xs font-medium px-2 py-0.5 rounded bg-red-100 text-red-700">
-                        Down
-                      </span>
-                    </div>
-                  </.link>
-                <% end %>
-              </div>
-            <% else %>
-              <div class="px-6 py-4 text-sm text-slate-500">
-                All monitors operational.
-              </div>
-            <% end %>
-            <div class="px-6 py-3 border-t border-slate-200 text-center">
-              <.link navigate={~p"/monitors"} class="text-sm text-emerald-600 hover:underline">
-                View all monitors →
-              </.link>
-            </div>
-          <% end %>
-        </div>
-        
-    <!-- Monthly Usage -->
-        <div class="glass-card rounded-2xl p-4 mb-8">
+        <!-- Monthly Usage -->
+        <div class="glass-card rounded-2xl p-4 mb-4">
           <div class="flex justify-between items-center mb-2">
             <span class="text-sm font-medium text-slate-600">Monthly Executions</span>
             <span class="text-sm text-slate-500">
@@ -321,11 +183,46 @@ defmodule PrikkeWeb.DashboardLive do
             </p>
           <% end %>
         </div>
-        
-    <!-- Jobs Section -->
-        <div class="glass-card rounded-2xl">
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+          <.link
+            navigate={~p"/jobs"}
+            class="glass-card rounded-2xl p-6 hover:border-slate-300 transition-colors"
+          >
+            <div class="text-sm font-medium text-slate-500 mb-1">Active Jobs</div>
+            <div class="text-3xl font-bold text-slate-900">{@stats.active_jobs}</div>
+          </.link>
+          <div class="glass-card rounded-2xl p-6">
+            <div class="text-sm font-medium text-slate-500 mb-1">Executions Today</div>
+            <div class="text-3xl font-bold text-slate-900">{@stats.executions_today}</div>
+            <%= if @stats.today_failed > 0 do %>
+              <div class="text-xs text-red-600 mt-1">{@stats.today_failed} failed</div>
+            <% end %>
+          </div>
+          <div class="glass-card rounded-2xl p-6">
+            <div class="text-sm font-medium text-slate-500 mb-1">Success Rate</div>
+            <div class="text-3xl font-bold text-emerald-600">{@stats.success_rate}</div>
+            <%= if @stats.success_rate_7d != "—" do %>
+              <div class="text-xs text-slate-400 mt-1">7d: {@stats.success_rate_7d}</div>
+            <% end %>
+          </div>
+          <div class="glass-card rounded-2xl p-6">
+            <div class="text-sm font-medium text-slate-500 mb-1">Avg Duration</div>
+            <div class="text-3xl font-bold text-slate-900">
+              {format_avg_duration(@stats.avg_duration_ms)}
+            </div>
+            <div class="text-xs text-slate-400 mt-1">today</div>
+          </div>
+        </div>
+
+        <!-- Jobs Section -->
+        <div class="glass-card rounded-2xl mb-4">
           <div class="px-6 py-4 border-b border-white/50 flex justify-between items-center">
-            <h2 class="text-lg font-semibold text-slate-900">Jobs</h2>
+            <div class="flex items-center gap-3">
+              <h2 class="text-lg font-semibold text-slate-900">Jobs</h2>
+              <.job_summary stats={@stats} />
+            </div>
             <div class="flex gap-2">
               <.link
                 navigate={~p"/queue"}
@@ -342,17 +239,16 @@ defmodule PrikkeWeb.DashboardLive do
             </div>
           </div>
           <%= if @recent_jobs == [] do %>
-            <div class="p-12 text-center">
-              <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <.icon name="hero-clock" class="w-6 h-6 text-slate-400" />
-              </div>
-              <h3 class="text-lg font-medium text-slate-900 mb-1">No jobs yet</h3>
-              <p class="text-slate-500 mb-4">Create your first scheduled job to get started.</p>
-              <.link navigate={~p"/jobs/new"} class="text-emerald-600 font-medium hover:underline">
-                Create a job →
+            <div class="p-8 text-center">
+              <p class="text-slate-500 mb-2">No jobs yet.</p>
+              <.link navigate={~p"/jobs/new"} class="text-emerald-600 text-sm font-medium hover:underline">
+                Create your first job →
               </.link>
             </div>
           <% else %>
+            <!-- Execution Trend -->
+            <.execution_trend trend={@stats.execution_trend} />
+            <!-- Job List -->
             <div class="divide-y divide-white/30">
               <%= for job <- @recent_jobs do %>
                 <.link
@@ -378,15 +274,73 @@ defmodule PrikkeWeb.DashboardLive do
                 </.link>
               <% end %>
             </div>
-            <%= if @stats.total_jobs > 5 do %>
-              <div class="px-6 py-3 border-t border-slate-200 text-center">
-                <.link navigate={~p"/jobs"} class="text-sm text-emerald-600 hover:underline">
-                  View all {@stats.total_jobs} jobs →
-                </.link>
-              </div>
-            <% end %>
+            <div class="px-6 py-3 border-t border-slate-200 text-center">
+              <.link navigate={~p"/jobs"} class="text-sm text-emerald-600 hover:underline">
+                View all jobs →
+              </.link>
+            </div>
           <% end %>
         </div>
+
+        <!-- Monitors Section -->
+        <div class="glass-card rounded-2xl mb-4">
+          <div class="px-6 py-4 border-b border-white/50 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+              <h2 class="text-lg font-semibold text-slate-900">Monitors</h2>
+              <%= if @monitors != [] do %>
+                <.monitor_summary monitors={@monitors} />
+              <% end %>
+            </div>
+            <.link
+              navigate={~p"/monitors/new"}
+              class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-md transition-colors no-underline"
+            >
+              New Monitor
+            </.link>
+          </div>
+          <%= if @monitors == [] do %>
+            <div class="p-8 text-center">
+              <p class="text-slate-500 mb-2">No monitors yet.</p>
+              <.link navigate={~p"/monitors/new"} class="text-emerald-600 text-sm font-medium hover:underline">
+                Set up heartbeat monitoring →
+              </.link>
+            </div>
+          <% else %>
+            <!-- Monitor Uptime Trend -->
+            <.monitor_trend trend={@monitor_trend} />
+            <!-- Monitor List -->
+            <div class="divide-y divide-white/30">
+              <%= for monitor <- @monitors do %>
+                <.link
+                  navigate={~p"/monitors/#{monitor.id}"}
+                  class="block px-6 py-3 hover:bg-white/50 transition-colors"
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2 min-w-0">
+                      <span class={["w-2.5 h-2.5 rounded-full shrink-0", monitor_dot_color(monitor.status)]} />
+                      <span class="font-medium text-slate-900 truncate">{monitor.name}</span>
+                      <span class={[
+                        "text-xs font-medium px-2 py-0.5 rounded",
+                        monitor.status == "down" && "bg-red-100 text-red-700",
+                        monitor.status == "up" && "bg-emerald-100 text-emerald-700",
+                        monitor.status == "new" && "bg-slate-100 text-slate-600",
+                        monitor.status == "paused" && "bg-amber-100 text-amber-700"
+                      ]}>
+                        {monitor_status_label(monitor.status)}
+                      </span>
+                    </div>
+                  </div>
+                </.link>
+              <% end %>
+            </div>
+            <div class="px-6 py-3 border-t border-slate-200 text-center">
+              <.link navigate={~p"/monitors"} class="text-sm text-emerald-600 hover:underline">
+                View all monitors →
+              </.link>
+            </div>
+          <% end %>
+        </div>
+
       <% else %>
         <!-- No organization state -->
         <div class="glass-card rounded-2xl p-12 text-center">
@@ -484,8 +438,43 @@ defmodule PrikkeWeb.DashboardLive do
     end
   end
 
-  defp load_monitors(nil), do: []
-  defp load_monitors(organization), do: Monitors.list_monitors(organization)
+  defp load_monitors_data(nil), do: {[], []}
+
+  defp load_monitors_data(organization) do
+    monitors = Monitors.list_monitors(organization)
+    status_days = if organization.tier == "pro", do: 30, else: 7
+
+    monitor_trend =
+      if monitors == [] do
+        []
+      else
+        daily_status = Monitors.get_daily_status(monitors, status_days)
+
+        # Aggregate across all monitors: for each day, count up/degraded/down
+        today = Date.utc_today()
+
+        Enum.map(0..(status_days - 1), fn offset ->
+          date = Date.add(today, -status_days + 1 + offset)
+
+          statuses =
+            Enum.map(monitors, fn m ->
+              case daily_status[m.id] do
+                nil -> "none"
+                days -> Enum.find_value(days, "none", fn {d, s} -> if d == date, do: s end)
+              end
+            end)
+
+          up = Enum.count(statuses, &(&1 == "up"))
+          degraded = Enum.count(statuses, &(&1 == "degraded"))
+          down = Enum.count(statuses, &(&1 == "down"))
+          total = up + degraded + down
+
+          {date, %{up: up, degraded: degraded, down: down, total: total}}
+        end)
+      end
+
+    {monitors, monitor_trend}
+  end
 
   defp load_recent_jobs(nil), do: []
 
@@ -547,6 +536,138 @@ defmodule PrikkeWeb.DashboardLive do
     """
   end
 
+  defp execution_trend(assigns) do
+    max_val =
+      Enum.max_by(assigns.trend, fn {_, s} -> s.total end)
+      |> elem(1)
+      |> Map.get(:total)
+      |> max(1)
+
+    assigns = assign(assigns, :max_val, max_val)
+
+    ~H"""
+    <div class="px-6 py-4 border-b border-white/30">
+      <div class="text-xs font-medium text-slate-500 mb-2">14-day trend</div>
+      <div class="h-16 flex items-end gap-px">
+        <%= for {{date, stats}, idx} <- Enum.with_index(@trend) do %>
+          <% height = if stats.total > 0, do: max(round(stats.total / @max_val * 100), 6), else: 0 %>
+          <% success_pct = if stats.total > 0, do: round(stats.success / stats.total * 100), else: 0 %>
+          <% failed_pct = 100 - success_pct %>
+          <div class="flex-1 flex flex-col justify-end h-full group relative">
+            <div class="flex flex-col" style={"height: #{height}%"}>
+              <%= if failed_pct > 0 && stats.failed > 0 do %>
+                <div class="bg-red-400 rounded-t-sm flex-none" style={"height: #{failed_pct}%"} />
+              <% end %>
+              <%= if success_pct > 0 && stats.success > 0 do %>
+                <div class={["bg-emerald-500 flex-1", if(stats.failed == 0, do: "rounded-t-sm", else: "")]} />
+              <% end %>
+              <%= if stats.total == 0 do %>
+                <div class="bg-slate-100 h-1 rounded-sm" />
+              <% end %>
+            </div>
+            <div class={[
+              "hidden group-hover:block absolute bottom-full mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap z-10",
+              tooltip_position(idx, length(@trend))
+            ]}>
+              <div class="font-medium">{Calendar.strftime(date, "%b %d")}</div>
+              <div>{stats.total} total</div>
+              <%= if stats.failed > 0 do %>
+                <div class="text-red-400">{stats.failed} failed</div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    """
+  end
+
+  defp monitor_trend(%{trend: []} = assigns) do
+    ~H""
+  end
+
+  defp monitor_trend(assigns) do
+    total_monitors =
+      Enum.max_by(assigns.trend, fn {_, s} -> s.total end)
+      |> elem(1)
+      |> Map.get(:total)
+      |> max(1)
+
+    assigns = assign(assigns, :total_monitors, total_monitors)
+
+    ~H"""
+    <div class="px-6 py-4 border-b border-white/30">
+      <div class="text-xs font-medium text-slate-500 mb-2">{length(@trend)}-day uptime</div>
+      <div class="h-16 flex items-end gap-px">
+        <%= for {{date, stats}, idx} <- Enum.with_index(@trend) do %>
+          <div class="flex-1 flex flex-col justify-end h-full group relative">
+            <%= if stats.total > 0 do %>
+              <div class="flex flex-col h-full">
+                <%= if stats.down > 0 do %>
+                  <div
+                    class="bg-red-400 rounded-t-sm"
+                    style={"height: #{round(stats.down / @total_monitors * 100)}%"}
+                  />
+                <% end %>
+                <%= if stats.degraded > 0 do %>
+                  <div
+                    class={["bg-amber-400", if(stats.down == 0, do: "rounded-t-sm", else: "")]}
+                    style={"height: #{round(stats.degraded / @total_monitors * 100)}%"}
+                  />
+                <% end %>
+                <%= if stats.up > 0 do %>
+                  <div
+                    class={["bg-emerald-500 flex-1", if(stats.down == 0 && stats.degraded == 0, do: "rounded-t-sm", else: "")]}
+                  />
+                <% end %>
+              </div>
+            <% else %>
+              <div class="bg-slate-100 h-1 rounded-sm" />
+            <% end %>
+            <div class={[
+              "hidden group-hover:block absolute bottom-full mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap z-10",
+              tooltip_position(idx, length(@trend))
+            ]}>
+              <div class="font-medium">{Calendar.strftime(date, "%b %d")}</div>
+              <%= if stats.up > 0 do %>
+                <div class="text-emerald-400">{stats.up} up</div>
+              <% end %>
+              <%= if stats.degraded > 0 do %>
+                <div class="text-amber-400">{stats.degraded} degraded</div>
+              <% end %>
+              <%= if stats.down > 0 do %>
+                <div class="text-red-400">{stats.down} down</div>
+              <% end %>
+              <%= if stats.total == 0 do %>
+                <div>No data</div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    """
+  end
+
+  defp tooltip_position(idx, total) do
+    cond do
+      idx < 3 -> "left-0"
+      idx > total - 4 -> "right-0"
+      true -> "left-1/2 -translate-x-1/2"
+    end
+  end
+
+  defp job_summary(assigns) do
+    ~H"""
+    <div class="flex items-center gap-2 text-xs">
+      <span class="text-slate-500">{@stats.active_jobs} active</span>
+      <%= if @stats.today_failed > 0 do %>
+        <span class="text-red-600 font-medium">{@stats.today_failed} failed today</span>
+      <% end %>
+    </div>
+    """
+  end
+
   defp monitor_summary(assigns) do
     up = Enum.count(assigns.monitors, &(&1.status == "up"))
     down = Enum.count(assigns.monitors, &(&1.status == "down"))
@@ -567,6 +688,18 @@ defmodule PrikkeWeb.DashboardLive do
     </div>
     """
   end
+
+  defp monitor_dot_color("up"), do: "bg-emerald-500"
+  defp monitor_dot_color("down"), do: "bg-red-500"
+  defp monitor_dot_color("new"), do: "bg-slate-400"
+  defp monitor_dot_color("paused"), do: "bg-amber-400"
+  defp monitor_dot_color(_), do: "bg-slate-300"
+
+  defp monitor_status_label("up"), do: "Up"
+  defp monitor_status_label("down"), do: "Down"
+  defp monitor_status_label("new"), do: "Awaiting ping"
+  defp monitor_status_label("paused"), do: "Paused"
+  defp monitor_status_label(_), do: "Unknown"
 
   defp status_dot_color(nil), do: "bg-slate-300"
   defp status_dot_color("success"), do: "bg-emerald-600"
