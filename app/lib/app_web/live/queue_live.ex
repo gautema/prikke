@@ -341,7 +341,8 @@ defmodule PrikkeWeb.QueueLive do
           <div class="flex justify-end">
             <button
               type="submit"
-              class="px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors flex items-center gap-2"
+              phx-disable-with="Queuing..."
+              class="px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-700 transition-colors flex items-center gap-2"
             >
               <.icon name="hero-bolt" class="w-5 h-5" /> Queue Now
             </button>
