@@ -87,5 +87,19 @@ defmodule PrikkeWeb.SuperadminLiveTest do
       assert html =~ "Pageviews"
       assert html =~ "Top Pages"
     end
+
+    test "displays system performance section", %{conn: conn, superadmin: superadmin} do
+      {:ok, _view, html} =
+        conn
+        |> log_in_user(superadmin)
+        |> live(~p"/superadmin")
+
+      assert html =~ "System Performance"
+      assert html =~ "Queue Depth"
+      assert html =~ "Active Workers"
+      assert html =~ "CPU Usage"
+      assert html =~ "Memory Usage"
+      assert html =~ "Response Times"
+    end
   end
 end

@@ -577,6 +577,86 @@ defmodule Prikke.Executions do
     length(stale_executions)
   end
 
+  ## Performance Metrics (for superadmin monitoring)
+
+  @doc """
+  Gets execution duration percentiles (p50, p95, p99) for a time window.
+  Uses PostgreSQL percentile_cont for accurate computation.
+  """
+  def get_duration_percentiles(since \\ nil) do
+    since = since || DateTime.add(DateTime.utc_now(), -1, :hour)
+
+    from(e in Execution,
+      where: e.status in ["success", "failed", "timeout"],
+      where: e.finished_at >= ^since,
+      where: not is_nil(e.duration_ms),
+      select: %{
+        p50:
+          fragment("percentile_cont(0.5) WITHIN GROUP (ORDER BY ?)", e.duration_ms),
+        p95:
+          fragment("percentile_cont(0.95) WITHIN GROUP (ORDER BY ?)", e.duration_ms),
+        p99:
+          fragment("percentile_cont(0.99) WITHIN GROUP (ORDER BY ?)", e.duration_ms),
+        avg: avg(e.duration_ms),
+        count: count(e.id)
+      }
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Gets average queue wait time (time from scheduled_for to started_at).
+  """
+  def get_avg_queue_wait(since \\ nil) do
+    since = since || DateTime.add(DateTime.utc_now(), -1, :hour)
+
+    from(e in Execution,
+      where: e.status in ["success", "failed", "timeout"],
+      where: e.finished_at >= ^since,
+      where: not is_nil(e.started_at),
+      select: %{
+        avg_wait_ms:
+          avg(
+            fragment(
+              "EXTRACT(EPOCH FROM (? - ?)) * 1000",
+              e.started_at,
+              e.scheduled_for
+            )
+          ),
+        max_wait_ms:
+          max(
+            fragment(
+              "EXTRACT(EPOCH FROM (? - ?)) * 1000",
+              e.started_at,
+              e.scheduled_for
+            )
+          ),
+        count: count(e.id)
+      }
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Gets execution throughput per minute for the last N minutes.
+  Returns a list of {minute_timestamp, count} tuples.
+  """
+  def throughput_per_minute(minutes \\ 60) do
+    since = DateTime.add(DateTime.utc_now(), -minutes, :minute)
+
+    from(e in Execution,
+      where: e.finished_at >= ^since,
+      where: e.status in ["success", "failed", "timeout"],
+      group_by: fragment("date_trunc('minute', ?)", e.finished_at),
+      order_by: [asc: fragment("date_trunc('minute', ?)", e.finished_at)],
+      select: {
+        fragment("date_trunc('minute', ?)", e.finished_at),
+        count(e.id)
+      }
+    )
+    |> Repo.all()
+  end
+
   ## Platform-wide Stats (for superadmin)
 
   @doc """

@@ -79,7 +79,21 @@ defmodule PrikkeWeb.SuperadminLive do
     recent_emails = Emails.list_recent_emails(limit: 20)
     emails_today = Emails.count_emails_today()
 
+    # System performance metrics
+    metrics = Prikke.Metrics.current()
+    metrics_history = Prikke.Metrics.recent(60)
+    duration_percentiles = Executions.get_duration_percentiles()
+    queue_wait = Executions.get_avg_queue_wait()
+    throughput = Executions.throughput_per_minute(60)
+    system_alerts = Prikke.Metrics.alerts()
+
     socket
+    |> assign(:metrics, metrics)
+    |> assign(:metrics_history, metrics_history)
+    |> assign(:duration_percentiles, duration_percentiles)
+    |> assign(:queue_wait, queue_wait)
+    |> assign(:throughput, throughput)
+    |> assign(:system_alerts, system_alerts)
     |> assign(:platform_stats, platform_stats)
     |> assign(:org_monthly_executions, org_monthly_executions)
     |> assign(:exec_stats, exec_stats)
@@ -213,6 +227,173 @@ defmodule PrikkeWeb.SuperadminLive do
         </div>
       </div>
       
+    <!-- System Performance -->
+      <div class="glass-card rounded-2xl p-6 mb-8">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-semibold text-slate-900">System Performance</h2>
+          <span class="text-xs text-slate-400">Updated every 10s</span>
+        </div>
+
+    <!-- Real-time metrics -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div>
+            <div class="text-sm text-slate-500 mb-1">Queue Depth</div>
+            <div class={[
+              "text-2xl font-bold",
+              cond do
+                Map.get(@metrics, :queue_depth, 0) >= 200 -> "text-red-600"
+                Map.get(@metrics, :queue_depth, 0) >= 50 -> "text-amber-600"
+                true -> "text-slate-900"
+              end
+            ]}>
+              {Map.get(@metrics, :queue_depth, 0)}
+            </div>
+            <.sparkline data={Enum.map(@metrics_history, &Map.get(&1, :queue_depth, 0))} />
+          </div>
+          <div>
+            <div class="text-sm text-slate-500 mb-1">Active Workers</div>
+            <div class="text-2xl font-bold text-slate-900">
+              {Map.get(@metrics, :active_workers, 0)}
+            </div>
+            <.sparkline data={Enum.map(@metrics_history, &Map.get(&1, :active_workers, 0))} />
+          </div>
+          <div>
+            <div class="text-sm text-slate-500 mb-1">CPU Usage</div>
+            <div class={[
+              "text-2xl font-bold",
+              cond do
+                Map.get(@metrics, :cpu_percent, 0) >= 95 -> "text-red-600"
+                Map.get(@metrics, :cpu_percent, 0) >= 80 -> "text-amber-600"
+                true -> "text-slate-900"
+              end
+            ]}>
+              {Map.get(@metrics, :cpu_percent, 0)}%
+            </div>
+            <.sparkline data={Enum.map(@metrics_history, &Map.get(&1, :cpu_percent, 0))} color="blue" />
+          </div>
+          <div>
+            <div class="text-sm text-slate-500 mb-1">Memory Usage</div>
+            <div class={[
+              "text-2xl font-bold",
+              cond do
+                Map.get(@metrics, :system_memory_used_pct, 0) >= 90 -> "text-red-600"
+                Map.get(@metrics, :system_memory_used_pct, 0) >= 80 -> "text-amber-600"
+                true -> "text-slate-900"
+              end
+            ]}>
+              {Map.get(@metrics, :system_memory_used_pct, 0)}%
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">
+              {Float.round(Map.get(@metrics, :system_memory_used_mb, 0) / 1024, 1)} /
+              {Float.round(Map.get(@metrics, :system_memory_total_mb, 0) / 1024, 1)} GB
+            </div>
+          </div>
+        </div>
+
+    <!-- Response time percentiles -->
+        <div class="border-t border-white/50 pt-4 mb-4">
+          <div class="text-sm font-medium text-slate-700 mb-3">Response Times (last 1 hour)</div>
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div>
+              <div class="text-xs text-slate-500">p50</div>
+              <div class="text-lg font-bold text-slate-900">
+                {format_duration_short(@duration_percentiles && @duration_percentiles.p50)}
+              </div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500">p95</div>
+              <div class="text-lg font-bold text-slate-900">
+                {format_duration_short(@duration_percentiles && @duration_percentiles.p95)}
+              </div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500">p99</div>
+              <div class="text-lg font-bold text-slate-900">
+                {format_duration_short(@duration_percentiles && @duration_percentiles.p99)}
+              </div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500">Avg</div>
+              <div class="text-lg font-bold text-slate-900">
+                {format_duration_short(@duration_percentiles && @duration_percentiles.avg)}
+              </div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500">Count</div>
+              <div class="text-lg font-bold text-slate-900">
+                {(@duration_percentiles && @duration_percentiles.count) || 0}
+              </div>
+            </div>
+          </div>
+        </div>
+
+    <!-- Secondary metrics -->
+        <div class="border-t border-white/50 pt-4 grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div>
+            <div class="text-xs text-slate-500">Queue Wait (avg)</div>
+            <div class="text-base font-semibold text-slate-900">
+              {format_duration_short(@queue_wait && @queue_wait.avg_wait_ms)}
+            </div>
+          </div>
+          <div>
+            <div class="text-xs text-slate-500">Throughput</div>
+            <div class="text-base font-semibold text-slate-900">
+              {throughput_per_min(@throughput)}/min
+            </div>
+          </div>
+          <div>
+            <div class="text-xs text-slate-500">Disk Usage</div>
+            <div class={[
+              "text-base font-semibold",
+              cond do
+                Map.get(@metrics, :disk_usage_pct, 0) >= 90 -> "text-red-600"
+                Map.get(@metrics, :disk_usage_pct, 0) >= 80 -> "text-amber-600"
+                true -> "text-slate-900"
+              end
+            ]}>
+              {Map.get(@metrics, :disk_usage_pct, 0)}%
+            </div>
+          </div>
+          <div>
+            <div class="text-xs text-slate-500">BEAM Processes</div>
+            <div class="text-base font-semibold text-slate-900">
+              {format_number(Map.get(@metrics, :beam_processes, 0))}
+            </div>
+          </div>
+          <div>
+            <div class="text-xs text-slate-500">BEAM Memory</div>
+            <div class="text-base font-semibold text-slate-900">
+              {Map.get(@metrics, :beam_memory_mb, 0)} MB
+            </div>
+          </div>
+        </div>
+
+    <!-- Alerts -->
+        <%= if @system_alerts != [] do %>
+          <div class="border-t border-white/50 pt-4 mt-4">
+            <div class="text-sm font-medium text-slate-700 mb-2">Active Alerts</div>
+            <div class="space-y-2">
+              <%= for alert <- @system_alerts do %>
+                <div class={[
+                  "flex items-center gap-2 px-3 py-2 rounded-lg text-sm",
+                  if(alert.level == :critical,
+                    do: "bg-red-50 text-red-800",
+                    else: "bg-amber-50 text-amber-800"
+                  )
+                ]}>
+                  <span class="font-medium">
+                    {if alert.level == :critical, do: "CRITICAL", else: "WARNING"}
+                  </span>
+                  <span>
+                    {alert.metric} at {alert.value}{alert.unit} (threshold: {alert.threshold}{alert.unit})
+                  </span>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
     <!-- Execution Trend Chart -->
       <div class="glass-card rounded-2xl p-6 mb-8">
         <h2 class="text-lg font-semibold text-slate-900 mb-4">Execution Trend (14 days)</h2>
@@ -560,6 +741,36 @@ defmodule PrikkeWeb.SuperadminLive do
     """
   end
 
+  defp sparkline(assigns) do
+    assigns = assign_new(assigns, :color, fn -> "emerald" end)
+    data = assigns.data
+
+    max_val = if data == [], do: 1, else: max(Enum.max(data), 1)
+
+    assigns = assign(assigns, :max_val, max_val)
+
+    ~H"""
+    <div class="flex items-end gap-px h-8 mt-1">
+      <%= for {val, _idx} <- Enum.with_index(@data) do %>
+        <% height = if val > 0, do: max(round(val / @max_val * 100), 8), else: 0 %>
+        <div
+          class={[
+            "flex-1 rounded-t-sm min-w-[2px]",
+            cond do
+              @color == "blue" -> "bg-blue-400/60"
+              true -> "bg-emerald-400/60"
+            end
+          ]}
+          style={"height: #{height}%"}
+        />
+      <% end %>
+      <%= if @data == [] do %>
+        <div class="flex-1 text-xs text-slate-300 text-center">No data</div>
+      <% end %>
+    </div>
+    """
+  end
+
   defp stat_card(assigns) do
     assigns = assign_new(assigns, :subtitle, fn -> nil end)
     assigns = assign_new(assigns, :color, fn -> "text-slate-900" end)
@@ -621,6 +832,20 @@ defmodule PrikkeWeb.SuperadminLive do
   defp email_type_badge_class("limit_warning"), do: "bg-amber-100 text-amber-700"
   defp email_type_badge_class("limit_reached"), do: "bg-red-100 text-red-700"
   defp email_type_badge_class(_), do: "bg-slate-100 text-slate-600"
+
+  defp format_duration_short(nil), do: "-"
+  defp format_duration_short(ms) when is_float(ms), do: format_duration_short(round(ms))
+  defp format_duration_short(ms) when ms < 1000, do: "#{ms}ms"
+  defp format_duration_short(ms) when ms < 60_000, do: "#{Float.round(ms / 1000, 1)}s"
+  defp format_duration_short(ms), do: "#{Float.round(ms / 60_000, 1)}m"
+
+  defp throughput_per_min([]), do: "0"
+
+  defp throughput_per_min(throughput) do
+    total = Enum.reduce(throughput, 0, fn {_ts, count}, acc -> acc + count end)
+    minutes = max(length(throughput), 1)
+    Float.round(total / minutes, 1) |> to_string()
+  end
 
   defp action_badge_class("created"), do: "bg-emerald-100 text-emerald-700"
   defp action_badge_class("updated"), do: "bg-blue-100 text-blue-700"
