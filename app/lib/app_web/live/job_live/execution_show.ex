@@ -9,21 +9,29 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
     org = get_organization(socket, session)
 
     if org do
-      job = Jobs.get_job!(org, job_id)
-      execution = Executions.get_execution_for_job(job, execution_id)
+      case Jobs.get_job(org, job_id) do
+        nil ->
+          {:ok,
+           socket
+           |> put_flash(:error, "Job not found")
+           |> redirect(to: ~p"/jobs")}
 
-      if execution do
-        {:ok,
-         socket
-         |> assign(:organization, org)
-         |> assign(:job, job)
-         |> assign(:execution, execution)
-         |> assign(:page_title, "Execution Details")}
-      else
-        {:ok,
-         socket
-         |> put_flash(:error, "Execution not found")
-         |> redirect(to: ~p"/jobs/#{job_id}")}
+        job ->
+          execution = Executions.get_execution_for_job(job, execution_id)
+
+          if execution do
+            {:ok,
+             socket
+             |> assign(:organization, org)
+             |> assign(:job, job)
+             |> assign(:execution, execution)
+             |> assign(:page_title, "Execution Details")}
+          else
+            {:ok,
+             socket
+             |> put_flash(:error, "Execution not found")
+             |> redirect(to: ~p"/jobs/#{job_id}")}
+          end
       end
     else
       {:ok,

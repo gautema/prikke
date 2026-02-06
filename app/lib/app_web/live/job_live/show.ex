@@ -11,29 +11,37 @@ defmodule PrikkeWeb.JobLive.Show do
     org = get_organization(socket, session)
 
     if org do
-      job = Jobs.get_job!(org, id)
-      status_filter = nil
-      executions = Executions.list_job_executions(job, limit: @per_page, status: status_filter)
-      total_count = Executions.count_job_executions(job, status: status_filter)
-      stats = Executions.get_job_stats(job)
-      latest_info = get_latest_info(executions)
+      case Jobs.get_job(org, id) do
+        nil ->
+          {:ok,
+           socket
+           |> put_flash(:error, "Job not found")
+           |> redirect(to: ~p"/jobs")}
 
-      if connected?(socket) do
-        Jobs.subscribe_jobs(org)
-        Executions.subscribe_job_executions(job.id)
+        job ->
+          status_filter = nil
+          executions = Executions.list_job_executions(job, limit: @per_page, status: status_filter)
+          total_count = Executions.count_job_executions(job, status: status_filter)
+          stats = Executions.get_job_stats(job)
+          latest_info = get_latest_info(executions)
+
+          if connected?(socket) do
+            Jobs.subscribe_jobs(org)
+            Executions.subscribe_job_executions(job.id)
+          end
+
+          {:ok,
+           socket
+           |> assign(:organization, org)
+           |> assign(:job, job)
+           |> assign(:executions, executions)
+           |> assign(:stats, stats)
+           |> assign(:latest_info, latest_info)
+           |> assign(:status_filter, status_filter)
+           |> assign(:total_count, total_count)
+           |> assign(:page_title, job.name)
+           |> assign(:menu_open, false)}
       end
-
-      {:ok,
-       socket
-       |> assign(:organization, org)
-       |> assign(:job, job)
-       |> assign(:executions, executions)
-       |> assign(:stats, stats)
-       |> assign(:latest_info, latest_info)
-       |> assign(:status_filter, status_filter)
-       |> assign(:total_count, total_count)
-       |> assign(:page_title, job.name)
-       |> assign(:menu_open, false)}
     else
       {:ok,
        socket

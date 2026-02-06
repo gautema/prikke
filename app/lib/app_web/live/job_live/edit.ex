@@ -11,36 +11,43 @@ defmodule PrikkeWeb.JobLive.Edit do
     org = get_organization(socket, session)
 
     if org do
-      job = Jobs.get_job!(org, id)
+      case Jobs.get_job(org, id) do
+        nil ->
+          {:ok,
+           socket
+           |> put_flash(:error, "Job not found")
+           |> redirect(to: ~p"/jobs")}
 
-      # Convert headers map to JSON string for editing
-      headers_json =
-        case job.headers do
-          nil -> "{}"
-          headers when headers == %{} -> "{}"
-          headers -> Jason.encode!(headers, pretty: true)
-        end
+        job ->
+          # Convert headers map to JSON string for editing
+          headers_json =
+            case job.headers do
+              nil -> "{}"
+              headers when headers == %{} -> "{}"
+              headers -> Jason.encode!(headers, pretty: true)
+            end
 
-      changeset =
-        Jobs.change_job(job)
-        |> Ecto.Changeset.put_change(:headers_json, headers_json)
+          changeset =
+            Jobs.change_job(job)
+            |> Ecto.Changeset.put_change(:headers_json, headers_json)
 
-      {cron_mode, cron_preset, cron_minute, cron_hour, cron_weekdays, cron_day_of_month} =
-        parse_cron_for_builder(job.cron_expression)
+          {cron_mode, cron_preset, cron_minute, cron_hour, cron_weekdays, cron_day_of_month} =
+            parse_cron_for_builder(job.cron_expression)
 
-      {:ok,
-       socket
-       |> assign(:organization, org)
-       |> assign(:job, job)
-       |> assign(:page_title, "Edit: #{job.name}")
-       |> assign(:schedule_type, job.schedule_type)
-       |> assign(:cron_mode, cron_mode)
-       |> assign(:cron_preset, cron_preset)
-       |> assign(:cron_minute, cron_minute)
-       |> assign(:cron_hour, cron_hour)
-       |> assign(:cron_weekdays, cron_weekdays)
-       |> assign(:cron_day_of_month, cron_day_of_month)
-       |> assign_form(changeset)}
+          {:ok,
+           socket
+           |> assign(:organization, org)
+           |> assign(:job, job)
+           |> assign(:page_title, "Edit: #{job.name}")
+           |> assign(:schedule_type, job.schedule_type)
+           |> assign(:cron_mode, cron_mode)
+           |> assign(:cron_preset, cron_preset)
+           |> assign(:cron_minute, cron_minute)
+           |> assign(:cron_hour, cron_hour)
+           |> assign(:cron_weekdays, cron_weekdays)
+           |> assign(:cron_day_of_month, cron_day_of_month)
+           |> assign_form(changeset)}
+      end
     else
       {:ok,
        socket
