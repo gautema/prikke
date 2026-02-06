@@ -834,6 +834,11 @@ defmodule PrikkeWeb.SuperadminLive do
   defp email_type_badge_class(_), do: "bg-slate-100 text-slate-600"
 
   defp format_duration_short(nil), do: "-"
+
+  defp format_duration_short(%Decimal{} = ms) do
+    format_duration_short(Decimal.to_float(ms))
+  end
+
   defp format_duration_short(ms) when is_float(ms), do: format_duration_short(round(ms))
   defp format_duration_short(ms) when ms < 1000, do: "#{ms}ms"
   defp format_duration_short(ms) when ms < 60_000, do: "#{Float.round(ms / 1000, 1)}s"
