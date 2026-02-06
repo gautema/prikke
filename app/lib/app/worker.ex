@@ -255,7 +255,13 @@ defmodule Prikke.Worker do
       notify_failure(updated_execution)
       send_callback(updated_execution)
 
-      maybe_retry(execution)
+      # Respect Retry-After header on 429 responses
+      retry_after_ms =
+        if response.status == 429 do
+          parse_retry_after(response.headers)
+        end
+
+      maybe_retry(execution, retry_after_ms)
     end
   end
 
@@ -268,7 +274,7 @@ defmodule Prikke.Worker do
     notify_failure(updated_execution)
     send_callback(updated_execution)
 
-    maybe_retry(execution)
+    maybe_retry(execution, nil)
   end
 
   defp handle_failure(execution, error, duration_ms) do
@@ -285,7 +291,7 @@ defmodule Prikke.Worker do
     notify_failure(updated_execution)
     send_callback(updated_execution)
 
-    maybe_retry(execution)
+    maybe_retry(execution, nil)
   end
 
   # Send notification for failed execution (preserves job/org from original execution)
@@ -317,17 +323,27 @@ defmodule Prikke.Worker do
 
   # Retry logic: only one-time jobs retry, cron jobs don't
   # (the next scheduled run is the implicit retry for cron)
-  defp maybe_retry(execution) do
+  # When retry_after_ms is provided (from 429 Retry-After), use it instead of backoff
+  defp maybe_retry(execution, retry_after_ms) do
     job = execution.job
 
     if job.schedule_type == "once" and execution.attempt < job.retry_attempts do
-      # Calculate backoff delay: (attempt + 1)² × base_delay
-      delay_ms = round(:math.pow(execution.attempt + 1, 2) * @retry_base_delay_ms)
+      # Use Retry-After delay if provided, otherwise exponential backoff
+      delay_ms =
+        if retry_after_ms do
+          # Cap Retry-After at 1 hour to prevent unreasonable delays
+          min(retry_after_ms, 3_600_000)
+        else
+          # Calculate backoff delay: (attempt + 1)² × base_delay
+          round(:math.pow(execution.attempt + 1, 2) * @retry_base_delay_ms)
+        end
 
       scheduled_for = DateTime.add(DateTime.utc_now(), delay_ms, :millisecond)
 
+      retry_source = if retry_after_ms, do: " (from Retry-After)", else: ""
+
       Logger.info(
-        "[Worker] Scheduling retry #{execution.attempt + 1}/#{job.retry_attempts} in #{delay_ms}ms"
+        "[Worker] Scheduling retry #{execution.attempt + 1}/#{job.retry_attempts} in #{delay_ms}ms#{retry_source}"
       )
 
       case Executions.create_execution_for_job(job, scheduled_for, execution.attempt + 1) do
@@ -359,6 +375,10 @@ defmodule Prikke.Worker do
   end
 
   defp truncate_body(body), do: inspect(body) |> truncate_body()
+
+  defp parse_retry_after(headers) do
+    Prikke.RetryAfter.parse(headers)
+  end
 
   defp format_error(%Req.TransportError{reason: reason}),
     do: "Transport error: #{inspect(reason)}"
