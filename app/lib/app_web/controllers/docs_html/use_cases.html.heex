@@ -52,14 +52,11 @@
         phx-no-curly-interpolation
         class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
       ><span class="text-slate-500">// Return immediately, process in background</span>
-<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/jobs'</span>, {
+<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/queue'</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">'POST'</span>,
   <span class="text-sky-300">headers</span>: { <span class="text-sky-300">'Authorization'</span>: <span class="text-green-300">'Bearer YOUR_API_KEY'</span> },
   <span class="text-sky-300">body</span>: JSON.stringify({
-    <span class="text-sky-300">name</span>: <span class="text-green-300">'generate-report'</span>,
     <span class="text-sky-300">url</span>: <span class="text-green-300">'https://myapp.com/api/reports/generate'</span>,
-    <span class="text-sky-300">schedule_type</span>: <span class="text-green-300">'once'</span>,
-    <span class="text-sky-300">scheduled_at</span>: <span class="text-purple-300">new</span> Date().toISOString(),
     <span class="text-sky-300">body</span>: JSON.stringify({ reportId, userId })
   })
 });
@@ -83,14 +80,12 @@
       ><span class="text-slate-500">// Stripe webhook - return 200 immediately</span>
 <span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(req) {
   <span class="text-purple-300">const</span> event = <span class="text-purple-300">await</span> req.json();
-  <span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/jobs'</span>, {
+  <span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/queue'</span>, {
     <span class="text-sky-300">method</span>: <span class="text-green-300">'POST'</span>,
     <span class="text-sky-300">headers</span>: { <span class="text-sky-300">'Authorization'</span>: <span class="text-green-300">'Bearer YOUR_API_KEY'</span> },
     <span class="text-sky-300">body</span>: JSON.stringify({
-      <span class="text-sky-300">name</span>: <span class="text-green-300">`stripe-${event.id}`</span>,
       <span class="text-sky-300">url</span>: <span class="text-green-300">'https://myapp.com/api/process-stripe'</span>,
-      <span class="text-sky-300">schedule_type</span>: <span class="text-green-300">'once'</span>,
-      <span class="text-sky-300">scheduled_at</span>: <span class="text-purple-300">new</span> Date().toISOString()
+      <span class="text-sky-300">body</span>: JSON.stringify(event)
     })
   });
   <span class="text-purple-300">return</span> Response.json({ <span class="text-sky-300">received</span>: <span class="text-orange-300">true</span> });

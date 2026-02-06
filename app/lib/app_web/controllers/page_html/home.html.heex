@@ -153,7 +153,14 @@
       <pre
         phx-no-curly-interpolation
         class="bg-slate-900 text-slate-100 p-4 sm:p-6 rounded-lg font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto"
-      ><span class="text-slate-500"># Defer a task - run it in 24 hours</span>
+      ><span class="text-slate-500"># Run something right now</span>
+curl -X POST https://runlater.eu/api/v1/queue \
+  -H "Authorization: Bearer pk_live_xxx" \
+  -d '{
+    <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/process"</span>
+  }'
+
+<span class="text-slate-500"># Defer a task - run it in 24 hours</span>
 curl -X POST https://runlater.eu/api/v1/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
   -d '{
