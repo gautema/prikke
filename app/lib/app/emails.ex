@@ -53,6 +53,20 @@ defmodule Prikke.Emails do
   end
 
   @doc """
+  Returns monthly summary emails, ordered by most recent first.
+  """
+  def list_monthly_summary_emails(opts \\ []) do
+    limit = Keyword.get(opts, :limit, 12)
+
+    from(e in EmailLog,
+      where: e.email_type == "monthly_summary",
+      order_by: [desc: e.inserted_at],
+      limit: ^limit
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Deletes email logs older than the given number of days.
   """
   def cleanup_old_email_logs(retention_days) do

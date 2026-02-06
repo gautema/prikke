@@ -78,6 +78,7 @@ defmodule PrikkeWeb.SuperadminLive do
     # Email logs
     recent_emails = Emails.list_recent_emails(limit: 20)
     emails_today = Emails.count_emails_today()
+    monthly_summary_emails = Emails.list_monthly_summary_emails(limit: 12)
 
     # System performance metrics
     metrics = Prikke.Metrics.current()
@@ -109,6 +110,7 @@ defmodule PrikkeWeb.SuperadminLive do
     |> assign(:audit_logs, audit_logs)
     |> assign(:recent_emails, recent_emails)
     |> assign(:emails_today, emails_today)
+    |> assign(:monthly_summary_emails, monthly_summary_emails)
   end
 
   @impl true
@@ -704,6 +706,42 @@ defmodule PrikkeWeb.SuperadminLive do
         </div>
       </div>
 
+    <!-- Monthly Summary Emails -->
+      <div class="glass-card rounded-2xl mb-8">
+        <div class="px-6 py-4 border-b border-white/50 flex justify-between items-center">
+          <h2 class="text-lg font-semibold text-slate-900">Monthly Summary Emails</h2>
+          <span class="text-xs text-slate-400">Sent on the 1st of each month</span>
+        </div>
+        <div class="divide-y divide-white/30">
+          <%= for email <- @monthly_summary_emails do %>
+            <div class="px-6 py-3 flex items-center gap-4">
+              <span class={[
+                "w-2 h-2 rounded-full shrink-0",
+                if(email.status == "sent", do: "bg-emerald-600", else: "bg-red-500")
+              ]} />
+              <span class="text-sm font-medium text-slate-900">{email.subject}</span>
+              <span class={[
+                "text-xs px-2 py-0.5 rounded-full font-medium shrink-0",
+                if(email.status == "sent",
+                  do: "bg-emerald-100 text-emerald-700",
+                  else: "bg-red-100 text-red-700"
+                )
+              ]}>
+                {email.status}
+              </span>
+              <span class="text-xs text-slate-400 whitespace-nowrap shrink-0 ml-auto">
+                <.relative_time id={"monthly-email-#{email.id}"} datetime={email.inserted_at} />
+              </span>
+            </div>
+          <% end %>
+          <%= if @monthly_summary_emails == [] do %>
+            <div class="px-6 py-8 text-center text-slate-400">
+              No monthly summaries sent yet. First one will be sent on the 1st of next month.
+            </div>
+          <% end %>
+        </div>
+      </div>
+
     <!-- Recent Emails -->
       <div class="glass-card rounded-2xl mb-8">
         <div class="px-6 py-4 border-b border-white/50">
@@ -831,6 +869,7 @@ defmodule PrikkeWeb.SuperadminLive do
   defp email_type_badge_class("organization_invite"), do: "bg-purple-100 text-purple-700"
   defp email_type_badge_class("limit_warning"), do: "bg-amber-100 text-amber-700"
   defp email_type_badge_class("limit_reached"), do: "bg-red-100 text-red-700"
+  defp email_type_badge_class("monthly_summary"), do: "bg-indigo-100 text-indigo-700"
   defp email_type_badge_class(_), do: "bg-slate-100 text-slate-600"
 
   defp format_duration_short(nil), do: "-"
