@@ -55,6 +55,7 @@ defmodule PrikkeWeb.OrganizationController do
     organization = conn.assigns.current_organization
 
     if organization do
+      organization = Prikke.Repo.reload!(organization)
       changeset = Accounts.change_organization(organization)
       tier_limits = Jobs.get_tier_limits(organization.tier)
       monthly_executions = Executions.count_current_month_executions(organization)

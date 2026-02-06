@@ -8,6 +8,7 @@ defmodule Prikke.Executions do
   alias Prikke.Repo
   alias Prikke.Executions.Execution
   alias Prikke.Jobs.Job
+  alias Prikke.Accounts.Organization
 
   @doc """
   Subscribes to execution updates for a specific job.
@@ -210,8 +211,12 @@ defmodule Prikke.Executions do
       |> Repo.update()
 
     case result do
-      {:ok, updated} -> broadcast_execution_update(updated)
-      _ -> :ok
+      {:ok, updated} ->
+        maybe_increment_monthly_count(updated)
+        broadcast_execution_update(updated)
+
+      _ ->
+        :ok
     end
 
     result
@@ -227,8 +232,12 @@ defmodule Prikke.Executions do
       |> Repo.update()
 
     case result do
-      {:ok, updated} -> broadcast_execution_update(updated)
-      _ -> :ok
+      {:ok, updated} ->
+        maybe_increment_monthly_count(updated)
+        broadcast_execution_update(updated)
+
+      _ ->
+        :ok
     end
 
     result
@@ -244,8 +253,12 @@ defmodule Prikke.Executions do
       |> Repo.update()
 
     case result do
-      {:ok, updated} -> broadcast_execution_update(updated)
-      _ -> :ok
+      {:ok, updated} ->
+        maybe_increment_monthly_count(updated)
+        broadcast_execution_update(updated)
+
+      _ ->
+        :ok
     end
 
     result
@@ -460,37 +473,49 @@ defmodule Prikke.Executions do
   end
 
   @doc """
-  Counts executions for an organization in a given month.
-  Used for enforcing monthly execution limits.
-
-  NOTE: Currently uses a COUNT query which is fine for MVP scale.
-  Future optimization: cache in ETS with 5-minute TTL, invalidate on completion.
+  Returns the monthly execution count for an organization.
+  Uses the cached counter on the organization which survives execution cleanup.
   """
-  def count_monthly_executions(organization, year, month) do
-    start_of_month = Date.new!(year, month, 1) |> DateTime.new!(~T[00:00:00], "Etc/UTC")
-    # Calculate first day of next month
-    {next_year, next_month} = if month == 12, do: {year + 1, 1}, else: {year, month + 1}
-    end_of_month = Date.new!(next_year, next_month, 1) |> DateTime.new!(~T[00:00:00], "Etc/UTC")
-
-    # Only count initial attempts (attempt == 1), retries are free
-    from(e in Execution,
-      join: j in Job,
-      on: e.job_id == j.id,
-      where: j.organization_id == ^organization.id,
-      where: e.scheduled_for >= ^start_of_month and e.scheduled_for < ^end_of_month,
-      where: e.status in ["success", "failed", "timeout"],
-      where: e.attempt == 1
-    )
-    |> Repo.aggregate(:count)
+  def count_current_month_executions(organization) do
+    organization.monthly_execution_count || 0
   end
 
   @doc """
-  Counts executions for an organization in the current month.
+  Atomically increments the monthly execution counter for an organization.
+  Called when an execution reaches a terminal state (success/failed/timeout).
   """
-  def count_current_month_executions(organization) do
-    now = DateTime.utc_now()
-    count_monthly_executions(organization, now.year, now.month)
+  def increment_monthly_execution_count(organization_id) do
+    from(o in Organization,
+      where: o.id == ^organization_id
+    )
+    |> Repo.update_all(inc: [monthly_execution_count: 1])
   end
+
+  @doc """
+  Resets monthly execution counters for all organizations.
+  Called by the cleanup job at the start of each month.
+  """
+  def reset_monthly_execution_counts do
+    now = DateTime.utc_now()
+
+    from(o in Organization,
+      where: is_nil(o.monthly_execution_reset_at) or o.monthly_execution_reset_at < ^start_of_current_month()
+    )
+    |> Repo.update_all(set: [monthly_execution_count: 0, monthly_execution_reset_at: now])
+  end
+
+  defp start_of_current_month do
+    now = DateTime.utc_now()
+    Date.new!(now.year, now.month, 1) |> DateTime.new!(~T[00:00:00], "Etc/UTC")
+  end
+
+  # Only increment for first attempts (retries are free)
+  defp maybe_increment_monthly_count(%Execution{attempt: 1} = execution) do
+    execution = Repo.preload(execution, job: :organization)
+    increment_monthly_execution_count(execution.job.organization_id)
+  end
+
+  defp maybe_increment_monthly_count(_execution), do: :ok
 
   @doc """
   Gets execution stats for an organization for today (since midnight UTC).
@@ -687,28 +712,17 @@ defmodule Prikke.Executions do
   """
   def list_organization_monthly_executions(opts \\ []) do
     limit = Keyword.get(opts, :limit, 50)
-    now = DateTime.utc_now()
-    start_of_month = Date.new!(now.year, now.month, 1) |> DateTime.new!(~T[00:00:00], "Etc/UTC")
-
     tier_limits = Prikke.Jobs.tier_limits()
 
-    from(e in Execution,
-      join: j in Job,
-      on: e.job_id == j.id,
-      join: o in Prikke.Accounts.Organization,
-      on: j.organization_id == o.id,
-      where: e.scheduled_for >= ^start_of_month,
-      where: e.status in ["success", "failed", "timeout"],
-      where: e.attempt == 1,
-      group_by: [o.id, o.name, o.tier],
-      select: {o, count(e.id)},
-      order_by: [desc: count(e.id)],
+    from(o in Organization,
+      where: o.monthly_execution_count > 0,
+      order_by: [desc: o.monthly_execution_count],
       limit: ^limit
     )
     |> Repo.all()
-    |> Enum.map(fn {org, count} ->
+    |> Enum.map(fn org ->
       tier_limit = tier_limits[org.tier][:max_monthly_executions] || 5_000
-      {org, count, tier_limit}
+      {org, org.monthly_execution_count, tier_limit}
     end)
   end
 end

@@ -308,8 +308,9 @@ defmodule Prikke.Scheduler do
 
   # Checks if we should send a limit notification (80% warning or 100% reached)
   defp check_limit_notification(organization) do
-    current_count = Executions.count_current_month_executions(organization)
-    Prikke.Accounts.maybe_send_limit_notification(organization, current_count)
+    org = Prikke.Repo.reload!(organization)
+    current_count = Executions.count_current_month_executions(org)
+    Prikke.Accounts.maybe_send_limit_notification(org, current_count)
   end
 
   # Schedules an overdue job, handling any missed runs if the scheduler was down.
@@ -535,7 +536,8 @@ defmodule Prikke.Scheduler do
   # - Free: 5,000 executions/month
   # - Pro: 250,000 executions/month
   defp within_monthly_limit?(job) do
-    org = job.organization
+    # Reload org to get fresh counter value
+    org = Prikke.Repo.reload!(job.organization)
     tier_limits = Prikke.Jobs.get_tier_limits(org.tier)
 
     case tier_limits.max_monthly_executions do

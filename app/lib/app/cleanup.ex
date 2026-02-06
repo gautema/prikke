@@ -20,6 +20,7 @@ defmodule Prikke.Cleanup do
   alias Prikke.Repo
   alias Prikke.Accounts
   alias Prikke.Executions
+  alias Prikke.Emails
   alias Prikke.Idempotency
   alias Prikke.Jobs
   alias Prikke.Monitors
@@ -142,17 +143,23 @@ defmodule Prikke.Cleanup do
     # Clean expired idempotency keys (24-hour TTL)
     {idempotency_deleted, _} = Idempotency.cleanup_expired_keys()
 
+    # Clean old email logs (30 days)
+    {emails_deleted, _} = Emails.cleanup_old_email_logs(30)
+
+    # Reset monthly execution counters if new month
+    Executions.reset_monthly_execution_counts()
+
     pings_deleted = total_pings
 
-    if total_executions > 0 or total_jobs > 0 or idempotency_deleted > 0 or pings_deleted > 0 do
+    if total_executions > 0 or total_jobs > 0 or idempotency_deleted > 0 or pings_deleted > 0 or emails_deleted > 0 do
       Logger.info(
-        "[Cleanup] Deleted #{total_executions} executions, #{total_jobs} completed one-time jobs, #{idempotency_deleted} idempotency keys, #{pings_deleted} monitor pings"
+        "[Cleanup] Deleted #{total_executions} executions, #{total_jobs} completed one-time jobs, #{idempotency_deleted} idempotency keys, #{pings_deleted} monitor pings, #{emails_deleted} email logs"
       )
     else
       Logger.info("[Cleanup] Nothing to clean up")
     end
 
-    {:ok, %{executions: total_executions, jobs: total_jobs, idempotency_keys: idempotency_deleted, monitor_pings: pings_deleted}}
+    {:ok, %{executions: total_executions, jobs: total_jobs, idempotency_keys: idempotency_deleted, monitor_pings: pings_deleted, email_logs: emails_deleted}}
   end
 
   defp get_retention_days(tier) do

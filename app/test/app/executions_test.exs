@@ -225,31 +225,90 @@ defmodule Prikke.ExecutionsTest do
       assert stats.success == 1
     end
 
-    test "count_monthly_executions/3 counts completed executions in a month", %{
+    test "monthly execution counter increments on completion", %{
       organization: org,
       job: job
     } do
-      now = DateTime.utc_now()
-      past = DateTime.add(now, -60, :second)
+      past = DateTime.add(DateTime.utc_now(), -60, :second)
 
       # Create and complete an execution
       {:ok, _exec} = Executions.create_execution_for_job(job, past)
       {:ok, running} = Executions.claim_next_execution()
       {:ok, _completed} = Executions.complete_execution(running, %{status_code: 200})
 
-      count = Executions.count_monthly_executions(org, now.year, now.month)
-      assert count == 1
+      # Reload org to get updated counter
+      org = Prikke.Repo.reload!(org)
+      assert org.monthly_execution_count == 1
+      assert Executions.count_current_month_executions(org) == 1
     end
 
-    test "count_current_month_executions/1 counts current month", %{organization: org, job: job} do
+    test "count_current_month_executions/1 reads from counter", %{organization: org, job: job} do
       past = DateTime.add(DateTime.utc_now(), -60, :second)
 
       {:ok, _exec} = Executions.create_execution_for_job(job, past)
       {:ok, running} = Executions.claim_next_execution()
       {:ok, _completed} = Executions.complete_execution(running, %{status_code: 200})
 
+      # Must reload to get fresh counter
+      org = Prikke.Repo.reload!(org)
       count = Executions.count_current_month_executions(org)
       assert count == 1
+    end
+
+    test "counter increments on failure", %{organization: org, job: job} do
+      past = DateTime.add(DateTime.utc_now(), -60, :second)
+
+      {:ok, _exec} = Executions.create_execution_for_job(job, past)
+      {:ok, running} = Executions.claim_next_execution()
+      {:ok, _failed} = Executions.fail_execution(running, %{error_message: "fail"})
+
+      org = Prikke.Repo.reload!(org)
+      assert org.monthly_execution_count == 1
+    end
+
+    test "counter increments on timeout", %{organization: org, job: job} do
+      past = DateTime.add(DateTime.utc_now(), -60, :second)
+
+      {:ok, _exec} = Executions.create_execution_for_job(job, past)
+      {:ok, running} = Executions.claim_next_execution()
+      {:ok, _timed_out} = Executions.timeout_execution(running, 30_000)
+
+      org = Prikke.Repo.reload!(org)
+      assert org.monthly_execution_count == 1
+    end
+
+    test "counter does not increment for retries (attempt > 1)", %{organization: org, job: job} do
+      past = DateTime.add(DateTime.utc_now(), -60, :second)
+
+      {:ok, exec} = Executions.create_execution_for_job(job, past)
+
+      # Manually set attempt to 2 to simulate a retry
+      exec
+      |> Ecto.Changeset.change(%{attempt: 2, status: "running", started_at: DateTime.truncate(DateTime.utc_now(), :second)})
+      |> Prikke.Repo.update!()
+
+      exec = Prikke.Repo.reload!(exec)
+      {:ok, _completed} = Executions.complete_execution(exec, %{status_code: 200})
+
+      org = Prikke.Repo.reload!(org)
+      assert org.monthly_execution_count == 0
+    end
+
+    test "reset_monthly_execution_counts/0 resets all counters" do
+      user = user_fixture()
+      {:ok, org} = Accounts.create_organization(user, %{name: "Counter Reset Org"})
+
+      # Manually set a count
+      Prikke.Repo.update_all(
+        from(o in Prikke.Accounts.Organization, where: o.id == ^org.id),
+        set: [monthly_execution_count: 42, monthly_execution_reset_at: nil]
+      )
+
+      Executions.reset_monthly_execution_counts()
+
+      org = Prikke.Repo.reload!(org)
+      assert org.monthly_execution_count == 0
+      assert org.monthly_execution_reset_at != nil
     end
   end
 end

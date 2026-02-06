@@ -19,6 +19,10 @@ defmodule Prikke.Accounts.Organization do
     field :limit_warning_sent_at, :utc_datetime
     field :limit_reached_sent_at, :utc_datetime
 
+    # Monthly execution counter (survives execution cleanup)
+    field :monthly_execution_count, :integer, default: 0
+    field :monthly_execution_reset_at, :utc_datetime
+
     has_many :memberships, Prikke.Accounts.Membership
     has_many :users, through: [:memberships, :user]
     has_many :api_keys, Prikke.Accounts.ApiKey

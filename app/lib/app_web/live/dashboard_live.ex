@@ -379,6 +379,7 @@ defmodule PrikkeWeb.DashboardLive do
     }
 
   defp load_stats(organization) do
+    organization = Prikke.Repo.reload!(organization)
     exec_stats = Executions.get_today_stats(organization)
     tier_limits = Jobs.get_tier_limits(organization.tier)
     monthly_executions = Executions.count_current_month_executions(organization)
