@@ -218,7 +218,7 @@ defmodule PrikkeWeb.DashboardLive do
 
         <!-- Jobs Section -->
         <div class="glass-card rounded-2xl mb-4">
-          <div class="px-6 py-4 border-b border-white/50 flex flex-wrap justify-between items-center gap-2">
+          <div class="px-6 py-4 border-b border-white/50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
             <div class="flex items-center gap-3">
               <h2 class="text-lg font-semibold text-slate-900">Jobs</h2>
               <.job_summary stats={@stats} />
@@ -284,7 +284,7 @@ defmodule PrikkeWeb.DashboardLive do
 
         <!-- Monitors Section -->
         <div class="glass-card rounded-2xl mb-4">
-          <div class="px-6 py-4 border-b border-white/50 flex flex-wrap justify-between items-center gap-2">
+          <div class="px-6 py-4 border-b border-white/50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
             <div class="flex items-center gap-3">
               <h2 class="text-lg font-semibold text-slate-900">Monitors</h2>
               <%= if @monitors != [] do %>
@@ -293,7 +293,7 @@ defmodule PrikkeWeb.DashboardLive do
             </div>
             <.link
               navigate={~p"/monitors/new"}
-              class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-md transition-colors no-underline"
+              class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-md transition-colors no-underline w-fit"
             >
               New Monitor
             </.link>
