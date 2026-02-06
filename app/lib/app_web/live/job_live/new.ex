@@ -179,24 +179,13 @@ defmodule PrikkeWeb.JobLive.New do
   end
 
   def handle_event("test_url", _, socket) do
-    form_params = socket.assigns.form.params || %{}
+    changeset = socket.assigns.form.source
 
-    url = form_params["url"] || ""
-    method = form_params["method"] || "GET"
-    body = form_params["body"]
-    timeout_ms = parse_timeout(form_params["timeout_ms"])
-
-    headers =
-      case form_params["headers_json"] do
-        json when is_binary(json) and json != "" ->
-          case Jason.decode(json) do
-            {:ok, h} when is_map(h) -> h
-            _ -> %{}
-          end
-
-        _ ->
-          %{}
-      end
+    url = Ecto.Changeset.get_field(changeset, :url) || ""
+    method = Ecto.Changeset.get_field(changeset, :method) || "GET"
+    body = Ecto.Changeset.get_field(changeset, :body)
+    timeout_ms = parse_timeout(Ecto.Changeset.get_field(changeset, :timeout_ms))
+    headers = Ecto.Changeset.get_field(changeset, :headers) || %{}
 
     task =
       Task.async(fn ->

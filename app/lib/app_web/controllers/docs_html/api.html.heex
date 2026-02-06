@@ -696,10 +696,45 @@
           <td class="py-2 pr-4 text-slate-500">string</td>
           <td class="py-2 text-slate-600">Request body, max 256KB (optional)</td>
         </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">monitors</code></td>
+          <td class="py-2 pr-4 text-slate-500">array</td>
+          <td class="py-2 text-slate-600">Array of monitor configurations (optional)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">monitors[].key</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">Unique key for this monitor (your identifier)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">monitors[].name</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">Display name for this monitor</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">monitors[].schedule_type</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">"cron" or "interval"</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">monitors[].cron_expression</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">Cron expression (when schedule_type is "cron")</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">monitors[].interval_seconds</code></td>
+          <td class="py-2 pr-4 text-slate-500">integer</td>
+          <td class="py-2 text-slate-600">Expected ping interval in seconds (when schedule_type is "interval")</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">monitors[].grace_seconds</code></td>
+          <td class="py-2 pr-4 text-slate-500">integer</td>
+          <td class="py-2 text-slate-600">Grace period before alerting (default: 300)</td>
+        </tr>
         <tr>
           <td class="py-2 pr-4"><code class="text-sky-600">delete_removed</code></td>
           <td class="py-2 pr-4 text-slate-500">boolean</td>
-          <td class="py-2 text-slate-600">Delete jobs not in config (default: false)</td>
+          <td class="py-2 text-slate-600">Delete jobs/monitors not in config (default: false)</td>
         </tr>
       </table>
     </div>
@@ -715,6 +750,13 @@
       <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Daily backup"</span>,
       <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/backup"</span>,
       <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 6 * * *"</span>
+    }],
+    <span class="text-sky-300">"monitors"</span>: [{
+      <span class="text-sky-300">"key"</span>: <span class="text-green-300">"nightly-etl"</span>,
+      <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Nightly ETL"</span>,
+      <span class="text-sky-300">"schedule_type"</span>: <span class="text-green-300">"cron"</span>,
+      <span class="text-sky-300">"cron_expression"</span>: <span class="text-green-300">"0 2 * * *"</span>,
+      <span class="text-sky-300">"grace_seconds"</span>: <span class="text-orange-300">600</span>
     }],
     <span class="text-sky-300">"delete_removed"</span>: <span class="text-orange-300">true</span>
   }'</pre>

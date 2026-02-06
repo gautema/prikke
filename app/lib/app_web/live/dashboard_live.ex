@@ -218,7 +218,7 @@ defmodule PrikkeWeb.DashboardLive do
 
         <!-- Jobs Section -->
         <div class="glass-card rounded-2xl mb-4">
-          <div class="px-6 py-4 border-b border-white/50 flex justify-between items-center">
+          <div class="px-6 py-4 border-b border-white/50 flex flex-wrap justify-between items-center gap-2">
             <div class="flex items-center gap-3">
               <h2 class="text-lg font-semibold text-slate-900">Jobs</h2>
               <.job_summary stats={@stats} />
@@ -247,7 +247,7 @@ defmodule PrikkeWeb.DashboardLive do
             </div>
           <% else %>
             <!-- Execution Trend -->
-            <.execution_trend trend={@stats.execution_trend} />
+            <.execution_trend trend={@stats.execution_trend} days={@stats.trend_days} />
             <!-- Job List -->
             <div class="divide-y divide-white/30">
               <%= for job <- @recent_jobs do %>
@@ -284,7 +284,7 @@ defmodule PrikkeWeb.DashboardLive do
 
         <!-- Monitors Section -->
         <div class="glass-card rounded-2xl mb-4">
-          <div class="px-6 py-4 border-b border-white/50 flex justify-between items-center">
+          <div class="px-6 py-4 border-b border-white/50 flex flex-wrap justify-between items-center gap-2">
             <div class="flex items-center gap-3">
               <h2 class="text-lg font-semibold text-slate-900">Monitors</h2>
               <%= if @monitors != [] do %>
@@ -372,8 +372,9 @@ defmodule PrikkeWeb.DashboardLive do
       avg_duration_ms: nil,
       monthly_executions: 0,
       monthly_limit: 0,
-      execution_trend: Enum.map(0..13, fn offset ->
-        {Date.add(Date.utc_today(), -13 + offset), %{total: 0, success: 0, failed: 0}}
+      trend_days: 7,
+      execution_trend: Enum.map(0..6, fn offset ->
+        {Date.add(Date.utc_today(), -6 + offset), %{total: 0, success: 0, failed: 0}}
       end)
     }
 
@@ -381,6 +382,7 @@ defmodule PrikkeWeb.DashboardLive do
     exec_stats = Executions.get_today_stats(organization)
     tier_limits = Jobs.get_tier_limits(organization.tier)
     monthly_executions = Executions.count_current_month_executions(organization)
+    trend_days = if organization.tier == "pro", do: 30, else: 7
 
     seven_days_ago = DateTime.add(DateTime.utc_now(), -7, :day)
     stats_7d = Executions.get_organization_stats(organization, since: seven_days_ago)
@@ -398,7 +400,8 @@ defmodule PrikkeWeb.DashboardLive do
       avg_duration_ms: exec_stats.avg_duration_ms,
       monthly_executions: monthly_executions,
       monthly_limit: tier_limits.max_monthly_executions,
-      execution_trend: Executions.executions_by_day_for_org(organization)
+      trend_days: trend_days,
+      execution_trend: Executions.executions_by_day_for_org(organization, trend_days)
     }
   end
 
@@ -547,24 +550,17 @@ defmodule PrikkeWeb.DashboardLive do
 
     ~H"""
     <div class="px-6 py-4 border-b border-white/30">
-      <div class="text-xs font-medium text-slate-500 mb-2">14-day trend</div>
+      <div class="text-xs font-medium text-slate-500 mb-2">{@days}-day trend</div>
       <div class="h-16 flex items-end gap-px">
         <%= for {{date, stats}, idx} <- Enum.with_index(@trend) do %>
           <% height = if stats.total > 0, do: max(round(stats.total / @max_val * 100), 6), else: 0 %>
-          <% success_pct = if stats.total > 0, do: round(stats.success / stats.total * 100), else: 0 %>
-          <% failed_pct = 100 - success_pct %>
+          <% bar_color = trend_bar_color(stats) %>
           <div class="flex-1 flex flex-col justify-end h-full group relative">
-            <div class="flex flex-col" style={"height: #{height}%"}>
-              <%= if failed_pct > 0 && stats.failed > 0 do %>
-                <div class="bg-red-400 rounded-t-sm flex-none" style={"height: #{failed_pct}%"} />
-              <% end %>
-              <%= if success_pct > 0 && stats.success > 0 do %>
-                <div class={["bg-emerald-500 flex-1", if(stats.failed == 0, do: "rounded-t-sm", else: "")]} />
-              <% end %>
-              <%= if stats.total == 0 do %>
-                <div class="bg-slate-100 h-1 rounded-sm" />
-              <% end %>
-            </div>
+            <%= if stats.total > 0 do %>
+              <div class={["rounded-t-sm", bar_color]} style={"height: #{height}%"} />
+            <% else %>
+              <div class="bg-slate-100 h-1 rounded-sm" />
+            <% end %>
             <div class={[
               "hidden group-hover:block absolute bottom-full mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap z-10",
               tooltip_position(idx, length(@trend))
@@ -581,6 +577,11 @@ defmodule PrikkeWeb.DashboardLive do
     </div>
     """
   end
+
+  defp trend_bar_color(%{total: 0}), do: "bg-slate-100"
+  defp trend_bar_color(%{failed: 0}), do: "bg-emerald-500"
+  defp trend_bar_color(%{failed: f, total: t}) when f > t / 2, do: "bg-red-400"
+  defp trend_bar_color(_), do: "bg-amber-400"
 
   defp monitor_trend(%{trend: []} = assigns) do
     ~H""

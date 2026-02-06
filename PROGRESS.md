@@ -13,10 +13,10 @@ Last updated: 2026-02-06
 - [x] PostgreSQL 18 via Docker Compose
 - [x] UUID primary keys throughout
 - [x] Health check endpoint `/health`
-- [x] Dockerfile for Koyeb deployment
+- [x] Dockerfile for production deployment
 - [x] Landing page with pricing section
-- [x] Documentation pages (API, Cron, Webhooks, Getting Started)
-- [x] Deployed to Koyeb Frankfurt
+- [x] Documentation pages (API, Cron, Webhooks, Monitors, Getting Started)
+- [x] Deployed to Hetzner VPS via Kamal
 
 ### Phase 2: Authentication & Organizations (Complete)
 - [x] User auth via `mix phx.gen.auth` (magic link)
@@ -29,7 +29,7 @@ Last updated: 2026-02-06
 - [x] API Auth Plug for bearer token authentication
 - [x] **Member limits enforcement** (Free: 2 members, Pro: unlimited)
 
-### Phase 3: Core Domain (In Progress)
+### Phase 3: Core Domain (Complete)
 - [x] Jobs schema with validations
   - Organization-scoped
   - Cron expression validation (via `crontab` library)
@@ -166,7 +166,7 @@ Last updated: 2026-02-06
   - New user signup notification
   - Pro upgrade notification
   - Works in dev (Swoosh mailbox) and production (Mailjet)
-- [x] **Koyeb built-in monitoring** - CPU, memory, request metrics, logs
+- [x] **Server monitoring** - CPU, memory, request metrics, logs
 - [x] Application error tracking (Elixir ErrorTracker)
 - [ ] Performance monitoring (response times, queue depth)
 - [ ] Infrastructure alerts (high CPU, memory, disk)
@@ -205,20 +205,7 @@ Last updated: 2026-02-06
 
 ## Planned
 
-1. **Per-job notification overrides** - Override org-level notification settings on individual jobs
-2. **Rate limit handling** - Auto-retry on 429 responses with backoff from `Retry-After` header
-3. **Bulk push API** - Queue multiple jobs in a single API call (transaction-safe)
-
-## Potential Next Steps
-
-### Zeplo Feature Parity
-1. **On-demand queues** - Simple API for immediate job execution (`POST /api/queues/:name` with pass-through body)
-2. **URL proxy API** - Prefix any URL to queue it (`POST /q/https://api.example.com/webhook`)
-
-### Post-MVP Enhancements
-1. **Lemon Squeezy integration** - When ready to charge, replace manual upgrade
-2. **Customer-facing status pages** - Let users create status pages for their own services
-3. **Workflows** - Multi-step jobs with dependencies
+See [ROADMAP.md](ROADMAP.md) for the full feature roadmap.
 
 ---
 
@@ -318,23 +305,22 @@ app/lib/app_web/
 cd app
 docker compose up -d          # Start PostgreSQL
 mix setup                     # Install deps, create DB, migrate
-mix phx.server               # Start server at localhost:4000
-mix test                     # Run tests (148 passing)
+mix phx.server                # Start server at localhost:4000
+mix test                      # Run tests
 ```
 
-### Koyeb Production
+### Production (Hetzner VPS + Kamal)
 ```
 GitHub repo: gautema/prikke
 Root directory: app
 Builder: Dockerfile
-Port: 8000
-Health check: /health
-Region: Frankfurt
+Deployment: Kamal (zero-downtime)
+Region: Germany (Hetzner)
 
 Environment variables:
-- DATABASE_URL (Koyeb managed Postgres)
+- DATABASE_URL (self-hosted Postgres 18)
 - SECRET_KEY_BASE
-- PHX_HOST=prikke.whitenoise.no (without https://)
+- PHX_HOST=runlater.eu
 - MAILJET_API_KEY
 - MAILJET_SECRET_KEY
 - ADMIN_EMAIL (optional, for signup/upgrade notifications)
@@ -354,7 +340,7 @@ Environment variables:
 
 ## Test Coverage
 
-- **495 tests passing**
+- **568 tests passing**
 - Accounts: user auth, organizations, memberships, invites, API keys
 - Jobs: CRUD, validations, cron parsing, tier limits
 - Executions: creation, claiming, completion, stats
@@ -472,3 +458,11 @@ _None currently — error tracking (Elixir ErrorTracker) and uptime monitoring (
 - [x] Session cookie secure flag for HTTPS
 - [x] 403 error page
 - [x] PHX_HOST protocol stripping safeguard
+- [x] **Webhook test button** — "Test URL" on job create/edit fires a test request and shows the response inline
+- [x] **Response assertions** — Mark an execution as failed if the response doesn't match expected status code or body pattern
+- [x] **Per-job and per-monitor notification muting** — Mute failure/recovery notifications for individual jobs and monitors
+- [x] **429 Retry-After handling** — Auto-retry on 429 responses with backoff from Retry-After header
+- [x] **Monitor sync API** — `/api/v1/sync` now supports monitors alongside jobs
+- [x] **Dashboard overhaul** — Unified jobs/monitors panes with inline trend charts, aggregate uptime visualization, monthly usage bar
+- [x] **Run history lines** — Per-job execution status visualization on jobs index page
+- [x] **Monitor uptime lines** — Per-monitor daily uptime status on monitors index and show pages (7d free / 30d pro)
