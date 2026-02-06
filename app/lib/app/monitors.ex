@@ -305,7 +305,7 @@ defmodule Prikke.Monitors do
               true -> "down"
             end
 
-          {date, status}
+          {date, %{status: status, actual: actual, expected: expected}}
         end)
 
       {monitor.id, days_list}

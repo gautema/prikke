@@ -100,15 +100,15 @@ defmodule PrikkeWeb.MonitorLive.Index do
   end
 
   defp uptime_line(assigns) do
-    up_days = Enum.count(assigns.days, fn {_, s} -> s == "up" end)
-    total_active = Enum.count(assigns.days, fn {_, s} -> s != "none" end)
+    up_days = Enum.count(assigns.days, fn {_, %{status: s}} -> s == "up" end)
+    total_active = Enum.count(assigns.days, fn {_, %{status: s}} -> s != "none" end)
     uptime_pct = if total_active > 0, do: round(up_days / total_active * 100), else: 0
     assigns = assign(assigns, :uptime_pct, uptime_pct)
 
     ~H"""
     <div class="flex items-center gap-0.5 pl-5">
       <div class="flex items-center gap-px flex-1">
-        <%= for {{date, status}, idx} <- Enum.with_index(@days) do %>
+        <%= for {{date, %{status: status, actual: actual, expected: expected}}, idx} <- Enum.with_index(@days) do %>
           <div class="flex-1 group relative">
             <div class={["h-3 first:rounded-l-sm last:rounded-r-sm", day_status_color(status)]} />
             <div class={[
@@ -120,6 +120,9 @@ defmodule PrikkeWeb.MonitorLive.Index do
             ]}>
               <div class="font-medium">{Calendar.strftime(date, "%b %d")}</div>
               <div>{day_status_label(status)}</div>
+              <%= if status in ["degraded", "down"] and expected > 0 do %>
+                <div class="text-slate-300">{actual} / {expected} pings</div>
+              <% end %>
             </div>
           </div>
         <% end %>

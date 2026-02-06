@@ -463,7 +463,7 @@ defmodule PrikkeWeb.DashboardLive do
             Enum.map(monitors, fn m ->
               case daily_status[m.id] do
                 nil -> "none"
-                days -> Enum.find_value(days, "none", fn {d, s} -> if d == date, do: s end)
+                days -> Enum.find_value(days, "none", fn {d, %{status: s}} -> if d == date, do: s end)
               end
             end)
 
