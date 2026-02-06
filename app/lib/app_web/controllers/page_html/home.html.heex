@@ -159,7 +159,8 @@ curl -X POST https://runlater.eu/api/v1/jobs \
   -d '{
     <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Send reminder"</span>,
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/remind"</span>,
-    <span class="text-sky-300">"run_at"</span>: <span class="text-green-300">"2025-02-01T09:00:00Z"</span>
+    <span class="text-sky-300">"schedule_type"</span>: <span class="text-green-300">"once"</span>,
+    <span class="text-sky-300">"scheduled_at"</span>: <span class="text-green-300">"2026-03-01T09:00:00Z"</span>
   }'
 
 <span class="text-slate-500"># Or schedule a recurring cron job</span>
@@ -168,7 +169,8 @@ curl -X POST https://runlater.eu/api/v1/jobs \
   -d '{
     <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Daily backup"</span>,
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/backup"</span>,
-    <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 6 * * *"</span>
+    <span class="text-sky-300">"schedule_type"</span>: <span class="text-green-300">"cron"</span>,
+    <span class="text-sky-300">"cron_expression"</span>: <span class="text-green-300">"0 6 * * *"</span>
   }'
 
 <span class="text-slate-500"># That's it. We handle the rest.</span></pre>

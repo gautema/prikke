@@ -319,7 +319,7 @@
     <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Send reminder"</span>,
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/remind"</span>,
     <span class="text-sky-300">"schedule_type"</span>: <span class="text-green-300">"once"</span>,
-    <span class="text-sky-300">"scheduled_at"</span>: <span class="text-green-300">"2025-02-01T09:00:00Z"</span>
+    <span class="text-sky-300">"scheduled_at"</span>: <span class="text-green-300">"2026-03-01T09:00:00Z"</span>
   }'</pre>
     </div>
   </div>
@@ -410,9 +410,9 @@
   <span class="text-sky-300">"data"</span>: [{
     <span class="text-sky-300">"id"</span>: <span class="text-green-300">"exec_123"</span>,
     <span class="text-sky-300">"status"</span>: <span class="text-green-300">"success"</span>,
-    <span class="text-sky-300">"scheduled_for"</span>: <span class="text-green-300">"2025-01-29T10:00:00Z"</span>,
-    <span class="text-sky-300">"started_at"</span>: <span class="text-green-300">"2025-01-29T10:00:01Z"</span>,
-    <span class="text-sky-300">"finished_at"</span>: <span class="text-green-300">"2025-01-29T10:00:01Z"</span>,
+    <span class="text-sky-300">"scheduled_for"</span>: <span class="text-green-300">"2026-02-06T10:00:00Z"</span>,
+    <span class="text-sky-300">"started_at"</span>: <span class="text-green-300">"2026-02-06T10:00:01Z"</span>,
+    <span class="text-sky-300">"finished_at"</span>: <span class="text-green-300">"2026-02-06T10:00:01Z"</span>,
     <span class="text-sky-300">"status_code"</span>: <span class="text-orange-300">200</span>,
     <span class="text-sky-300">"duration_ms"</span>: <span class="text-orange-300">145</span>,
     <span class="text-sky-300">"attempt"</span>: <span class="text-orange-300">1</span>
@@ -682,9 +682,19 @@
           <td class="py-2 text-slate-600">HTTP method (default: POST)</td>
         </tr>
         <tr class="border-b border-slate-50">
-          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].cron</code></td>
+          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].schedule_type</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
-          <td class="py-2 text-slate-600">Cron expression for recurring jobs</td>
+          <td class="py-2 text-slate-600">"cron" for recurring or "once" for one-time</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].cron_expression</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">Cron expression (when schedule_type is "cron")</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].scheduled_at</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">ISO 8601 timestamp (when schedule_type is "once")</td>
         </tr>
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">jobs[].headers</code></td>
@@ -749,7 +759,8 @@
       <span class="text-sky-300">"key"</span>: <span class="text-green-300">"daily-backup"</span>,
       <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Daily backup"</span>,
       <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/backup"</span>,
-      <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 6 * * *"</span>
+      <span class="text-sky-300">"schedule_type"</span>: <span class="text-green-300">"cron"</span>,
+      <span class="text-sky-300">"cron_expression"</span>: <span class="text-green-300">"0 6 * * *"</span>
     }],
     <span class="text-sky-300">"monitors"</span>: [{
       <span class="text-sky-300">"key"</span>: <span class="text-green-300">"nightly-etl"</span>,

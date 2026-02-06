@@ -31,7 +31,8 @@
   <span class="text-sky-300">body</span>: JSON.stringify({
     <span class="text-sky-300">name</span>: <span class="text-green-300">'welcome-email'</span>,
     <span class="text-sky-300">url</span>: <span class="text-green-300">'https://myapp.com/api/send-welcome'</span>,
-    <span class="text-sky-300">run_at</span>: <span class="text-purple-300">new</span> Date(Date.now() + <span class="text-orange-300">86400000</span>).toISOString()
+    <span class="text-sky-300">schedule_type</span>: <span class="text-green-300">'once'</span>,
+    <span class="text-sky-300">scheduled_at</span>: <span class="text-purple-300">new</span> Date(Date.now() + <span class="text-orange-300">86400000</span>).toISOString()
   })
 });</pre>
     </div>
@@ -57,7 +58,8 @@
   <span class="text-sky-300">body</span>: JSON.stringify({
     <span class="text-sky-300">name</span>: <span class="text-green-300">'generate-report'</span>,
     <span class="text-sky-300">url</span>: <span class="text-green-300">'https://myapp.com/api/reports/generate'</span>,
-    <span class="text-sky-300">run_at</span>: <span class="text-purple-300">new</span> Date().toISOString(),
+    <span class="text-sky-300">schedule_type</span>: <span class="text-green-300">'once'</span>,
+    <span class="text-sky-300">scheduled_at</span>: <span class="text-purple-300">new</span> Date().toISOString(),
     <span class="text-sky-300">body</span>: JSON.stringify({ reportId, userId })
   })
 });
@@ -87,7 +89,8 @@
     <span class="text-sky-300">body</span>: JSON.stringify({
       <span class="text-sky-300">name</span>: <span class="text-green-300">`stripe-${event.id}`</span>,
       <span class="text-sky-300">url</span>: <span class="text-green-300">'https://myapp.com/api/process-stripe'</span>,
-      <span class="text-sky-300">run_at</span>: <span class="text-purple-300">new</span> Date().toISOString()
+      <span class="text-sky-300">schedule_type</span>: <span class="text-green-300">'once'</span>,
+      <span class="text-sky-300">scheduled_at</span>: <span class="text-purple-300">new</span> Date().toISOString()
     })
   });
   <span class="text-purple-300">return</span> Response.json({ <span class="text-sky-300">received</span>: <span class="text-orange-300">true</span> });
@@ -115,7 +118,8 @@
       >{
   <span class="text-sky-300">"name"</span>: <span class="text-green-300">"process-renewals"</span>,
   <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/billing/renewals"</span>,
-  <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 6 * * *"</span>
+  <span class="text-sky-300">"schedule_type"</span>: <span class="text-green-300">"cron"</span>,
+  <span class="text-sky-300">"cron_expression"</span>: <span class="text-green-300">"0 6 * * *"</span>
 }</pre>
     </div>
 
@@ -133,7 +137,8 @@
       >{
   <span class="text-sky-300">"name"</span>: <span class="text-green-300">"cleanup-sessions"</span>,
   <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/maintenance/cleanup"</span>,
-  <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 2 * * *"</span>
+  <span class="text-sky-300">"schedule_type"</span>: <span class="text-green-300">"cron"</span>,
+  <span class="text-sky-300">"cron_expression"</span>: <span class="text-green-300">"0 2 * * *"</span>
 }</pre>
     </div>
 
@@ -151,7 +156,8 @@
       >{
   <span class="text-sky-300">"name"</span>: <span class="text-green-300">"healthcheck-stripe"</span>,
   <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/health/stripe"</span>,
-  <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"*/15 * * * *"</span>
+  <span class="text-sky-300">"schedule_type"</span>: <span class="text-green-300">"cron"</span>,
+  <span class="text-sky-300">"cron_expression"</span>: <span class="text-green-300">"*/15 * * * *"</span>
 }</pre>
     </div>
   </div>

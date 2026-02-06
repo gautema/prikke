@@ -378,7 +378,8 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
   -d '{
     <span class="text-sky-300">"name"</span>: <span class="text-green-300">"My job"</span>,
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/webhook"</span>,
-    <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 * * * *"</span>,
+    <span class="text-sky-300">"schedule_type"</span>: <span class="text-green-300">"cron"</span>,
+    <span class="text-sky-300">"cron_expression"</span>: <span class="text-green-300">"0 * * * *"</span>,
     <span class="text-sky-300">"headers"</span>: {
       <span class="text-sky-300">"Authorization"</span>: <span class="text-green-300">"Bearer my-app-token"</span>,
       <span class="text-sky-300">"X-Custom-Header"</span>: <span class="text-green-300">"custom-value"</span>
