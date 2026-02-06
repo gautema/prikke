@@ -490,6 +490,18 @@ defmodule PrikkeWeb.JobLive.Show do
                   <p class="text-slate-900 font-mono text-sm break-all">{@job.callback_url}</p>
                 </div>
               <% end %>
+              <%= if @job.expected_status_codes do %>
+                <div>
+                  <span class="text-xs text-slate-500 uppercase">Expected Status Codes</span>
+                  <p class="text-slate-900 font-mono text-sm">{@job.expected_status_codes}</p>
+                </div>
+              <% end %>
+              <%= if @job.expected_body_pattern do %>
+                <div>
+                  <span class="text-xs text-slate-500 uppercase">Response Body Contains</span>
+                  <p class="text-slate-900 font-mono text-sm">"{@job.expected_body_pattern}"</p>
+                </div>
+              <% end %>
             </div>
           </div>
           

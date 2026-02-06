@@ -475,6 +475,8 @@ defmodule Prikke.Jobs do
       timeout_ms: job.timeout_ms,
       retry_attempts: job.retry_attempts,
       callback_url: job.callback_url,
+      expected_status_codes: job.expected_status_codes,
+      expected_body_pattern: job.expected_body_pattern,
       enabled: true
     }
 
@@ -569,6 +571,19 @@ defmodule Prikke.Jobs do
   end
 
   defp truncate_test_body(body), do: inspect(body)
+
+  @doc """
+  Parses a comma-separated string of status codes into a list of integers.
+  Returns an empty list for nil or empty string.
+  """
+  def parse_status_codes(nil), do: []
+  def parse_status_codes(""), do: []
+
+  def parse_status_codes(codes) when is_binary(codes) do
+    codes
+    |> String.split(",", trim: true)
+    |> Enum.map(&(&1 |> String.trim() |> String.to_integer()))
+  end
 
   ## Platform-wide Stats (for superadmin)
 

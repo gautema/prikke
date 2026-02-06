@@ -21,6 +21,8 @@ defmodule Prikke.Jobs.Job do
     field :next_run_at, :utc_datetime
     field :muted, :boolean, default: false
     field :callback_url, :string
+    field :expected_status_codes, :string
+    field :expected_body_pattern, :string
 
     # Virtual field for form editing
     field :headers_json, :string, virtual: true
@@ -52,7 +54,9 @@ defmodule Prikke.Jobs.Job do
       :retry_attempts,
       :timeout_ms,
       :callback_url,
-      :muted
+      :muted,
+      :expected_status_codes,
+      :expected_body_pattern
     ])
     |> trim_url()
     |> validate_required([:name, :url, :schedule_type])
@@ -67,6 +71,7 @@ defmodule Prikke.Jobs.Job do
       less_than_or_equal_to: 300_000
     )
     |> validate_body_size()
+    |> validate_expected_status_codes()
     |> validate_schedule()
     |> compute_interval_minutes()
     |> compute_next_run_at()
@@ -123,6 +128,24 @@ defmodule Prikke.Jobs.Job do
       else
         []
       end
+    end)
+  end
+
+  defp validate_expected_status_codes(changeset) do
+    validate_change(changeset, :expected_status_codes, fn _, codes ->
+      codes
+      |> String.split(",", trim: true)
+      |> Enum.reduce([], fn code_str, errors ->
+        code_str = String.trim(code_str)
+
+        case Integer.parse(code_str) do
+          {code, ""} when code >= 100 and code <= 599 ->
+            errors
+
+          _ ->
+            [{:expected_status_codes, "must be comma-separated HTTP status codes (100-599)"}]
+        end
+      end)
     end)
   end
 

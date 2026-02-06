@@ -223,47 +223,89 @@ defmodule Prikke.Worker do
   end
 
   defp handle_success(execution, response, duration_ms) do
-    # Consider 2xx as success
-    if response.status >= 200 and response.status < 300 do
-      Logger.info("[Worker] Job succeeded with status #{response.status} in #{duration_ms}ms")
+    job = execution.job
 
-      {:ok, updated_execution} =
-        Executions.complete_execution(execution, %{
-          status_code: response.status,
-          response_body: truncate_body(response.body),
-          duration_ms: duration_ms
-        })
+    case check_response_assertions(job, response) do
+      :ok ->
+        Logger.info("[Worker] Job succeeded with status #{response.status} in #{duration_ms}ms")
 
-      # Send recovery notification if previous execution failed (async)
-      notify_recovery(updated_execution)
+        {:ok, updated_execution} =
+          Executions.complete_execution(execution, %{
+            status_code: response.status,
+            response_body: truncate_body(response.body),
+            duration_ms: duration_ms
+          })
 
-      # Send callback notification (async)
-      send_callback(updated_execution)
-    else
-      # Non-2xx is treated as failure
-      Logger.warning("[Worker] Job failed with status #{response.status} in #{duration_ms}ms")
+        # Send recovery notification if previous execution failed (async)
+        notify_recovery(updated_execution)
 
-      {:ok, updated_execution} =
-        Executions.fail_execution(execution, %{
-          status_code: response.status,
-          response_body: truncate_body(response.body),
-          error_message: "HTTP #{response.status}",
-          duration_ms: duration_ms
-        })
+        # Send callback notification (async)
+        send_callback(updated_execution)
 
-      # Send failure notification and callback (async)
-      notify_failure(updated_execution)
-      send_callback(updated_execution)
+      {:error, error_message} ->
+        Logger.warning(
+          "[Worker] Job assertion failed: #{error_message} (status #{response.status}) in #{duration_ms}ms"
+        )
 
-      # Respect Retry-After header on 429 responses
-      retry_after_ms =
-        if response.status == 429 do
-          parse_retry_after(response.headers)
-        end
+        {:ok, updated_execution} =
+          Executions.fail_execution(execution, %{
+            status_code: response.status,
+            response_body: truncate_body(response.body),
+            error_message: error_message,
+            duration_ms: duration_ms
+          })
 
-      maybe_retry(execution, retry_after_ms)
+        # Send failure notification and callback (async)
+        notify_failure(updated_execution)
+        send_callback(updated_execution)
+
+        # Respect Retry-After header on 429 responses
+        retry_after_ms =
+          if response.status == 429 do
+            parse_retry_after(response.headers)
+          end
+
+        maybe_retry(execution, retry_after_ms)
     end
   end
+
+  defp check_response_assertions(job, response) do
+    with :ok <- check_status_assertion(job, response.status),
+         :ok <- check_body_assertion(job, response.body) do
+      :ok
+    end
+  end
+
+  defp check_status_assertion(%{expected_status_codes: nil}, status) do
+    if status >= 200 and status < 300, do: :ok, else: {:error, "HTTP #{status}"}
+  end
+
+  defp check_status_assertion(%{expected_status_codes: ""}, status) do
+    if status >= 200 and status < 300, do: :ok, else: {:error, "HTTP #{status}"}
+  end
+
+  defp check_status_assertion(%{expected_status_codes: codes}, status) do
+    allowed = Jobs.parse_status_codes(codes)
+
+    if status in allowed do
+      :ok
+    else
+      {:error, "Assertion failed: status #{status} not in [#{codes}]"}
+    end
+  end
+
+  defp check_body_assertion(%{expected_body_pattern: nil}, _body), do: :ok
+  defp check_body_assertion(%{expected_body_pattern: ""}, _body), do: :ok
+
+  defp check_body_assertion(%{expected_body_pattern: pattern}, body) when is_binary(body) do
+    if String.contains?(body, pattern) do
+      :ok
+    else
+      {:error, "Assertion failed: response body does not contain \"#{pattern}\""}
+    end
+  end
+
+  defp check_body_assertion(%{expected_body_pattern: _pattern}, _body), do: :ok
 
   defp handle_timeout(execution, duration_ms) do
     Logger.warning("[Worker] Job timed out after #{duration_ms}ms")

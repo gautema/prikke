@@ -3,6 +3,7 @@ defmodule Prikke.WorkerTest do
 
   alias Prikke.Worker
   alias Prikke.Executions
+  alias Prikke.Repo
 
   import Prikke.AccountsFixtures
   import Prikke.JobsFixtures
@@ -116,6 +117,169 @@ defmodule Prikke.WorkerTest do
 
       assert timed_out.status == "timeout"
       assert timed_out.error_message == "Request timed out"
+    end
+  end
+
+  describe "response assertions" do
+    setup do
+      org = organization_fixture()
+      %{org: org}
+    end
+
+    # Insert a job directly into the DB bypassing URL validation (needed for localhost/Bypass URLs)
+    defp insert_job_for_bypass(org, url, extra_attrs \\ %{}) do
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+      attrs =
+        Map.merge(
+          %{
+            name: "Bypass Job #{System.unique_integer([:positive])}",
+            url: url,
+            method: "POST",
+            headers: %{},
+            body: nil,
+            schedule_type: "cron",
+            cron_expression: "0 * * * *",
+            interval_minutes: 60,
+            timezone: "UTC",
+            enabled: true,
+            retry_attempts: 0,
+            timeout_ms: 10_000,
+            organization_id: org.id,
+            inserted_at: now,
+            updated_at: now,
+            next_run_at: now
+          },
+          extra_attrs
+        )
+
+      %Prikke.Jobs.Job{}
+      |> Ecto.Changeset.change(attrs)
+      |> Repo.insert!()
+    end
+
+    test "job with expected_status_codes '200' and response 201 → failure", %{org: org} do
+      Process.flag(:trap_exit, true)
+
+      bypass = Bypass.open()
+
+      Bypass.expect_once(bypass, "POST", "/webhook", fn conn ->
+        Plug.Conn.resp(conn, 201, "Created")
+      end)
+
+      job =
+        insert_job_for_bypass(org, "http://localhost:#{bypass.port}/webhook", %{
+          expected_status_codes: "200"
+        })
+
+      {:ok, execution} = Executions.create_execution_for_job(job, DateTime.utc_now())
+
+      {:ok, pid} = Worker.start_link()
+      Process.sleep(500)
+
+      updated = Executions.get_execution(execution.id)
+      assert updated.status == "failed"
+      assert updated.error_message =~ "Assertion failed: status 201 not in [200]"
+
+      GenServer.stop(pid, :normal)
+    end
+
+    test "job with expected_status_codes '200,201' and response 201 → success", %{org: org} do
+      Process.flag(:trap_exit, true)
+
+      bypass = Bypass.open()
+
+      Bypass.expect_once(bypass, "POST", "/webhook", fn conn ->
+        Plug.Conn.resp(conn, 201, "Created")
+      end)
+
+      job =
+        insert_job_for_bypass(org, "http://localhost:#{bypass.port}/webhook", %{
+          expected_status_codes: "200,201"
+        })
+
+      {:ok, execution} = Executions.create_execution_for_job(job, DateTime.utc_now())
+
+      {:ok, pid} = Worker.start_link()
+      Process.sleep(500)
+
+      updated = Executions.get_execution(execution.id)
+      assert updated.status == "success"
+
+      GenServer.stop(pid, :normal)
+    end
+
+    test "job with expected_body_pattern 'ok' and body 'result: ok' → success", %{org: org} do
+      Process.flag(:trap_exit, true)
+
+      bypass = Bypass.open()
+
+      Bypass.expect_once(bypass, "POST", "/webhook", fn conn ->
+        Plug.Conn.resp(conn, 200, "result: ok")
+      end)
+
+      job =
+        insert_job_for_bypass(org, "http://localhost:#{bypass.port}/webhook", %{
+          expected_body_pattern: "ok"
+        })
+
+      {:ok, execution} = Executions.create_execution_for_job(job, DateTime.utc_now())
+
+      {:ok, pid} = Worker.start_link()
+      Process.sleep(500)
+
+      updated = Executions.get_execution(execution.id)
+      assert updated.status == "success"
+
+      GenServer.stop(pid, :normal)
+    end
+
+    test "job with expected_body_pattern 'ok' and body 'error' → failure", %{org: org} do
+      Process.flag(:trap_exit, true)
+
+      bypass = Bypass.open()
+
+      Bypass.expect_once(bypass, "POST", "/webhook", fn conn ->
+        Plug.Conn.resp(conn, 200, "error")
+      end)
+
+      job =
+        insert_job_for_bypass(org, "http://localhost:#{bypass.port}/webhook", %{
+          expected_body_pattern: "ok"
+        })
+
+      {:ok, execution} = Executions.create_execution_for_job(job, DateTime.utc_now())
+
+      {:ok, pid} = Worker.start_link()
+      Process.sleep(500)
+
+      updated = Executions.get_execution(execution.id)
+      assert updated.status == "failed"
+      assert updated.error_message =~ "Assertion failed: response body does not contain"
+
+      GenServer.stop(pid, :normal)
+    end
+
+    test "job with no assertions and 200 response → success (backward compat)", %{org: org} do
+      Process.flag(:trap_exit, true)
+
+      bypass = Bypass.open()
+
+      Bypass.expect_once(bypass, "POST", "/webhook", fn conn ->
+        Plug.Conn.resp(conn, 200, "OK")
+      end)
+
+      job = insert_job_for_bypass(org, "http://localhost:#{bypass.port}/webhook")
+
+      {:ok, execution} = Executions.create_execution_for_job(job, DateTime.utc_now())
+
+      {:ok, pid} = Worker.start_link()
+      Process.sleep(500)
+
+      updated = Executions.get_execution(execution.id)
+      assert updated.status == "success"
+
+      GenServer.stop(pid, :normal)
     end
   end
 end

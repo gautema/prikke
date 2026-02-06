@@ -619,6 +619,44 @@ defmodule PrikkeWeb.JobLive.Edit do
           </div>
         </div>
 
+    <!-- Response Assertions -->
+        <div class="glass-card rounded-2xl p-6">
+          <div class="mb-4">
+            <h2 class="text-lg font-semibold text-slate-900">Response Assertions</h2>
+            <p class="text-sm text-slate-500 mt-1">Define what counts as a successful response.</p>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">
+                Expected Status Codes
+              </label>
+              <.input
+                field={@form[:expected_status_codes]}
+                type="text"
+                placeholder="200, 201"
+              />
+              <p class="text-xs text-slate-500 mt-1">
+                Comma-separated (e.g. 200, 201). Leave empty for any 2xx status.
+              </p>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">
+                Response Body Contains
+              </label>
+              <.input
+                field={@form[:expected_body_pattern]}
+                type="text"
+                placeholder="ok"
+              />
+              <p class="text-xs text-slate-500 mt-1">
+                Response must contain this text. Leave empty to accept any body.
+              </p>
+            </div>
+          </div>
+        </div>
+
     <!-- Actions -->
         <div class="flex justify-end gap-4">
           <.link

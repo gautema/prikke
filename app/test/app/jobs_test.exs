@@ -807,4 +807,114 @@ defmodule Prikke.JobsTest do
       assert job.interval_minutes == 24 * 60
     end
   end
+
+  describe "response assertions" do
+    test "creating a job with expected_status_codes stores them" do
+      org = organization_fixture()
+
+      attrs = %{
+        name: "Assertion Job",
+        url: "https://example.com/webhook",
+        schedule_type: "cron",
+        cron_expression: "0 * * * *",
+        expected_status_codes: "200,201"
+      }
+
+      assert {:ok, %Job{} = job} = Jobs.create_job(org, attrs)
+      assert job.expected_status_codes == "200,201"
+    end
+
+    test "creating a job with expected_body_pattern stores it" do
+      org = organization_fixture()
+
+      attrs = %{
+        name: "Body Assertion Job",
+        url: "https://example.com/webhook",
+        schedule_type: "cron",
+        cron_expression: "0 * * * *",
+        expected_body_pattern: "success"
+      }
+
+      assert {:ok, %Job{} = job} = Jobs.create_job(org, attrs)
+      assert job.expected_body_pattern == "success"
+    end
+
+    test "default values are nil" do
+      org = organization_fixture()
+
+      attrs = %{
+        name: "Default Assertion Job",
+        url: "https://example.com/webhook",
+        schedule_type: "cron",
+        cron_expression: "0 * * * *"
+      }
+
+      assert {:ok, %Job{} = job} = Jobs.create_job(org, attrs)
+      assert job.expected_status_codes == nil
+      assert job.expected_body_pattern == nil
+    end
+
+    test "invalid status codes are rejected" do
+      org = organization_fixture()
+
+      attrs = %{
+        name: "Bad Status Codes",
+        url: "https://example.com/webhook",
+        schedule_type: "cron",
+        cron_expression: "0 * * * *",
+        expected_status_codes: "abc"
+      }
+
+      assert {:error, changeset} = Jobs.create_job(org, attrs)
+      assert "must be comma-separated HTTP status codes (100-599)" in errors_on(changeset).expected_status_codes
+    end
+
+    test "status code out of range is rejected" do
+      org = organization_fixture()
+
+      attrs = %{
+        name: "Out of Range",
+        url: "https://example.com/webhook",
+        schedule_type: "cron",
+        cron_expression: "0 * * * *",
+        expected_status_codes: "200,999"
+      }
+
+      assert {:error, changeset} = Jobs.create_job(org, attrs)
+      assert "must be comma-separated HTTP status codes (100-599)" in errors_on(changeset).expected_status_codes
+    end
+
+    test "valid comma-separated status codes are accepted" do
+      org = organization_fixture()
+
+      attrs = %{
+        name: "Multi Codes",
+        url: "https://example.com/webhook",
+        schedule_type: "cron",
+        cron_expression: "0 * * * *",
+        expected_status_codes: "200, 201, 204"
+      }
+
+      assert {:ok, %Job{} = job} = Jobs.create_job(org, attrs)
+      assert job.expected_status_codes == "200, 201, 204"
+    end
+  end
+
+  describe "parse_status_codes/1" do
+    test "returns empty list for nil" do
+      assert Jobs.parse_status_codes(nil) == []
+    end
+
+    test "returns empty list for empty string" do
+      assert Jobs.parse_status_codes("") == []
+    end
+
+    test "parses single code" do
+      assert Jobs.parse_status_codes("200") == [200]
+    end
+
+    test "parses comma-separated codes with spaces" do
+      assert Jobs.parse_status_codes("200, 201, 204") == [200, 201, 204]
+    end
+  end
 end

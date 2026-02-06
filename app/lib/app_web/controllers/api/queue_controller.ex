@@ -77,7 +77,9 @@ defmodule PrikkeWeb.Api.QueueController do
       "enabled" => true,
       "timeout_ms" => params["timeout_ms"] || 30_000,
       "retry_attempts" => params["retry_attempts"] || 5,
-      "callback_url" => params["callback_url"]
+      "callback_url" => params["callback_url"],
+      "expected_status_codes" => params["expected_status_codes"],
+      "expected_body_pattern" => params["expected_body_pattern"]
     }
 
     # Per-push callback_url override: pass to execution if provided
