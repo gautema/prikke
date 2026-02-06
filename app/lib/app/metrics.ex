@@ -222,11 +222,51 @@ defmodule Prikke.Metrics do
     :exit, _ -> 0.0
   end
 
+  # Read /proc/meminfo directly for accurate values (same source as `free`).
+  # MemAvailable accounts for reclaimable cache/buffers, unlike MemFree.
+  # Falls back to :memsup on non-Linux (macOS dev).
   defp get_system_memory do
+    case File.read("/proc/meminfo") do
+      {:ok, content} -> parse_proc_meminfo(content)
+      _ -> get_system_memory_from_memsup()
+    end
+  rescue
+    _ -> {0.0, 0.0, 0.0}
+  end
+
+  defp parse_proc_meminfo(content) do
+    values =
+      content
+      |> String.split("\n")
+      |> Enum.reduce(%{}, fn line, acc ->
+        case String.split(line, ~r/:\s+/) do
+          [key, rest] ->
+            case Integer.parse(rest) do
+              {val_kb, _} -> Map.put(acc, key, val_kb)
+              _ -> acc
+            end
+
+          _ ->
+            acc
+        end
+      end)
+
+    total_kb = Map.get(values, "MemTotal", 0)
+    available_kb = Map.get(values, "MemAvailable", Map.get(values, "MemFree", 0))
+    used_kb = total_kb - available_kb
+
+    total_mb = Float.round(total_kb / 1024, 0)
+    used_mb = Float.round(used_kb / 1024, 0)
+    pct = if total_kb > 0, do: Float.round(used_kb / total_kb * 100, 1), else: 0.0
+
+    {pct, total_mb, used_mb}
+  end
+
+  defp get_system_memory_from_memsup do
     data = :memsup.get_system_memory_data()
     total = Keyword.get(data, :total_memory, 0)
-    free = Keyword.get(data, :free_memory, 0)
-    used = total - free
+    available = Keyword.get(data, :available_memory, Keyword.get(data, :free_memory, 0))
+    used = total - available
     total_mb = Float.round(total / (1024 * 1024), 0)
     used_mb = Float.round(used / (1024 * 1024), 0)
     pct = if total > 0, do: Float.round(used / total * 100, 1), else: 0.0
