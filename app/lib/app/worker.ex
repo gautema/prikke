@@ -234,6 +234,9 @@ defmodule Prikke.Worker do
           duration_ms: duration_ms
         })
 
+      # Send recovery notification if previous execution failed (async)
+      notify_recovery(updated_execution)
+
       # Send callback notification (async)
       send_callback(updated_execution)
     else
@@ -290,6 +293,12 @@ defmodule Prikke.Worker do
     # The updated execution loses preloads, so we need to re-fetch with associations
     execution_with_job = Executions.get_execution_with_job(updated_execution.id)
     Notifications.notify_failure(execution_with_job)
+  end
+
+  # Send recovery notification when execution succeeds after a failure
+  defp notify_recovery(updated_execution) do
+    execution_with_job = Executions.get_execution_with_job(updated_execution.id)
+    Notifications.notify_recovery(execution_with_job)
   end
 
   # Send callback notification if callback_url is configured

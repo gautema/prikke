@@ -2,7 +2,7 @@
 
 ## Current Status: MVP Complete
 
-Last updated: 2026-02-03
+Last updated: 2026-02-06
 
 ---
 
@@ -128,6 +128,11 @@ Last updated: 2026-02-03
   - Auto-detects `hooks.slack.com` and `discord.com/api/webhooks`
   - Formats messages with appropriate markdown (Slack: `:x:`, Discord: `❌`)
   - Generic JSON payload for other webhooks
+- [x] **Recovery notifications**
+  - Email + webhook when a job succeeds after a failure streak
+  - Configurable toggle per organization (default: enabled)
+  - Green "Job Recovered" email template
+  - Slack/Discord/generic webhook payloads with `job.recovered` event
 
 ### Phase 8: Billing (MVP Approach)
 - [x] Manual upgrade flow (user clicks upgrade → tier changes → "sales will contact you" message)
@@ -312,7 +317,7 @@ Environment variables:
 
 ## Test Coverage
 
-- **371 tests passing**
+- **451 tests passing**
 - Accounts: user auth, organizations, memberships, invites, API keys
 - Jobs: CRUD, validations, cron parsing, tier limits
 - Executions: creation, claiming, completion, stats
@@ -415,6 +420,14 @@ Environment variables:
 - [x] Executions schema & context (claim with SKIP LOCKED, stats, monthly counts)
 - [x] Manual upgrade to Pro (click to upgrade, sales contacts user)
 - [x] Notification settings (org settings → Notifications tab)
+- [x] **Job duplication (Clone)** - Clone button on job show page creates a copy with all settings
+  - Copies name (with "(copy)" suffix), URL, method, headers, body, schedule, settings
+  - One-time jobs with past scheduled_at adjusted to 1 hour from now
+  - Respects tier limits (job count, interval restrictions)
+- [x] **Recovery notifications** - Get notified when a job succeeds after a failure
+  - Toggle in org notification settings (default: enabled)
+  - Email + webhook delivery (reuses existing channels)
+  - Only triggers on status change (failed → success)
 - [x] Team member limits for organizations (Free: 2, Pro: unlimited)
 - [x] Tier limits for jobs (max count, min interval)
 - [x] Branded HTML email templates

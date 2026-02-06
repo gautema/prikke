@@ -65,6 +65,27 @@
       </div>
 
       <div class="glass-card rounded-2xl p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-4">Recovery Alerts</h2>
+        <p class="text-sm text-slate-500 mb-4">
+          Get notified when a job succeeds again after a failure.
+        </p>
+
+        <input type="hidden" name={@form[:notify_on_recovery].name} value="false" />
+        <label class="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            name={@form[:notify_on_recovery].name}
+            value="true"
+            checked={
+              Phoenix.HTML.Form.normalize_value("checkbox", @form[:notify_on_recovery].value)
+            }
+            class="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-600"
+          />
+          <span class="text-sm text-slate-700">Enable recovery notifications</span>
+        </label>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6">
         <h2 class="text-lg font-semibold text-slate-900 mb-4">Email Notifications</h2>
         <p class="text-sm text-slate-500 mb-4">
           Send failure alerts to this email address. Leave empty to use the organization owner's email.

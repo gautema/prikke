@@ -559,6 +559,95 @@ defmodule Prikke.JobsTest do
     end
   end
 
+  describe "clone_job/3" do
+    test "clones a cron job with (copy) suffix" do
+      org = organization_fixture()
+      job = job_fixture(org, %{name: "My Cron Job", url: "https://example.com/webhook", method: "POST"})
+
+      assert {:ok, %Job{} = cloned} = Jobs.clone_job(org, job)
+      assert cloned.name == "My Cron Job (copy)"
+      assert cloned.url == job.url
+      assert cloned.method == job.method
+      assert cloned.headers == job.headers
+      assert cloned.body == job.body
+      assert cloned.schedule_type == job.schedule_type
+      assert cloned.cron_expression == job.cron_expression
+      assert cloned.timezone == job.timezone
+      assert cloned.timeout_ms == job.timeout_ms
+      assert cloned.retry_attempts == job.retry_attempts
+      assert cloned.enabled == true
+      assert cloned.id != job.id
+    end
+
+    test "clones a one-time job with future scheduled_at" do
+      org = organization_fixture()
+      future_time = DateTime.add(DateTime.utc_now(), 7200, :second)
+
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Future One-time",
+          url: "https://example.com/webhook",
+          schedule_type: "once",
+          scheduled_at: future_time
+        })
+
+      assert {:ok, %Job{} = cloned} = Jobs.clone_job(org, job)
+      assert cloned.name == "Future One-time (copy)"
+      assert cloned.schedule_type == "once"
+      # Should keep the original future time
+      assert DateTime.compare(cloned.scheduled_at, DateTime.utc_now()) == :gt
+    end
+
+    test "clones a one-time job with past scheduled_at adjusts to 1 hour from now" do
+      org = organization_fixture()
+      future_time = DateTime.add(DateTime.utc_now(), 3600, :second)
+
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Past One-time",
+          url: "https://example.com/webhook",
+          schedule_type: "once",
+          scheduled_at: future_time
+        })
+
+      # Manually set scheduled_at to the past
+      past_time = DateTime.add(DateTime.utc_now(), -3600, :second) |> DateTime.truncate(:second)
+
+      {:ok, job} =
+        job
+        |> Ecto.Changeset.change(scheduled_at: past_time, next_run_at: nil)
+        |> Prikke.Repo.update()
+
+      assert {:ok, %Job{} = cloned} = Jobs.clone_job(org, job)
+      assert cloned.name == "Past One-time (copy)"
+      # Should be adjusted to ~1 hour from now
+      assert DateTime.compare(cloned.scheduled_at, DateTime.utc_now()) == :gt
+    end
+
+    test "respects free tier job limit" do
+      org = organization_fixture(tier: "free")
+      limits = Jobs.get_tier_limits("free")
+
+      # Create max number of jobs
+      for i <- 1..limits.max_jobs do
+        {:ok, _} =
+          Jobs.create_job(org, %{
+            name: "Job #{i}",
+            url: "https://example.com/webhook",
+            schedule_type: "cron",
+            cron_expression: "0 * * * *"
+          })
+      end
+
+      # Get the last job to clone
+      [job | _] = Jobs.list_jobs(org)
+
+      # Clone should fail due to job limit
+      assert {:error, changeset} = Jobs.clone_job(org, job)
+      assert "You've reached the maximum number of jobs" <> _ = hd(errors_on(changeset).base)
+    end
+  end
+
   describe "interval_minutes calculation" do
     test "every minute cron (pro tier)" do
       org = organization_fixture(tier: "pro")

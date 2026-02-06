@@ -154,6 +154,8 @@ Simple, no dependencies, full control.
 ### v2
 - [ ] Job queues (on-demand via API, immediate execution)
 - [x] Team/organization support (done early - orgs, memberships, invites)
+- [x] Job duplication (clone button on job show page)
+- [x] Recovery notifications (notify when job succeeds after failure)
 - [ ] Per-job notification overrides
 - [ ] Customer-facing status pages
 

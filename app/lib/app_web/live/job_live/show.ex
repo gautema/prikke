@@ -109,6 +109,27 @@ defmodule PrikkeWeb.JobLive.Show do
     end
   end
 
+  def handle_event("clone", _, socket) do
+    org = socket.assigns.organization
+    job = socket.assigns.job
+
+    case Jobs.clone_job(org, job, scope: socket.assigns.current_scope) do
+      {:ok, cloned_job} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Job cloned successfully")
+         |> push_navigate(to: ~p"/jobs/#{cloned_job.id}")}
+
+      {:error, changeset} ->
+        message =
+          changeset
+          |> Ecto.Changeset.traverse_errors(fn {msg, _opts} -> msg end)
+          |> Enum.map_join(", ", fn {_field, msgs} -> Enum.join(msgs, ", ") end)
+
+        {:noreply, put_flash(socket, :error, "Failed to clone job: #{message}")}
+    end
+  end
+
   def handle_event("delete", _, socket) do
     {:ok, _} =
       Jobs.delete_job(socket.assigns.organization, socket.assigns.job,
@@ -257,6 +278,13 @@ defmodule PrikkeWeb.JobLive.Show do
               >
                 Edit
               </.link>
+              <button
+                type="button"
+                phx-click="clone"
+                class="px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                <.icon name="hero-document-duplicate" class="w-4 h-4" /> Clone
+              </button>
               <button
                 type="button"
                 phx-click="delete"

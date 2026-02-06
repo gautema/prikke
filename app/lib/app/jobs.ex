@@ -444,6 +444,43 @@ defmodule Prikke.Jobs do
     |> Repo.delete_all()
   end
 
+  @doc """
+  Clones a job, creating a copy with "(copy)" suffix.
+
+  For one-time jobs with a past `scheduled_at`, adjusts to 1 hour from now.
+  Reuses `create_job/3` so all validation and tier limits apply.
+  """
+  def clone_job(%Organization{} = org, %Job{} = job, opts \\ []) do
+    scheduled_at =
+      if job.schedule_type == "once" do
+        if job.scheduled_at && DateTime.compare(job.scheduled_at, DateTime.utc_now()) == :gt do
+          job.scheduled_at
+        else
+          DateTime.utc_now() |> DateTime.add(3600, :second) |> DateTime.truncate(:second)
+        end
+      else
+        job.scheduled_at
+      end
+
+    attrs = %{
+      name: "#{job.name} (copy)",
+      url: job.url,
+      method: job.method,
+      headers: job.headers,
+      body: job.body,
+      schedule_type: job.schedule_type,
+      cron_expression: job.cron_expression,
+      scheduled_at: scheduled_at,
+      timezone: job.timezone,
+      timeout_ms: job.timeout_ms,
+      retry_attempts: job.retry_attempts,
+      callback_url: job.callback_url,
+      enabled: true
+    }
+
+    create_job(org, attrs, opts)
+  end
+
   ## Platform-wide Stats (for superadmin)
 
   @doc """

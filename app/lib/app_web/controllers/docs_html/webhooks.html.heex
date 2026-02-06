@@ -331,6 +331,42 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
     </span>
   </div>
 
+  <h2 id="notifications">Notifications</h2>
+  <p>
+    Runlater can notify you via email and webhook when job execution status changes. Configure these in
+    <a href="/organizations/notifications" class="text-emerald-600 hover:underline">Organization Settings → Notifications</a>.
+  </p>
+
+  <h3>Failure Notifications</h3>
+  <p>
+    Triggered on the <strong>first failure</strong> in a sequence (not on every consecutive failure). If a job fails 5 times in a row, you only get one notification.
+  </p>
+
+  <h3>Recovery Notifications</h3>
+  <p>
+    Triggered when a job <strong>succeeds after a failure</strong>. This lets you know your service is back to normal without manually checking the dashboard.
+  </p>
+
+  <p>Both notification types are sent to your configured email and webhook URL. Webhook payloads are auto-formatted for Slack and Discord.</p>
+
+  <h3>Notification Webhook Payloads</h3>
+  <pre
+    phx-no-curly-interpolation
+    class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto"
+  ><span class="text-slate-500">// Failure notification</span>
+{
+  <span class="text-sky-300">"event"</span>: <span class="text-green-300">"job.failed"</span>,
+  <span class="text-sky-300">"job"</span>: { <span class="text-sky-300">"id"</span>: <span class="text-green-300">"..."</span>, <span class="text-sky-300">"name"</span>: <span class="text-green-300">"..."</span>, <span class="text-sky-300">"url"</span>: <span class="text-green-300">"..."</span> },
+  <span class="text-sky-300">"execution"</span>: { <span class="text-sky-300">"status"</span>: <span class="text-green-300">"failed"</span>, <span class="text-sky-300">"status_code"</span>: <span class="text-orange-300">500</span>, ... }
+}
+
+<span class="text-slate-500">// Recovery notification</span>
+{
+  <span class="text-sky-300">"event"</span>: <span class="text-green-300">"job.recovered"</span>,
+  <span class="text-sky-300">"job"</span>: { <span class="text-sky-300">"id"</span>: <span class="text-green-300">"..."</span>, <span class="text-sky-300">"name"</span>: <span class="text-green-300">"..."</span>, <span class="text-sky-300">"url"</span>: <span class="text-green-300">"..."</span> },
+  <span class="text-sky-300">"execution"</span>: { <span class="text-sky-300">"status"</span>: <span class="text-green-300">"success"</span>, <span class="text-sky-300">"status_code"</span>: <span class="text-orange-300">200</span>, ... }
+}</pre>
+
   <h2>Custom Headers</h2>
   <p>You can configure custom headers when creating a job:</p>
   <pre

@@ -217,6 +217,281 @@ defmodule Prikke.NotificationsTest do
     end
   end
 
+  describe "send_recovery_email/2" do
+    setup do
+      user = user_fixture()
+      flush_emails()
+
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org"})
+
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Recovery Job",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *"
+        })
+
+      # Create a failed execution first
+      {:ok, failed_execution} =
+        Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: DateTime.add(DateTime.utc_now(), -120, :second)
+        })
+
+      {:ok, _failed_execution} =
+        Executions.fail_execution(failed_execution, %{
+          status_code: 500,
+          error_message: "Internal Server Error"
+        })
+
+      # Create a successful execution after the failure
+      {:ok, success_execution} =
+        Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: DateTime.utc_now()
+        })
+
+      {:ok, success_execution} =
+        Executions.complete_execution(success_execution, %{
+          status_code: 200,
+          response_body: "OK",
+          duration_ms: 150
+        })
+
+      execution = Executions.get_execution_with_job(success_execution.id)
+
+      %{org: org, job: job, execution: execution}
+    end
+
+    test "sends email with recovery details", %{execution: execution} do
+      to_email = "alerts@example.com"
+      assert :ok = Notifications.send_recovery_email(execution, to_email)
+
+      emails = collect_emails()
+
+      recovery_email =
+        Enum.find(emails, fn email ->
+          String.contains?(email.subject, "Job recovered")
+        end)
+
+      assert recovery_email != nil, "Expected recovery email to be sent"
+      assert recovery_email.to == [{"", to_email}]
+      assert recovery_email.subject =~ "Recovery Job"
+      assert recovery_email.text_body =~ "succeeding again"
+    end
+  end
+
+  describe "send_recovery_webhook/2" do
+    setup do
+      user = user_fixture()
+      flush_emails()
+
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org"})
+
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Recovery Job",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *"
+        })
+
+      {:ok, success_execution} =
+        Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: DateTime.utc_now()
+        })
+
+      {:ok, success_execution} =
+        Executions.complete_execution(success_execution, %{
+          status_code: 200,
+          response_body: "OK",
+          duration_ms: 150
+        })
+
+      execution = Executions.get_execution_with_job(success_execution.id)
+
+      %{org: org, job: job, execution: execution}
+    end
+
+    test "sends webhook with generic JSON payload", %{execution: execution} do
+      bypass = Bypass.open()
+
+      Bypass.expect_once(bypass, "POST", "/webhook", fn conn ->
+        {:ok, body, conn} = Plug.Conn.read_body(conn)
+        payload = Jason.decode!(body)
+
+        assert payload["event"] == "job.recovered"
+        assert payload["job"]["name"] == "Recovery Job"
+        assert payload["execution"]["status"] == "success"
+        assert payload["execution"]["status_code"] == 200
+
+        Plug.Conn.resp(conn, 200, "OK")
+      end)
+
+      webhook_url = "http://localhost:#{bypass.port}/webhook"
+      assert :ok = Notifications.send_recovery_webhook(execution, webhook_url)
+    end
+  end
+
+  describe "notify_recovery/1" do
+    setup do
+      if !Process.whereis(Prikke.TaskSupervisor) do
+        start_supervised!({Task.Supervisor, name: Prikke.TaskSupervisor})
+      end
+
+      user = user_fixture()
+      flush_emails()
+
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org"})
+
+      {:ok, org} =
+        Accounts.update_notification_settings(org, %{
+          notify_on_failure: true,
+          notify_on_recovery: true,
+          notification_email: "alerts@example.com"
+        })
+
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Recovery Notified Job",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *"
+        })
+
+      %{org: org, job: job}
+    end
+
+    test "sends recovery notification when previous execution failed", %{job: job} do
+      # Create a failed execution
+      {:ok, failed_exec} =
+        Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: DateTime.add(DateTime.utc_now(), -120, :second)
+        })
+
+      {:ok, _failed_exec} =
+        Executions.fail_execution(failed_exec, %{
+          status_code: 500,
+          error_message: "Server Error"
+        })
+
+      # Create a successful execution
+      {:ok, success_exec} =
+        Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: DateTime.utc_now()
+        })
+
+      {:ok, success_exec} =
+        Executions.complete_execution(success_exec, %{
+          status_code: 200,
+          response_body: "OK",
+          duration_ms: 100
+        })
+
+      execution = Executions.get_execution_with_job(success_exec.id)
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_recovery(execution)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      recovery_email =
+        Enum.find(emails, fn email ->
+          String.contains?(email.subject, "Job recovered")
+        end)
+
+      assert recovery_email != nil, "Expected recovery email to be sent"
+      assert recovery_email.to == [{"", "alerts@example.com"}]
+      assert recovery_email.subject =~ "Recovery Notified Job"
+    end
+
+    test "does not send recovery notification when previous execution succeeded", %{job: job} do
+      # Create a successful execution (no prior failure)
+      {:ok, success_exec} =
+        Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: DateTime.utc_now()
+        })
+
+      {:ok, success_exec} =
+        Executions.complete_execution(success_exec, %{
+          status_code: 200,
+          response_body: "OK",
+          duration_ms: 100
+        })
+
+      execution = Executions.get_execution_with_job(success_exec.id)
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_recovery(execution)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      recovery_emails =
+        Enum.filter(emails, fn email ->
+          String.contains?(email.subject, "Job recovered")
+        end)
+
+      assert recovery_emails == [],
+             "Expected no recovery emails when previous execution was successful"
+    end
+
+    test "does not send recovery notification when disabled", %{org: org, job: job} do
+      {:ok, _org} =
+        Accounts.update_notification_settings(org, %{
+          notify_on_recovery: false
+        })
+
+      # Create a failed then successful execution
+      {:ok, failed_exec} =
+        Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: DateTime.add(DateTime.utc_now(), -120, :second)
+        })
+
+      {:ok, _} =
+        Executions.fail_execution(failed_exec, %{
+          status_code: 500,
+          error_message: "Error"
+        })
+
+      {:ok, success_exec} =
+        Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: DateTime.utc_now()
+        })
+
+      {:ok, success_exec} =
+        Executions.complete_execution(success_exec, %{
+          status_code: 200,
+          response_body: "OK",
+          duration_ms: 100
+        })
+
+      execution = Executions.get_execution_with_job(success_exec.id)
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_recovery(execution)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      recovery_emails =
+        Enum.filter(emails, fn email ->
+          String.contains?(email.subject, "Job recovered")
+        end)
+
+      assert recovery_emails == [],
+             "Expected no recovery emails when notifications are disabled"
+    end
+  end
+
   # Helper to collect all emails from the mailbox
   defp collect_emails(acc \\ []) do
     receive do

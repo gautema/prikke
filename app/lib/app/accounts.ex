@@ -474,6 +474,7 @@ defmodule Prikke.Accounts do
         changes =
           Audit.compute_changes(old_org, Map.from_struct(updated_org), [
             :notify_on_failure,
+            :notify_on_recovery,
             :notification_email,
             :notification_webhook_url
           ])

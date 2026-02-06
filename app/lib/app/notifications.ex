@@ -29,6 +29,52 @@ defmodule Prikke.Notifications do
     end)
   end
 
+  @doc """
+  Sends recovery notifications for an execution that succeeded after a failure.
+
+  Checks the organization's notification settings and sends:
+  - Email to notification_email (or org owner if not set)
+  - POST to notification_webhook_url (auto-detects Slack/Discord)
+
+  Only notifies if the previous execution was a failure (status change detection).
+  Runs asynchronously via Task.Supervisor.
+  """
+  def notify_recovery(execution) do
+    Task.Supervisor.start_child(Prikke.TaskSupervisor, fn ->
+      send_recovery_notifications(execution)
+    end)
+  end
+
+  defp send_recovery_notifications(execution) do
+    job = execution.job
+    org = job.organization
+
+    if org.notify_on_recovery do
+      previous_status = Prikke.Executions.get_previous_status(job, execution.id)
+
+      if should_notify_recovery?(previous_status) do
+        if email = notification_email(org) do
+          send_recovery_email(execution, email)
+        end
+
+        if webhook_url = org.notification_webhook_url do
+          send_recovery_webhook(execution, webhook_url)
+        end
+      else
+        Logger.debug("[Notifications] Skipping recovery notification - previous execution was not failed")
+      end
+    else
+      Logger.debug("[Notifications] Recovery notifications disabled for org #{org.id}")
+    end
+  end
+
+  # Notify recovery only if previous execution was a failure
+  defp should_notify_recovery?(nil), do: false
+  defp should_notify_recovery?("success"), do: false
+  defp should_notify_recovery?("pending"), do: false
+  defp should_notify_recovery?("running"), do: false
+  defp should_notify_recovery?(_failed_status), do: true
+
   defp send_failure_notifications(execution) do
     job = execution.job
     org = job.organization
@@ -325,6 +371,240 @@ defmodule Prikke.Notifications do
         status: execution.status,
         status_code: execution.status_code,
         error_message: execution.error_message,
+        scheduled_for: execution.scheduled_for,
+        finished_at: execution.finished_at,
+        duration_ms: execution.duration_ms
+      }
+    })
+  end
+
+  @doc """
+  Sends a recovery notification email.
+  """
+  def send_recovery_email(execution, to_email) do
+    job = execution.job
+
+    config = Application.get_env(:app, Prikke.Mailer, [])
+    from_name = Keyword.get(config, :from_name, "Runlater")
+    from_email = Keyword.get(config, :from_email, "noreply@runlater.eu")
+
+    subject = "[Runlater] Job recovered: #{job.name}"
+
+    text_body = """
+    Your job "#{job.name}" has recovered and is succeeding again.
+
+    Status: #{execution.status}
+    #{if execution.status_code, do: "HTTP Status: #{execution.status_code}", else: ""}
+
+    Scheduled for: #{format_datetime(execution.scheduled_for)}
+    #{if execution.finished_at, do: "Finished at: #{format_datetime(execution.finished_at)}", else: ""}
+
+    Job URL: #{job.url}
+    Method: #{job.method}
+
+    ---
+    View execution details: https://runlater.eu/jobs/#{job.id}
+    """
+
+    execution_url = "https://runlater.eu/jobs/#{job.id}/executions/#{execution.id}"
+    html_body = recovery_email_template(execution, job, execution_url)
+
+    email =
+      new()
+      |> to(to_email)
+      |> from({from_name, from_email})
+      |> subject(subject)
+      |> text_body(String.trim(text_body))
+      |> html_body(html_body)
+
+    case Mailer.deliver(email) do
+      {:ok, _} ->
+        Logger.info("[Notifications] Recovery email sent to #{to_email} for job #{job.id}")
+        :ok
+
+      {:error, reason} ->
+        Logger.error("[Notifications] Failed to send recovery email to #{to_email}: #{inspect(reason)}")
+        :error
+    end
+  end
+
+  defp recovery_email_template(execution, job, execution_url) do
+    status_code_row = if execution.status_code do
+      """
+      <tr>
+        <td style="padding: 8px 16px;">
+          <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">HTTP Status</p>
+          <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a; font-weight: 500;">#{execution.status_code}</p>
+        </td>
+      </tr>
+      """
+    else
+      ""
+    end
+
+    """
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 480px; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <!-- Header -->
+              <tr>
+                <td style="padding: 32px 32px 24px 32px; text-align: center; border-bottom: 1px solid #e2e8f0;">
+                  <div style="display: inline-flex; align-items: center;">
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #10b981; border-radius: 50%; margin-right: 8px;"></span>
+                    <span style="font-size: 20px; font-weight: 600; color: #0f172a;">runlater</span>
+                  </div>
+                </td>
+              </tr>
+              <!-- Content -->
+              <tr>
+                <td style="padding: 32px;">
+                  <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #10b981;">Job Recovered</h2>
+                  <p style="margin: 0 0 16px 0; font-size: 14px; color: #475569; line-height: 1.6;">
+                    Your job <strong>#{job.name}</strong> is succeeding again after a failure.
+                  </p>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 6px;">
+                    <tr>
+                      <td style="padding: 8px 16px;">
+                        <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">Status</p>
+                        <p style="margin: 4px 0 0 0; font-size: 14px; color: #10b981; font-weight: 500;">#{execution.status}</p>
+                      </td>
+                    </tr>
+                    #{status_code_row}
+                    <tr>
+                      <td style="padding: 8px 16px;">
+                        <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">URL</p>
+                        <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a;">#{job.method} #{job.url}</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 16px;">
+                        <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">Scheduled For</p>
+                        <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a;">#{format_datetime(execution.scheduled_for)}</p>
+                      </td>
+                    </tr>
+                  </table>
+                  <!-- Button -->
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 24px;">
+                    <tr>
+                      <td align="center">
+                        <a href="#{execution_url}" style="display: inline-block; padding: 14px 32px; background-color: #10b981; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 14px;">View Execution</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <!-- Footer -->
+              <tr>
+                <td style="padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
+                  <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                    Runlater - Schedule jobs, simply.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+    """
+  end
+
+  @doc """
+  Sends a recovery notification to a webhook URL.
+  Auto-detects Slack and Discord webhooks and formats accordingly.
+  """
+  def send_recovery_webhook(execution, webhook_url) do
+    job = execution.job
+
+    {payload, content_type} = build_recovery_webhook_payload(execution, webhook_url)
+
+    headers = [
+      {"content-type", content_type},
+      {"user-agent", "Runlater/1.0"}
+    ]
+
+    case Req.post(webhook_url, body: payload, headers: headers) do
+      {:ok, %{status: status}} when status in 200..299 ->
+        Logger.info("[Notifications] Recovery webhook sent to #{webhook_url} for job #{job.id}")
+        :ok
+
+      {:ok, %{status: status, body: body}} ->
+        Logger.error("[Notifications] Recovery webhook failed with status #{status}: #{inspect(body)}")
+        :error
+
+      {:error, reason} ->
+        Logger.error("[Notifications] Recovery webhook request failed: #{inspect(reason)}")
+        :error
+    end
+  end
+
+  defp build_recovery_webhook_payload(execution, webhook_url) do
+    cond do
+      slack_webhook?(webhook_url) ->
+        {build_slack_recovery_payload(execution), "application/json"}
+
+      discord_webhook?(webhook_url) ->
+        {build_discord_recovery_payload(execution), "application/json"}
+
+      true ->
+        {build_generic_recovery_payload(execution), "application/json"}
+    end
+  end
+
+  defp build_slack_recovery_payload(execution) do
+    job = execution.job
+
+    text = """
+    :white_check_mark: *Job Recovered: #{job.name}*
+
+    • Status: `#{execution.status}`
+    #{if execution.status_code, do: "• HTTP Status: `#{execution.status_code}`", else: ""}
+    • URL: #{job.url}
+    • Scheduled: #{format_datetime(execution.scheduled_for)}
+    """
+
+    Jason.encode!(%{text: String.trim(text)})
+  end
+
+  defp build_discord_recovery_payload(execution) do
+    job = execution.job
+
+    content = """
+    :white_check_mark: **Job Recovered: #{job.name}**
+
+    • Status: `#{execution.status}`
+    #{if execution.status_code, do: "• HTTP Status: `#{execution.status_code}`", else: ""}
+    • URL: #{job.url}
+    • Scheduled: #{format_datetime(execution.scheduled_for)}
+    """
+
+    Jason.encode!(%{content: String.trim(content)})
+  end
+
+  defp build_generic_recovery_payload(execution) do
+    job = execution.job
+
+    Jason.encode!(%{
+      event: "job.recovered",
+      job: %{
+        id: job.id,
+        name: job.name,
+        url: job.url,
+        method: job.method
+      },
+      execution: %{
+        id: execution.id,
+        status: execution.status,
+        status_code: execution.status_code,
         scheduled_for: execution.scheduled_for,
         finished_at: execution.finished_at,
         duration_ms: execution.duration_ms

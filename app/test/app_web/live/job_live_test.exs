@@ -68,6 +68,32 @@ defmodule PrikkeWeb.JobLiveTest do
     end
   end
 
+  describe "Job Clone" do
+    setup :register_and_log_in_user
+
+    test "shows clone button on job show page", %{conn: conn, user: user} do
+      org = organization_fixture(%{user: user})
+      job = job_fixture(org)
+
+      {:ok, _view, html} = live(conn, ~p"/jobs/#{job.id}")
+
+      assert html =~ "Clone"
+    end
+
+    test "clicking clone creates a copy and redirects", %{conn: conn, user: user} do
+      org = organization_fixture(%{user: user})
+      job = job_fixture(org, %{name: "Original Job"})
+
+      {:ok, view, _html} = live(conn, ~p"/jobs/#{job.id}")
+
+      view |> element("button", "Clone") |> render_click()
+
+      # Should redirect to the cloned job
+      {_path, flash} = assert_redirect(view)
+      assert flash["info"] =~ "cloned"
+    end
+  end
+
   describe "Job New" do
     setup :register_and_log_in_user
 
