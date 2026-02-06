@@ -8,6 +8,30 @@
       name="description"
       content={assigns[:page_description] || "Simple cron scheduling and webhook delivery. EU-hosted, GDPR-native. Schedule HTTP jobs, monitor executions, get notified on failures."}
     />
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Runlater" />
+    <meta
+      property="og:title"
+      content={(assigns[:page_title] || "Schedule Jobs Simply") <> " · Runlater"}
+    />
+    <meta
+      property="og:description"
+      content={assigns[:page_description] || "Simple cron scheduling and webhook delivery. EU-hosted, GDPR-native. Schedule HTTP jobs, monitor executions, get notified on failures."}
+    />
+    <meta property="og:url" content="https://runlater.eu" />
+    <meta property="og:locale" content="en_US" />
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta
+      name="twitter:title"
+      content={(assigns[:page_title] || "Schedule Jobs Simply") <> " · Runlater"}
+    />
+    <meta
+      name="twitter:description"
+      content={assigns[:page_description] || "Simple cron scheduling and webhook delivery. EU-hosted, GDPR-native. Schedule HTTP jobs, monitor executions, get notified on failures."}
+    />
+    <link rel="canonical" href="https://runlater.eu" />
     <.live_title suffix=" · Runlater">
       {assigns[:page_title] || "Schedule Jobs Simply"}
     </.live_title>
