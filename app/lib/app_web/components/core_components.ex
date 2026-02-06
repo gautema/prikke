@@ -818,13 +818,13 @@ defmodule PrikkeWeb.CoreComponents do
       <.marketing_header />
       <.marketing_header menu_id="login-menu" current_scope={@current_scope} />
   """
-  attr :menu_id, :string, default: "marketing-menu-toggle"
+  attr :menu_id, :string, default: "marketing-menu-toggle", doc: "ID for the mobile menu checkbox toggle"
   attr :current_scope, :map, default: nil
 
   def marketing_header(assigns) do
     ~H"""
     <div class="group/menu">
-      <input type="checkbox" id={@menu_id} class="hidden" />
+      <input type="checkbox" id={@menu_id} class="sr-only" />
       <header class="py-6 flex justify-between items-center">
         <a
           href="/"
@@ -879,7 +879,7 @@ defmodule PrikkeWeb.CoreComponents do
         </nav>
       </header>
       <!-- Mobile menu (overlay, CSS-only) -->
-      <div class="hidden group-has-[:checked]/menu:block sm:hidden fixed inset-x-0 top-[72px] bottom-0 bg-white border-t border-slate-200 z-50 overflow-y-auto">
+      <div class="hidden group-has-[:checked]/menu:!block sm:!hidden fixed inset-x-0 top-[72px] bottom-0 bg-white border-t border-slate-200 z-50 overflow-y-auto">
         <nav class="flex flex-col gap-1 px-6 py-4">
           <a
             href="/docs"

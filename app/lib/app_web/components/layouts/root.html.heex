@@ -38,8 +38,9 @@
   <body class="min-h-screen relative" style="background: linear-gradient(135deg, #f0fdf4 0%, #f1f5f9 25%, #f8fafc 50%, #ecfeff 75%, #faf5ff 100%);">
 
     <%= unless assigns[:hide_header] do %>
-      <header class="bg-white/70 backdrop-blur-xl border-b border-white/50 group/menu relative z-20">
-        <input type="checkbox" id="mobile-menu-toggle" class="hidden" />
+      <div class="group/menu">
+      <input type="checkbox" id="mobile-menu-toggle" class="sr-only" />
+      <header class="bg-white/70 backdrop-blur-xl border-b border-white/50 relative z-20">
         <nav class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <a
             href="/"
@@ -180,8 +181,9 @@
           </div>
         </nav>
         
-<!-- Mobile menu (overlay, CSS-only) -->
-        <div class="hidden group-has-[:checked]/menu:block sm:hidden fixed inset-x-0 top-14 bottom-0 bg-white border-t border-slate-200 z-50 overflow-y-auto">
+      </header>
+<!-- Mobile menu overlay -->
+      <div class="hidden group-has-[:checked]/menu:!block sm:!hidden fixed inset-x-0 top-14 bottom-0 bg-white border-t border-slate-200 z-50 overflow-y-auto">
           <div class="px-4 py-2">
             <%= if @current_scope do %>
               <.link href={~p"/dashboard"} class="block py-3 text-base font-medium text-slate-700">
@@ -268,7 +270,7 @@
             <% end %>
           </div>
         </div>
-      </header>
+      </div>
     <% end %>
     {@inner_content}
     <%= unless assigns[:hide_footer] do %>
