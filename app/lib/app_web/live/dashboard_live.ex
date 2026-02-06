@@ -149,18 +149,22 @@ defmodule PrikkeWeb.DashboardLive do
           </div>
         </div>
 
-        <%= if @monitor_stats.total > 0 do %>
-          <!-- Monitors Summary -->
-          <.link
-            navigate={~p"/monitors"}
-            class="block glass-card rounded-2xl p-4 mb-4 hover:border-slate-300 transition-colors"
-          >
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <.icon name="hero-heart" class="w-5 h-5 text-slate-400" />
-                <span class="text-sm font-medium text-slate-700">Monitors</span>
-              </div>
-              <div class="flex items-center gap-3">
+        <!-- Monitors Summary -->
+        <.link
+          navigate={~p"/monitors"}
+          class="block glass-card rounded-2xl p-4 mb-4 hover:border-slate-300 transition-colors"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <.icon name="hero-heart" class="w-5 h-5 text-slate-400" />
+              <span class="text-sm font-medium text-slate-700">Monitors</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <%= if @monitor_stats.total == 0 do %>
+                <span class="text-sm text-slate-400">
+                  Set up cron monitoring →
+                </span>
+              <% else %>
                 <%= if @monitor_stats.down > 0 do %>
                   <span class="flex items-center gap-1.5 text-sm font-medium text-red-600">
                     <span class="w-2 h-2 rounded-full bg-red-500" />
@@ -174,10 +178,10 @@ defmodule PrikkeWeb.DashboardLive do
                   ]} />
                   {@monitor_stats.total} total
                 </span>
-              </div>
+              <% end %>
             </div>
-          </.link>
-        <% end %>
+          </div>
+        </.link>
         
     <!-- Monthly Usage -->
         <div class="glass-card rounded-2xl p-4 mb-8">
