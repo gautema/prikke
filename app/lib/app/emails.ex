@@ -42,6 +42,17 @@ defmodule Prikke.Emails do
   end
 
   @doc """
+  Returns the count of emails sent this month (UTC).
+  """
+  def count_emails_this_month do
+    now = DateTime.utc_now()
+    month_start = Date.new!(now.year, now.month, 1) |> DateTime.new!(~T[00:00:00], "Etc/UTC")
+
+    from(e in EmailLog, where: e.inserted_at >= ^month_start)
+    |> Repo.aggregate(:count)
+  end
+
+  @doc """
   Deletes email logs older than the given number of days.
   """
   def cleanup_old_email_logs(retention_days) do

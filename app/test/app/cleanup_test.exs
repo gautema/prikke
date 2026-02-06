@@ -7,6 +7,33 @@ defmodule Prikke.CleanupTest do
   import Prikke.AccountsFixtures
   import Prikke.JobsFixtures
 
+  describe "run_monthly_summary/0" do
+    setup do
+      # Configure admin_email for tests
+      original = Application.get_env(:app, Prikke.Mailer)
+      Application.put_env(:app, Prikke.Mailer, Keyword.put(original, :admin_email, "admin@test.com"))
+
+      on_exit(fn ->
+        Application.put_env(:app, Prikke.Mailer, original)
+      end)
+
+      :ok
+    end
+
+    test "sends monthly summary email" do
+      assert :ok = Cleanup.run_monthly_summary()
+    end
+
+    test "email is logged with correct type" do
+      Cleanup.run_monthly_summary()
+
+      emails = Prikke.Emails.list_recent_emails(limit: 1)
+      assert length(emails) == 1
+      assert hd(emails).email_type == "monthly_summary"
+      assert hd(emails).to == "admin@test.com"
+    end
+  end
+
   describe "cleanup" do
     setup do
       start_supervised!({Cleanup, test_mode: true})

@@ -19,6 +19,7 @@ defmodule Prikke.Cleanup do
 
   alias Prikke.Repo
   alias Prikke.Accounts
+  alias Prikke.Accounts.UserNotifier
   alias Prikke.Executions
   alias Prikke.Emails
   alias Prikke.Idempotency
@@ -47,6 +48,13 @@ defmodule Prikke.Cleanup do
     GenServer.call(__MODULE__, :cleanup, :timer.minutes(5))
   end
 
+  @doc """
+  Manually trigger monthly summary email. Useful for testing from IEx.
+  """
+  def run_monthly_summary do
+    send_monthly_summary()
+  end
+
   ## Server Callbacks
 
   @impl true
@@ -58,7 +66,7 @@ defmodule Prikke.Cleanup do
       send(self(), :check)
     end
 
-    {:ok, %{test_mode: test_mode, last_cleanup_date: nil}}
+    {:ok, %{test_mode: test_mode, last_cleanup_date: nil, last_monthly_email_date: nil}}
   end
 
   @impl true
@@ -71,6 +79,15 @@ defmodule Prikke.Cleanup do
 
     state =
       if should_run_cleanup?(now, state.last_cleanup_date) do
+        # Send monthly summary BEFORE cleanup (captures last month's data before reset)
+        state =
+          if should_send_monthly_email?(now, state.last_monthly_email_date) do
+            send_monthly_summary()
+            %{state | last_monthly_email_date: today}
+          else
+            state
+          end
+
         case run_with_lock() do
           {:ok, _result} ->
             %{state | last_cleanup_date: today}
@@ -165,6 +182,59 @@ defmodule Prikke.Cleanup do
   defp get_retention_days(tier) do
     limits = Jobs.get_tier_limits(tier)
     limits.retention_days
+  end
+
+  defp should_send_monthly_email?(now, last_monthly_email_date) do
+    today = DateTime.to_date(now)
+    # Send on the 1st of each month, once per day
+    now.day == 1 and last_monthly_email_date != today
+  end
+
+  defp send_monthly_summary do
+    Logger.info("[Cleanup] Sending monthly summary email")
+
+    now = DateTime.utc_now()
+
+    # Calculate previous month for the summary
+    {year, month} =
+      if now.month == 1 do
+        {now.year - 1, 12}
+      else
+        {now.year, now.month - 1}
+      end
+
+    month_start = Date.new!(year, month, 1) |> DateTime.new!(~T[00:00:00], "Etc/UTC")
+    month_name = Calendar.strftime(month_start, "%B %Y")
+
+    platform_stats = Executions.get_platform_stats()
+    this_month = platform_stats.this_month
+
+    stats = %{
+      total_users: Accounts.count_users(),
+      new_users: Accounts.count_users_since(month_start),
+      total_orgs: Accounts.count_organizations(),
+      new_orgs: Accounts.count_organizations_since(month_start),
+      pro_orgs: Accounts.count_pro_organizations(),
+      total_jobs: Jobs.count_all_jobs(),
+      enabled_jobs: Jobs.count_all_enabled_jobs(),
+      executions: %{
+        total: this_month.total,
+        success: this_month.success,
+        failed: this_month.failed,
+        timeout: this_month.timeout
+      },
+      success_rate: Executions.get_platform_success_rate(month_start),
+      top_orgs: Executions.list_organization_monthly_executions(limit: 5),
+      total_monitors: Monitors.count_all_monitors(),
+      down_monitors: Monitors.count_all_down_monitors(),
+      emails_sent: Emails.count_emails_this_month(),
+      month_name: month_name
+    }
+
+    case UserNotifier.deliver_monthly_summary(stats) do
+      {:ok, _} -> Logger.info("[Cleanup] Monthly summary email sent successfully")
+      {:error, reason} -> Logger.error("[Cleanup] Failed to send monthly summary: #{inspect(reason)}")
+    end
   end
 
   # Recover executions stuck in "running" status (worker crashed or server restarted)

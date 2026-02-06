@@ -459,6 +459,204 @@ defmodule Prikke.Accounts.UserNotifier do
 
   defp format_number(n), do: Integer.to_string(n)
 
+  @doc """
+  Deliver a monthly summary email to the admin with platform stats.
+
+  The `stats` map should contain:
+  - :total_users, :new_users - user counts
+  - :total_orgs, :new_orgs, :pro_orgs - organization counts
+  - :total_jobs, :enabled_jobs - job counts
+  - :executions - map with :total, :success, :failed, :timeout
+  - :success_rate - percentage or nil
+  - :top_orgs - list of {org, count, limit} tuples
+  - :total_monitors, :down_monitors - monitor counts
+  - :emails_sent - email count for the month
+  - :month_name - e.g. "January 2026"
+  """
+  def deliver_monthly_summary(stats) do
+    config = Application.get_env(:app, Prikke.Mailer, [])
+    admin_email = Keyword.get(config, :admin_email)
+
+    if admin_email do
+      month_name = stats.month_name
+
+      text = """
+      Monthly Summary for #{month_name}
+
+      Users: #{format_number(stats.total_users)} total, #{format_number(stats.new_users)} new
+      Organizations: #{format_number(stats.total_orgs)} total, #{format_number(stats.new_orgs)} new, #{format_number(stats.pro_orgs)} pro
+      Jobs: #{format_number(stats.total_jobs)} total, #{format_number(stats.enabled_jobs)} enabled
+      Monitors: #{format_number(stats.total_monitors)} total, #{format_number(stats.down_monitors)} down
+
+      Executions this month:
+      - Total: #{format_number(stats.executions.total)}
+      - Success: #{format_number(stats.executions.success)}
+      - Failed: #{format_number(stats.executions.failed)}
+      - Timeout: #{format_number(stats.executions.timeout)}
+      - Success rate: #{stats.success_rate || "N/A"}%
+
+      Emails sent: #{format_number(stats.emails_sent)}
+
+      - Runlater System
+      """
+
+      html = admin_monthly_summary_template(stats)
+      deliver(admin_email, "Monthly Summary: #{month_name}", text, html, email_type: "monthly_summary")
+    else
+      Logger.debug("No ADMIN_EMAIL configured, skipping monthly summary")
+      {:ok, :skipped}
+    end
+  end
+
+  defp admin_monthly_summary_template(stats) do
+    top_orgs_rows =
+      stats.top_orgs
+      |> Enum.map(fn {org, count, limit} ->
+        percent = if limit > 0, do: round(count / limit * 100), else: 0
+
+        """
+        <tr>
+          <td style="padding: 6px 12px; font-size: 13px; color: #0f172a; border-bottom: 1px solid #f1f5f9;">#{org.name}</td>
+          <td style="padding: 6px 12px; font-size: 13px; color: #0f172a; border-bottom: 1px solid #f1f5f9; text-align: right;">#{format_number(count)}</td>
+          <td style="padding: 6px 12px; font-size: 13px; color: #64748b; border-bottom: 1px solid #f1f5f9; text-align: right;">#{percent}%</td>
+        </tr>
+        """
+      end)
+      |> Enum.join()
+
+    top_orgs_section =
+      if stats.top_orgs != [] do
+        """
+        <h3 style="margin: 24px 0 12px 0; font-size: 14px; font-weight: 600; color: #0f172a;">Top Organizations</h3>
+        <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;">
+          <tr style="background-color: #f8fafc;">
+            <th style="padding: 8px 12px; font-size: 11px; color: #64748b; text-transform: uppercase; text-align: left;">Organization</th>
+            <th style="padding: 8px 12px; font-size: 11px; color: #64748b; text-transform: uppercase; text-align: right;">Executions</th>
+            <th style="padding: 8px 12px; font-size: 11px; color: #64748b; text-transform: uppercase; text-align: right;">Usage</th>
+          </tr>
+          #{top_orgs_rows}
+        </table>
+        """
+      else
+        ""
+      end
+
+    success_rate_display = if stats.success_rate, do: "#{stats.success_rate}%", else: "N/A"
+
+    """
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 560px; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <!-- Header -->
+              <tr>
+                <td style="padding: 32px 32px 24px 32px; text-align: center; border-bottom: 1px solid #e2e8f0;">
+                  <div style="display: inline-flex; align-items: center;">
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #10b981; border-radius: 50%; margin-right: 8px;"></span>
+                    <span style="font-size: 20px; font-weight: 600; color: #0f172a;">runlater</span>
+                  </div>
+                </td>
+              </tr>
+              <!-- Content -->
+              <tr>
+                <td style="padding: 32px;">
+                  <h2 style="margin: 0 0 4px 0; font-size: 18px; font-weight: 600; color: #0f172a;">Monthly Summary</h2>
+                  <p style="margin: 0 0 24px 0; font-size: 13px; color: #64748b;">#{stats.month_name}</p>
+
+                  <!-- Stat Cards Row 1: Users & Orgs -->
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 12px;">
+                    <tr>
+                      <td width="50%" style="padding-right: 6px;">
+                        <div style="background-color: #f0fdf4; border-radius: 6px; padding: 16px;">
+                          <p style="margin: 0; font-size: 11px; color: #64748b; text-transform: uppercase;">Users</p>
+                          <p style="margin: 4px 0 0 0; font-size: 22px; font-weight: 700; color: #0f172a;">#{format_number(stats.total_users)}</p>
+                          <p style="margin: 4px 0 0 0; font-size: 12px; color: #10b981;">+#{format_number(stats.new_users)} new</p>
+                        </div>
+                      </td>
+                      <td width="50%" style="padding-left: 6px;">
+                        <div style="background-color: #f0fdf4; border-radius: 6px; padding: 16px;">
+                          <p style="margin: 0; font-size: 11px; color: #64748b; text-transform: uppercase;">Organizations</p>
+                          <p style="margin: 4px 0 0 0; font-size: 22px; font-weight: 700; color: #0f172a;">#{format_number(stats.total_orgs)}</p>
+                          <p style="margin: 4px 0 0 0; font-size: 12px; color: #10b981;">+#{format_number(stats.new_orgs)} new, #{format_number(stats.pro_orgs)} pro</p>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Stat Cards Row 2: Jobs & Monitors -->
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 12px;">
+                    <tr>
+                      <td width="50%" style="padding-right: 6px;">
+                        <div style="background-color: #f8fafc; border-radius: 6px; padding: 16px; border: 1px solid #e2e8f0;">
+                          <p style="margin: 0; font-size: 11px; color: #64748b; text-transform: uppercase;">Jobs</p>
+                          <p style="margin: 4px 0 0 0; font-size: 22px; font-weight: 700; color: #0f172a;">#{format_number(stats.total_jobs)}</p>
+                          <p style="margin: 4px 0 0 0; font-size: 12px; color: #64748b;">#{format_number(stats.enabled_jobs)} enabled</p>
+                        </div>
+                      </td>
+                      <td width="50%" style="padding-left: 6px;">
+                        <div style="background-color: #f8fafc; border-radius: 6px; padding: 16px; border: 1px solid #e2e8f0;">
+                          <p style="margin: 0; font-size: 11px; color: #64748b; text-transform: uppercase;">Monitors</p>
+                          <p style="margin: 4px 0 0 0; font-size: 22px; font-weight: 700; color: #0f172a;">#{format_number(stats.total_monitors)}</p>
+                          <p style="margin: 4px 0 0 0; font-size: 12px; color: #{if stats.down_monitors > 0, do: "#dc2626", else: "#64748b"};">#{format_number(stats.down_monitors)} down</p>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Executions Section -->
+                  <h3 style="margin: 24px 0 12px 0; font-size: 14px; font-weight: 600; color: #0f172a;">Executions This Month</h3>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 6px; padding: 4px;">
+                    <tr>
+                      <td style="padding: 10px 16px;">
+                        <p style="margin: 0; font-size: 11px; color: #64748b; text-transform: uppercase;">Total</p>
+                        <p style="margin: 2px 0 0 0; font-size: 16px; font-weight: 600; color: #0f172a;">#{format_number(stats.executions.total)}</p>
+                      </td>
+                      <td style="padding: 10px 16px;">
+                        <p style="margin: 0; font-size: 11px; color: #64748b; text-transform: uppercase;">Success</p>
+                        <p style="margin: 2px 0 0 0; font-size: 16px; font-weight: 600; color: #10b981;">#{format_number(stats.executions.success)}</p>
+                      </td>
+                      <td style="padding: 10px 16px;">
+                        <p style="margin: 0; font-size: 11px; color: #64748b; text-transform: uppercase;">Failed</p>
+                        <p style="margin: 2px 0 0 0; font-size: 16px; font-weight: 600; color: #dc2626;">#{format_number(stats.executions.failed)}</p>
+                      </td>
+                      <td style="padding: 10px 16px;">
+                        <p style="margin: 0; font-size: 11px; color: #64748b; text-transform: uppercase;">Timeout</p>
+                        <p style="margin: 2px 0 0 0; font-size: 16px; font-weight: 600; color: #f59e0b;">#{format_number(stats.executions.timeout)}</p>
+                      </td>
+                    </tr>
+                  </table>
+                  <p style="margin: 8px 0 0 0; font-size: 13px; color: #64748b;">Success rate: <strong style="color: #0f172a;">#{success_rate_display}</strong></p>
+
+                  #{top_orgs_section}
+
+                  <!-- Emails -->
+                  <p style="margin: 24px 0 0 0; font-size: 13px; color: #64748b;">Emails sent this month: <strong style="color: #0f172a;">#{format_number(stats.emails_sent)}</strong></p>
+                </td>
+              </tr>
+              <!-- Footer -->
+              <tr>
+                <td style="padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
+                  <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                    Runlater Admin Notification
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+    """
+  end
+
   defp admin_notification_template(user) do
     """
     <!DOCTYPE html>

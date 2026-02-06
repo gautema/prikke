@@ -989,6 +989,14 @@ defmodule Prikke.Accounts do
   end
 
   @doc """
+  Returns the count of organizations created since the given datetime.
+  """
+  def count_organizations_since(since) do
+    from(o in Organization, where: o.inserted_at >= ^since)
+    |> Repo.aggregate(:count)
+  end
+
+  @doc """
   Lists recent user signups.
   """
   def list_recent_users(opts \\ []) do
