@@ -77,7 +77,7 @@ defmodule PrikkeWeb.SuperadminLive do
 
     # Email logs
     recent_emails = Emails.list_recent_emails(limit: 20)
-    emails_today = Emails.count_emails_today()
+    emails_this_month = Emails.count_emails_this_month()
     monthly_summary_emails = Emails.list_monthly_summary_emails(limit: 12)
 
     # System performance metrics
@@ -109,7 +109,7 @@ defmodule PrikkeWeb.SuperadminLive do
     |> assign(:monitor_stats, monitor_stats)
     |> assign(:audit_logs, audit_logs)
     |> assign(:recent_emails, recent_emails)
-    |> assign(:emails_today, emails_today)
+    |> assign(:emails_this_month, emails_this_month)
     |> assign(:monthly_summary_emails, monthly_summary_emails)
   end
 
@@ -167,7 +167,7 @@ defmodule PrikkeWeb.SuperadminLive do
           color={success_rate_color(@success_rate)}
         />
         <.stat_card title="Pro Customers" value={@pro_count} color="text-emerald-600" />
-        <.stat_card title="Emails Today" value={@emails_today} />
+        <.stat_card title="Emails This Month" value={@emails_this_month} />
       </div>
       
     <!-- Execution Stats -->
