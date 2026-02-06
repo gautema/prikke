@@ -485,8 +485,12 @@ defmodule PrikkeWeb.JobLive.Edit do
                   Scheduled Time (UTC)
                 </label>
                 <% existing_value =
-                  @form[:scheduled_at].value &&
-                    Calendar.strftime(@form[:scheduled_at].value, "%Y-%m-%dT%H:%M") %>
+                  case @form[:scheduled_at].value do
+                    %DateTime{} = dt -> Calendar.strftime(dt, "%Y-%m-%dT%H:%M")
+                    %NaiveDateTime{} = dt -> Calendar.strftime(dt, "%Y-%m-%dT%H:%M")
+                    val when is_binary(val) and val != "" -> val
+                    _ -> nil
+                  end %>
                 <input
                   type="datetime-local"
                   name={@form[:scheduled_at].name}
