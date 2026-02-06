@@ -125,7 +125,14 @@ defmodule PrikkeWeb.JobLive.Show do
     job = socket.assigns.job
     scheduled_for = DateTime.utc_now() |> DateTime.truncate(:second)
 
-    case Executions.create_execution_for_job(job, scheduled_for) do
+    # If this is a retry (last execution failed), make it single-attempt
+    opts = if get_status(socket.assigns.latest_info) in ["failed", "timeout"] do
+      [attempt: job.retry_attempts]
+    else
+      []
+    end
+
+    case Executions.create_execution_for_job(job, scheduled_for, opts) do
       {:ok, _execution} ->
         # Wake workers to process immediately
         Jobs.notify_workers()

@@ -52,7 +52,8 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
     job = socket.assigns.job
     now = DateTime.utc_now() |> DateTime.truncate(:second)
 
-    case Executions.create_execution_for_job(job, now) do
+    # Set attempt to max so this manual retry won't auto-retry on failure
+    case Executions.create_execution_for_job(job, now, attempt: job.retry_attempts) do
       {:ok, execution} ->
         {:noreply,
          socket
