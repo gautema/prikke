@@ -110,7 +110,7 @@ defmodule PrikkeWeb.MonitorLive.Index do
       <div class="flex items-center gap-px flex-1">
         <%= for {{date, status}, idx} <- Enum.with_index(@days) do %>
           <div class="flex-1 group relative">
-            <div class={["h-5 first:rounded-l-sm last:rounded-r-sm", day_status_color(status)]} />
+            <div class={["h-3 first:rounded-l-sm last:rounded-r-sm", day_status_color(status)]} />
             <div class={[
               "hidden group-hover:block absolute bottom-full mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap z-10",
               if(idx < 3,
@@ -205,7 +205,7 @@ defmodule PrikkeWeb.MonitorLive.Index do
         <% else %>
           <div class="glass-card rounded-2xl divide-y divide-white/30">
             <%= for monitor <- @monitors do %>
-              <.link navigate={~p"/monitors/#{monitor.id}"} class="block px-4 sm:px-6 py-4 hover:bg-white/50 transition-colors">
+              <.link navigate={~p"/monitors/#{monitor.id}"} class="block px-4 sm:px-6 py-5 hover:bg-white/50 transition-colors">
                 <div class="flex items-center justify-between gap-3 mb-2">
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 sm:gap-3">

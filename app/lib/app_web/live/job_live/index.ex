@@ -196,7 +196,7 @@ defmodule PrikkeWeb.JobLive.Index do
       <div class="flex items-center gap-px flex-1">
         <%= for status <- @reversed do %>
           <div
-            class={["h-5 flex-1 first:rounded-l-sm last:rounded-r-sm", run_status_color(status)]}
+            class={["h-3 flex-1 first:rounded-l-sm last:rounded-r-sm", run_status_color(status)]}
             title={status}
           />
         <% end %>
@@ -262,7 +262,7 @@ defmodule PrikkeWeb.JobLive.Index do
       <% else %>
         <div class="glass-card rounded-2xl divide-y divide-white/30">
           <%= for job <- @jobs do %>
-            <div class="px-4 sm:px-6 py-4">
+            <div class="px-4 sm:px-6 py-5">
               <div class="flex items-start sm:items-center justify-between gap-3">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
