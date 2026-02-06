@@ -53,13 +53,16 @@
           />
         </div>
         <div class="flex gap-3">
-          <select
-            name="invite[role]"
-            class="px-3 py-2.5 pr-8 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
-          >
-            <option value="member">Member</option>
-            <option value="admin">Admin</option>
-          </select>
+          <div class="relative">
+            <select
+              name="invite[role]"
+              class="appearance-none pl-3 pr-7 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
+            >
+              <option value="member">Member</option>
+              <option value="admin">Admin</option>
+            </select>
+            <.icon name="hero-chevron-down" class="w-4 h-4 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
           <button
             type="submit"
             class="px-4 py-2.5 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors whitespace-nowrap"
