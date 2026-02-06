@@ -115,7 +115,7 @@ defmodule PrikkeWeb.MonitorLive.Index do
           </div>
           <.link
             navigate={~p"/monitors/new"}
-            class="font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-3 sm:px-4 py-2 rounded-md transition-colors text-sm sm:text-base"
+            class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-md transition-colors no-underline"
           >
             New Monitor
           </.link>

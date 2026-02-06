@@ -648,6 +648,122 @@ defmodule Prikke.JobsTest do
     end
   end
 
+  describe "test_webhook/1" do
+    test "returns success for a valid URL" do
+      bypass = Bypass.open()
+
+      Bypass.expect_once(bypass, "GET", "/test", fn conn ->
+        Plug.Conn.resp(conn, 200, "OK")
+      end)
+
+      assert {:ok, result} = Jobs.test_webhook(%{url: "http://localhost:#{bypass.port}/test"})
+      assert result.status == 200
+      assert result.body == "OK"
+      assert is_integer(result.duration_ms)
+      assert result.duration_ms >= 0
+    end
+
+    test "returns error for connection failure" do
+      assert {:error, message} = Jobs.test_webhook(%{url: "http://localhost:1/nope"})
+      assert is_binary(message)
+      assert message =~ "Connection error" or message =~ "Request failed"
+    end
+
+    test "sends correct method" do
+      bypass = Bypass.open()
+
+      Bypass.expect_once(bypass, "POST", "/test", fn conn ->
+        assert conn.method == "POST"
+        Plug.Conn.resp(conn, 201, "Created")
+      end)
+
+      assert {:ok, result} =
+               Jobs.test_webhook(%{
+                 url: "http://localhost:#{bypass.port}/test",
+                 method: "POST",
+                 body: "hello"
+               })
+
+      assert result.status == 201
+    end
+
+    test "sends correct headers" do
+      bypass = Bypass.open()
+
+      Bypass.expect_once(bypass, "GET", "/test", fn conn ->
+        auth = Enum.find_value(conn.req_headers, fn {k, v} -> if k == "x-custom", do: v end)
+        assert auth == "test-value"
+        Plug.Conn.resp(conn, 200, "OK")
+      end)
+
+      assert {:ok, _result} =
+               Jobs.test_webhook(%{
+                 url: "http://localhost:#{bypass.port}/test",
+                 headers: %{"X-Custom" => "test-value"}
+               })
+    end
+
+    test "sends request body for POST" do
+      bypass = Bypass.open()
+
+      Bypass.expect_once(bypass, "POST", "/test", fn conn ->
+        {:ok, body, conn} = Plug.Conn.read_body(conn)
+        assert body == ~s({"key":"value"})
+        Plug.Conn.resp(conn, 200, "OK")
+      end)
+
+      assert {:ok, _result} =
+               Jobs.test_webhook(%{
+                 url: "http://localhost:#{bypass.port}/test",
+                 method: "POST",
+                 body: ~s({"key":"value"})
+               })
+    end
+
+    test "caps timeout at 10 seconds" do
+      bypass = Bypass.open()
+
+      Bypass.expect_once(bypass, "GET", "/test", fn conn ->
+        Plug.Conn.resp(conn, 200, "OK")
+      end)
+
+      # Even if we pass a large timeout, it should be capped
+      assert {:ok, _result} =
+               Jobs.test_webhook(%{
+                 url: "http://localhost:#{bypass.port}/test",
+                 timeout_ms: 300_000
+               })
+    end
+
+    test "truncates large response bodies" do
+      bypass = Bypass.open()
+      large_body = String.duplicate("x", 5_000)
+
+      Bypass.expect_once(bypass, "GET", "/test", fn conn ->
+        Plug.Conn.resp(conn, 200, large_body)
+      end)
+
+      assert {:ok, result} =
+               Jobs.test_webhook(%{url: "http://localhost:#{bypass.port}/test"})
+
+      # 4KB = 4096 bytes + "... [truncated]" suffix
+      assert byte_size(result.body) < byte_size(large_body)
+      assert result.body =~ "... [truncated]"
+    end
+
+    test "returns non-2xx status codes" do
+      bypass = Bypass.open()
+
+      Bypass.expect_once(bypass, "GET", "/test", fn conn ->
+        Plug.Conn.resp(conn, 404, "Not Found")
+      end)
+
+      assert {:ok, result} = Jobs.test_webhook(%{url: "http://localhost:#{bypass.port}/test"})
+      assert result.status == 404
+      assert result.body == "Not Found"
+    end
+  end
+
   describe "interval_minutes calculation" do
     test "every minute cron (pro tier)" do
       org = organization_fixture(tier: "pro")

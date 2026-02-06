@@ -481,6 +481,95 @@ defmodule Prikke.Jobs do
     create_job(org, attrs, opts)
   end
 
+  @doc """
+  Tests a webhook URL by making a real HTTP request without creating any execution records.
+
+  Returns `{:ok, %{status: status_code, duration_ms: ms, body: body}}` on success,
+  or `{:error, reason}` on connection failure.
+
+  Timeout is capped at 10 seconds for test requests.
+  Response body is truncated to 4KB.
+  """
+  def test_webhook(params) do
+    url = Map.get(params, :url) || Map.get(params, "url", "")
+    method = Map.get(params, :method) || Map.get(params, "method", "GET")
+    headers_raw = Map.get(params, :headers) || Map.get(params, "headers", %{})
+    body = Map.get(params, :body) || Map.get(params, "body")
+    timeout_ms = Map.get(params, :timeout_ms) || Map.get(params, "timeout_ms", 10_000)
+
+    # Cap timeout at 10 seconds for test requests
+    timeout_ms = min(timeout_ms, 10_000)
+
+    headers =
+      case headers_raw do
+        h when is_map(h) -> Enum.map(h, fn {k, v} -> {to_string(k), to_string(v)} end)
+        h when is_list(h) -> h
+        _ -> []
+      end
+
+    method_atom =
+      method
+      |> to_string()
+      |> String.downcase()
+      |> String.to_existing_atom()
+
+    opts = [
+      method: method_atom,
+      url: url,
+      headers: headers,
+      receive_timeout: timeout_ms,
+      connect_options: [timeout: 5_000],
+      retry: false
+    ]
+
+    opts =
+      if method in ["POST", "PUT", "PATCH", "post", "put", "patch"] and body do
+        Keyword.put(opts, :body, body)
+      else
+        opts
+      end
+
+    start_time = System.monotonic_time(:millisecond)
+
+    case Req.request(opts) do
+      {:ok, response} ->
+        duration_ms = System.monotonic_time(:millisecond) - start_time
+        response_body = truncate_test_body(response.body)
+
+        {:ok,
+         %{
+           status: response.status,
+           duration_ms: duration_ms,
+           body: response_body
+         }}
+
+      {:error, %Req.TransportError{reason: :timeout}} ->
+        duration_ms = System.monotonic_time(:millisecond) - start_time
+        {:error, "Request timed out after #{duration_ms}ms"}
+
+      {:error, %Req.TransportError{reason: reason}} ->
+        {:error, "Connection error: #{inspect(reason)}"}
+
+      {:error, error} ->
+        {:error, "Request failed: #{inspect(error)}"}
+    end
+  end
+
+  # Truncate response body to 4KB for test display
+  @max_test_body_size 4 * 1024
+
+  defp truncate_test_body(nil), do: nil
+
+  defp truncate_test_body(body) when is_binary(body) do
+    if byte_size(body) > @max_test_body_size do
+      String.slice(body, 0, @max_test_body_size) <> "... [truncated]"
+    else
+      body
+    end
+  end
+
+  defp truncate_test_body(body), do: inspect(body)
+
   ## Platform-wide Stats (for superadmin)
 
   @doc """

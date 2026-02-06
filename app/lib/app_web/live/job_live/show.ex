@@ -40,7 +40,9 @@ defmodule PrikkeWeb.JobLive.Show do
            |> assign(:status_filter, status_filter)
            |> assign(:total_count, total_count)
            |> assign(:page_title, job.name)
-           |> assign(:menu_open, false)}
+           |> assign(:menu_open, false)
+           |> assign(:test_result, nil)
+           |> assign(:testing, false)}
       end
     else
       {:ok,
@@ -97,6 +99,23 @@ defmodule PrikkeWeb.JobLive.Show do
      |> assign(:total_count, total_count)
      |> assign(:stats, stats)
      |> assign(:latest_info, latest_info)}
+  end
+
+  def handle_info({ref, result}, socket) when is_reference(ref) do
+    if ref == socket.assigns[:test_task_ref] do
+      Process.demonitor(ref, [:flush])
+      {:noreply, assign(socket, test_result: result, testing: false)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info({:DOWN, ref, :process, _pid, _reason}, socket) when is_reference(ref) do
+    if ref == socket.assigns[:test_task_ref] do
+      {:noreply, assign(socket, testing: false)}
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_info(_, socket), do: {:noreply, socket}
@@ -158,6 +177,31 @@ defmodule PrikkeWeb.JobLive.Show do
 
         {:noreply, put_flash(socket, :error, "Failed to clone job: #{message}")}
     end
+  end
+
+  def handle_event("test_url", _, socket) do
+    job = socket.assigns.job
+
+    task =
+      Task.async(fn ->
+        Jobs.test_webhook(%{
+          url: job.url,
+          method: job.method,
+          headers: job.headers || %{},
+          body: job.body,
+          timeout_ms: job.timeout_ms
+        })
+      end)
+
+    {:noreply,
+     socket
+     |> assign(:testing, true)
+     |> assign(:test_result, nil)
+     |> assign(:test_task_ref, task.ref)}
+  end
+
+  def handle_event("dismiss_test_result", _, socket) do
+    {:noreply, assign(socket, :test_result, nil)}
   end
 
   def handle_event("delete", _, socket) do
@@ -285,6 +329,23 @@ defmodule PrikkeWeb.JobLive.Show do
             <div class="flex items-center gap-2">
               <button
                 type="button"
+                id="test-url-btn"
+                phx-click="test_url"
+                disabled={@testing}
+                class={[
+                  "px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 cursor-pointer",
+                  !@testing && "text-slate-700 bg-white border border-slate-200 hover:bg-slate-50",
+                  @testing && "text-slate-400 bg-slate-50 border border-slate-100 cursor-not-allowed"
+                ]}
+              >
+                <%= if @testing do %>
+                  <.icon name="hero-arrow-path" class="w-4 h-4 animate-spin" /> Testing...
+                <% else %>
+                  <.icon name="hero-signal" class="w-4 h-4" /> Test
+                <% end %>
+              </button>
+              <button
+                type="button"
                 phx-click="run_now"
                 class="px-3 py-1.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition-colors cursor-pointer flex items-center gap-1.5"
               >
@@ -359,6 +420,9 @@ defmodule PrikkeWeb.JobLive.Show do
         </div>
 
         <div class="p-4 sm:p-6 space-y-6">
+          <%= if @test_result do %>
+            <.test_result_panel test_result={@test_result} />
+          <% end %>
           <!-- Webhook Details -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Webhook</h3>
@@ -560,6 +624,57 @@ defmodule PrikkeWeb.JobLive.Show do
         }
       }
     </script>
+    """
+  end
+
+  defp test_result_panel(assigns) do
+    ~H"""
+    <div id="test-result-panel" class="rounded-lg border overflow-hidden">
+      <%= case @test_result do %>
+        <% {:ok, result} -> %>
+          <div class={[
+            "px-4 py-3 flex items-center justify-between",
+            result.status >= 200 and result.status < 300 && "bg-emerald-50 border-emerald-200",
+            (result.status < 200 or result.status >= 300) && "bg-red-50 border-red-200"
+          ]}>
+            <div class="flex items-center gap-3">
+              <%= if result.status >= 200 and result.status < 300 do %>
+                <.icon name="hero-check-circle" class="w-5 h-5 text-emerald-600" />
+              <% else %>
+                <.icon name="hero-x-circle" class="w-5 h-5 text-red-600" />
+              <% end %>
+              <span class="font-mono text-sm font-medium">HTTP {result.status}</span>
+              <span class="text-sm text-slate-500">{result.duration_ms}ms</span>
+            </div>
+            <button
+              type="button"
+              phx-click="dismiss_test_result"
+              class="text-slate-400 hover:text-slate-600 cursor-pointer"
+            >
+              <.icon name="hero-x-mark" class="w-4 h-4" />
+            </button>
+          </div>
+          <%= if result.body && result.body != "" do %>
+            <div class="px-4 py-3 bg-white/50 border-t border-slate-100">
+              <pre class="text-xs font-mono text-slate-700 whitespace-pre-wrap break-all max-h-48 overflow-y-auto"><%= result.body %></pre>
+            </div>
+          <% end %>
+        <% {:error, message} -> %>
+          <div class="px-4 py-3 bg-red-50 border-red-200 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <.icon name="hero-x-circle" class="w-5 h-5 text-red-600" />
+              <span class="text-sm text-red-700">{message}</span>
+            </div>
+            <button
+              type="button"
+              phx-click="dismiss_test_result"
+              class="text-slate-400 hover:text-slate-600 cursor-pointer"
+            >
+              <.icon name="hero-x-mark" class="w-4 h-4" />
+            </button>
+          </div>
+      <% end %>
+    </div>
     """
   end
 

@@ -46,6 +46,8 @@ defmodule PrikkeWeb.JobLive.Edit do
            |> assign(:cron_hour, cron_hour)
            |> assign(:cron_weekdays, cron_weekdays)
            |> assign(:cron_day_of_month, cron_day_of_month)
+           |> assign(:test_result, nil)
+           |> assign(:testing, false)
            |> assign_form(changeset)}
       end
     else
@@ -192,6 +194,48 @@ defmodule PrikkeWeb.JobLive.Edit do
      |> update_cron_expression(expr)}
   end
 
+  def handle_event("test_url", _, socket) do
+    form_params = socket.assigns.form.params || %{}
+
+    url = form_params["url"] || socket.assigns.job.url
+    method = form_params["method"] || socket.assigns.job.method
+    body = form_params["body"] || socket.assigns.job.body
+    timeout_ms = parse_timeout(form_params["timeout_ms"] || socket.assigns.job.timeout_ms)
+
+    headers =
+      case form_params["headers_json"] do
+        json when is_binary(json) and json != "" ->
+          case Jason.decode(json) do
+            {:ok, h} when is_map(h) -> h
+            _ -> socket.assigns.job.headers || %{}
+          end
+
+        _ ->
+          socket.assigns.job.headers || %{}
+      end
+
+    task =
+      Task.async(fn ->
+        Jobs.test_webhook(%{
+          url: url,
+          method: method,
+          headers: headers,
+          body: body,
+          timeout_ms: timeout_ms
+        })
+      end)
+
+    {:noreply,
+     socket
+     |> assign(:testing, true)
+     |> assign(:test_result, nil)
+     |> assign(:test_task_ref, task.ref)}
+  end
+
+  def handle_event("dismiss_test_result", _, socket) do
+    {:noreply, assign(socket, :test_result, nil)}
+  end
+
   def handle_event("set_cron_day_of_month", %{"cron_day_of_month" => day}, socket) do
     expr = Cron.compute_cron(
       socket.assigns.cron_preset,
@@ -206,6 +250,37 @@ defmodule PrikkeWeb.JobLive.Edit do
      |> assign(:cron_day_of_month, day)
      |> update_cron_expression(expr)}
   end
+
+  @impl true
+  def handle_info({ref, result}, socket) when is_reference(ref) do
+    if ref == socket.assigns[:test_task_ref] do
+      Process.demonitor(ref, [:flush])
+      {:noreply, assign(socket, test_result: result, testing: false)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info({:DOWN, ref, :process, _pid, _reason}, socket) when is_reference(ref) do
+    if ref == socket.assigns[:test_task_ref] do
+      {:noreply, assign(socket, testing: false)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info(_msg, socket), do: {:noreply, socket}
+
+  defp parse_timeout(val) when is_integer(val), do: val
+
+  defp parse_timeout(val) when is_binary(val) do
+    case Integer.parse(val) do
+      {n, _} -> n
+      :error -> 10_000
+    end
+  end
+
+  defp parse_timeout(_), do: 10_000
 
   defp parse_headers(%{"headers_json" => json} = params) when is_binary(json) and json != "" do
     case Jason.decode(json) do
@@ -246,6 +321,57 @@ defmodule PrikkeWeb.JobLive.Edit do
       |> Map.put(:action, :validate)
 
     assign_form(socket, changeset)
+  end
+
+  defp test_result_panel(assigns) do
+    ~H"""
+    <div id="test-result-panel" class="mb-4 rounded-lg border overflow-hidden">
+      <%= case @test_result do %>
+        <% {:ok, result} -> %>
+          <div class={[
+            "px-4 py-3 flex items-center justify-between",
+            result.status >= 200 and result.status < 300 && "bg-emerald-50 border-emerald-200",
+            (result.status < 200 or result.status >= 300) && "bg-red-50 border-red-200"
+          ]}>
+            <div class="flex items-center gap-3">
+              <%= if result.status >= 200 and result.status < 300 do %>
+                <.icon name="hero-check-circle" class="w-5 h-5 text-emerald-600" />
+              <% else %>
+                <.icon name="hero-x-circle" class="w-5 h-5 text-red-600" />
+              <% end %>
+              <span class="font-mono text-sm font-medium">HTTP {result.status}</span>
+              <span class="text-sm text-slate-500">{result.duration_ms}ms</span>
+            </div>
+            <button
+              type="button"
+              phx-click="dismiss_test_result"
+              class="text-slate-400 hover:text-slate-600 cursor-pointer"
+            >
+              <.icon name="hero-x-mark" class="w-4 h-4" />
+            </button>
+          </div>
+          <%= if result.body && result.body != "" do %>
+            <div class="px-4 py-3 bg-white/50 border-t border-slate-100">
+              <pre class="text-xs font-mono text-slate-700 whitespace-pre-wrap break-all max-h-48 overflow-y-auto"><%= result.body %></pre>
+            </div>
+          <% end %>
+        <% {:error, message} -> %>
+          <div class="px-4 py-3 bg-red-50 border-red-200 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <.icon name="hero-x-circle" class="w-5 h-5 text-red-600" />
+              <span class="text-sm text-red-700">{message}</span>
+            </div>
+            <button
+              type="button"
+              phx-click="dismiss_test_result"
+              class="text-slate-400 hover:text-slate-600 cursor-pointer"
+            >
+              <.icon name="hero-x-mark" class="w-4 h-4" />
+            </button>
+          </div>
+      <% end %>
+    </div>
+    """
   end
 
   defp parse_cron_for_builder(nil), do: {:simple, "every_hour", "0", "9", ["1"], "1"}
@@ -401,8 +527,33 @@ defmodule PrikkeWeb.JobLive.Edit do
         
     <!-- Request Settings -->
         <div class="glass-card rounded-2xl p-6">
-          <h2 class="text-lg font-semibold text-slate-900 mb-4">Request Settings</h2>
-          <p class="text-sm text-slate-500 mb-4">Configure the HTTP request that will be sent.</p>
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-lg font-semibold text-slate-900">Request Settings</h2>
+              <p class="text-sm text-slate-500 mt-1">Configure the HTTP request that will be sent.</p>
+            </div>
+            <button
+              type="button"
+              id="test-url-btn"
+              phx-click="test_url"
+              disabled={@testing}
+              class={[
+                "px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 cursor-pointer",
+                !@testing && "text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200",
+                @testing && "text-slate-400 bg-slate-50 border border-slate-100 cursor-not-allowed"
+              ]}
+            >
+              <%= if @testing do %>
+                <.icon name="hero-arrow-path" class="w-4 h-4 animate-spin" /> Testing...
+              <% else %>
+                <.icon name="hero-play" class="w-4 h-4" /> Test URL
+              <% end %>
+            </button>
+          </div>
+
+          <%= if @test_result do %>
+            <.test_result_panel test_result={@test_result} />
+          <% end %>
 
           <div class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
