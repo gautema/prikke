@@ -6,10 +6,11 @@ defmodule Prikke.Accounts.UserNotifier do
   alias Prikke.Accounts.User
 
   # Delivers the email using the application mailer.
-  defp deliver(recipient, subject, text_body, html_body) do
+  defp deliver(recipient, subject, text_body, html_body, opts) do
     config = Application.get_env(:app, Prikke.Mailer, [])
     from_name = Keyword.get(config, :from_name, "Runlater")
     from_email = Keyword.get(config, :from_email, "noreply@runlater.eu")
+    email_type = Keyword.get(opts, :email_type, "transactional")
 
     email =
       new()
@@ -21,7 +22,7 @@ defmodule Prikke.Accounts.UserNotifier do
 
     Logger.info("Sending email to #{recipient} from #{from_email}, subject: #{subject}")
 
-    case Mailer.deliver(email) do
+    case Mailer.deliver_and_log(email, email_type) do
       {:ok, metadata} ->
         Logger.info("Email sent successfully: #{inspect(metadata)}")
         {:ok, email}
@@ -119,7 +120,7 @@ defmodule Prikke.Accounts.UserNotifier do
     """
 
     html = email_template(html_content, "Confirm email change", url)
-    deliver(user.email, "Confirm your new email - Runlater", text, html)
+    deliver(user.email, "Confirm your new email - Runlater", text, html, email_type: "update_email")
   end
 
   @doc """
@@ -158,7 +159,7 @@ defmodule Prikke.Accounts.UserNotifier do
     """
 
     html = email_template(html_content, "Log in to Runlater", url)
-    deliver(user.email, "Log in to Runlater", text, html)
+    deliver(user.email, "Log in to Runlater", text, html, email_type: "login_instructions")
   end
 
   defp deliver_confirmation_instructions(user, url) do
@@ -185,7 +186,7 @@ defmodule Prikke.Accounts.UserNotifier do
     """
 
     html = email_template(html_content, "Confirm your account", url)
-    deliver(user.email, "Welcome to Runlater - Confirm your account", text, html)
+    deliver(user.email, "Welcome to Runlater - Confirm your account", text, html, email_type: "confirmation")
   end
 
   @doc """
@@ -221,7 +222,7 @@ defmodule Prikke.Accounts.UserNotifier do
     """
 
     html = email_template(html_content, "Accept invitation", url)
-    deliver(email, "You're invited to #{org_name} on Runlater", text, html)
+    deliver(email, "You're invited to #{org_name} on Runlater", text, html, email_type: "organization_invite")
   end
 
   @doc """
@@ -243,7 +244,7 @@ defmodule Prikke.Accounts.UserNotifier do
       """
 
       html = admin_notification_template(user)
-      deliver(admin_email, "New user signup: #{user.email}", text, html)
+      deliver(admin_email, "New user signup: #{user.email}", text, html, email_type: "admin_new_user")
     else
       Logger.debug("No ADMIN_EMAIL configured, skipping new user notification")
       {:ok, :skipped}
@@ -271,7 +272,7 @@ defmodule Prikke.Accounts.UserNotifier do
       """
 
       html = admin_upgrade_template(organization)
-      deliver(admin_email, "Pro upgrade: #{organization.name}", text, html)
+      deliver(admin_email, "Pro upgrade: #{organization.name}", text, html, email_type: "admin_upgrade")
     else
       Logger.debug("No ADMIN_EMAIL configured, skipping upgrade notification")
       {:ok, :skipped}
@@ -388,7 +389,7 @@ defmodule Prikke.Accounts.UserNotifier do
     """
 
     html = email_template(html_content, "View Dashboard", "https://runlater.eu/dashboard")
-    deliver(email, "Approaching monthly limit - #{organization.name}", text, html)
+    deliver(email, "Approaching monthly limit - #{organization.name}", text, html, email_type: "limit_warning")
   end
 
   @doc """
@@ -444,7 +445,7 @@ defmodule Prikke.Accounts.UserNotifier do
     """
 
     html = email_template(html_content, "View Dashboard", "https://runlater.eu/dashboard")
-    deliver(email, "Monthly limit reached - #{organization.name}", text, html)
+    deliver(email, "Monthly limit reached - #{organization.name}", text, html, email_type: "limit_reached")
   end
 
   defp format_number(n) when n >= 1000 do

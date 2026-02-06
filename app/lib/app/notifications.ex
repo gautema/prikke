@@ -159,7 +159,7 @@ defmodule Prikke.Notifications do
       |> text_body(String.trim(text_body))
       |> html_body(html_body)
 
-    case Mailer.deliver(email) do
+    case Mailer.deliver_and_log(email, "job_failure", organization_id: job.organization_id) do
       {:ok, _} ->
         Logger.info("[Notifications] Email sent to #{to_email} for job #{job.id}")
         :ok
@@ -417,7 +417,7 @@ defmodule Prikke.Notifications do
       |> text_body(String.trim(text_body))
       |> html_body(html_body)
 
-    case Mailer.deliver(email) do
+    case Mailer.deliver_and_log(email, "job_recovery", organization_id: job.organization_id) do
       {:ok, _} ->
         Logger.info("[Notifications] Recovery email sent to #{to_email} for job #{job.id}")
         :ok
@@ -693,7 +693,7 @@ defmodule Prikke.Notifications do
       |> text_body(String.trim(text_body))
       |> html_body(html_body)
 
-    case Mailer.deliver(email) do
+    case Mailer.deliver_and_log(email, "monitor_down", organization_id: monitor.organization_id) do
       {:ok, _} ->
         Logger.info("[Notifications] Monitor down email sent for #{monitor.id}")
         :ok
@@ -732,7 +732,7 @@ defmodule Prikke.Notifications do
       |> text_body(String.trim(text_body))
       |> html_body(html_body)
 
-    case Mailer.deliver(email) do
+    case Mailer.deliver_and_log(email, "monitor_recovery", organization_id: monitor.organization_id) do
       {:ok, _} ->
         Logger.info("[Notifications] Monitor recovery email sent for #{monitor.id}")
         :ok

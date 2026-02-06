@@ -7,6 +7,7 @@ defmodule PrikkeWeb.SuperadminLive do
   alias Prikke.Monitors
   alias Prikke.Analytics
   alias Prikke.Audit
+  alias Prikke.Emails
 
   @impl true
   def mount(_params, _session, socket) do
@@ -74,6 +75,10 @@ defmodule PrikkeWeb.SuperadminLive do
     # Recent audit logs
     audit_logs = Audit.list_all_logs(limit: 20)
 
+    # Email logs
+    recent_emails = Emails.list_recent_emails(limit: 20)
+    emails_today = Emails.count_emails_today()
+
     socket
     |> assign(:platform_stats, platform_stats)
     |> assign(:org_monthly_executions, org_monthly_executions)
@@ -88,6 +93,8 @@ defmodule PrikkeWeb.SuperadminLive do
     |> assign(:execution_trend, execution_trend)
     |> assign(:monitor_stats, monitor_stats)
     |> assign(:audit_logs, audit_logs)
+    |> assign(:recent_emails, recent_emails)
+    |> assign(:emails_today, emails_today)
   end
 
   @impl true
@@ -116,7 +123,7 @@ defmodule PrikkeWeb.SuperadminLive do
       </div>
       
     <!-- Platform Stats -->
-      <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
+      <div class="grid grid-cols-2 md:grid-cols-7 gap-4 mb-8">
         <.stat_card
           title="Total Users"
           value={@platform_stats.total_users}
@@ -144,6 +151,7 @@ defmodule PrikkeWeb.SuperadminLive do
           color={success_rate_color(@success_rate)}
         />
         <.stat_card title="Pro Customers" value={@pro_count} color="text-emerald-600" />
+        <.stat_card title="Emails Today" value={@emails_today} />
       </div>
       
     <!-- Execution Stats -->
@@ -514,6 +522,40 @@ defmodule PrikkeWeb.SuperadminLive do
           </div>
         </div>
       </div>
+
+    <!-- Recent Emails -->
+      <div class="glass-card rounded-2xl mb-8">
+        <div class="px-6 py-4 border-b border-white/50">
+          <h2 class="text-lg font-semibold text-slate-900">Recent Emails</h2>
+        </div>
+        <div class="divide-y divide-white/30">
+          <%= for email <- @recent_emails do %>
+            <div class="px-6 py-3 flex items-center gap-4">
+              <span class={[
+                "w-2 h-2 rounded-full shrink-0",
+                if(email.status == "sent", do: "bg-emerald-600", else: "bg-red-500")
+              ]} />
+              <span class="text-sm text-slate-900 truncate min-w-0 max-w-[200px]">{email.to}</span>
+              <span class="text-sm text-slate-600 truncate min-w-0 flex-1">{email.subject}</span>
+              <span class={[
+                "text-xs px-2 py-0.5 rounded-full font-medium shrink-0",
+                email_type_badge_class(email.email_type)
+              ]}>
+                {email.email_type}
+              </span>
+              <%= if email.organization do %>
+                <span class="text-xs text-slate-400 shrink-0">{email.organization.name}</span>
+              <% end %>
+              <span class="text-xs text-slate-400 whitespace-nowrap shrink-0">
+                <.relative_time id={"email-#{email.id}"} datetime={email.inserted_at} />
+              </span>
+            </div>
+          <% end %>
+          <%= if @recent_emails == [] do %>
+            <div class="px-6 py-8 text-center text-slate-400">No emails sent yet</div>
+          <% end %>
+        </div>
+      </div>
     </div>
     """
   end
@@ -568,6 +610,17 @@ defmodule PrikkeWeb.SuperadminLive do
   end
 
   defp format_number(num), do: to_string(num)
+
+  defp email_type_badge_class("job_failure"), do: "bg-red-100 text-red-700"
+  defp email_type_badge_class("job_recovery"), do: "bg-emerald-100 text-emerald-700"
+  defp email_type_badge_class("monitor_down"), do: "bg-red-100 text-red-700"
+  defp email_type_badge_class("monitor_recovery"), do: "bg-emerald-100 text-emerald-700"
+  defp email_type_badge_class("login_instructions"), do: "bg-blue-100 text-blue-700"
+  defp email_type_badge_class("confirmation"), do: "bg-blue-100 text-blue-700"
+  defp email_type_badge_class("organization_invite"), do: "bg-purple-100 text-purple-700"
+  defp email_type_badge_class("limit_warning"), do: "bg-amber-100 text-amber-700"
+  defp email_type_badge_class("limit_reached"), do: "bg-red-100 text-red-700"
+  defp email_type_badge_class(_), do: "bg-slate-100 text-slate-600"
 
   defp action_badge_class("created"), do: "bg-emerald-100 text-emerald-700"
   defp action_badge_class("updated"), do: "bg-blue-100 text-blue-700"
