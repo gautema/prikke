@@ -85,7 +85,7 @@ defmodule Prikke.Notifications do
 
     subject = "[Runlater] Job failed: #{job.name}"
 
-    body = """
+    text_body = """
     Your job "#{job.name}" has failed.
 
     Status: #{execution.status}
@@ -99,15 +99,19 @@ defmodule Prikke.Notifications do
     Method: #{job.method}
 
     ---
-    View execution details in your Runlater dashboard.
+    View execution details: https://runlater.eu/jobs/#{job.id}
     """
+
+    execution_url = "https://runlater.eu/jobs/#{job.id}/executions/#{execution.id}"
+    html_body = failure_email_template(execution, job, execution_url)
 
     email =
       new()
       |> to(to_email)
       |> from({from_name, from_email})
       |> subject(subject)
-      |> text_body(String.trim(body))
+      |> text_body(String.trim(text_body))
+      |> html_body(html_body)
 
     case Mailer.deliver(email) do
       {:ok, _} ->
@@ -118,6 +122,110 @@ defmodule Prikke.Notifications do
         Logger.error("[Notifications] Failed to send email to #{to_email}: #{inspect(reason)}")
         :error
     end
+  end
+
+  defp failure_email_template(execution, job, execution_url) do
+    status_code_row = if execution.status_code do
+      """
+      <tr>
+        <td style="padding: 8px 16px;">
+          <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">HTTP Status</p>
+          <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a; font-weight: 500;">#{execution.status_code}</p>
+        </td>
+      </tr>
+      """
+    else
+      ""
+    end
+
+    error_row = if execution.error_message do
+      """
+      <tr>
+        <td style="padding: 8px 16px;">
+          <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">Error</p>
+          <p style="margin: 4px 0 0 0; font-size: 14px; color: #dc2626;">#{execution.error_message}</p>
+        </td>
+      </tr>
+      """
+    else
+      ""
+    end
+
+    """
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 480px; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <!-- Header -->
+              <tr>
+                <td style="padding: 32px 32px 24px 32px; text-align: center; border-bottom: 1px solid #e2e8f0;">
+                  <div style="display: inline-flex; align-items: center;">
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #10b981; border-radius: 50%; margin-right: 8px;"></span>
+                    <span style="font-size: 20px; font-weight: 600; color: #0f172a;">runlater</span>
+                  </div>
+                </td>
+              </tr>
+              <!-- Content -->
+              <tr>
+                <td style="padding: 32px;">
+                  <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #dc2626;">Job Failed</h2>
+                  <p style="margin: 0 0 16px 0; font-size: 14px; color: #475569; line-height: 1.6;">
+                    Your job <strong>#{job.name}</strong> has failed.
+                  </p>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 6px;">
+                    <tr>
+                      <td style="padding: 8px 16px;">
+                        <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">Status</p>
+                        <p style="margin: 4px 0 0 0; font-size: 14px; color: #dc2626; font-weight: 500;">#{execution.status}</p>
+                      </td>
+                    </tr>
+                    #{status_code_row}
+                    #{error_row}
+                    <tr>
+                      <td style="padding: 8px 16px;">
+                        <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">URL</p>
+                        <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a;">#{job.method} #{job.url}</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 16px;">
+                        <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">Scheduled For</p>
+                        <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a;">#{format_datetime(execution.scheduled_for)}</p>
+                      </td>
+                    </tr>
+                  </table>
+                  <!-- Button -->
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 24px;">
+                    <tr>
+                      <td align="center">
+                        <a href="#{execution_url}" style="display: inline-block; padding: 14px 32px; background-color: #10b981; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 14px;">View Execution</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <!-- Footer -->
+              <tr>
+                <td style="padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
+                  <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                    Runlater - Schedule jobs, simply.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+    """
   end
 
   @doc """
