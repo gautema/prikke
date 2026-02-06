@@ -19,6 +19,7 @@ defmodule Prikke.Jobs.Job do
     field :retry_attempts, :integer, default: 3
     field :timeout_ms, :integer, default: 30000
     field :next_run_at, :utc_datetime
+    field :muted, :boolean, default: false
     field :callback_url, :string
 
     # Virtual field for form editing
@@ -50,7 +51,8 @@ defmodule Prikke.Jobs.Job do
       :enabled,
       :retry_attempts,
       :timeout_ms,
-      :callback_url
+      :callback_url,
+      :muted
     ])
     |> trim_url()
     |> validate_required([:name, :url, :schedule_type])

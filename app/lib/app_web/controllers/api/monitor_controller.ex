@@ -180,6 +180,7 @@ defmodule PrikkeWeb.Api.MonitorController do
       grace_period_seconds: m.grace_period_seconds,
       status: m.status,
       enabled: m.enabled,
+      muted: m.muted,
       last_ping_at: m.last_ping_at,
       next_expected_at: m.next_expected_at,
       inserted_at: m.inserted_at,

@@ -15,6 +15,7 @@ defmodule Prikke.Monitors.Monitor do
     field :last_ping_at, :utc_datetime
     field :next_expected_at, :utc_datetime
     field :enabled, :boolean, default: true
+    field :muted, :boolean, default: false
 
     belongs_to :organization, Prikke.Accounts.Organization
     has_many :pings, Prikke.Monitors.MonitorPing
@@ -32,7 +33,8 @@ defmodule Prikke.Monitors.Monitor do
       :cron_expression,
       :interval_seconds,
       :grace_period_seconds,
-      :enabled
+      :enabled,
+      :muted
     ])
     |> validate_required([:name, :schedule_type])
     |> validate_inclusion(:schedule_type, @schedule_types)

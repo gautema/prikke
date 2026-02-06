@@ -53,6 +53,7 @@ defmodule PrikkeWeb.Schemas do
           description: "Timezone for cron expression"
         },
         enabled: %Schema{type: :boolean, default: true, description: "Whether the job is enabled"},
+        muted: %Schema{type: :boolean, default: false, description: "Whether notifications are muted for this job"},
         timeout_ms: %Schema{
           type: :integer,
           default: 30000,
@@ -138,6 +139,7 @@ defmodule PrikkeWeb.Schemas do
         },
         timezone: %Schema{type: :string, default: "UTC"},
         enabled: %Schema{type: :boolean, default: true},
+        muted: %Schema{type: :boolean, default: false, description: "Mute notifications for this job"},
         timeout_ms: %Schema{type: :integer, default: 30000},
         retry_attempts: %Schema{type: :integer, default: 3},
         callback_url: %Schema{
@@ -423,6 +425,7 @@ defmodule PrikkeWeb.Schemas do
           description: "Current monitor status"
         },
         enabled: %Schema{type: :boolean, default: true, description: "Whether the monitor is active"},
+        muted: %Schema{type: :boolean, default: false, description: "Whether notifications are muted for this monitor"},
         last_ping_at: %Schema{
           type: :string,
           format: :"date-time",
@@ -482,7 +485,8 @@ defmodule PrikkeWeb.Schemas do
           default: 300,
           description: "Grace period in seconds (0-3600)"
         },
-        enabled: %Schema{type: :boolean, default: true}
+        enabled: %Schema{type: :boolean, default: true},
+        muted: %Schema{type: :boolean, default: false, description: "Mute notifications for this monitor"}
       },
       example: %{
         name: "Nightly Backup",

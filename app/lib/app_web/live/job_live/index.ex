@@ -236,6 +236,11 @@ defmodule PrikkeWeb.JobLive.Index do
                     >
                       {job.name}
                     </.link>
+                    <%= if job.muted do %>
+                      <span title="Notifications muted">
+                        <.icon name="hero-bell-slash" class="w-4 h-4 text-slate-400" />
+                      </span>
+                    <% end %>
                     <.job_status_badge job={job} latest_info={@latest_statuses[job.id]} />
                   </div>
                   <div class="text-sm text-slate-500 mt-1 flex items-center gap-2">

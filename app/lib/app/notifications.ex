@@ -49,7 +49,7 @@ defmodule Prikke.Notifications do
     job = execution.job
     org = job.organization
 
-    if org.notify_on_recovery do
+    if org.notify_on_recovery and not job.muted do
       previous_status = Prikke.Executions.get_previous_status(job, execution.id)
 
       if should_notify_recovery?(previous_status) do
@@ -79,8 +79,8 @@ defmodule Prikke.Notifications do
     job = execution.job
     org = job.organization
 
-    # Check if notifications are enabled
-    if org.notify_on_failure do
+    # Check if notifications are enabled and job is not muted
+    if org.notify_on_failure and not job.muted do
       # Only notify on status change (first failure in a sequence)
       previous_status = Prikke.Executions.get_previous_status(job, execution.id)
 
@@ -637,7 +637,7 @@ defmodule Prikke.Notifications do
   defp send_monitor_down_notifications(monitor) do
     org = monitor.organization
 
-    if org.notify_on_failure do
+    if org.notify_on_failure and not monitor.muted do
       if email = notification_email(org) do
         send_monitor_down_email(monitor, email)
       end
@@ -651,7 +651,7 @@ defmodule Prikke.Notifications do
   defp send_monitor_recovery_notifications(monitor) do
     org = monitor.organization
 
-    if org.notify_on_recovery do
+    if org.notify_on_recovery and not monitor.muted do
       if email = notification_email(org) do
         send_monitor_recovery_email(monitor, email)
       end

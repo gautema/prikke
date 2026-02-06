@@ -492,6 +492,215 @@ defmodule Prikke.NotificationsTest do
     end
   end
 
+  describe "muted job notifications" do
+    setup do
+      if !Process.whereis(Prikke.TaskSupervisor) do
+        start_supervised!({Task.Supervisor, name: Prikke.TaskSupervisor})
+      end
+
+      user = user_fixture()
+      flush_emails()
+
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org"})
+
+      {:ok, org} =
+        Accounts.update_notification_settings(org, %{
+          notify_on_failure: true,
+          notify_on_recovery: true,
+          notification_email: "alerts@example.com"
+        })
+
+      {:ok, job} =
+        Jobs.create_job(org, %{
+          name: "Muted Job",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *",
+          muted: true
+        })
+
+      %{org: org, job: job}
+    end
+
+    test "does not send failure notification for muted job", %{job: job} do
+      {:ok, execution} =
+        Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: DateTime.utc_now()
+        })
+
+      {:ok, execution} =
+        Executions.fail_execution(execution, %{
+          status_code: 500,
+          error_message: "Server Error"
+        })
+
+      execution = Executions.get_execution_with_job(execution.id)
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_failure(execution)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      failure_emails =
+        Enum.filter(emails, fn email ->
+          String.contains?(email.subject, "Job failed")
+        end)
+
+      assert failure_emails == [], "Expected no failure emails for muted job"
+    end
+
+    test "does not send recovery notification for muted job", %{job: job} do
+      # Create a failed execution first
+      {:ok, failed_exec} =
+        Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: DateTime.add(DateTime.utc_now(), -120, :second)
+        })
+
+      {:ok, _failed_exec} =
+        Executions.fail_execution(failed_exec, %{
+          status_code: 500,
+          error_message: "Server Error"
+        })
+
+      # Create a successful execution after
+      {:ok, success_exec} =
+        Executions.create_execution(%{
+          job_id: job.id,
+          scheduled_for: DateTime.utc_now()
+        })
+
+      {:ok, success_exec} =
+        Executions.complete_execution(success_exec, %{
+          status_code: 200,
+          response_body: "OK",
+          duration_ms: 100
+        })
+
+      execution = Executions.get_execution_with_job(success_exec.id)
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_recovery(execution)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      recovery_emails =
+        Enum.filter(emails, fn email ->
+          String.contains?(email.subject, "Job recovered")
+        end)
+
+      assert recovery_emails == [], "Expected no recovery emails for muted job"
+    end
+
+    test "sends failure notification for unmuted job", %{org: org} do
+      {:ok, unmuted_job} =
+        Jobs.create_job(org, %{
+          name: "Unmuted Job",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *",
+          muted: false
+        })
+
+      {:ok, execution} =
+        Executions.create_execution(%{
+          job_id: unmuted_job.id,
+          scheduled_for: DateTime.utc_now()
+        })
+
+      {:ok, execution} =
+        Executions.fail_execution(execution, %{
+          status_code: 500,
+          error_message: "Server Error"
+        })
+
+      execution = Executions.get_execution_with_job(execution.id)
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_failure(execution)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      failure_email =
+        Enum.find(emails, fn email ->
+          String.contains?(email.subject, "Job failed")
+        end)
+
+      assert failure_email != nil, "Expected failure email for unmuted job"
+    end
+  end
+
+  describe "muted monitor notifications" do
+    setup do
+      if !Process.whereis(Prikke.TaskSupervisor) do
+        start_supervised!({Task.Supervisor, name: Prikke.TaskSupervisor})
+      end
+
+      user = user_fixture()
+      flush_emails()
+
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org"})
+
+      {:ok, org} =
+        Accounts.update_notification_settings(org, %{
+          notify_on_failure: true,
+          notify_on_recovery: true,
+          notification_email: "alerts@example.com"
+        })
+
+      {:ok, monitor} =
+        Prikke.Monitors.create_monitor(org, %{
+          name: "Muted Monitor",
+          schedule_type: "interval",
+          interval_seconds: 3600,
+          grace_period_seconds: 300,
+          muted: true
+        })
+
+      # Preload organization for notification logic
+      monitor = Prikke.Repo.preload(monitor, :organization)
+
+      %{org: org, monitor: monitor}
+    end
+
+    test "does not send down notification for muted monitor", %{monitor: monitor} do
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_monitor_down(monitor)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      down_emails =
+        Enum.filter(emails, fn email ->
+          String.contains?(email.subject, "Monitor down")
+        end)
+
+      assert down_emails == [], "Expected no down emails for muted monitor"
+    end
+
+    test "does not send recovery notification for muted monitor", %{monitor: monitor} do
+      monitor = %{monitor | last_ping_at: DateTime.utc_now()}
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_monitor_recovery(monitor)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      recovery_emails =
+        Enum.filter(emails, fn email ->
+          String.contains?(email.subject, "Monitor recovered")
+        end)
+
+      assert recovery_emails == [], "Expected no recovery emails for muted monitor"
+    end
+  end
+
   # Helper to collect all emails from the mailbox
   defp collect_emails(acc \\ []) do
     receive do

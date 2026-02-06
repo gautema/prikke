@@ -126,6 +126,19 @@ defmodule PrikkeWeb.JobLive.Show do
     {:noreply, assign(socket, :menu_open, false)}
   end
 
+  def handle_event("toggle_mute", _, socket) do
+    job = socket.assigns.job
+    org = socket.assigns.organization
+
+    case Jobs.update_job(org, job, %{muted: !job.muted}) do
+      {:ok, updated_job} ->
+        {:noreply, assign(socket, :job, updated_job)}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Failed to update mute setting")}
+    end
+  end
+
   def handle_event("clone", _, socket) do
     org = socket.assigns.organization
     job = socket.assigns.job
@@ -258,6 +271,11 @@ defmodule PrikkeWeb.JobLive.Show do
             <div>
               <div class="flex items-center gap-3 flex-wrap">
                 <h1 class="text-lg sm:text-xl font-bold text-slate-900">{@job.name}</h1>
+                <%= if @job.muted do %>
+                  <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-500" title="Notifications muted">
+                    <.icon name="hero-bell-slash" class="w-3.5 h-3.5" /> Muted
+                  </span>
+                <% end %>
                 <.job_status_badge job={@job} latest_info={@latest_info} />
               </div>
               <p class="text-sm text-slate-500 mt-1">
@@ -306,6 +324,17 @@ defmodule PrikkeWeb.JobLive.Show do
                     >
                       <.icon name="hero-pencil" class="w-4 h-4 text-slate-400" /> Edit
                     </.link>
+                    <button
+                      type="button"
+                      phx-click="toggle_mute"
+                      class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
+                    >
+                      <%= if @job.muted do %>
+                        <.icon name="hero-bell" class="w-4 h-4 text-slate-400" /> Unmute
+                      <% else %>
+                        <.icon name="hero-bell-slash" class="w-4 h-4 text-slate-400" /> Mute
+                      <% end %>
+                    </button>
                     <button
                       type="button"
                       phx-click="clone"

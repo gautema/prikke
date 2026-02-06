@@ -247,6 +247,7 @@ defmodule PrikkeWeb.Api.JobController do
       enabled: job.enabled,
       timeout_ms: job.timeout_ms,
       retry_attempts: job.retry_attempts,
+      muted: job.muted,
       next_run_at: job.next_run_at,
       inserted_at: job.inserted_at,
       updated_at: job.updated_at
