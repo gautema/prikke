@@ -48,14 +48,18 @@ defmodule PrikkeWeb.JobLiveTest do
       assert html =~ "daily at 9:00"
     end
 
-    test "shows edit and delete buttons", %{conn: conn, user: user} do
+    test "shows actions menu with edit and delete", %{conn: conn, user: user} do
       org = organization_fixture(%{user: user})
       job = job_fixture(org)
 
-      {:ok, _view, html} = live(conn, ~p"/jobs/#{job.id}")
+      {:ok, view, _html} = live(conn, ~p"/jobs/#{job.id}")
+
+      # Open the menu
+      html = view |> element("#job-actions-menu button") |> render_click()
 
       assert html =~ "Edit"
       assert html =~ "Delete"
+      assert html =~ "Clone"
     end
 
     test "shows execution history section", %{conn: conn, user: user} do
@@ -71,11 +75,14 @@ defmodule PrikkeWeb.JobLiveTest do
   describe "Job Clone" do
     setup :register_and_log_in_user
 
-    test "shows clone button on job show page", %{conn: conn, user: user} do
+    test "shows clone in actions menu", %{conn: conn, user: user} do
       org = organization_fixture(%{user: user})
       job = job_fixture(org)
 
-      {:ok, _view, html} = live(conn, ~p"/jobs/#{job.id}")
+      {:ok, view, _html} = live(conn, ~p"/jobs/#{job.id}")
+
+      # Open the menu
+      html = view |> element("#job-actions-menu button") |> render_click()
 
       assert html =~ "Clone"
     end
@@ -86,6 +93,8 @@ defmodule PrikkeWeb.JobLiveTest do
 
       {:ok, view, _html} = live(conn, ~p"/jobs/#{job.id}")
 
+      # Open the menu first, then click clone
+      view |> element("#job-actions-menu button") |> render_click()
       view |> element("button", "Clone") |> render_click()
 
       # Should redirect to the cloned job

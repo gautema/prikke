@@ -32,7 +32,8 @@ defmodule PrikkeWeb.JobLive.Show do
        |> assign(:latest_info, latest_info)
        |> assign(:status_filter, status_filter)
        |> assign(:total_count, total_count)
-       |> assign(:page_title, job.name)}
+       |> assign(:page_title, job.name)
+       |> assign(:menu_open, false)}
     else
       {:ok,
        socket
@@ -107,6 +108,14 @@ defmodule PrikkeWeb.JobLive.Show do
         Logger.warning("[JobLive.Show] Toggle failed: #{inspect(changeset.errors)}")
         {:noreply, put_flash(socket, :error, "Failed to toggle job")}
     end
+  end
+
+  def handle_event("toggle_menu", _, socket) do
+    {:noreply, assign(socket, :menu_open, !socket.assigns.menu_open)}
+  end
+
+  def handle_event("close_menu", _, socket) do
+    {:noreply, assign(socket, :menu_open, false)}
   end
 
   def handle_event("clone", _, socket) do
@@ -247,7 +256,7 @@ defmodule PrikkeWeb.JobLive.Show do
                 Created <.local_time id="job-created" datetime={@job.inserted_at} format="date" />
               </p>
             </div>
-            <div class="flex items-center gap-2 flex-wrap">
+            <div class="flex items-center gap-2">
               <button
                 type="button"
                 phx-click="run_now"
@@ -259,40 +268,55 @@ defmodule PrikkeWeb.JobLive.Show do
                   <.icon name="hero-play" class="w-4 h-4" /> Run Now
                 <% end %>
               </button>
-              <%= if @job.schedule_type == "cron" do %>
+              <div class="relative" id="job-actions-menu" phx-hook=".ClickOutside">
                 <button
                   type="button"
-                  phx-click="toggle"
-                  class={[
-                    "px-3 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer",
-                    @job.enabled && "text-slate-600 bg-slate-100 hover:bg-slate-200",
-                    !@job.enabled && "text-emerald-600 bg-emerald-100 hover:bg-emerald-200"
-                  ]}
+                  phx-click="toggle_menu"
+                  class="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors cursor-pointer"
+                  aria-label="More actions"
                 >
-                  {if @job.enabled, do: "Pause", else: "Enable"}
+                  <.icon name="hero-ellipsis-vertical" class="w-5 h-5" />
                 </button>
-              <% end %>
-              <.link
-                navigate={~p"/jobs/#{@job.id}/edit"}
-                class="px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
-              >
-                Edit
-              </.link>
-              <button
-                type="button"
-                phx-click="clone"
-                class="px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors cursor-pointer flex items-center gap-1.5"
-              >
-                <.icon name="hero-document-duplicate" class="w-4 h-4" /> Clone
-              </button>
-              <button
-                type="button"
-                phx-click="delete"
-                data-confirm="Are you sure you want to delete this job? This cannot be undone."
-                class="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors cursor-pointer"
-              >
-                Delete
-              </button>
+                <%= if @menu_open do %>
+                  <div class="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
+                    <%= if @job.schedule_type == "cron" do %>
+                      <button
+                        type="button"
+                        phx-click="toggle"
+                        class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
+                      >
+                        <%= if @job.enabled do %>
+                          <.icon name="hero-pause" class="w-4 h-4 text-slate-400" /> Pause
+                        <% else %>
+                          <.icon name="hero-play" class="w-4 h-4 text-slate-400" /> Enable
+                        <% end %>
+                      </button>
+                    <% end %>
+                    <.link
+                      navigate={~p"/jobs/#{@job.id}/edit"}
+                      class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                    >
+                      <.icon name="hero-pencil" class="w-4 h-4 text-slate-400" /> Edit
+                    </.link>
+                    <button
+                      type="button"
+                      phx-click="clone"
+                      class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
+                    >
+                      <.icon name="hero-document-duplicate" class="w-4 h-4 text-slate-400" /> Clone
+                    </button>
+                    <div class="border-t border-slate-100 my-1"></div>
+                    <button
+                      type="button"
+                      phx-click="delete"
+                      data-confirm="Are you sure you want to delete this job? This cannot be undone."
+                      class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer"
+                    >
+                      <.icon name="hero-trash" class="w-4 h-4" /> Delete
+                    </button>
+                  </div>
+                <% end %>
+              </div>
             </div>
           </div>
         </div>
@@ -484,6 +508,21 @@ defmodule PrikkeWeb.JobLive.Show do
         </div>
       </div>
     </div>
+    <script :type={Phoenix.LiveView.ColocatedHook} name=".ClickOutside">
+      export default {
+        mounted() {
+          this.handler = (e) => {
+            if (!this.el.contains(e.target)) {
+              this.pushEvent("close_menu", {})
+            }
+          }
+          document.addEventListener("click", this.handler)
+        },
+        destroyed() {
+          document.removeEventListener("click", this.handler)
+        }
+      }
+    </script>
     """
   end
 
