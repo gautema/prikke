@@ -1,6 +1,9 @@
 defmodule PrikkeWeb.JobLive.New do
   use PrikkeWeb, :live_view
 
+  import PrikkeWeb.CronBuilder
+
+  alias Prikke.Cron
   alias Prikke.Jobs
   alias Prikke.Jobs.Job
 
@@ -16,6 +19,12 @@ defmodule PrikkeWeb.JobLive.New do
        |> assign(:organization, org)
        |> assign(:page_title, "New Job")
        |> assign(:schedule_type, "cron")
+       |> assign(:cron_mode, :simple)
+       |> assign(:cron_preset, "every_hour")
+       |> assign(:cron_minute, "0")
+       |> assign(:cron_hour, "9")
+       |> assign(:cron_weekdays, ["1"])
+       |> assign(:cron_day_of_month, "1")
        |> assign_form(changeset)}
     else
       {:ok,
@@ -75,6 +84,113 @@ defmodule PrikkeWeb.JobLive.New do
     end
   end
 
+  def handle_event("set_cron_mode", %{"mode" => mode}, socket) do
+    cron_mode = if mode == "simple", do: :simple, else: :advanced
+
+    socket =
+      if cron_mode == :simple do
+        # Recompute expression from builder state
+        expr = Cron.compute_cron(
+          socket.assigns.cron_preset,
+          socket.assigns.cron_minute,
+          socket.assigns.cron_hour,
+          socket.assigns.cron_weekdays,
+          socket.assigns.cron_day_of_month
+        )
+
+        update_cron_expression(socket, expr)
+      else
+        socket
+      end
+
+    {:noreply, assign(socket, :cron_mode, cron_mode)}
+  end
+
+  def handle_event("set_cron_preset", %{"preset" => preset}, socket) do
+    expr = Cron.compute_cron(
+      preset,
+      socket.assigns.cron_minute,
+      socket.assigns.cron_hour,
+      socket.assigns.cron_weekdays,
+      socket.assigns.cron_day_of_month
+    )
+
+    {:noreply,
+     socket
+     |> assign(:cron_preset, preset)
+     |> update_cron_expression(expr)}
+  end
+
+  def handle_event("set_cron_hour", %{"cron_hour" => hour}, socket) do
+    expr = Cron.compute_cron(
+      socket.assigns.cron_preset,
+      socket.assigns.cron_minute,
+      hour,
+      socket.assigns.cron_weekdays,
+      socket.assigns.cron_day_of_month
+    )
+
+    {:noreply,
+     socket
+     |> assign(:cron_hour, hour)
+     |> update_cron_expression(expr)}
+  end
+
+  def handle_event("set_cron_minute", %{"cron_minute" => minute}, socket) do
+    expr = Cron.compute_cron(
+      socket.assigns.cron_preset,
+      minute,
+      socket.assigns.cron_hour,
+      socket.assigns.cron_weekdays,
+      socket.assigns.cron_day_of_month
+    )
+
+    {:noreply,
+     socket
+     |> assign(:cron_minute, minute)
+     |> update_cron_expression(expr)}
+  end
+
+  def handle_event("toggle_weekday", %{"day" => day}, socket) do
+    weekdays = socket.assigns.cron_weekdays
+
+    weekdays =
+      if day in weekdays do
+        # Don't allow deselecting the last day
+        if length(weekdays) > 1, do: List.delete(weekdays, day), else: weekdays
+      else
+        [day | weekdays]
+      end
+
+    expr = Cron.compute_cron(
+      socket.assigns.cron_preset,
+      socket.assigns.cron_minute,
+      socket.assigns.cron_hour,
+      weekdays,
+      socket.assigns.cron_day_of_month
+    )
+
+    {:noreply,
+     socket
+     |> assign(:cron_weekdays, weekdays)
+     |> update_cron_expression(expr)}
+  end
+
+  def handle_event("set_cron_day_of_month", %{"cron_day_of_month" => day}, socket) do
+    expr = Cron.compute_cron(
+      socket.assigns.cron_preset,
+      socket.assigns.cron_minute,
+      socket.assigns.cron_hour,
+      socket.assigns.cron_weekdays,
+      day
+    )
+
+    {:noreply,
+     socket
+     |> assign(:cron_day_of_month, day)
+     |> update_cron_expression(expr)}
+  end
+
   defp get_organization(socket, session) do
     user = socket.assigns.current_scope.user
     org_id = session["current_organization_id"]
@@ -91,6 +207,15 @@ defmodule PrikkeWeb.JobLive.New do
 
   defp assign_form(socket, %Ecto.Changeset{} = changeset) do
     assign(socket, :form, to_form(changeset))
+  end
+
+  defp update_cron_expression(socket, expr) do
+    changeset =
+      %Job{}
+      |> Jobs.change_job(%{"cron_expression" => expr, "schedule_type" => "cron"})
+      |> Map.put(:action, :validate)
+
+    assign_form(socket, changeset)
   end
 
   @impl true
@@ -188,32 +313,15 @@ defmodule PrikkeWeb.JobLive.New do
             </div>
 
             <%= if @schedule_type == "cron" do %>
-              <div>
-                <label for="job_cron_expression" class="block text-sm font-medium text-slate-700 mb-1">
-                  Cron Expression
-                </label>
-                <.input
-                  field={@form[:cron_expression]}
-                  type="text"
-                  placeholder="0 * * * *"
-                  class="w-full px-4 py-3 font-mono text-base bg-white/70 border border-white/50 rounded-md text-slate-900 placeholder-slate-400"
-                />
-                <p class="text-sm text-slate-500 mt-2">
-                  Examples:
-                  <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-mono">
-                    * * * * *
-                  </code>
-                  (every minute),
-                  <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-mono">
-                    0 * * * *
-                  </code>
-                  (hourly),
-                  <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-mono">
-                    0 9 * * *
-                  </code>
-                  (daily at 9am)
-                </p>
-              </div>
+              <.cron_builder
+                form={@form}
+                cron_mode={@cron_mode}
+                cron_preset={@cron_preset}
+                cron_minute={@cron_minute}
+                cron_hour={@cron_hour}
+                cron_weekdays={@cron_weekdays}
+                cron_day_of_month={@cron_day_of_month}
+              />
             <% else %>
               <div phx-feedback-for={@form[:scheduled_at].name}>
                 <label for="job_scheduled_at" class="block text-sm font-medium text-slate-700 mb-1">
