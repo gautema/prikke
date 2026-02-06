@@ -414,6 +414,7 @@ defmodule Prikke.Jobs do
   def count_jobs(%Organization{} = org) do
     Job
     |> where(organization_id: ^org.id)
+    |> where([j], j.schedule_type == "cron")
     |> Repo.aggregate(:count)
   end
 

@@ -197,6 +197,7 @@ defmodule PrikkeWeb.QueueLive do
   @impl true
   def render(assigns) do
     ~H"""
+    <Layouts.flash_group flash={@flash} />
     <div class="max-w-2xl mx-auto py-8 px-4">
       <div class="mb-6">
         <.link
