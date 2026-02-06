@@ -34,6 +34,7 @@ defmodule PrikkeWeb.DashboardLive do
 
     socket =
       socket
+      |> assign(:page_title, "Dashboard")
       |> assign(:current_organization, current_org)
       |> assign(:organizations, organizations)
       |> assign(:pending_invites_count, length(pending_invites))
