@@ -292,7 +292,7 @@ defmodule PrikkeWeb.SuperadminLive do
 
     <!-- Response time percentiles -->
         <div class="border-t border-white/50 pt-4 mb-4">
-          <div class="text-sm font-medium text-slate-700 mb-3">Response Times (last 1 hour)</div>
+          <div class="text-sm font-medium text-slate-700 mb-3">Webhook Response Times (last 1 hour)</div>
           <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div>
               <div class="text-xs text-slate-500">p50</div>
