@@ -203,7 +203,7 @@ defmodule PrikkeWeb.MonitorLive.Index do
             </.link>
           </div>
         <% else %>
-          <div class="glass-card rounded-2xl divide-y divide-white/30">
+          <div class="glass-card rounded-2xl divide-y divide-slate-200/60">
             <%= for monitor <- @monitors do %>
               <.link navigate={~p"/monitors/#{monitor.id}"} class="block px-4 sm:px-6 py-5 hover:bg-white/50 transition-colors">
                 <div class="flex items-center justify-between gap-3 mb-2">
