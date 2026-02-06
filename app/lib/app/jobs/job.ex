@@ -37,34 +37,40 @@ defmodule Prikke.Jobs.Job do
   @schedule_types ~w(cron once)
 
   @doc false
-  def changeset(job, attrs) do
-    job
-    |> cast(attrs, [
-      :name,
-      :url,
-      :method,
-      :headers,
-      :headers_json,
-      :body,
-      :schedule_type,
-      :cron_expression,
-      :scheduled_at,
-      :timezone,
-      :enabled,
-      :retry_attempts,
-      :timeout_ms,
-      :callback_url,
-      :muted,
-      :expected_status_codes,
-      :expected_body_pattern
-    ])
-    |> trim_url()
-    |> validate_required([:name, :url, :schedule_type])
-    |> validate_inclusion(:method, @http_methods)
-    |> validate_inclusion(:schedule_type, @schedule_types)
-    |> validate_url(:url)
-    |> Prikke.UrlValidator.validate_webhook_url_safe(:url)
-    |> validate_callback_url()
+  def changeset(job, attrs, opts \\ []) do
+    skip_ssrf = Keyword.get(opts, :skip_ssrf, false)
+
+    cs =
+      job
+      |> cast(attrs, [
+        :name,
+        :url,
+        :method,
+        :headers,
+        :headers_json,
+        :body,
+        :schedule_type,
+        :cron_expression,
+        :scheduled_at,
+        :timezone,
+        :enabled,
+        :retry_attempts,
+        :timeout_ms,
+        :callback_url,
+        :muted,
+        :expected_status_codes,
+        :expected_body_pattern
+      ])
+      |> trim_url()
+      |> validate_required([:name, :url, :schedule_type])
+      |> validate_inclusion(:method, @http_methods)
+      |> validate_inclusion(:schedule_type, @schedule_types)
+      |> validate_url(:url)
+      |> validate_callback_url()
+
+    cs = if skip_ssrf, do: cs, else: Prikke.UrlValidator.validate_webhook_url_safe(cs, :url)
+
+    cs
     |> validate_number(:retry_attempts, greater_than_or_equal_to: 0, less_than_or_equal_to: 10)
     |> validate_number(:timeout_ms,
       greater_than_or_equal_to: 1000,
@@ -80,9 +86,9 @@ defmodule Prikke.Jobs.Job do
   @doc """
   Changeset for creating a job within an organization.
   """
-  def create_changeset(job, attrs, organization_id) do
+  def create_changeset(job, attrs, organization_id, opts \\ []) do
     job
-    |> changeset(attrs)
+    |> changeset(attrs, opts)
     |> put_change(:organization_id, organization_id)
     |> validate_required([:organization_id])
   end

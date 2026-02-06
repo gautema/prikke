@@ -56,8 +56,7 @@ defmodule PrikkeWeb.JobLive.New do
       end
 
     changeset =
-      %Job{}
-      |> Jobs.change_job(job_params)
+      Job.changeset(%Job{}, job_params, skip_ssrf: true)
       |> Map.put(:action, :validate)
 
     {:noreply,

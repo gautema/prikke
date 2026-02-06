@@ -5,6 +5,7 @@ defmodule PrikkeWeb.JobLive.Edit do
 
   alias Prikke.Cron
   alias Prikke.Jobs
+  alias Prikke.Jobs.Job
 
   @impl true
   def mount(%{"id" => id}, session, socket) do
@@ -63,8 +64,7 @@ defmodule PrikkeWeb.JobLive.Edit do
     schedule_type = job_params["schedule_type"] || socket.assigns.schedule_type
 
     changeset =
-      socket.assigns.job
-      |> Jobs.change_job(job_params)
+      Job.changeset(socket.assigns.job, job_params, skip_ssrf: true)
       |> Map.put(:action, :validate)
 
     {:noreply,
@@ -305,8 +305,7 @@ defmodule PrikkeWeb.JobLive.Edit do
 
   defp update_cron_expression(socket, expr) do
     changeset =
-      socket.assigns.job
-      |> Jobs.change_job(%{"cron_expression" => expr, "schedule_type" => "cron"})
+      Job.changeset(socket.assigns.job, %{"cron_expression" => expr, "schedule_type" => "cron"}, skip_ssrf: true)
       |> Map.put(:action, :validate)
 
     assign_form(socket, changeset)
