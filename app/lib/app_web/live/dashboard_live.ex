@@ -259,7 +259,7 @@ defmodule PrikkeWeb.DashboardLive do
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-2">
                         <.execution_status_dot status={get_status(@latest_statuses[job.id])} />
-                        <span class="font-medium text-slate-900 truncate">{job.name}</span>
+                        <span class="text-sm font-medium text-slate-900 truncate">{job.name}</span>
                         <.job_status_badge job={job} latest_info={@latest_statuses[job.id]} />
                       </div>
                     </div>
@@ -318,7 +318,7 @@ defmodule PrikkeWeb.DashboardLive do
                   <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2 min-w-0">
                       <span class={["w-2.5 h-2.5 rounded-full shrink-0", monitor_dot_color(monitor.status)]} />
-                      <span class="font-medium text-slate-900 truncate">{monitor.name}</span>
+                      <span class="text-sm font-medium text-slate-900 truncate">{monitor.name}</span>
                       <span class={[
                         "text-xs font-medium px-2 py-0.5 rounded",
                         monitor.status == "down" && "bg-red-100 text-red-700",
