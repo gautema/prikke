@@ -53,8 +53,9 @@ defmodule Prikke.Worker do
   # Exit after this duration of no work (5 minutes)
   @max_idle_ms 300_000
 
-  # Retry backoff multiplier (attempt^2 * base_ms)
-  @retry_base_delay_ms 5_000
+  # Retry backoff: (attempt + 1)² × base_delay
+  # With 30s base: 2m, 4.5m, 8m, 12.5m, 18m = ~45m total for 5 retries
+  @retry_base_delay_ms 30_000
 
   ## Client API
 
@@ -311,9 +312,8 @@ defmodule Prikke.Worker do
     job = execution.job
 
     if job.schedule_type == "once" and execution.attempt < job.retry_attempts do
-      # Calculate backoff delay: attempt^2 * base_delay
-      delay_ms = :math.pow(execution.attempt + 1, 2) * @retry_base_delay_ms
-      delay_ms = round(delay_ms)
+      # Calculate backoff delay: (attempt + 1)² × base_delay
+      delay_ms = round(:math.pow(execution.attempt + 1, 2) * @retry_base_delay_ms)
 
       scheduled_for = DateTime.add(DateTime.utc_now(), delay_ms, :millisecond)
 

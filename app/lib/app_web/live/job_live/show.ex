@@ -225,7 +225,11 @@ defmodule PrikkeWeb.JobLive.Show do
                 phx-click="run_now"
                 class="px-3 py-1.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition-colors cursor-pointer flex items-center gap-1.5"
               >
-                <.icon name="hero-play" class="w-4 h-4" /> Run Now
+                <%= if get_status(@latest_info) in ["failed", "timeout"] do %>
+                  <.icon name="hero-arrow-path" class="w-4 h-4" /> Retry
+                <% else %>
+                  <.icon name="hero-play" class="w-4 h-4" /> Run Now
+                <% end %>
               </button>
               <%= if @job.schedule_type == "cron" do %>
                 <button
