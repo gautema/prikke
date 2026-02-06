@@ -39,11 +39,21 @@ defmodule PrikkeWeb.CronBuilder do
   attr :cron_hour, :string, required: true
   attr :cron_weekdays, :list, required: true
   attr :cron_day_of_month, :string, required: true
+  attr :tier, :string, default: "free"
+
+  @sub_hourly_presets ~w(every_minute every_5_minutes every_15_minutes every_30_minutes)
 
   def cron_builder(assigns) do
+    presets =
+      if assigns.tier == "pro" do
+        @presets
+      else
+        Enum.reject(@presets, fn {_label, value} -> value in @sub_hourly_presets end)
+      end
+
     assigns =
       assigns
-      |> assign(:presets, @presets)
+      |> assign(:presets, presets)
       |> assign(:weekdays, @weekdays)
       |> assign(:hours, Enum.map(0..23, fn h -> {String.pad_leading("#{h}", 2, "0"), "#{h}"} end))
       |> assign(:minutes, Enum.map(0..59, fn m -> {String.pad_leading("#{m}", 2, "0"), "#{m}"} end))

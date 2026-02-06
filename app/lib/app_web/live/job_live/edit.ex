@@ -478,6 +478,7 @@ defmodule PrikkeWeb.JobLive.Edit do
                 cron_hour={@cron_hour}
                 cron_weekdays={@cron_weekdays}
                 cron_day_of_month={@cron_day_of_month}
+                tier={@organization.tier}
               />
             <% else %>
               <div>

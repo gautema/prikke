@@ -208,9 +208,9 @@ defmodule PrikkeWeb.MonitorLive.Index do
         <% else %>
           <div class="glass-card rounded-2xl divide-y divide-slate-200/60">
             <%= for monitor <- @monitors do %>
-              <.link navigate={~p"/monitors/#{monitor.id}"} class="block px-4 sm:px-6 py-5 hover:bg-white/50 transition-colors">
+              <div class="px-4 sm:px-6 py-5 hover:bg-white/50 transition-colors">
                 <div class="flex items-center justify-between gap-3 mb-2">
-                  <div class="flex-1 min-w-0">
+                  <.link navigate={~p"/monitors/#{monitor.id}"} class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 sm:gap-3">
                       <span class={["w-2.5 h-2.5 rounded-full shrink-0", status_dot_color(monitor.status)]}
                             title={status_label(monitor.status)} />
@@ -232,7 +232,7 @@ defmodule PrikkeWeb.MonitorLive.Index do
                         {status_label(monitor.status)}
                       </span>
                     </div>
-                  </div>
+                  </.link>
                   <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                     <span class="text-xs text-slate-400 font-mono">{format_schedule(monitor)}</span>
                     <button
@@ -262,11 +262,13 @@ defmodule PrikkeWeb.MonitorLive.Index do
                     </button>
                   </div>
                 </div>
-                <.uptime_line
-                  days={Map.get(@daily_status, monitor.id, [])}
-                  label={"Last #{@status_days} days"}
-                />
-              </.link>
+                <.link navigate={~p"/monitors/#{monitor.id}"} class="block">
+                  <.uptime_line
+                    days={Map.get(@daily_status, monitor.id, [])}
+                    label={"Last #{@status_days} days"}
+                  />
+                </.link>
+              </div>
             <% end %>
           </div>
         <% end %>
