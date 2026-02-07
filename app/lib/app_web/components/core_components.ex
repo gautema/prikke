@@ -670,7 +670,7 @@ defmodule PrikkeWeb.CoreComponents do
       class="relative group/time inline-block"
     >
       <span>{format_utc_fallback(@datetime, @format)}</span>
-      <span class="absolute invisible group-hover/time:visible top-full left-0 mt-1 px-2 py-1 text-xs text-white bg-slate-800 rounded whitespace-nowrap z-50 pointer-events-none">
+      <span class="absolute hidden group-hover/time:block top-full left-0 mt-1 px-2 py-1 text-xs text-white bg-slate-800 rounded whitespace-nowrap z-50 pointer-events-none">
         {format_utc_tooltip(@datetime)}
       </span>
     </span>
@@ -739,7 +739,7 @@ defmodule PrikkeWeb.CoreComponents do
       class="relative group/time inline-block"
     >
       <span>{format_relative_fallback(@datetime)}</span>
-      <span class="absolute invisible group-hover/time:visible top-full left-0 mt-1 px-2 py-1 text-xs text-white bg-slate-800 rounded whitespace-nowrap z-50 pointer-events-none">
+      <span class="absolute hidden group-hover/time:block top-full left-0 mt-1 px-2 py-1 text-xs text-white bg-slate-800 rounded whitespace-nowrap z-50 pointer-events-none">
         {format_utc_tooltip(@datetime)}
       </span>
     </span>
