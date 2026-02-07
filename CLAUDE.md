@@ -144,18 +144,24 @@ Simple, no dependencies, full control.
 - [x] Create/edit/delete scheduled jobs (LiveView UI)
 - [x] Cron expressions + simple intervals (hourly, daily, weekly)
 - [x] One-time scheduled jobs (run once at specific time)
-- [ ] HTTP GET/POST webhook delivery (needs scheduler/workers)
-- [x] Custom headers and request body for webhooks (UI done)
-- [ ] Execution history with status, duration, response (needs executions schema)
-- [ ] Project-level notifications (email + webhook URL)
-- [ ] Public status page for Prikke itself
+- [x] HTTP GET/POST webhook delivery (scheduler + worker pool)
+- [x] Custom headers and request body for webhooks
+- [x] Execution history with status, duration, response
+- [x] Project-level notifications (email + webhook URL, Slack/Discord auto-detection)
+- [x] Public status page for Prikke itself
 - [x] Basic dashboard
 
 ### v2
-- [ ] Job queues (on-demand via API, immediate execution)
-- [x] Team/organization support (done early - orgs, memberships, invites)
+- [x] Job queues (on-demand via API + LiveView UI, immediate execution)
+- [x] Team/organization support (orgs, memberships, invites)
 - [x] Job duplication (clone button on job show page)
 - [x] Recovery notifications (notify when job succeeds after failure)
+- [x] API keys (org-scoped, hashed storage)
+- [x] OpenAPI/Swagger docs (`/api/v1/docs`)
+- [x] Webhook signatures (HMAC-SHA256)
+- [x] Execution callbacks (POST results to a URL on completion)
+- [x] Audit logging (user + API key actions)
+- [x] HTTP uptime monitors with ping endpoints
 - [ ] Per-job notification overrides
 - [ ] Customer-facing status pages
 
@@ -163,13 +169,15 @@ Simple, no dependencies, full control.
 - [ ] Workflows (multi-step jobs)
 - [ ] Rate limiting per endpoint
 - [ ] Cron monitoring (expect ping, alert if missing)
+- [ ] Per-org worker fairness (limit each org to 1 concurrent worker so slow endpoints can't starve other orgs)
 
 ### Ops & Monitoring
-- [ ] Error tracking (Sentry or AppSignal)
-- [ ] Performance monitoring (response times, queue depth)
-- [ ] Infrastructure alerts (CPU, memory, disk)
-- [ ] Uptime monitoring (external ping)
-- [ ] System health dashboard
+- [x] Error tracking (ErrorTracker, built-in)
+- [x] Performance monitoring (response times, queue depth, duration percentiles)
+- [x] System health dashboard (superadmin with CPU, memory, disk, BEAM metrics)
+- [x] Uptime monitoring (HTTP monitors with configurable intervals)
+- [x] Email logging (email_logs table, superadmin view)
+- [ ] Infrastructure alerts (external alerting)
 
 ## Database Schema (Core)
 

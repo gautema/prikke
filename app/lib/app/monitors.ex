@@ -285,9 +285,11 @@ defmodule Prikke.Monitors do
       end)
 
     # Build status per day per monitor
+    now = DateTime.utc_now()
+
     monitors
     |> Map.new(fn monitor ->
-      expected = expected_daily_pings(monitor)
+      full_day_expected = expected_daily_pings(monitor)
       created_date = DateTime.to_date(monitor.inserted_at)
 
       days_list =
@@ -295,10 +297,16 @@ defmodule Prikke.Monitors do
           date = Date.add(today, -days + 1 + offset)
           actual = get_in(ping_counts, [monitor.id, date]) || 0
 
+          # Scale expected pings for partial days (today and creation date)
+          expected = scale_expected_pings(full_day_expected, date, today, now, monitor.inserted_at, created_date)
+
           status =
             cond do
               Date.compare(date, created_date) == :lt -> "none"
               Date.compare(date, today) == :gt -> "none"
+              # Paused monitor today: don't penalize for remaining time
+              Date.compare(date, today) == :eq and not monitor.enabled ->
+                if actual > 0, do: "up", else: "none"
               expected == 0 -> if actual > 0, do: "up", else: "none"
               actual >= expected -> "up"
               actual > 0 -> "degraded"
@@ -338,6 +346,35 @@ defmodule Prikke.Monitors do
   end
 
   def expected_daily_pings(_), do: 0
+
+  # Scale expected pings for partial days: today (not finished yet) and
+  # the creation date (monitor didn't exist since midnight).
+  defp scale_expected_pings(full_day, date, today, now, inserted_at, created_date) do
+    cond do
+      # Today AND created today: only count from creation time to now
+      Date.compare(date, today) == :eq and Date.compare(date, created_date) == :eq ->
+        seconds_since_creation = DateTime.diff(now, inserted_at, :second)
+        scale_by_seconds(full_day, max(seconds_since_creation, 0))
+
+      # Today (partial day, not finished yet)
+      Date.compare(date, today) == :eq ->
+        seconds_elapsed = Time.diff(DateTime.to_time(now), ~T[00:00:00])
+        scale_by_seconds(full_day, seconds_elapsed)
+
+      # Creation date (monitor started partway through the day)
+      Date.compare(date, created_date) == :eq ->
+        seconds_remaining = Time.diff(~T[23:59:59], DateTime.to_time(inserted_at)) + 1
+        scale_by_seconds(full_day, seconds_remaining)
+
+      # Full past day
+      true ->
+        full_day
+    end
+  end
+
+  defp scale_by_seconds(full_day, seconds) do
+    trunc(full_day * seconds / 86400)
+  end
 
   ## Cleanup
 
