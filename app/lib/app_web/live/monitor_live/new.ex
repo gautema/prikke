@@ -72,7 +72,7 @@ defmodule PrikkeWeb.MonitorLive.New do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <div class="max-w-2xl mx-auto py-6 sm:py-8 px-4">
+      <div class="max-w-2xl mx-auto py-6 sm:py-8 px-2 sm:px-4">
         <div class="mb-4">
           <.link
             navigate={~p"/monitors"}

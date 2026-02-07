@@ -957,7 +957,7 @@ defmodule PrikkeWeb.CoreComponents do
       </footer>
     <% else %>
       <footer class="mt-16">
-        <div class="max-w-4xl mx-auto px-4 py-6">
+        <div class="max-w-4xl mx-auto px-2 sm:px-4 py-6">
           <div class="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-500">
             <div class="flex flex-wrap justify-center gap-4 sm:gap-6">
               <a href="/docs" class="hover:text-slate-700">Docs</a>

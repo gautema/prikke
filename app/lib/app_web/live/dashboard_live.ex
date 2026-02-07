@@ -103,7 +103,7 @@ defmodule PrikkeWeb.DashboardLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-4xl mx-auto py-8 px-4">
+    <div class="max-w-4xl mx-auto py-8 px-2 sm:px-4">
       <div class="mb-8 flex justify-between items-start">
         <div>
           <h1 class="text-2xl font-bold text-slate-900">Dashboard</h1>

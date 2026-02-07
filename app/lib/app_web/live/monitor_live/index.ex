@@ -169,7 +169,7 @@ defmodule PrikkeWeb.MonitorLive.Index do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <div class="max-w-4xl mx-auto py-6 sm:py-8 px-4">
+      <div class="max-w-4xl mx-auto py-6 sm:py-8 px-2 sm:px-4">
         <div class="mb-4">
           <.link
             navigate={~p"/dashboard"}
@@ -208,7 +208,7 @@ defmodule PrikkeWeb.MonitorLive.Index do
         <% else %>
           <div class="glass-card rounded-2xl divide-y divide-slate-200/60">
             <%= for monitor <- @monitors do %>
-              <div class="px-4 sm:px-6 py-5 hover:bg-white/50 transition-colors">
+              <div class="px-3 sm:px-6 py-4 sm:py-5 hover:bg-white/50 transition-colors">
                 <div class="flex items-center justify-between gap-3 mb-2">
                   <.link navigate={~p"/monitors/#{monitor.id}"} class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 sm:gap-3">

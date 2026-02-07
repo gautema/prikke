@@ -222,7 +222,7 @@ defmodule PrikkeWeb.JobLive.Index do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-4xl mx-auto py-6 sm:py-8 px-4">
+    <div class="max-w-4xl mx-auto py-6 sm:py-8 px-2 sm:px-4">
       <div class="mb-4">
         <.link
           navigate={~p"/dashboard"}
