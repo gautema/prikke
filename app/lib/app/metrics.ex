@@ -56,7 +56,9 @@ defmodule Prikke.Metrics do
   def current do
     case :ets.lookup(@table, :latest_index) do
       [{:latest_index, idx}] ->
-        case :ets.lookup(@table, {:sample, idx}) do
+        actual_idx = rem(idx, @max_samples)
+
+        case :ets.lookup(@table, {:sample, actual_idx}) do
           [{_, sample}] -> sample
           [] -> %{}
         end
@@ -284,11 +286,10 @@ defmodule Prikke.Metrics do
         0
 
       disks when is_list(disks) ->
-        # Find the root or largest partition
-        {_id, _size, pct} =
-          Enum.max_by(disks, fn {_id, size, _pct} -> size end, fn -> {"/", 0, 0} end)
-
-        pct
+        case List.keyfind(disks, ~c"/", 0) do
+          {_, _, pct} -> pct
+          nil -> 0
+        end
 
       _ ->
         0
