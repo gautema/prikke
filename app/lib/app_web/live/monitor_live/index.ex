@@ -208,15 +208,18 @@ defmodule PrikkeWeb.MonitorLive.Index do
         <% else %>
           <div class="glass-card rounded-2xl divide-y divide-slate-200/60">
             <%= for monitor <- @monitors do %>
-              <div class="px-3 sm:px-6 py-4 sm:py-5 hover:bg-white/50 transition-colors">
-                <div class="flex items-center justify-between gap-3 mb-2">
-                  <.link navigate={~p"/monitors/#{monitor.id}"} class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 sm:gap-3">
+              <div class="px-4 sm:px-6 py-5">
+                <div class="flex items-start sm:items-center justify-between gap-3">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
                       <span class={["w-2.5 h-2.5 rounded-full shrink-0", status_dot_color(monitor.status)]}
                             title={status_label(monitor.status)} />
-                      <span class="font-medium text-slate-900 truncate">
+                      <.link
+                        navigate={~p"/monitors/#{monitor.id}"}
+                        class="font-medium text-slate-900 hover:text-emerald-600 break-all sm:truncate"
+                      >
                         {monitor.name}
-                      </span>
+                      </.link>
                       <%= if monitor.muted do %>
                         <span title="Notifications muted">
                           <.icon name="hero-bell-slash" class="w-4 h-4 text-slate-400" />
@@ -232,18 +235,20 @@ defmodule PrikkeWeb.MonitorLive.Index do
                         {status_label(monitor.status)}
                       </span>
                     </div>
-                  </.link>
+                    <div class="text-xs sm:text-sm text-slate-400 mt-1">
+                      <span class="font-mono">{format_schedule(monitor)}</span>
+                      <%= if monitor.last_ping_at do %>
+                        <span class="text-slate-300 ml-1">·</span>
+                        <span class="ml-1">
+                          Last ping: <.local_time
+                            id={"mon-#{monitor.id}-last-ping"}
+                            datetime={monitor.last_ping_at}
+                          />
+                        </span>
+                      <% end %>
+                    </div>
+                  </div>
                   <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-                    <%= if monitor.last_ping_at do %>
-                      <span class="text-xs text-slate-400 hidden sm:inline">
-                        <.local_time
-                          id={"mon-#{monitor.id}-last-ping"}
-                          datetime={monitor.last_ping_at}
-                        />
-                      </span>
-                      <span class="text-slate-200 hidden sm:inline">·</span>
-                    <% end %>
-                    <span class="text-xs text-slate-400 font-mono">{format_schedule(monitor)}</span>
                     <button
                       type="button"
                       phx-click="toggle"
