@@ -234,7 +234,8 @@ defmodule Prikke.Cron do
             {"weekly", minute, hour, days, "1"}
 
           # Monthly: specific day-of-month, wildcard weekday
-          month == "*" and weekday == "*" and day != "*" and numeric?(minute) and numeric?(hour) and numeric?(day) ->
+          month == "*" and weekday == "*" and day != "*" and numeric?(minute) and numeric?(hour) and
+              numeric?(day) ->
             {"monthly", minute, hour, ["1"], day}
 
           # Daily: wildcard day and weekday

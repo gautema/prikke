@@ -99,13 +99,14 @@ defmodule PrikkeWeb.TaskLive.Edit do
 
     socket =
       if cron_mode == :simple do
-        expr = Cron.compute_cron(
-          socket.assigns.cron_preset,
-          socket.assigns.cron_minute,
-          socket.assigns.cron_hour,
-          socket.assigns.cron_weekdays,
-          socket.assigns.cron_day_of_month
-        )
+        expr =
+          Cron.compute_cron(
+            socket.assigns.cron_preset,
+            socket.assigns.cron_minute,
+            socket.assigns.cron_hour,
+            socket.assigns.cron_weekdays,
+            socket.assigns.cron_day_of_month
+          )
 
         update_cron_expression(socket, expr)
       else
@@ -116,13 +117,14 @@ defmodule PrikkeWeb.TaskLive.Edit do
   end
 
   def handle_event("set_cron_preset", %{"preset" => preset}, socket) do
-    expr = Cron.compute_cron(
-      preset,
-      socket.assigns.cron_minute,
-      socket.assigns.cron_hour,
-      socket.assigns.cron_weekdays,
-      socket.assigns.cron_day_of_month
-    )
+    expr =
+      Cron.compute_cron(
+        preset,
+        socket.assigns.cron_minute,
+        socket.assigns.cron_hour,
+        socket.assigns.cron_weekdays,
+        socket.assigns.cron_day_of_month
+      )
 
     {:noreply,
      socket
@@ -131,13 +133,14 @@ defmodule PrikkeWeb.TaskLive.Edit do
   end
 
   def handle_event("set_cron_hour", %{"cron_hour" => hour}, socket) do
-    expr = Cron.compute_cron(
-      socket.assigns.cron_preset,
-      socket.assigns.cron_minute,
-      hour,
-      socket.assigns.cron_weekdays,
-      socket.assigns.cron_day_of_month
-    )
+    expr =
+      Cron.compute_cron(
+        socket.assigns.cron_preset,
+        socket.assigns.cron_minute,
+        hour,
+        socket.assigns.cron_weekdays,
+        socket.assigns.cron_day_of_month
+      )
 
     {:noreply,
      socket
@@ -146,13 +149,14 @@ defmodule PrikkeWeb.TaskLive.Edit do
   end
 
   def handle_event("set_cron_minute", %{"cron_minute" => minute}, socket) do
-    expr = Cron.compute_cron(
-      socket.assigns.cron_preset,
-      minute,
-      socket.assigns.cron_hour,
-      socket.assigns.cron_weekdays,
-      socket.assigns.cron_day_of_month
-    )
+    expr =
+      Cron.compute_cron(
+        socket.assigns.cron_preset,
+        minute,
+        socket.assigns.cron_hour,
+        socket.assigns.cron_weekdays,
+        socket.assigns.cron_day_of_month
+      )
 
     {:noreply,
      socket
@@ -170,13 +174,14 @@ defmodule PrikkeWeb.TaskLive.Edit do
         [day | weekdays]
       end
 
-    expr = Cron.compute_cron(
-      socket.assigns.cron_preset,
-      socket.assigns.cron_minute,
-      socket.assigns.cron_hour,
-      weekdays,
-      socket.assigns.cron_day_of_month
-    )
+    expr =
+      Cron.compute_cron(
+        socket.assigns.cron_preset,
+        socket.assigns.cron_minute,
+        socket.assigns.cron_hour,
+        weekdays,
+        socket.assigns.cron_day_of_month
+      )
 
     {:noreply,
      socket
@@ -216,13 +221,14 @@ defmodule PrikkeWeb.TaskLive.Edit do
   end
 
   def handle_event("set_cron_day_of_month", %{"cron_day_of_month" => day}, socket) do
-    expr = Cron.compute_cron(
-      socket.assigns.cron_preset,
-      socket.assigns.cron_minute,
-      socket.assigns.cron_hour,
-      socket.assigns.cron_weekdays,
-      day
-    )
+    expr =
+      Cron.compute_cron(
+        socket.assigns.cron_preset,
+        socket.assigns.cron_minute,
+        socket.assigns.cron_hour,
+        socket.assigns.cron_weekdays,
+        day
+      )
 
     {:noreply,
      socket
@@ -295,7 +301,9 @@ defmodule PrikkeWeb.TaskLive.Edit do
 
   defp update_cron_expression(socket, expr) do
     changeset =
-      Task.changeset(socket.assigns.task, %{"cron_expression" => expr, "schedule_type" => "cron"}, skip_ssrf: true)
+      Task.changeset(socket.assigns.task, %{"cron_expression" => expr, "schedule_type" => "cron"},
+        skip_ssrf: true
+      )
       |> Map.put(:action, :validate)
 
     assign_form(socket, changeset)
@@ -308,7 +316,7 @@ defmodule PrikkeWeb.TaskLive.Edit do
         <% {:ok, result} -> %>
           <div class={[
             "px-4 py-3 flex items-center justify-between",
-            result.status >= 200 and result.status < 300 && "bg-emerald-50 border-emerald-200",
+            (result.status >= 200 and result.status < 300) && "bg-emerald-50 border-emerald-200",
             (result.status < 200 or result.status >= 300) && "bg-red-50 border-red-200"
           ]}>
             <div class="flex items-center gap-3">
@@ -429,7 +437,9 @@ defmodule PrikkeWeb.TaskLive.Edit do
 
           <div class="space-y-4">
             <div>
-              <label for="task_name" class="block text-sm font-medium text-slate-700 mb-1">Name</label>
+              <label for="task_name" class="block text-sm font-medium text-slate-700 mb-1">
+                Name
+              </label>
               <.input field={@form[:name]} type="text" placeholder="My scheduled task" />
             </div>
 
@@ -441,7 +451,7 @@ defmodule PrikkeWeb.TaskLive.Edit do
             </div>
           </div>
         </div>
-
+        
     <!-- Schedule -->
         <div class="glass-card rounded-2xl p-6">
           <h2 class="text-lg font-semibold text-slate-900 mb-4">Schedule</h2>
@@ -506,7 +516,7 @@ defmodule PrikkeWeb.TaskLive.Edit do
             <% end %>
           </div>
         </div>
-
+        
     <!-- Request Settings -->
         <div class="glass-card rounded-2xl p-6">
           <div class="flex items-center justify-between mb-4">
@@ -617,7 +627,7 @@ defmodule PrikkeWeb.TaskLive.Edit do
             </div>
           </div>
         </div>
-
+        
     <!-- Response Assertions -->
         <div class="glass-card rounded-2xl p-6">
           <div class="mb-4">
@@ -655,7 +665,7 @@ defmodule PrikkeWeb.TaskLive.Edit do
             </div>
           </div>
         </div>
-
+        
     <!-- Actions -->
         <div class="flex justify-end gap-4">
           <.link

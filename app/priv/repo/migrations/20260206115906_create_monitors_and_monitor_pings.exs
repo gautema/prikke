@@ -4,6 +4,7 @@ defmodule Prikke.Repo.Migrations.CreateMonitorsAndMonitorPings do
   def change do
     create table(:monitors, primary_key: false) do
       add :id, :binary_id, primary_key: true
+
       add :organization_id, references(:organizations, type: :binary_id, on_delete: :delete_all),
         null: false
 
@@ -31,6 +32,7 @@ defmodule Prikke.Repo.Migrations.CreateMonitorsAndMonitorPings do
 
     create table(:monitor_pings, primary_key: false) do
       add :id, :binary_id, primary_key: true
+
       add :monitor_id, references(:monitors, type: :binary_id, on_delete: :delete_all),
         null: false
 

@@ -11,7 +11,12 @@ defmodule Prikke.CleanupTest do
     setup do
       # Configure admin_email for tests
       original = Application.get_env(:app, Prikke.Mailer)
-      Application.put_env(:app, Prikke.Mailer, Keyword.put(original, :admin_email, "admin@test.com"))
+
+      Application.put_env(
+        :app,
+        Prikke.Mailer,
+        Keyword.put(original, :admin_email, "admin@test.com")
+      )
 
       on_exit(fn ->
         Application.put_env(:app, Prikke.Mailer, original)

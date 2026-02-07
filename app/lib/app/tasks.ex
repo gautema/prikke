@@ -68,8 +68,14 @@ defmodule Prikke.Tasks do
 
   @doc """
   Returns the list of tasks for an organization.
+
+  ## Options
+
+    * `:queue` - filter by queue name. Use `"none"` to match tasks with no queue.
   """
-  def list_tasks(%Organization{} = org) do
+  def list_tasks(%Organization{} = org, opts \\ []) do
+    queue = Keyword.get(opts, :queue)
+
     # Subquery to get the latest execution time per task
     latest_exec_subquery =
       from(e in Prikke.Executions.Execution,
@@ -77,12 +83,35 @@ defmodule Prikke.Tasks do
         select: %{task_id: e.task_id, last_exec: max(e.scheduled_for)}
       )
 
+    query =
+      from(t in Task,
+        where: t.organization_id == ^org.id,
+        left_join: le in subquery(latest_exec_subquery),
+        on: le.task_id == t.id,
+        order_by: [desc_nulls_last: le.last_exec, desc: t.inserted_at],
+        select: t
+      )
+
+    query =
+      case queue do
+        nil -> query
+        "none" -> from(t in query, where: is_nil(t.queue))
+        name -> from(t in query, where: t.queue == ^name)
+      end
+
+    Repo.all(query)
+  end
+
+  @doc """
+  Returns distinct non-nil queue names for an organization.
+  """
+  def list_queues(%Organization{} = org) do
     from(t in Task,
       where: t.organization_id == ^org.id,
-      left_join: le in subquery(latest_exec_subquery),
-      on: le.task_id == t.id,
-      order_by: [desc_nulls_last: le.last_exec, desc: t.inserted_at],
-      select: t
+      where: not is_nil(t.queue),
+      distinct: true,
+      select: t.queue,
+      order_by: t.queue
     )
     |> Repo.all()
   end

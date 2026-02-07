@@ -331,7 +331,7 @@ defmodule Prikke.Metrics do
 
     {alerts, last_alert_at} =
       Enum.reduce(checks, {[], last_alert_at}, fn {metric, value, warning, critical, unit},
-                                                   {alerts, alert_times} ->
+                                                  {alerts, alert_times} ->
         cond do
           value >= critical ->
             alert = %{

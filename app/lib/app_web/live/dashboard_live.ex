@@ -183,8 +183,8 @@ defmodule PrikkeWeb.DashboardLive do
             </p>
           <% end %>
         </div>
-
-        <!-- Quick Stats -->
+        
+    <!-- Quick Stats -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
           <.link
             navigate={~p"/tasks"}
@@ -215,8 +215,8 @@ defmodule PrikkeWeb.DashboardLive do
             <div class="text-xs text-slate-400 mt-1">today</div>
           </div>
         </div>
-
-        <!-- Tasks Section -->
+        
+    <!-- Tasks Section -->
         <div class="glass-card rounded-2xl mb-4">
           <div class="px-4 sm:px-6 py-4 border-b border-white/50 flex justify-between items-center gap-2">
             <div class="flex items-center gap-3">
@@ -235,7 +235,10 @@ defmodule PrikkeWeb.DashboardLive do
           <%= if @recent_tasks == [] do %>
             <div class="p-8 text-center">
               <p class="text-slate-500 mb-2">No tasks yet.</p>
-              <.link navigate={~p"/tasks/new"} class="text-emerald-600 text-sm font-medium hover:underline">
+              <.link
+                navigate={~p"/tasks/new"}
+                class="text-emerald-600 text-sm font-medium hover:underline"
+              >
                 Create your first task →
               </.link>
             </div>
@@ -264,7 +267,9 @@ defmodule PrikkeWeb.DashboardLive do
                           />
                           <%= if @latest_statuses[task.id].duration_ms do %>
                             <span class="text-slate-300">·</span>
-                            <span>{format_duration_short(@latest_statuses[task.id].duration_ms)}</span>
+                            <span>
+                              {format_duration_short(@latest_statuses[task.id].duration_ms)}
+                            </span>
                           <% end %>
                         </div>
                       <% end %>
@@ -287,8 +292,8 @@ defmodule PrikkeWeb.DashboardLive do
             </div>
           <% end %>
         </div>
-
-        <!-- Monitors Section -->
+        
+    <!-- Monitors Section -->
         <div class="glass-card rounded-2xl mb-4">
           <div class="px-4 sm:px-6 py-4 border-b border-white/50 flex justify-between items-center gap-2">
             <div class="flex items-center gap-3">
@@ -307,7 +312,10 @@ defmodule PrikkeWeb.DashboardLive do
           <%= if @monitors == [] do %>
             <div class="p-8 text-center">
               <p class="text-slate-500 mb-2">No monitors yet.</p>
-              <.link navigate={~p"/monitors/new"} class="text-emerald-600 text-sm font-medium hover:underline">
+              <.link
+                navigate={~p"/monitors/new"}
+                class="text-emerald-600 text-sm font-medium hover:underline"
+              >
                 Set up heartbeat monitoring →
               </.link>
             </div>
@@ -323,7 +331,10 @@ defmodule PrikkeWeb.DashboardLive do
                 >
                   <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2 min-w-0">
-                      <span class={["w-2.5 h-2.5 rounded-full shrink-0", monitor_dot_color(monitor.status)]} />
+                      <span class={[
+                        "w-2.5 h-2.5 rounded-full shrink-0",
+                        monitor_dot_color(monitor.status)
+                      ]} />
                       <span class="text-sm text-slate-900 truncate">{monitor.name}</span>
                       <span class={[
                         "text-xs font-medium px-2 py-0.5 rounded",
@@ -354,7 +365,6 @@ defmodule PrikkeWeb.DashboardLive do
             </div>
           <% end %>
         </div>
-
       <% else %>
         <!-- No organization state -->
         <div class="glass-card rounded-2xl p-12 text-center">
@@ -387,9 +397,10 @@ defmodule PrikkeWeb.DashboardLive do
       monthly_executions: 0,
       monthly_limit: 0,
       trend_days: 7,
-      execution_trend: Enum.map(0..6, fn offset ->
-        {Date.add(Date.utc_today(), -6 + offset), %{total: 0, success: 0, failed: 0}}
-      end)
+      execution_trend:
+        Enum.map(0..6, fn offset ->
+          {Date.add(Date.utc_today(), -6 + offset), %{total: 0, success: 0, failed: 0}}
+        end)
     }
 
   defp load_stats(organization) do
@@ -477,8 +488,11 @@ defmodule PrikkeWeb.DashboardLive do
           statuses =
             Enum.map(monitors, fn m ->
               case daily_status[m.id] do
-                nil -> "none"
-                days -> Enum.find_value(days, "none", fn {d, %{status: s}} -> if d == date, do: s end)
+                nil ->
+                  "none"
+
+                days ->
+                  Enum.find_value(days, "none", fn {d, %{status: s}} -> if d == date, do: s end)
               end
             end)
 
@@ -632,9 +646,10 @@ defmodule PrikkeWeb.DashboardLive do
                   />
                 <% end %>
                 <%= if stats.up > 0 do %>
-                  <div
-                    class={["bg-emerald-500 flex-1", if(stats.down == 0 && stats.degraded == 0, do: "rounded-t-sm", else: "")]}
-                  />
+                  <div class={[
+                    "bg-emerald-500 flex-1",
+                    if(stats.down == 0 && stats.degraded == 0, do: "rounded-t-sm", else: "")
+                  ]} />
                 <% end %>
               </div>
             <% else %>
@@ -739,5 +754,4 @@ defmodule PrikkeWeb.DashboardLive do
   defp status_dot_title("pending"), do: "Pending execution"
   defp status_dot_title("missed"), do: "Last run: Missed"
   defp status_dot_title(_), do: "Unknown status"
-
 end

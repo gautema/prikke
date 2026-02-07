@@ -35,7 +35,8 @@ defmodule Prikke.Emails do
   Returns the count of emails sent today (UTC).
   """
   def count_emails_today do
-    today_start = DateTime.utc_now() |> DateTime.to_date() |> DateTime.new!(~T[00:00:00], "Etc/UTC")
+    today_start =
+      DateTime.utc_now() |> DateTime.to_date() |> DateTime.new!(~T[00:00:00], "Etc/UTC")
 
     from(e in EmailLog, where: e.inserted_at >= ^today_start)
     |> Repo.aggregate(:count)

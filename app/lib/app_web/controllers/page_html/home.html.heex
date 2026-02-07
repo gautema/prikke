@@ -1,9 +1,12 @@
-<div class="min-h-screen" style="background: linear-gradient(135deg, #f0fdf4 0%, #f1f5f9 25%, #f8fafc 50%, #ecfeff 75%, #faf5ff 100%);">
+<div
+  class="min-h-screen"
+  style="background: linear-gradient(135deg, #f0fdf4 0%, #f1f5f9 25%, #f8fafc 50%, #ecfeff 75%, #faf5ff 100%);"
+>
   <div class="max-w-[800px] mx-auto px-6">
     <%= unless @current_scope do %>
       <.marketing_header menu_id="landing-menu-toggle" />
     <% end %>
-
+    
 <!-- Hero -->
     <section class="py-12 sm:py-20 text-center">
       <div class="inline-flex items-center gap-1.5 glass-button px-4 py-2 rounded-full text-sm text-slate-600 mb-6">
@@ -29,9 +32,11 @@
           View docs
         </a>
       </div>
-      <p class="text-sm text-slate-400">No credit card required · 5,000 requests/mo free forever</p>
+      <p class="text-sm text-slate-400">
+        No credit card required · 5,000 requests/mo free forever
+      </p>
     </section>
-
+    
 <!-- The problem -->
     <section class="py-14 border-t border-slate-200">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-6">
@@ -46,7 +51,7 @@
         </p>
       </div>
     </section>
-
+    
 <!-- Core capabilities -->
     <section class="py-14 border-t border-slate-200">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
@@ -54,21 +59,21 @@
       </h2>
       <div class="grid sm:grid-cols-2 gap-4">
         <div class="glass-card rounded-2xl p-5">
-          <h3 class="text-base font-semibold mb-2 text-slate-900">Named Queues</h3>
+          <h3 class="text-base font-semibold mb-2 text-slate-900">Async Messaging</h3>
           <p class="text-[15px] text-slate-500 m-0">
-            Group tasks into named queues for serial execution. Tasks in the same queue run one at a time — the next waits until the current one finishes. Perfect for payments, API rate limits, or anything that can't overlap.
+            Push a task and we run it immediately. Offload work from your request cycle. One POST, instant execution.
           </p>
         </div>
         <div class="glass-card rounded-2xl p-5">
           <h3 class="text-base font-semibold mb-2 text-slate-900">Delays</h3>
           <p class="text-[15px] text-slate-500 m-0">
-            Schedule a task for any time in the future. Send a reminder in 24 hours. Expire a trial in 14 days. Just set a timestamp.
+            Schedule a task for any time in the future. Send a reminder in 24 hours. Expire a trial in 14 days. Just set a delay or timestamp.
           </p>
         </div>
         <div class="glass-card rounded-2xl p-5">
-          <h3 class="text-base font-semibold mb-2 text-slate-900">Crons</h3>
+          <h3 class="text-base font-semibold mb-2 text-slate-900">Crons & Monitoring</h3>
           <p class="text-[15px] text-slate-500 m-0">
-            Daily reports, hourly syncs, weekly cleanups. Standard cron expressions. We call your endpoint on schedule.
+            Daily reports, hourly syncs, weekly cleanups. Standard cron expressions with built-in dead man's switch — get alerted when jobs stop running, and again when they recover.
           </p>
         </div>
         <div class="glass-card rounded-2xl p-5">
@@ -84,14 +89,14 @@
           </p>
         </div>
         <div class="glass-card rounded-2xl p-5">
-          <h3 class="text-base font-semibold mb-2 text-slate-900">Monitoring</h3>
+          <h3 class="text-base font-semibold mb-2 text-slate-900">Named Queues</h3>
           <p class="text-[15px] text-slate-500 m-0">
-            Dead man's switch for your cron jobs. Get alerted when they stop running. Recovery notifications when they're back.
+            Group tasks into named queues for serial execution. Tasks in the same queue run one at a time. Perfect for payments, API rate limits, or anything that can't overlap.
           </p>
         </div>
       </div>
     </section>
-
+    
 <!-- Built for production -->
     <section class="py-14 border-t border-slate-200">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
@@ -136,7 +141,9 @@
             <.icon name="hero-adjustments-horizontal" class="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 class="text-base font-semibold mb-1 text-slate-900">Custom headers and payloads</h3>
+            <h3 class="text-base font-semibold mb-1 text-slate-900">
+              Custom headers and payloads
+            </h3>
             <p class="text-[15px] text-slate-600 m-0">
               Send any HTTP method, headers, and request body. Forward webhooks, trigger APIs, authenticate with your own tokens.
             </p>
@@ -158,7 +165,9 @@
             <.icon name="hero-bell-alert" class="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 class="text-base font-semibold mb-1 text-slate-900">Alerts to Slack, Discord, or email</h3>
+            <h3 class="text-base font-semibold mb-1 text-slate-900">
+              Alerts to Slack, Discord, or email
+            </h3>
             <p class="text-[15px] text-slate-600 m-0">
               Get notified only when something fails. We auto-detect Slack and Discord webhook URLs and format the message for you.
             </p>
@@ -166,7 +175,7 @@
         </div>
       </div>
     </section>
-
+    
 <!-- How it works -->
     <section class="py-14 border-t border-slate-200">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
@@ -176,13 +185,18 @@
         <%!-- Step 1 --%>
         <div class="glass-card rounded-2xl overflow-hidden">
           <div class="px-5 py-3 border-b border-slate-200/60 flex items-center gap-3">
-            <span class="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center text-white text-xs font-bold">1</span>
+            <span class="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+              1
+            </span>
             <div>
               <h3 class="text-sm font-semibold text-slate-900 m-0">Delay a task</h3>
               <p class="text-xs text-slate-500 m-0">Something happened, do this in 24 hours</p>
             </div>
           </div>
-          <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto m-0 rounded-none">curl -X POST https://runlater.eu/api/v1/tasks \
+          <pre
+            phx-no-curly-interpolation
+            class="bg-slate-900 text-slate-100 p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto m-0 rounded-none"
+          >curl -X POST https://runlater.eu/api/v1/tasks \
   -H "Authorization: Bearer pk_live_xxx" \
   -H "Idempotency-Key: reminder-user-42" \
   -d '{
@@ -194,13 +208,20 @@
         <%!-- Step 2 --%>
         <div class="glass-card rounded-2xl overflow-hidden">
           <div class="px-5 py-3 border-b border-slate-200/60 flex items-center gap-3">
-            <span class="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center text-white text-xs font-bold">2</span>
+            <span class="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+              2
+            </span>
             <div>
               <h3 class="text-sm font-semibold text-slate-900 m-0">Queue a task</h3>
-              <p class="text-xs text-slate-500 m-0">Named queue ensures tasks run one at a time</p>
+              <p class="text-xs text-slate-500 m-0">
+                Named queue ensures tasks run one at a time
+              </p>
             </div>
           </div>
-          <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto m-0 rounded-none">curl -X POST https://runlater.eu/api/v1/tasks \
+          <pre
+            phx-no-curly-interpolation
+            class="bg-slate-900 text-slate-100 p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto m-0 rounded-none"
+          >curl -X POST https://runlater.eu/api/v1/tasks \
   -H "Authorization: Bearer pk_live_xxx" \
   -d '{
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/process"</span>,
@@ -212,13 +233,18 @@
         <%!-- Step 3 --%>
         <div class="glass-card rounded-2xl overflow-hidden">
           <div class="px-5 py-3 border-b border-slate-200/60 flex items-center gap-3">
-            <span class="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center text-white text-xs font-bold">3</span>
+            <span class="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+              3
+            </span>
             <div>
               <h3 class="text-sm font-semibold text-slate-900 m-0">Schedule a cron</h3>
               <p class="text-xs text-slate-500 m-0">Recurring jobs on any schedule</p>
             </div>
           </div>
-          <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto m-0 rounded-none">curl -X POST https://runlater.eu/api/v1/tasks \
+          <pre
+            phx-no-curly-interpolation
+            class="bg-slate-900 text-slate-100 p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto m-0 rounded-none"
+          >curl -X POST https://runlater.eu/api/v1/tasks \
   -H "Authorization: Bearer pk_live_xxx" \
   -d '{
     <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Daily backup"</span>,
@@ -232,7 +258,7 @@
         </p>
       </div>
     </section>
-
+    
 <!-- Why Runlater -->
     <section class="py-14 border-t border-slate-200">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
@@ -266,7 +292,9 @@
             <.icon name="hero-code-bracket" class="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 class="text-base font-semibold mb-1 text-slate-900">API-first with a dashboard</h3>
+            <h3 class="text-base font-semibold mb-1 text-slate-900">
+              API-first with a dashboard
+            </h3>
             <p class="text-[15px] text-slate-600 m-0">
               Full REST API with OpenAPI docs. Real-time dashboard for when you need visibility. Team workspaces with role-based access.
             </p>
@@ -285,7 +313,7 @@
         </div>
       </div>
     </section>
-
+    
 <!-- Pricing -->
     <section class="py-14 border-t border-slate-200 text-center">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
@@ -323,7 +351,7 @@
         </div>
       </div>
     </section>
-
+    
 <!-- CTA -->
     <section class="py-20 text-center border-t border-slate-200">
       <h2 class="text-2xl font-bold mb-4 text-slate-900">Ready to offload your first task?</h2>

@@ -76,78 +76,78 @@ defmodule PrikkeWeb.MonitorLive.Edit do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-        <div class="mb-4">
-          <.link
-            navigate={~p"/monitors/#{@monitor.id}"}
-            class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
-          >
-            <.icon name="hero-chevron-left" class="w-4 h-4" /> Back to {@monitor.name}
-          </.link>
-        </div>
+      <div class="mb-4">
+        <.link
+          navigate={~p"/monitors/#{@monitor.id}"}
+          class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
+        >
+          <.icon name="hero-chevron-left" class="w-4 h-4" /> Back to {@monitor.name}
+        </.link>
+      </div>
 
-        <h1 class="text-xl sm:text-2xl font-bold text-slate-900 mb-6">Edit Monitor</h1>
+      <h1 class="text-xl sm:text-2xl font-bold text-slate-900 mb-6">Edit Monitor</h1>
 
-        <div class="glass-card rounded-2xl p-6">
-          <.form for={@form} id="monitor-form" phx-change="validate" phx-submit="save" class="space-y-6">
-            <.input field={@form[:name]} type="text" label="Name" />
+      <div class="glass-card rounded-2xl p-6">
+        <.form for={@form} id="monitor-form" phx-change="validate" phx-submit="save" class="space-y-6">
+          <.input field={@form[:name]} type="text" label="Name" />
 
+          <.input
+            field={@form[:schedule_type]}
+            type="select"
+            label="Schedule Type"
+            options={[{"Fixed interval", "interval"}, {"Cron expression", "cron"}]}
+          />
+
+          <%= if to_string(@form[:schedule_type].value) == "cron" do %>
             <.input
-              field={@form[:schedule_type]}
-              type="select"
-              label="Schedule Type"
-              options={[{"Fixed interval", "interval"}, {"Cron expression", "cron"}]}
+              field={@form[:cron_expression]}
+              type="text"
+              label="Cron Expression"
+              placeholder="0 * * * *"
             />
-
-            <%= if to_string(@form[:schedule_type].value) == "cron" do %>
-              <.input
-                field={@form[:cron_expression]}
-                type="text"
-                label="Cron Expression"
-                placeholder="0 * * * *"
-              />
-            <% else %>
-              <.input
-                field={@form[:interval_seconds]}
-                type="select"
-                label="Expected Interval"
-                options={[
-                  {"Every 1 minute", "60"},
-                  {"Every 5 minutes", "300"},
-                  {"Every 15 minutes", "900"},
-                  {"Every 30 minutes", "1800"},
-                  {"Every hour", "3600"},
-                  {"Every 6 hours", "21600"},
-                  {"Every 12 hours", "43200"},
-                  {"Every 24 hours", "86400"},
-                  {"Every 7 days", "604800"}
-                ]}
-              />
-            <% end %>
-
+          <% else %>
             <.input
-              field={@form[:grace_period_seconds]}
+              field={@form[:interval_seconds]}
               type="select"
-              label="Grace Period"
+              label="Expected Interval"
               options={[
-                {"No grace period", "0"},
-                {"1 minute", "60"},
-                {"5 minutes", "300"},
-                {"15 minutes", "900"},
-                {"30 minutes", "1800"},
-                {"1 hour", "3600"}
+                {"Every 1 minute", "60"},
+                {"Every 5 minutes", "300"},
+                {"Every 15 minutes", "900"},
+                {"Every 30 minutes", "1800"},
+                {"Every hour", "3600"},
+                {"Every 6 hours", "21600"},
+                {"Every 12 hours", "43200"},
+                {"Every 24 hours", "86400"},
+                {"Every 7 days", "604800"}
               ]}
             />
+          <% end %>
 
-            <div class="pt-4">
-              <button
-                type="submit"
-                class="w-full sm:w-auto font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-6 py-2.5 rounded-md transition-colors"
-              >
-                Save Changes
-              </button>
-            </div>
-          </.form>
-        </div>
+          <.input
+            field={@form[:grace_period_seconds]}
+            type="select"
+            label="Grace Period"
+            options={[
+              {"No grace period", "0"},
+              {"1 minute", "60"},
+              {"5 minutes", "300"},
+              {"15 minutes", "900"},
+              {"30 minutes", "1800"},
+              {"1 hour", "3600"}
+            ]}
+          />
+
+          <div class="pt-4">
+            <button
+              type="submit"
+              class="w-full sm:w-auto font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-6 py-2.5 rounded-md transition-colors"
+            >
+              Save Changes
+            </button>
+          </div>
+        </.form>
+      </div>
     </Layouts.app>
     """
   end

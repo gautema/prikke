@@ -28,6 +28,65 @@ defmodule Prikke.TasksTest do
       assert Enum.any?(tasks, &(&1.id == task1.id))
       assert Enum.any?(tasks, &(&1.id == task2.id))
     end
+
+    test "filters by queue name" do
+      org = organization_fixture()
+      task_with_queue = task_fixture(org, %{name: "Queued", queue: "payments"})
+      _task_without_queue = task_fixture(org, %{name: "No Queue"})
+      _task_other_queue = task_fixture(org, %{name: "Other Queue", queue: "emails"})
+
+      tasks = Tasks.list_tasks(org, queue: "payments")
+      assert length(tasks) == 1
+      assert hd(tasks).id == task_with_queue.id
+    end
+
+    test "filters for tasks with no queue using 'none'" do
+      org = organization_fixture()
+      _task_with_queue = task_fixture(org, %{name: "Queued", queue: "payments"})
+      task_without_queue = task_fixture(org, %{name: "No Queue"})
+
+      tasks = Tasks.list_tasks(org, queue: "none")
+      assert length(tasks) == 1
+      assert hd(tasks).id == task_without_queue.id
+    end
+
+    test "returns all tasks when queue option is nil" do
+      org = organization_fixture()
+      task_fixture(org, %{name: "Queued", queue: "payments"})
+      task_fixture(org, %{name: "No Queue"})
+
+      tasks = Tasks.list_tasks(org, queue: nil)
+      assert length(tasks) == 2
+    end
+  end
+
+  describe "list_queues/1" do
+    test "returns distinct queue names" do
+      org = organization_fixture()
+      task_fixture(org, %{name: "T1", queue: "payments"})
+      task_fixture(org, %{name: "T2", queue: "emails"})
+      task_fixture(org, %{name: "T3", queue: "payments"})
+      task_fixture(org, %{name: "T4"})
+
+      queues = Tasks.list_queues(org)
+      assert queues == ["emails", "payments"]
+    end
+
+    test "returns empty list when no tasks have queues" do
+      org = organization_fixture()
+      task_fixture(org)
+
+      assert Tasks.list_queues(org) == []
+    end
+
+    test "does not return queues from other organizations" do
+      org = organization_fixture()
+      other_org = organization_fixture()
+      task_fixture(org, %{queue: "payments"})
+      task_fixture(other_org, %{queue: "emails"})
+
+      assert Tasks.list_queues(org) == ["payments"]
+    end
   end
 
   describe "list_enabled_tasks/1" do
@@ -516,7 +575,13 @@ defmodule Prikke.TasksTest do
   describe "clone_task/3" do
     test "clones a cron task with (copy) suffix" do
       org = organization_fixture()
-      task = task_fixture(org, %{name: "My Cron Task", url: "https://example.com/webhook", method: "POST"})
+
+      task =
+        task_fixture(org, %{
+          name: "My Cron Task",
+          url: "https://example.com/webhook",
+          method: "POST"
+        })
 
       assert {:ok, %Task{} = cloned} = Tasks.clone_task(org, task)
       assert cloned.name == "My Cron Task (copy)"
@@ -796,6 +861,7 @@ defmodule Prikke.TasksTest do
       }
 
       assert {:error, changeset} = Tasks.create_task(org, attrs)
+
       assert "must be comma-separated HTTP status codes (100-599)" in errors_on(changeset).expected_status_codes
     end
 
@@ -811,6 +877,7 @@ defmodule Prikke.TasksTest do
       }
 
       assert {:error, changeset} = Tasks.create_task(org, attrs)
+
       assert "must be comma-separated HTTP status codes (100-599)" in errors_on(changeset).expected_status_codes
     end
 

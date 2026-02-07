@@ -20,7 +20,10 @@ defmodule PrikkeWeb.TaskLive.Show do
 
         task ->
           status_filter = nil
-          executions = Executions.list_task_executions(task, limit: @per_page, status: status_filter)
+
+          executions =
+            Executions.list_task_executions(task, limit: @per_page, status: status_filter)
+
           total_count = Executions.count_task_executions(task, status: status_filter)
           stats = Executions.get_task_stats(task)
           latest_info = get_latest_info(executions)
@@ -215,18 +218,22 @@ defmodule PrikkeWeb.TaskLive.Show do
     task = socket.assigns.task
     scheduled_for = DateTime.utc_now() |> DateTime.truncate(:second)
 
-    opts = if get_status(socket.assigns.latest_info) in ["failed", "timeout"] do
-      [attempt: task.retry_attempts]
-    else
-      []
-    end
+    opts =
+      if get_status(socket.assigns.latest_info) in ["failed", "timeout"] do
+        [attempt: task.retry_attempts]
+      else
+        []
+      end
 
     case Executions.create_execution_for_task(task, scheduled_for, opts) do
       {:ok, _execution} ->
         Tasks.notify_workers()
 
         status_filter = socket.assigns.status_filter
-        executions = Executions.list_task_executions(task, limit: @per_page, status: status_filter)
+
+        executions =
+          Executions.list_task_executions(task, limit: @per_page, status: status_filter)
+
         total_count = Executions.count_task_executions(task, status: status_filter)
         stats = Executions.get_task_stats(task)
         latest_info = get_latest_info(executions)
@@ -308,7 +315,10 @@ defmodule PrikkeWeb.TaskLive.Show do
               <div class="flex items-center gap-3 flex-wrap">
                 <h1 class="text-lg sm:text-xl font-bold text-slate-900">{@task.name}</h1>
                 <%= if @task.muted do %>
-                  <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-500" title="Notifications muted">
+                  <span
+                    class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-500"
+                    title="Notifications muted"
+                  >
                     <.icon name="hero-bell-slash" class="w-3.5 h-3.5" /> Muted
                   </span>
                 <% end %>
@@ -439,7 +449,7 @@ defmodule PrikkeWeb.TaskLive.Show do
               <% end %>
             </div>
           </div>
-
+          
     <!-- Schedule -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Schedule</h3>
@@ -462,7 +472,7 @@ defmodule PrikkeWeb.TaskLive.Show do
               <% end %>
             </div>
           </div>
-
+          
     <!-- Settings -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Settings</h3>
@@ -501,7 +511,7 @@ defmodule PrikkeWeb.TaskLive.Show do
               <% end %>
             </div>
           </div>
-
+          
     <!-- Stats (24h) -->
           <%= if @stats.total > 0 do %>
             <div>
@@ -530,7 +540,7 @@ defmodule PrikkeWeb.TaskLive.Show do
               </div>
             </div>
           <% end %>
-
+          
     <!-- Execution History -->
           <div>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
@@ -643,7 +653,7 @@ defmodule PrikkeWeb.TaskLive.Show do
         <% {:ok, result} -> %>
           <div class={[
             "px-4 py-3 flex items-center justify-between",
-            result.status >= 200 and result.status < 300 && "bg-emerald-50 border-emerald-200",
+            (result.status >= 200 and result.status < 300) && "bg-emerald-50 border-emerald-200",
             (result.status < 200 or result.status >= 300) && "bg-red-50 border-red-200"
           ]}>
             <div class="flex items-center gap-3">

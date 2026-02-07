@@ -20,7 +20,9 @@
   <pre class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto">Authorization: Bearer <span class="text-green-300">pk_live_xxx.sk_live_yyy</span></pre>
 
   <h2>Tasks API</h2>
-  <p>Create and manage tasks. A task's behavior is determined by its parameters: run immediately, after a delay, at a specific time, or on a recurring cron schedule.</p>
+  <p>
+    Create and manage tasks. A task's behavior is determined by its parameters: run immediately, after a delay, at a specific time, or on a recurring cron schedule.
+  </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="p-6 border-b border-slate-100">
@@ -59,7 +61,11 @@
         <span class="font-mono text-sm">/tasks</span>
       </div>
       <p class="text-slate-600 m-0 mb-4">
-        Create a new task. The type is inferred from the parameters you pass: omit timing fields for immediate execution, use <code>delay</code> to defer, <code>scheduled_at</code> for a specific time, or <code>cron_expression</code> for recurring.
+        Create a new task. The type is inferred from the parameters you pass: omit timing fields for immediate execution, use
+        <code>delay</code>
+        to defer, <code>scheduled_at</code>
+        for a specific time, or <code>cron_expression</code>
+        for recurring.
       </p>
 
       <h4 class="text-sm font-semibold mt-4 mb-2 text-slate-900">Headers</h4>
@@ -99,7 +105,9 @@
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">method</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
-          <td class="py-2 text-slate-600">HTTP method: GET, POST, PUT, PATCH, DELETE (default: POST)</td>
+          <td class="py-2 text-slate-600">
+            HTTP method: GET, POST, PUT, PATCH, DELETE (default: POST)
+          </td>
         </tr>
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">headers</code></td>
@@ -121,7 +129,9 @@
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">scheduled_at</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
-          <td class="py-2 text-slate-600">ISO 8601 timestamp for one-time scheduled execution (optional)</td>
+          <td class="py-2 text-slate-600">
+            ISO 8601 timestamp for one-time scheduled execution (optional)
+          </td>
         </tr>
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">cron_expression</code></td>
@@ -142,7 +152,10 @@
           <td class="py-2 pr-4"><code class="text-sky-600">callback_url</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
           <td class="py-2 text-slate-600">
-            URL to receive a POST callback when execution completes. See <a href="/docs/webhooks#callbacks" class="text-emerald-600 hover:underline">Callbacks</a>. (optional)
+            URL to receive a POST callback when execution completes. See <a
+              href="/docs/webhooks#callbacks"
+              class="text-emerald-600 hover:underline"
+            >Callbacks</a>. (optional)
           </td>
         </tr>
         <tr class="border-b border-slate-50">
@@ -160,17 +173,23 @@
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">muted</code></td>
           <td class="py-2 pr-4 text-slate-500">boolean</td>
-          <td class="py-2 text-slate-600">Mute failure/recovery notifications (default: false)</td>
+          <td class="py-2 text-slate-600">
+            Mute failure/recovery notifications (default: false)
+          </td>
         </tr>
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">expected_status_codes</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
-          <td class="py-2 text-slate-600">Comma-separated status codes that count as success, e.g. "200,201". Empty means any 2xx. (optional)</td>
+          <td class="py-2 text-slate-600">
+            Comma-separated status codes that count as success, e.g. "200,201". Empty means any 2xx. (optional)
+          </td>
         </tr>
         <tr>
           <td class="py-2 pr-4"><code class="text-sky-600">expected_body_pattern</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
-          <td class="py-2 text-slate-600">Response body must contain this text to count as success. Empty means any body. (optional)</td>
+          <td class="py-2 text-slate-600">
+            Response body must contain this text to count as success. Empty means any body. (optional)
+          </td>
         </tr>
       </table>
     </div>
@@ -343,7 +362,11 @@
   </div>
 
   <h2>Monitors API</h2>
-  <p>CRUD operations for heartbeat monitors (dead man's switches). See the <a href="/docs/monitors" class="text-emerald-600 hover:underline">Cron Monitoring docs</a> for details.</p>
+  <p>
+    CRUD operations for heartbeat monitors (dead man's switches). See the
+    <a href="/docs/monitors" class="text-emerald-600 hover:underline">Cron Monitoring docs</a>
+    for details.
+  </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="p-6 border-b border-slate-100">
@@ -367,7 +390,9 @@
         </span>
         <span class="font-mono text-sm">/monitors/:id</span>
       </div>
-      <p class="text-slate-600 m-0">Get a single monitor by ID. Response includes the <code class="text-sky-600">ping_url</code>.</p>
+      <p class="text-slate-600 m-0">
+        Get a single monitor by ID. Response includes the <code class="text-sky-600">ping_url</code>.
+      </p>
     </div>
     <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://runlater.eu/api/v1/monitors/mon_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
@@ -403,7 +428,9 @@
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">interval_seconds</code></td>
           <td class="py-2 pr-4 text-slate-500">integer</td>
-          <td class="py-2 text-slate-600">Expected interval, 60-604800 (required for interval type)</td>
+          <td class="py-2 text-slate-600">
+            Expected interval, 60-604800 (required for interval type)
+          </td>
         </tr>
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">cron_expression</code></td>
@@ -423,7 +450,9 @@
         <tr>
           <td class="py-2 pr-4"><code class="text-sky-600">muted</code></td>
           <td class="py-2 pr-4 text-slate-500">boolean</td>
-          <td class="py-2 text-slate-600">Mute down/recovery notifications for this monitor (default: false)</td>
+          <td class="py-2 text-slate-600">
+            Mute down/recovery notifications for this monitor (default: false)
+          </td>
         </tr>
       </table>
     </div>
@@ -449,7 +478,9 @@
         </span>
         <span class="font-mono text-sm">/monitors/:id</span>
       </div>
-      <p class="text-slate-600 m-0">Update a monitor. Only include the fields you want to change.</p>
+      <p class="text-slate-600 m-0">
+        Update a monitor. Only include the fields you want to change.
+      </p>
     </div>
     <pre
       phx-no-curly-interpolation
@@ -656,7 +687,9 @@
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">monitors[].interval_seconds</code></td>
           <td class="py-2 pr-4 text-slate-500">integer</td>
-          <td class="py-2 text-slate-600">Expected ping interval in seconds (when schedule_type is "interval")</td>
+          <td class="py-2 text-slate-600">
+            Expected ping interval in seconds (when schedule_type is "interval")
+          </td>
         </tr>
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">monitors[].grace_seconds</code></td>
@@ -666,7 +699,9 @@
         <tr>
           <td class="py-2 pr-4"><code class="text-sky-600">delete_removed</code></td>
           <td class="py-2 pr-4 text-slate-500">boolean</td>
-          <td class="py-2 text-slate-600">Delete tasks/monitors not in config (default: false)</td>
+          <td class="py-2 text-slate-600">
+            Delete tasks/monitors not in config (default: false)
+          </td>
         </tr>
       </table>
     </div>

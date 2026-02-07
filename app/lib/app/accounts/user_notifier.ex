@@ -120,7 +120,10 @@ defmodule Prikke.Accounts.UserNotifier do
     """
 
     html = email_template(html_content, "Confirm email change", url)
-    deliver(user.email, "Confirm your new email - Runlater", text, html, email_type: "update_email")
+
+    deliver(user.email, "Confirm your new email - Runlater", text, html,
+      email_type: "update_email"
+    )
   end
 
   @doc """
@@ -186,7 +189,10 @@ defmodule Prikke.Accounts.UserNotifier do
     """
 
     html = email_template(html_content, "Confirm your account", url)
-    deliver(user.email, "Welcome to Runlater - Confirm your account", text, html, email_type: "confirmation")
+
+    deliver(user.email, "Welcome to Runlater - Confirm your account", text, html,
+      email_type: "confirmation"
+    )
   end
 
   @doc """
@@ -222,7 +228,10 @@ defmodule Prikke.Accounts.UserNotifier do
     """
 
     html = email_template(html_content, "Accept invitation", url)
-    deliver(email, "You're invited to #{org_name} on Runlater", text, html, email_type: "organization_invite")
+
+    deliver(email, "You're invited to #{org_name} on Runlater", text, html,
+      email_type: "organization_invite"
+    )
   end
 
   @doc """
@@ -244,7 +253,10 @@ defmodule Prikke.Accounts.UserNotifier do
       """
 
       html = admin_notification_template(user)
-      deliver(admin_email, "New user signup: #{user.email}", text, html, email_type: "admin_new_user")
+
+      deliver(admin_email, "New user signup: #{user.email}", text, html,
+        email_type: "admin_new_user"
+      )
     else
       Logger.debug("No ADMIN_EMAIL configured, skipping new user notification")
       {:ok, :skipped}
@@ -272,7 +284,10 @@ defmodule Prikke.Accounts.UserNotifier do
       """
 
       html = admin_upgrade_template(organization)
-      deliver(admin_email, "Pro upgrade: #{organization.name}", text, html, email_type: "admin_upgrade")
+
+      deliver(admin_email, "Pro upgrade: #{organization.name}", text, html,
+        email_type: "admin_upgrade"
+      )
     else
       Logger.debug("No ADMIN_EMAIL configured, skipping upgrade notification")
       {:ok, :skipped}
@@ -389,7 +404,10 @@ defmodule Prikke.Accounts.UserNotifier do
     """
 
     html = email_template(html_content, "View Dashboard", "https://runlater.eu/dashboard")
-    deliver(email, "Approaching monthly limit - #{organization.name}", text, html, email_type: "limit_warning")
+
+    deliver(email, "Approaching monthly limit - #{organization.name}", text, html,
+      email_type: "limit_warning"
+    )
   end
 
   @doc """
@@ -445,7 +463,10 @@ defmodule Prikke.Accounts.UserNotifier do
     """
 
     html = email_template(html_content, "View Dashboard", "https://runlater.eu/dashboard")
-    deliver(email, "Monthly limit reached - #{organization.name}", text, html, email_type: "limit_reached")
+
+    deliver(email, "Monthly limit reached - #{organization.name}", text, html,
+      email_type: "limit_reached"
+    )
   end
 
   defp format_number(n) when n >= 1000 do
@@ -501,7 +522,10 @@ defmodule Prikke.Accounts.UserNotifier do
       """
 
       html = admin_monthly_summary_template(stats)
-      deliver(admin_email, "Monthly Summary: #{month_name}", text, html, email_type: "monthly_summary")
+
+      deliver(admin_email, "Monthly Summary: #{month_name}", text, html,
+        email_type: "monthly_summary"
+      )
     else
       Logger.debug("No ADMIN_EMAIL configured, skipping monthly summary")
       {:ok, :skipped}

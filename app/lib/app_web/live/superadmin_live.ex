@@ -235,7 +235,7 @@ defmodule PrikkeWeb.SuperadminLive do
           <h2 class="text-lg font-semibold text-slate-900">System Performance</h2>
           <span class="text-xs text-slate-400">Updated every 10s</span>
         </div>
-
+        
     <!-- Real-time metrics -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div>
@@ -286,15 +286,19 @@ defmodule PrikkeWeb.SuperadminLive do
               {Map.get(@metrics, :system_memory_used_pct, 0)}%
             </div>
             <div class="text-xs text-slate-400 mt-0.5">
-              {Float.round(Map.get(@metrics, :system_memory_used_mb, 0) / 1024, 1)} /
-              {Float.round(Map.get(@metrics, :system_memory_total_mb, 0) / 1024, 1)} GB
+              {Float.round(Map.get(@metrics, :system_memory_used_mb, 0) / 1024, 1)} / {Float.round(
+                Map.get(@metrics, :system_memory_total_mb, 0) / 1024,
+                1
+              )} GB
             </div>
           </div>
         </div>
-
+        
     <!-- Response time percentiles -->
         <div class="border-t border-white/50 pt-4 mb-4">
-          <div class="text-sm font-medium text-slate-700 mb-3">Webhook Response Times (last 1 hour)</div>
+          <div class="text-sm font-medium text-slate-700 mb-3">
+            Webhook Response Times (last 1 hour)
+          </div>
           <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div>
               <div class="text-xs text-slate-500">p50</div>
@@ -328,7 +332,7 @@ defmodule PrikkeWeb.SuperadminLive do
             </div>
           </div>
         </div>
-
+        
     <!-- Secondary metrics -->
         <div class="border-t border-white/50 pt-4 grid grid-cols-2 md:grid-cols-5 gap-4">
           <div>
@@ -369,7 +373,7 @@ defmodule PrikkeWeb.SuperadminLive do
             </div>
           </div>
         </div>
-
+        
     <!-- Alerts -->
         <%= if @system_alerts != [] do %>
           <div class="border-t border-white/50 pt-4 mt-4">
@@ -395,7 +399,7 @@ defmodule PrikkeWeb.SuperadminLive do
           </div>
         <% end %>
       </div>
-
+      
     <!-- Execution Trend Chart -->
       <div class="glass-card rounded-2xl p-6 mb-8">
         <h2 class="text-lg font-semibold text-slate-900 mb-4">Execution Trend (14 days)</h2>
@@ -705,7 +709,7 @@ defmodule PrikkeWeb.SuperadminLive do
           </div>
         </div>
       </div>
-
+      
     <!-- Monthly Summary Emails -->
       <div class="glass-card rounded-2xl mb-8">
         <div class="px-6 py-4 border-b border-white/50 flex justify-between items-center">
@@ -741,7 +745,7 @@ defmodule PrikkeWeb.SuperadminLive do
           <% end %>
         </div>
       </div>
-
+      
     <!-- Recent Emails -->
       <div class="glass-card rounded-2xl mb-8">
         <div class="px-6 py-4 border-b border-white/50">

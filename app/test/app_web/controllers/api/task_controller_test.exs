@@ -38,6 +38,29 @@ defmodule PrikkeWeb.Api.TaskControllerTest do
       assert json_response(conn, 200)["data"] == []
     end
 
+    test "filters tasks by queue parameter", %{conn: conn, org: org} do
+      _task1 = task_fixture(org, %{name: "Payment Task", queue: "payments"})
+      _task2 = task_fixture(org, %{name: "Email Task", queue: "emails"})
+      _task3 = task_fixture(org, %{name: "No Queue Task"})
+
+      conn = get(conn, ~p"/api/v1/tasks?queue=payments")
+      response = json_response(conn, 200)
+
+      assert length(response["data"]) == 1
+      assert hd(response["data"])["name"] == "Payment Task"
+    end
+
+    test "filters tasks with no queue using 'none'", %{conn: conn, org: org} do
+      _task1 = task_fixture(org, %{name: "Payment Task", queue: "payments"})
+      _task2 = task_fixture(org, %{name: "No Queue Task"})
+
+      conn = get(conn, ~p"/api/v1/tasks?queue=none")
+      response = json_response(conn, 200)
+
+      assert length(response["data"]) == 1
+      assert hd(response["data"])["name"] == "No Queue Task"
+    end
+
     test "returns 401 without auth", %{org: _org} do
       conn =
         build_conn()

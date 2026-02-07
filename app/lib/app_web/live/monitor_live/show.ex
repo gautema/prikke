@@ -189,10 +189,19 @@ defmodule PrikkeWeb.MonitorLive.Show do
   defp status_label(_), do: "Unknown"
 
   defp format_schedule(%{schedule_type: "cron", cron_expression: expr}), do: "Cron: #{expr}"
-  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}) when s < 120, do: "Every #{s} seconds"
-  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}) when s < 7200, do: "Every #{div(s, 60)} minutes"
-  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}) when s < 172_800, do: "Every #{div(s, 3600)} hours"
-  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}), do: "Every #{div(s, 86400)} days"
+
+  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}) when s < 120,
+    do: "Every #{s} seconds"
+
+  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}) when s < 7200,
+    do: "Every #{div(s, 60)} minutes"
+
+  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}) when s < 172_800,
+    do: "Every #{div(s, 3600)} hours"
+
+  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}),
+    do: "Every #{div(s, 86400)} days"
+
   defp format_schedule(_), do: "Unknown"
 
   defp format_grace(%{grace_period_seconds: 0}), do: "None"
@@ -204,163 +213,166 @@ defmodule PrikkeWeb.MonitorLive.Show do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-        <div class="mb-4">
-          <.link
-            navigate={~p"/monitors"}
-            class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
-          >
-            <.icon name="hero-chevron-left" class="w-4 h-4" /> Back to Monitors
-          </.link>
-        </div>
+      <div class="mb-4">
+        <.link
+          navigate={~p"/monitors"}
+          class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
+        >
+          <.icon name="hero-chevron-left" class="w-4 h-4" /> Back to Monitors
+        </.link>
+      </div>
 
-        <div class="flex justify-between items-center mb-6">
-          <div class="flex items-center gap-3">
-            <h1 class="text-xl sm:text-2xl font-bold text-slate-900">{@monitor.name}</h1>
-            <%= if @monitor.muted do %>
-              <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-500" title="Notifications muted">
-                <.icon name="hero-bell-slash" class="w-3.5 h-3.5" /> Muted
-              </span>
-            <% end %>
-            <span class={["text-xs font-medium px-2 py-0.5 rounded", status_color(@monitor.status)]}>
-              {status_label(@monitor.status)}
+      <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center gap-3">
+          <h1 class="text-xl sm:text-2xl font-bold text-slate-900">{@monitor.name}</h1>
+          <%= if @monitor.muted do %>
+            <span
+              class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-500"
+              title="Notifications muted"
+            >
+              <.icon name="hero-bell-slash" class="w-3.5 h-3.5" /> Muted
             </span>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <div id="monitor-actions-menu" class="relative" phx-hook=".ClickOutside">
-              <button
-                type="button"
-                phx-click="toggle_menu"
-                class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
-              >
-                <.icon name="hero-ellipsis-vertical" class="w-5 h-5" />
-              </button>
-              <%= if @menu_open do %>
-                <div class="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
-                  <.link
-                    navigate={~p"/monitors/#{@monitor.id}/edit"}
-                    class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                  >
-                    Edit
-                  </.link>
-                  <button
-                    type="button"
-                    phx-click="toggle_mute"
-                    class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                  >
-                    <%= if @monitor.muted do %>
-                      <.icon name="hero-bell" class="w-4 h-4 text-slate-400" /> Unmute
-                    <% else %>
-                      <.icon name="hero-bell-slash" class="w-4 h-4 text-slate-400" /> Mute
-                    <% end %>
-                  </button>
-                  <button
-                    type="button"
-                    phx-click="toggle"
-                    class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                  >
-                    <%= if @monitor.enabled, do: "Pause", else: "Enable" %>
-                  </button>
-                  <button
-                    type="button"
-                    phx-click="delete"
-                    data-confirm="Are you sure you want to delete this monitor?"
-                    class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    Delete
-                  </button>
-                </div>
-              <% end %>
-            </div>
-          </div>
+          <% end %>
+          <span class={["text-xs font-medium px-2 py-0.5 rounded", status_color(@monitor.status)]}>
+            {status_label(@monitor.status)}
+          </span>
         </div>
 
-        <%!-- Uptime status --%>
-        <div class="glass-card rounded-2xl p-6 mb-6">
-          <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-3">Uptime</h2>
-          <.uptime_line
-            days={Map.get(@daily_status, @monitor.id, [])}
-            label={"Last #{@status_days} days"}
-          />
-        </div>
-
-        <%!-- Ping URL card --%>
-        <div class="glass-card rounded-2xl p-6 mb-6">
-          <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-3">Ping URL</h2>
-          <div class="flex items-center gap-2 bg-slate-50 rounded-lg p-3">
-            <code class="flex-1 text-sm text-slate-800 font-mono break-all">{@ping_url}</code>
+        <div class="flex items-center gap-2">
+          <div id="monitor-actions-menu" class="relative" phx-hook=".ClickOutside">
             <button
               type="button"
-              id="copy-ping-url"
-              phx-hook=".CopyToClipboard"
-              data-clipboard-text={@ping_url}
-              class="shrink-0 text-slate-400 hover:text-emerald-600 p-1.5 rounded transition-colors"
-              title="Copy to clipboard"
+              phx-click="toggle_menu"
+              class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
             >
-              <.icon name="hero-clipboard-document" class="w-5 h-5" />
+              <.icon name="hero-ellipsis-vertical" class="w-5 h-5" />
             </button>
-          </div>
-          <div class="mt-3 text-sm text-slate-500">
-            <p class="mb-1">Add this to the end of your cron job:</p>
-            <code class="block bg-slate-800 text-emerald-400 rounded-lg p-3 text-xs font-mono overflow-x-auto">
-              curl -fsS --retry 3 {@ping_url}
-            </code>
+            <%= if @menu_open do %>
+              <div class="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
+                <.link
+                  navigate={~p"/monitors/#{@monitor.id}/edit"}
+                  class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  Edit
+                </.link>
+                <button
+                  type="button"
+                  phx-click="toggle_mute"
+                  class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                >
+                  <%= if @monitor.muted do %>
+                    <.icon name="hero-bell" class="w-4 h-4 text-slate-400" /> Unmute
+                  <% else %>
+                    <.icon name="hero-bell-slash" class="w-4 h-4 text-slate-400" /> Mute
+                  <% end %>
+                </button>
+                <button
+                  type="button"
+                  phx-click="toggle"
+                  class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  {if @monitor.enabled, do: "Pause", else: "Enable"}
+                </button>
+                <button
+                  type="button"
+                  phx-click="delete"
+                  data-confirm="Are you sure you want to delete this monitor?"
+                  class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                >
+                  Delete
+                </button>
+              </div>
+            <% end %>
           </div>
         </div>
+      </div>
 
-        <%!-- Details --%>
-        <div class="glass-card rounded-2xl p-6 mb-6">
-          <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Details</h2>
-          <dl class="grid grid-cols-2 gap-4">
-            <div>
-              <dt class="text-sm text-slate-500">Schedule</dt>
-              <dd class="text-sm font-medium text-slate-900 mt-0.5">{format_schedule(@monitor)}</dd>
-            </div>
-            <div>
-              <dt class="text-sm text-slate-500">Grace Period</dt>
-              <dd class="text-sm font-medium text-slate-900 mt-0.5">{format_grace(@monitor)}</dd>
-            </div>
-            <div>
-              <dt class="text-sm text-slate-500">Last Ping</dt>
-              <dd class="text-sm font-medium text-slate-900 mt-0.5">
-                <%= if @monitor.last_ping_at do %>
-                  <.local_time id="monitor-last-ping" datetime={@monitor.last_ping_at} />
-                <% else %>
-                  Never
-                <% end %>
-              </dd>
-            </div>
-            <div>
-              <dt class="text-sm text-slate-500">Next Expected</dt>
-              <dd class="text-sm font-medium text-slate-900 mt-0.5">
-                <%= if @monitor.next_expected_at do %>
-                  <.local_time id="monitor-next-expected" datetime={@monitor.next_expected_at} />
-                <% else %>
-                  Awaiting first ping
-                <% end %>
-              </dd>
-            </div>
-          </dl>
+      <%!-- Uptime status --%>
+      <div class="glass-card rounded-2xl p-6 mb-6">
+        <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-3">Uptime</h2>
+        <.uptime_line
+          days={Map.get(@daily_status, @monitor.id, [])}
+          label={"Last #{@status_days} days"}
+        />
+      </div>
+
+      <%!-- Ping URL card --%>
+      <div class="glass-card rounded-2xl p-6 mb-6">
+        <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-3">Ping URL</h2>
+        <div class="flex items-center gap-2 bg-slate-50 rounded-lg p-3">
+          <code class="flex-1 text-sm text-slate-800 font-mono break-all">{@ping_url}</code>
+          <button
+            type="button"
+            id="copy-ping-url"
+            phx-hook=".CopyToClipboard"
+            data-clipboard-text={@ping_url}
+            class="shrink-0 text-slate-400 hover:text-emerald-600 p-1.5 rounded transition-colors"
+            title="Copy to clipboard"
+          >
+            <.icon name="hero-clipboard-document" class="w-5 h-5" />
+          </button>
         </div>
+        <div class="mt-3 text-sm text-slate-500">
+          <p class="mb-1">Add this to the end of your cron job:</p>
+          <code class="block bg-slate-800 text-emerald-400 rounded-lg p-3 text-xs font-mono overflow-x-auto">
+            curl -fsS --retry 3 {@ping_url}
+          </code>
+        </div>
+      </div>
 
-        <%!-- Recent Pings --%>
-        <div class="glass-card rounded-2xl p-6">
-          <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Recent Pings</h2>
-          <%= if @pings == [] do %>
-            <p class="text-sm text-slate-400 text-center py-4">No pings received yet</p>
-          <% else %>
-            <div class="divide-y divide-slate-100">
-              <%= for ping <- @pings do %>
-                <div class="py-2 flex items-center gap-3">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                  <span class="text-sm text-slate-700">
-                    <.local_time id={"ping-#{ping.id}"} datetime={ping.received_at} />
-                  </span>
-                </div>
+      <%!-- Details --%>
+      <div class="glass-card rounded-2xl p-6 mb-6">
+        <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Details</h2>
+        <dl class="grid grid-cols-2 gap-4">
+          <div>
+            <dt class="text-sm text-slate-500">Schedule</dt>
+            <dd class="text-sm font-medium text-slate-900 mt-0.5">{format_schedule(@monitor)}</dd>
+          </div>
+          <div>
+            <dt class="text-sm text-slate-500">Grace Period</dt>
+            <dd class="text-sm font-medium text-slate-900 mt-0.5">{format_grace(@monitor)}</dd>
+          </div>
+          <div>
+            <dt class="text-sm text-slate-500">Last Ping</dt>
+            <dd class="text-sm font-medium text-slate-900 mt-0.5">
+              <%= if @monitor.last_ping_at do %>
+                <.local_time id="monitor-last-ping" datetime={@monitor.last_ping_at} />
+              <% else %>
+                Never
               <% end %>
-            </div>
-          <% end %>
-        </div>
+            </dd>
+          </div>
+          <div>
+            <dt class="text-sm text-slate-500">Next Expected</dt>
+            <dd class="text-sm font-medium text-slate-900 mt-0.5">
+              <%= if @monitor.next_expected_at do %>
+                <.local_time id="monitor-next-expected" datetime={@monitor.next_expected_at} />
+              <% else %>
+                Awaiting first ping
+              <% end %>
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      <%!-- Recent Pings --%>
+      <div class="glass-card rounded-2xl p-6">
+        <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Recent Pings</h2>
+        <%= if @pings == [] do %>
+          <p class="text-sm text-slate-400 text-center py-4">No pings received yet</p>
+        <% else %>
+          <div class="divide-y divide-slate-100">
+            <%= for ping <- @pings do %>
+              <div class="py-2 flex items-center gap-3">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                <span class="text-sm text-slate-700">
+                  <.local_time id={"ping-#{ping.id}"} datetime={ping.received_at} />
+                </span>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
 
       <script :type={Phoenix.LiveView.ColocatedHook} name=".ClickOutside">
         export default {

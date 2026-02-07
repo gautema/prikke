@@ -61,7 +61,9 @@ defmodule Prikke.Notifications do
           send_recovery_webhook(execution, webhook_url)
         end
       else
-        Logger.debug("[Notifications] Skipping recovery notification - previous execution was not failed")
+        Logger.debug(
+          "[Notifications] Skipping recovery notification - previous execution was not failed"
+        )
       end
     else
       Logger.debug("[Notifications] Recovery notifications disabled for org #{org.id}")
@@ -171,31 +173,33 @@ defmodule Prikke.Notifications do
   end
 
   defp failure_email_template(execution, task, execution_url) do
-    status_code_row = if execution.status_code do
-      """
-      <tr>
-        <td style="padding: 8px 16px;">
-          <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">HTTP Status</p>
-          <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a; font-weight: 500;">#{execution.status_code}</p>
-        </td>
-      </tr>
-      """
-    else
-      ""
-    end
+    status_code_row =
+      if execution.status_code do
+        """
+        <tr>
+          <td style="padding: 8px 16px;">
+            <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">HTTP Status</p>
+            <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a; font-weight: 500;">#{execution.status_code}</p>
+          </td>
+        </tr>
+        """
+      else
+        ""
+      end
 
-    error_row = if execution.error_message do
-      """
-      <tr>
-        <td style="padding: 8px 16px;">
-          <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">Error</p>
-          <p style="margin: 4px 0 0 0; font-size: 14px; color: #dc2626;">#{execution.error_message}</p>
-        </td>
-      </tr>
-      """
-    else
-      ""
-    end
+    error_row =
+      if execution.error_message do
+        """
+        <tr>
+          <td style="padding: 8px 16px;">
+            <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">Error</p>
+            <p style="margin: 4px 0 0 0; font-size: 14px; color: #dc2626;">#{execution.error_message}</p>
+          </td>
+        </tr>
+        """
+      else
+        ""
+      end
 
     """
     <!DOCTYPE html>
@@ -423,24 +427,28 @@ defmodule Prikke.Notifications do
         :ok
 
       {:error, reason} ->
-        Logger.error("[Notifications] Failed to send recovery email to #{to_email}: #{inspect(reason)}")
+        Logger.error(
+          "[Notifications] Failed to send recovery email to #{to_email}: #{inspect(reason)}"
+        )
+
         :error
     end
   end
 
   defp recovery_email_template(execution, task, execution_url) do
-    status_code_row = if execution.status_code do
-      """
-      <tr>
-        <td style="padding: 8px 16px;">
-          <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">HTTP Status</p>
-          <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a; font-weight: 500;">#{execution.status_code}</p>
-        </td>
-      </tr>
-      """
-    else
-      ""
-    end
+    status_code_row =
+      if execution.status_code do
+        """
+        <tr>
+          <td style="padding: 8px 16px;">
+            <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">HTTP Status</p>
+            <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a; font-weight: 500;">#{execution.status_code}</p>
+          </td>
+        </tr>
+        """
+      else
+        ""
+      end
 
     """
     <!DOCTYPE html>
@@ -538,7 +546,10 @@ defmodule Prikke.Notifications do
         :ok
 
       {:ok, %{status: status, body: body}} ->
-        Logger.error("[Notifications] Recovery webhook failed with status #{status}: #{inspect(body)}")
+        Logger.error(
+          "[Notifications] Recovery webhook failed with status #{status}: #{inspect(body)}"
+        )
+
         :error
 
       {:error, reason} ->
@@ -732,7 +743,9 @@ defmodule Prikke.Notifications do
       |> text_body(String.trim(text_body))
       |> html_body(html_body)
 
-    case Mailer.deliver_and_log(email, "monitor_recovery", organization_id: monitor.organization_id) do
+    case Mailer.deliver_and_log(email, "monitor_recovery",
+           organization_id: monitor.organization_id
+         ) do
       {:ok, _} ->
         Logger.info("[Notifications] Monitor recovery email sent for #{monitor.id}")
         :ok
@@ -747,49 +760,50 @@ defmodule Prikke.Notifications do
     event = if event_type == :down, do: "monitor.down", else: "monitor.recovered"
     status = if event_type == :down, do: "down", else: "up"
 
-    payload = cond do
-      slack_webhook?(webhook_url) ->
-        emoji = if event_type == :down, do: ":red_circle:", else: ":white_check_mark:"
-        label = if event_type == :down, do: "Monitor Down", else: "Monitor Recovered"
+    payload =
+      cond do
+        slack_webhook?(webhook_url) ->
+          emoji = if event_type == :down, do: ":red_circle:", else: ":white_check_mark:"
+          label = if event_type == :down, do: "Monitor Down", else: "Monitor Recovered"
 
-        text = """
-        #{emoji} *#{label}: #{monitor.name}*
+          text = """
+          #{emoji} *#{label}: #{monitor.name}*
 
-        • Status: `#{status}`
-        • Last ping: #{if monitor.last_ping_at, do: format_datetime(monitor.last_ping_at), else: "Never"}
-        • Schedule: #{format_schedule(monitor)}
-        """
+          • Status: `#{status}`
+          • Last ping: #{if monitor.last_ping_at, do: format_datetime(monitor.last_ping_at), else: "Never"}
+          • Schedule: #{format_schedule(monitor)}
+          """
 
-        Jason.encode!(%{text: String.trim(text)})
+          Jason.encode!(%{text: String.trim(text)})
 
-      discord_webhook?(webhook_url) ->
-        emoji = if event_type == :down, do: ":red_circle:", else: ":white_check_mark:"
-        label = if event_type == :down, do: "Monitor Down", else: "Monitor Recovered"
+        discord_webhook?(webhook_url) ->
+          emoji = if event_type == :down, do: ":red_circle:", else: ":white_check_mark:"
+          label = if event_type == :down, do: "Monitor Down", else: "Monitor Recovered"
 
-        content = """
-        #{emoji} **#{label}: #{monitor.name}**
+          content = """
+          #{emoji} **#{label}: #{monitor.name}**
 
-        • Status: `#{status}`
-        • Last ping: #{if monitor.last_ping_at, do: format_datetime(monitor.last_ping_at), else: "Never"}
-        • Schedule: #{format_schedule(monitor)}
-        """
+          • Status: `#{status}`
+          • Last ping: #{if monitor.last_ping_at, do: format_datetime(monitor.last_ping_at), else: "Never"}
+          • Schedule: #{format_schedule(monitor)}
+          """
 
-        Jason.encode!(%{content: String.trim(content)})
+          Jason.encode!(%{content: String.trim(content)})
 
-      true ->
-        Jason.encode!(%{
-          event: event,
-          monitor: %{
-            id: monitor.id,
-            name: monitor.name,
-            status: status,
-            last_ping_at: monitor.last_ping_at,
-            schedule_type: monitor.schedule_type,
-            cron_expression: monitor.cron_expression,
-            interval_seconds: monitor.interval_seconds
-          }
-        })
-    end
+        true ->
+          Jason.encode!(%{
+            event: event,
+            monitor: %{
+              id: monitor.id,
+              name: monitor.name,
+              status: status,
+              last_ping_at: monitor.last_ping_at,
+              schedule_type: monitor.schedule_type,
+              cron_expression: monitor.cron_expression,
+              interval_seconds: monitor.interval_seconds
+            }
+          })
+      end
 
     headers = [
       {"content-type", "application/json"},

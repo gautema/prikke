@@ -43,7 +43,9 @@ defmodule PrikkeWeb.MonitorLive.Index do
   end
 
   def handle_info({:monitor_updated, monitor}, socket) do
-    monitors = Enum.map(socket.assigns.monitors, fn m -> if m.id == monitor.id, do: monitor, else: m end)
+    monitors =
+      Enum.map(socket.assigns.monitors, fn m -> if m.id == monitor.id, do: monitor, else: m end)
+
     daily_status = Monitors.get_daily_status(monitors, socket.assigns.status_days)
 
     {:noreply,
@@ -159,132 +161,144 @@ defmodule PrikkeWeb.MonitorLive.Index do
   defp status_label(_), do: "Unknown"
 
   defp format_schedule(%{schedule_type: "cron", cron_expression: expr}), do: expr
-  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}) when s < 120, do: "Every #{s}s"
-  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}) when s < 7200, do: "Every #{div(s, 60)}m"
-  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}) when s < 172_800, do: "Every #{div(s, 3600)}h"
-  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}), do: "Every #{div(s, 86400)}d"
+
+  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}) when s < 120,
+    do: "Every #{s}s"
+
+  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}) when s < 7200,
+    do: "Every #{div(s, 60)}m"
+
+  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}) when s < 172_800,
+    do: "Every #{div(s, 3600)}h"
+
+  defp format_schedule(%{schedule_type: "interval", interval_seconds: s}),
+    do: "Every #{div(s, 86400)}d"
+
   defp format_schedule(_), do: ""
 
   @impl true
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-        <div class="mb-4">
-          <.link
-            navigate={~p"/dashboard"}
-            class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
-          >
-            <.icon name="hero-chevron-left" class="w-4 h-4" /> Back to Dashboard
+      <div class="mb-4">
+        <.link
+          navigate={~p"/dashboard"}
+          class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
+        >
+          <.icon name="hero-chevron-left" class="w-4 h-4" /> Back to Dashboard
+        </.link>
+      </div>
+
+      <div class="flex justify-between items-center mb-6 sm:mb-8 pl-1 sm:pl-0">
+        <div>
+          <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Monitors</h1>
+          <p class="text-slate-500 mt-1 text-sm">Heartbeat monitoring for your external cron jobs</p>
+        </div>
+        <.link
+          navigate={~p"/monitors/new"}
+          class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-3 sm:px-4 py-2 rounded-md transition-colors no-underline whitespace-nowrap"
+        >
+          New Monitor
+        </.link>
+      </div>
+
+      <%= if @monitors == [] do %>
+        <div class="glass-card rounded-2xl p-8 sm:p-12 text-center">
+          <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <.icon name="hero-heart" class="w-6 h-6 text-slate-400" />
+          </div>
+          <h3 class="text-lg font-medium text-slate-900 mb-2">No monitors yet</h3>
+          <p class="text-slate-500 mb-6">
+            Create a monitor to track your external cron jobs. We'll alert you if a ping is missed.
+          </p>
+          <.link navigate={~p"/monitors/new"} class="text-emerald-600 font-medium hover:underline">
+            Create a monitor
           </.link>
         </div>
-
-        <div class="flex justify-between items-center mb-6 sm:mb-8 pl-1 sm:pl-0">
-          <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Monitors</h1>
-            <p class="text-slate-500 mt-1 text-sm">Heartbeat monitoring for your external cron jobs</p>
-          </div>
-          <.link
-            navigate={~p"/monitors/new"}
-            class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-3 sm:px-4 py-2 rounded-md transition-colors no-underline whitespace-nowrap"
-          >
-            New Monitor
-          </.link>
-        </div>
-
-        <%= if @monitors == [] do %>
-          <div class="glass-card rounded-2xl p-8 sm:p-12 text-center">
-            <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <.icon name="hero-heart" class="w-6 h-6 text-slate-400" />
-            </div>
-            <h3 class="text-lg font-medium text-slate-900 mb-2">No monitors yet</h3>
-            <p class="text-slate-500 mb-6">
-              Create a monitor to track your external cron jobs. We'll alert you if a ping is missed.
-            </p>
-            <.link navigate={~p"/monitors/new"} class="text-emerald-600 font-medium hover:underline">
-              Create a monitor
-            </.link>
-          </div>
-        <% else %>
-          <div class="glass-card rounded-2xl divide-y divide-slate-200/60">
-            <%= for monitor <- @monitors do %>
-              <div class="px-4 sm:px-6 py-5">
-                <div class="flex items-start sm:items-center justify-between gap-3">
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-                      <span class={["w-2.5 h-2.5 rounded-full shrink-0", status_dot_color(monitor.status)]}
-                            title={status_label(monitor.status)} />
-                      <.link
-                        navigate={~p"/monitors/#{monitor.id}"}
-                        class="font-medium text-slate-900 hover:text-emerald-600 break-all sm:truncate"
-                      >
-                        {monitor.name}
-                      </.link>
-                      <%= if monitor.muted do %>
-                        <span title="Notifications muted">
-                          <.icon name="hero-bell-slash" class="w-4 h-4 text-slate-400" />
-                        </span>
-                      <% end %>
-                      <span class={[
-                        "text-xs font-medium px-2 py-0.5 rounded",
-                        monitor.status == "up" && "bg-emerald-100 text-emerald-700",
-                        monitor.status == "down" && "bg-red-100 text-red-700",
-                        monitor.status == "new" && "bg-slate-100 text-slate-600",
-                        monitor.status == "paused" && "bg-amber-100 text-amber-700"
-                      ]}>
-                        {status_label(monitor.status)}
+      <% else %>
+        <div class="glass-card rounded-2xl divide-y divide-slate-200/60">
+          <%= for monitor <- @monitors do %>
+            <div class="px-4 sm:px-6 py-5">
+              <div class="flex items-start sm:items-center justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                    <span
+                      class={["w-2.5 h-2.5 rounded-full shrink-0", status_dot_color(monitor.status)]}
+                      title={status_label(monitor.status)}
+                    />
+                    <.link
+                      navigate={~p"/monitors/#{monitor.id}"}
+                      class="font-medium text-slate-900 hover:text-emerald-600 break-all sm:truncate"
+                    >
+                      {monitor.name}
+                    </.link>
+                    <%= if monitor.muted do %>
+                      <span title="Notifications muted">
+                        <.icon name="hero-bell-slash" class="w-4 h-4 text-slate-400" />
                       </span>
-                    </div>
-                    <div class="text-xs sm:text-sm text-slate-400 mt-1">
-                      <span class="font-mono">{format_schedule(monitor)}</span>
-                      <%= if monitor.last_ping_at do %>
-                        <span class="text-slate-300 ml-1">·</span>
-                        <span class="ml-1">
-                          Last ping: <.local_time
-                            id={"mon-#{monitor.id}-last-ping"}
-                            datetime={monitor.last_ping_at}
-                          />
-                        </span>
-                      <% end %>
-                    </div>
+                    <% end %>
+                    <span class={[
+                      "text-xs font-medium px-2 py-0.5 rounded",
+                      monitor.status == "up" && "bg-emerald-100 text-emerald-700",
+                      monitor.status == "down" && "bg-red-100 text-red-700",
+                      monitor.status == "new" && "bg-slate-100 text-slate-600",
+                      monitor.status == "paused" && "bg-amber-100 text-amber-700"
+                    ]}>
+                      {status_label(monitor.status)}
+                    </span>
                   </div>
-                  <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-                    <button
-                      type="button"
-                      phx-click="toggle"
-                      phx-value-id={monitor.id}
-                      class={[
-                        "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2",
-                        monitor.enabled && "bg-emerald-600",
-                        !monitor.enabled && "bg-slate-200"
-                      ]}
-                    >
-                      <span class={[
-                        "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                        monitor.enabled && "translate-x-5",
-                        !monitor.enabled && "translate-x-0"
-                      ]} />
-                    </button>
-                    <button
-                      type="button"
-                      phx-click="delete"
-                      phx-value-id={monitor.id}
-                      data-confirm="Are you sure you want to delete this monitor?"
-                      class="text-slate-400 hover:text-red-600 p-1"
-                    >
-                      <.icon name="hero-trash" class="w-5 h-5" />
-                    </button>
+                  <div class="text-xs sm:text-sm text-slate-400 mt-1">
+                    <span class="font-mono">{format_schedule(monitor)}</span>
+                    <%= if monitor.last_ping_at do %>
+                      <span class="text-slate-300 ml-1">·</span>
+                      <span class="ml-1">
+                        Last ping:
+                        <.local_time
+                          id={"mon-#{monitor.id}-last-ping"}
+                          datetime={monitor.last_ping_at}
+                        />
+                      </span>
+                    <% end %>
                   </div>
                 </div>
-                <.link navigate={~p"/monitors/#{monitor.id}"} class="block">
-                  <.uptime_line
-                    days={Map.get(@daily_status, monitor.id, [])}
-                    label={"Last #{@status_days} days"}
-                  />
-                </.link>
+                <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                  <button
+                    type="button"
+                    phx-click="toggle"
+                    phx-value-id={monitor.id}
+                    class={[
+                      "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2",
+                      monitor.enabled && "bg-emerald-600",
+                      !monitor.enabled && "bg-slate-200"
+                    ]}
+                  >
+                    <span class={[
+                      "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                      monitor.enabled && "translate-x-5",
+                      !monitor.enabled && "translate-x-0"
+                    ]} />
+                  </button>
+                  <button
+                    type="button"
+                    phx-click="delete"
+                    phx-value-id={monitor.id}
+                    data-confirm="Are you sure you want to delete this monitor?"
+                    class="text-slate-400 hover:text-red-600 p-1"
+                  >
+                    <.icon name="hero-trash" class="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-            <% end %>
-          </div>
-        <% end %>
+              <.link navigate={~p"/monitors/#{monitor.id}"} class="block">
+                <.uptime_line
+                  days={Map.get(@daily_status, monitor.id, [])}
+                  label={"Last #{@status_days} days"}
+                />
+              </.link>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
     </Layouts.app>
     """
   end

@@ -47,9 +47,10 @@ defmodule Prikke.MetricsTest do
 
       timestamps = Enum.map(samples, & &1.timestamp)
 
-      assert timestamps == Enum.sort(timestamps, fn a, b ->
-               DateTime.compare(a, b) in [:lt, :eq]
-             end)
+      assert timestamps ==
+               Enum.sort(timestamps, fn a, b ->
+                 DateTime.compare(a, b) in [:lt, :eq]
+               end)
     end
 
     test "sample values are reasonable" do

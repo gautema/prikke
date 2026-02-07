@@ -59,14 +59,17 @@
   </div>
 
   <p>
-    The <code class="bg-slate-100 px-2 py-1 rounded text-sm">-fsS</code> flags make cURL fail silently on errors but show server errors.
-    <code class="bg-slate-100 px-2 py-1 rounded text-sm">--retry 3</code> retries transient network failures.
+    The <code class="bg-slate-100 px-2 py-1 rounded text-sm">-fsS</code>
+    flags make cURL fail silently on errors but show server errors.
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">--retry 3</code>
+    retries transient network failures.
   </p>
 
   <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded-r-lg my-6">
     <strong class="text-emerald-800">Tip:</strong>
     <span class="text-emerald-700">
-      Place the ping <strong>after</strong> your main command using <code>&&</code>. This way, the ping only fires if the job succeeded.
+      Place the ping <strong>after</strong>
+      your main command using <code>&&</code>. This way, the ping only fires if the job succeeded.
     </span>
   </div>
 
@@ -76,7 +79,9 @@
     Expect a ping every N seconds. After each ping, the next expected time is
     calculated as: <code class="bg-slate-100 px-2 py-1 rounded text-sm">last_ping + interval</code>.
   </p>
-  <p>Available presets: 1 min, 5 min, 15 min, 30 min, 1 hour, 6 hours, 12 hours, 24 hours, 7 days.</p>
+  <p>
+    Available presets: 1 min, 5 min, 15 min, 30 min, 1 hour, 6 hours, 12 hours, 24 hours, 7 days.
+  </p>
 
   <h3>Cron Expression</h3>
   <p>
@@ -154,13 +159,28 @@
   <h2>Notifications</h2>
   <p>
     Monitor alerts use your organization's notification settings (email and webhook).
-    Configure them in
-    <a href="/organizations/notifications" class="text-emerald-600 hover:underline">Organization Settings &rarr; Notifications</a>.
+    Configure them in <a
+      href="/organizations/notifications"
+      class="text-emerald-600 hover:underline"
+    >Organization Settings &rarr; Notifications</a>.
   </p>
   <ul>
-    <li><strong>Down alert:</strong> Sent when a monitor misses its expected ping (respects <code class="bg-slate-100 px-2 py-1 rounded text-sm">notify_on_failure</code> setting)</li>
-    <li><strong>Recovery alert:</strong> Sent when pings resume after downtime (respects <code class="bg-slate-100 px-2 py-1 rounded text-sm">notify_on_recovery</code> setting)</li>
-    <li><strong>Per-monitor muting:</strong> Mute notifications for individual monitors without affecting organization-wide settings. Toggle from the monitor detail page or via the API (<code class="bg-slate-100 px-2 py-1 rounded text-sm">muted: true</code>).</li>
+    <li>
+      <strong>Down alert:</strong>
+      Sent when a monitor misses its expected ping (respects
+      <code class="bg-slate-100 px-2 py-1 rounded text-sm">notify_on_failure</code>
+      setting)
+    </li>
+    <li>
+      <strong>Recovery alert:</strong>
+      Sent when pings resume after downtime (respects
+      <code class="bg-slate-100 px-2 py-1 rounded text-sm">notify_on_recovery</code>
+      setting)
+    </li>
+    <li>
+      <strong>Per-monitor muting:</strong>
+      Mute notifications for individual monitors without affecting organization-wide settings. Toggle from the monitor detail page or via the API (<code class="bg-slate-100 px-2 py-1 rounded text-sm">muted: true</code>).
+    </li>
   </ul>
 
   <h3>Notification Webhook Payloads</h3>
@@ -189,7 +209,9 @@
   }
 }</pre>
 
-  <p>Slack and Discord webhook URLs are auto-detected and formatted with appropriate rich messages.</p>
+  <p>
+    Slack and Discord webhook URLs are auto-detected and formatted with appropriate rich messages.
+  </p>
 
   <h2>Ping Endpoint</h2>
   <p>
@@ -223,17 +245,23 @@ curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">h
       <tbody class="text-slate-600">
         <tr class="border-b border-slate-100">
           <td class="py-3 px-4"><code class="text-emerald-600">200</code></td>
-          <td class="py-3 px-4" phx-no-curly-interpolation><code class="text-sm">{"status": "ok", "monitor": "..."}</code></td>
+          <td class="py-3 px-4" phx-no-curly-interpolation>
+            <code class="text-sm">{"status": "ok", "monitor": "..."}</code>
+          </td>
           <td class="py-3 px-4">Ping recorded successfully</td>
         </tr>
         <tr class="border-b border-slate-100">
           <td class="py-3 px-4"><code class="text-red-600">404</code></td>
-          <td class="py-3 px-4" phx-no-curly-interpolation><code class="text-sm">{"error": "Monitor not found"}</code></td>
+          <td class="py-3 px-4" phx-no-curly-interpolation>
+            <code class="text-sm">{"error": "Monitor not found"}</code>
+          </td>
           <td class="py-3 px-4">Invalid token</td>
         </tr>
         <tr>
           <td class="py-3 px-4"><code class="text-amber-600">410</code></td>
-          <td class="py-3 px-4" phx-no-curly-interpolation><code class="text-sm">{"error": "Monitor is disabled"}</code></td>
+          <td class="py-3 px-4" phx-no-curly-interpolation>
+            <code class="text-sm">{"error": "Monitor is disabled"}</code>
+          </td>
           <td class="py-3 px-4">Monitor is paused/disabled</td>
         </tr>
       </tbody>
@@ -333,8 +361,10 @@ curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">h
   </div>
 
   <p>
-    For the full API specification including request/response schemas, visit the
-    <a href="/api/v1/docs" class="text-emerald-600 hover:underline">interactive API docs</a>.
+    For the full API specification including request/response schemas, visit the <a
+      href="/api/v1/docs"
+      class="text-emerald-600 hover:underline"
+    >interactive API docs</a>.
   </p>
 
   <h2>Tier Limits</h2>

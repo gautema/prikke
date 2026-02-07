@@ -14,6 +14,7 @@ defmodule PrikkeWeb.TaskLive.Index do
         Executions.subscribe_organization_executions(org.id)
       end
 
+      queues = Tasks.list_queues(org)
       tasks = Tasks.list_tasks(org)
       task_ids = Enum.map(tasks, & &1.id)
       latest_statuses = Executions.get_latest_statuses(task_ids)
@@ -24,6 +25,8 @@ defmodule PrikkeWeb.TaskLive.Index do
        |> assign(:organization, org)
        |> assign(:page_title, "Tasks")
        |> assign(:tasks, tasks)
+       |> assign(:queues, queues)
+       |> assign(:queue_filter, nil)
        |> assign(:latest_statuses, latest_statuses)
        |> assign(:task_run_histories, task_run_histories)}
     else
@@ -35,33 +38,36 @@ defmodule PrikkeWeb.TaskLive.Index do
   end
 
   @impl true
-  def handle_info({:created, task}, socket) do
-    {:noreply,
-     socket
-     |> update(:tasks, fn tasks -> [task | tasks] end)
-     |> refresh_latest_statuses()}
+  def handle_info({:created, _task}, socket) do
+    {:noreply, refetch_tasks(socket)}
   end
 
-  def handle_info({:updated, task}, socket) do
-    {:noreply,
-     socket
-     |> update(:tasks, fn tasks ->
-       Enum.map(tasks, fn t -> if t.id == task.id, do: task, else: t end)
-     end)
-     |> refresh_latest_statuses()}
+  def handle_info({:updated, _task}, socket) do
+    {:noreply, refetch_tasks(socket)}
   end
 
-  def handle_info({:deleted, task}, socket) do
-    {:noreply,
-     socket
-     |> update(:tasks, fn tasks ->
-       Enum.reject(tasks, fn t -> t.id == task.id end)
-     end)
-     |> update(:latest_statuses, fn statuses -> Map.delete(statuses, task.id) end)}
+  def handle_info({:deleted, _task}, socket) do
+    {:noreply, refetch_tasks(socket)}
   end
 
   def handle_info({:execution_updated, _execution}, socket) do
     {:noreply, refresh_latest_statuses(socket)}
+  end
+
+  defp refetch_tasks(socket) do
+    org = socket.assigns.organization
+    queue_filter = socket.assigns.queue_filter
+    opts = if queue_filter, do: [queue: queue_filter], else: []
+
+    queues = Tasks.list_queues(org)
+    tasks = Tasks.list_tasks(org, opts)
+    task_ids = Enum.map(tasks, & &1.id)
+
+    socket
+    |> assign(:queues, queues)
+    |> assign(:tasks, tasks)
+    |> assign(:latest_statuses, Executions.get_latest_statuses(task_ids))
+    |> assign(:task_run_histories, Executions.get_recent_statuses_for_tasks(task_ids, 20))
   end
 
   defp refresh_latest_statuses(socket) do
@@ -73,6 +79,22 @@ defmodule PrikkeWeb.TaskLive.Index do
   end
 
   @impl true
+  def handle_event("filter", %{"queue" => queue}, socket) do
+    queue_filter = if queue == "", do: nil, else: queue
+    org = socket.assigns.organization
+    opts = if queue_filter, do: [queue: queue_filter], else: []
+
+    tasks = Tasks.list_tasks(org, opts)
+    task_ids = Enum.map(tasks, & &1.id)
+
+    {:noreply,
+     socket
+     |> assign(:queue_filter, queue_filter)
+     |> assign(:tasks, tasks)
+     |> assign(:latest_statuses, Executions.get_latest_statuses(task_ids))
+     |> assign(:task_run_histories, Executions.get_recent_statuses_for_tasks(task_ids, 20))}
+  end
+
   def handle_event("delete", %{"id" => id}, socket) do
     task = Tasks.get_task!(socket.assigns.organization, id)
 
@@ -245,16 +267,39 @@ defmodule PrikkeWeb.TaskLive.Index do
         </.link>
       </div>
 
+      <%= if @queues != [] do %>
+        <div class="mb-4" id="queue-filter">
+          <form phx-change="filter">
+            <select
+              name="queue"
+              id="queue-filter-select"
+              class="text-sm border-slate-200 rounded-lg px-3 py-1.5 text-slate-700 focus:ring-emerald-500 focus:border-emerald-500"
+            >
+              <option value="" selected={@queue_filter == nil}>All queues</option>
+              <option value="none" selected={@queue_filter == "none"}>No queue</option>
+              <%= for queue <- @queues do %>
+                <option value={queue} selected={@queue_filter == queue}>{queue}</option>
+              <% end %>
+            </select>
+          </form>
+        </div>
+      <% end %>
+
       <%= if @tasks == [] do %>
         <div class="glass-card rounded-2xl p-8 sm:p-12 text-center">
           <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <.icon name="hero-clock" class="w-6 h-6 text-slate-400" />
           </div>
-          <h3 class="text-lg font-medium text-slate-900 mb-2">No tasks yet</h3>
-          <p class="text-slate-500 mb-6">Create your first scheduled task to get started.</p>
-          <.link navigate={~p"/tasks/new"} class="text-emerald-600 font-medium hover:underline">
-            Create a task →
-          </.link>
+          <%= if @queue_filter do %>
+            <h3 class="text-lg font-medium text-slate-900 mb-2">No tasks in this queue</h3>
+            <p class="text-slate-500 mb-6">No tasks match the selected queue filter.</p>
+          <% else %>
+            <h3 class="text-lg font-medium text-slate-900 mb-2">No tasks yet</h3>
+            <p class="text-slate-500 mb-6">Create your first scheduled task to get started.</p>
+            <.link navigate={~p"/tasks/new"} class="text-emerald-600 font-medium hover:underline">
+              Create a task →
+            </.link>
+          <% end %>
         </div>
       <% else %>
         <div class="glass-card rounded-2xl divide-y divide-slate-200/60">
@@ -276,6 +321,11 @@ defmodule PrikkeWeb.TaskLive.Index do
                       </span>
                     <% end %>
                     <.task_status_badge task={task} latest_info={@latest_statuses[task.id]} />
+                    <%= if task.queue do %>
+                      <span class="text-xs font-medium px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100">
+                        {task.queue}
+                      </span>
+                    <% end %>
                   </div>
                   <div class="text-sm text-slate-500 mt-1 flex items-center gap-2">
                     <span class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded shrink-0">

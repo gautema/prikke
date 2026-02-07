@@ -298,19 +298,39 @@ defmodule Prikke.Monitors do
           actual = get_in(ping_counts, [monitor.id, date]) || 0
 
           # Scale expected pings for partial days (today and creation date)
-          expected = scale_expected_pings(full_day_expected, date, today, now, monitor.inserted_at, created_date)
+          expected =
+            scale_expected_pings(
+              full_day_expected,
+              date,
+              today,
+              now,
+              monitor.inserted_at,
+              created_date
+            )
 
           status =
             cond do
-              Date.compare(date, created_date) == :lt -> "none"
-              Date.compare(date, today) == :gt -> "none"
+              Date.compare(date, created_date) == :lt ->
+                "none"
+
+              Date.compare(date, today) == :gt ->
+                "none"
+
               # Paused monitor today: don't penalize for remaining time
               Date.compare(date, today) == :eq and not monitor.enabled ->
                 if actual > 0, do: "up", else: "none"
-              expected == 0 -> if actual > 0, do: "up", else: "none"
-              actual >= expected -> "up"
-              actual > 0 -> "degraded"
-              true -> "down"
+
+              expected == 0 ->
+                if actual > 0, do: "up", else: "none"
+
+              actual >= expected ->
+                "up"
+
+              actual > 0 ->
+                "degraded"
+
+              true ->
+                "down"
             end
 
           {date, %{status: status, actual: actual, expected: expected}}

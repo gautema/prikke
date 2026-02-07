@@ -47,8 +47,16 @@ defmodule PrikkeWeb.Schemas do
           nullable: true,
           description: "Scheduled time (for one-time tasks)"
         },
-        enabled: %Schema{type: :boolean, default: true, description: "Whether the task is enabled"},
-        muted: %Schema{type: :boolean, default: false, description: "Whether notifications are muted for this task"},
+        enabled: %Schema{
+          type: :boolean,
+          default: true,
+          description: "Whether the task is enabled"
+        },
+        muted: %Schema{
+          type: :boolean,
+          default: false,
+          description: "Whether notifications are muted for this task"
+        },
         timeout_ms: %Schema{
           type: :integer,
           default: 30000,
@@ -68,12 +76,14 @@ defmodule PrikkeWeb.Schemas do
         expected_status_codes: %Schema{
           type: :string,
           nullable: true,
-          description: "Comma-separated HTTP status codes that count as success (e.g. \"200,201\"). Empty means any 2xx."
+          description:
+            "Comma-separated HTTP status codes that count as success (e.g. \"200,201\"). Empty means any 2xx."
         },
         expected_body_pattern: %Schema{
           type: :string,
           nullable: true,
-          description: "Response body must contain this text to count as success. Empty means any body."
+          description:
+            "Response body must contain this text to count as success. Empty means any body."
         },
         next_run_at: %Schema{
           type: :string,
@@ -142,7 +152,11 @@ defmodule PrikkeWeb.Schemas do
           description: "Required for one-time tasks"
         },
         enabled: %Schema{type: :boolean, default: true},
-        muted: %Schema{type: :boolean, default: false, description: "Mute notifications for this task"},
+        muted: %Schema{
+          type: :boolean,
+          default: false,
+          description: "Mute notifications for this task"
+        },
         timeout_ms: %Schema{type: :integer, default: 30000},
         retry_attempts: %Schema{type: :integer, default: 3},
         callback_url: %Schema{
@@ -154,12 +168,14 @@ defmodule PrikkeWeb.Schemas do
         expected_status_codes: %Schema{
           type: :string,
           nullable: true,
-          description: "Comma-separated HTTP status codes that count as success (e.g. \"200,201\"). Empty means any 2xx."
+          description:
+            "Comma-separated HTTP status codes that count as success (e.g. \"200,201\"). Empty means any 2xx."
         },
         expected_body_pattern: %Schema{
           type: :string,
           nullable: true,
-          description: "Response body must contain this text to count as success. Empty means any body."
+          description:
+            "Response body must contain this text to count as success. Empty means any body."
         }
       },
       example: %{
@@ -400,8 +416,16 @@ defmodule PrikkeWeb.Schemas do
           enum: ["new", "up", "down", "paused"],
           description: "Current monitor status"
         },
-        enabled: %Schema{type: :boolean, default: true, description: "Whether the monitor is active"},
-        muted: %Schema{type: :boolean, default: false, description: "Whether notifications are muted for this monitor"},
+        enabled: %Schema{
+          type: :boolean,
+          default: true,
+          description: "Whether the monitor is active"
+        },
+        muted: %Schema{
+          type: :boolean,
+          default: false,
+          description: "Whether notifications are muted for this monitor"
+        },
         last_ping_at: %Schema{
           type: :string,
           format: :"date-time",
@@ -414,8 +438,16 @@ defmodule PrikkeWeb.Schemas do
           nullable: true,
           description: "When the next ping is expected"
         },
-        inserted_at: %Schema{type: :string, format: :"date-time", description: "Creation timestamp"},
-        updated_at: %Schema{type: :string, format: :"date-time", description: "Last update timestamp"}
+        inserted_at: %Schema{
+          type: :string,
+          format: :"date-time",
+          description: "Creation timestamp"
+        },
+        updated_at: %Schema{
+          type: :string,
+          format: :"date-time",
+          description: "Last update timestamp"
+        }
       },
       example: %{
         id: "019c0123-4567-7890-abcd-ef1234567890",
@@ -462,7 +494,11 @@ defmodule PrikkeWeb.Schemas do
           description: "Grace period in seconds (0-3600)"
         },
         enabled: %Schema{type: :boolean, default: true},
-        muted: %Schema{type: :boolean, default: false, description: "Mute notifications for this monitor"}
+        muted: %Schema{
+          type: :boolean,
+          default: false,
+          description: "Mute notifications for this monitor"
+        }
       },
       example: %{
         name: "Nightly Backup",

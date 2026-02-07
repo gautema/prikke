@@ -60,7 +60,12 @@ defmodule Prikke.Accounts.Organization do
   """
   def notification_changeset(organization, attrs) do
     organization
-    |> cast(attrs, [:notify_on_failure, :notify_on_recovery, :notification_email, :notification_webhook_url])
+    |> cast(attrs, [
+      :notify_on_failure,
+      :notify_on_recovery,
+      :notification_email,
+      :notification_webhook_url
+    ])
     |> validate_format(:notification_email, ~r/^[^\s]+@[^\s]+$/, message: "must be a valid email")
     |> Prikke.UrlValidator.validate_webhook_url_safe(:notification_webhook_url)
   end

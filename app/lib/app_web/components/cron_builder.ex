@@ -56,7 +56,10 @@ defmodule PrikkeWeb.CronBuilder do
       |> assign(:presets, presets)
       |> assign(:weekdays, @weekdays)
       |> assign(:hours, Enum.map(0..23, fn h -> {String.pad_leading("#{h}", 2, "0"), "#{h}"} end))
-      |> assign(:minutes, Enum.map(0..59, fn m -> {String.pad_leading("#{m}", 2, "0"), "#{m}"} end))
+      |> assign(
+        :minutes,
+        Enum.map(0..59, fn m -> {String.pad_leading("#{m}", 2, "0"), "#{m}"} end)
+      )
       |> assign(:days_of_month, Enum.map(1..31, fn d -> {"#{d}", "#{d}"} end))
       |> assign(:cron_expression, current_cron_expression(assigns))
       |> assign(:cron_description, current_cron_description(assigns))
@@ -112,7 +115,8 @@ defmodule PrikkeWeb.CronBuilder do
                   class={[
                     "px-3 py-2 text-sm font-medium rounded-lg border transition-all",
                     @cron_preset == value && "bg-emerald-50 border-emerald-300 text-emerald-700",
-                    @cron_preset != value && "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    @cron_preset != value &&
+                      "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
                   ]}
                 >
                   {label}
@@ -168,7 +172,8 @@ defmodule PrikkeWeb.CronBuilder do
                     class={[
                       "w-11 h-11 text-sm font-medium rounded-full border transition-all",
                       value in @cron_weekdays && "bg-emerald-600 border-emerald-600 text-white",
-                      value not in @cron_weekdays && "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                      value not in @cron_weekdays &&
+                        "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
                     ]}
                   >
                     {label}
@@ -209,7 +214,10 @@ defmodule PrikkeWeb.CronBuilder do
           class="w-full px-4 py-3 font-mono text-base bg-white/70 border border-white/50 rounded-md text-slate-900 placeholder-slate-400"
         />
         <p class="text-sm text-slate-500 mt-2">
-          Format: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-mono">minute hour day month weekday</code>
+          Format:
+          <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-mono">
+            minute hour day month weekday
+          </code>
         </p>
       <% end %>
 
@@ -218,7 +226,9 @@ defmodule PrikkeWeb.CronBuilder do
         <.icon name="hero-clock" class="w-4 h-4 text-slate-400 flex-shrink-0" />
         <div class="flex items-center gap-2 min-w-0">
           <span class="text-sm text-slate-700 font-medium">{@cron_description}</span>
-          <code class="text-xs font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{@cron_expression}</code>
+          <code class="text-xs font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+            {@cron_expression}
+          </code>
         </div>
       </div>
     </div>

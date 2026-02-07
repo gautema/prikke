@@ -284,7 +284,11 @@ defmodule Prikke.ExecutionsTest do
 
       # Manually set attempt to 2 to simulate a retry
       exec
-      |> Ecto.Changeset.change(%{attempt: 2, status: "running", started_at: DateTime.truncate(DateTime.utc_now(), :second)})
+      |> Ecto.Changeset.change(%{
+        attempt: 2,
+        status: "running",
+        started_at: DateTime.truncate(DateTime.utc_now(), :second)
+      })
       |> Prikke.Repo.update!()
 
       exec = Prikke.Repo.reload!(exec)

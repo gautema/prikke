@@ -24,16 +24,26 @@ defmodule PrikkeWeb.Api.TaskController do
 
   operation(:index,
     summary: "List all tasks",
-    description: "Returns all tasks for the authenticated organization",
+    description:
+      "Returns all tasks for the authenticated organization. Optionally filter by queue name.",
+    parameters: [
+      queue: [
+        in: :query,
+        type: :string,
+        description: "Filter by queue name. Use \"none\" to get tasks without a queue.",
+        required: false
+      ]
+    ],
     responses: [
       ok: {"Tasks list", "application/json", Schemas.TasksResponse},
       unauthorized: {"Unauthorized", "application/json", Schemas.ErrorResponse}
     ]
   )
 
-  def index(conn, _params) do
+  def index(conn, params) do
     org = conn.assigns.current_organization
-    tasks = Tasks.list_tasks(org)
+    opts = if params["queue"], do: [queue: params["queue"]], else: []
+    tasks = Tasks.list_tasks(org, opts)
     json(conn, %{data: Enum.map(tasks, &task_json/1)})
   end
 
@@ -296,7 +306,9 @@ defmodule PrikkeWeb.Api.TaskController do
       {:error, _} ->
         conn
         |> put_status(:bad_request)
-        |> json(%{error: %{code: "invalid_run_at", message: "run_at must be a valid ISO 8601 datetime"}})
+        |> json(%{
+          error: %{code: "invalid_run_at", message: "run_at must be a valid ISO 8601 datetime"}
+        })
     end
   end
 
@@ -343,7 +355,8 @@ defmodule PrikkeWeb.Api.TaskController do
       end
 
     with {:ok, task} <- Tasks.create_task(org, task_params, api_key_name: api_key_name),
-         {:ok, execution} <- Executions.create_execution_for_task(task, scheduled_at, execution_opts),
+         {:ok, execution} <-
+           Executions.create_execution_for_task(task, scheduled_at, execution_opts),
          {:ok, _task} <- Tasks.clear_next_run(task) do
       Tasks.notify_workers()
 
@@ -432,7 +445,8 @@ defmodule PrikkeWeb.Api.TaskController do
     end
   end
 
-  defp parse_delay(_), do: {:error, "delay must be a string (e.g. \"30s\", \"5m\") or integer (seconds)"}
+  defp parse_delay(_),
+    do: {:error, "delay must be a string (e.g. \"30s\", \"5m\") or integer (seconds)"}
 
   defp unit_to_seconds("s"), do: 1
   defp unit_to_seconds("m"), do: 60

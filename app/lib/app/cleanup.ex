@@ -168,7 +168,8 @@ defmodule Prikke.Cleanup do
 
     pings_deleted = total_pings
 
-    if total_executions > 0 or total_tasks > 0 or idempotency_deleted > 0 or pings_deleted > 0 or emails_deleted > 0 do
+    if total_executions > 0 or total_tasks > 0 or idempotency_deleted > 0 or pings_deleted > 0 or
+         emails_deleted > 0 do
       Logger.info(
         "[Cleanup] Deleted #{total_executions} executions, #{total_tasks} completed one-time tasks, #{idempotency_deleted} idempotency keys, #{pings_deleted} monitor pings, #{emails_deleted} email logs"
       )
@@ -176,7 +177,14 @@ defmodule Prikke.Cleanup do
       Logger.info("[Cleanup] Nothing to clean up")
     end
 
-    {:ok, %{executions: total_executions, tasks: total_tasks, idempotency_keys: idempotency_deleted, monitor_pings: pings_deleted, email_logs: emails_deleted}}
+    {:ok,
+     %{
+       executions: total_executions,
+       tasks: total_tasks,
+       idempotency_keys: idempotency_deleted,
+       monitor_pings: pings_deleted,
+       email_logs: emails_deleted
+     }}
   end
 
   defp get_retention_days(tier) do
@@ -232,8 +240,11 @@ defmodule Prikke.Cleanup do
     }
 
     case UserNotifier.deliver_monthly_summary(stats) do
-      {:ok, _} -> Logger.info("[Cleanup] Monthly summary email sent successfully")
-      {:error, reason} -> Logger.error("[Cleanup] Failed to send monthly summary: #{inspect(reason)}")
+      {:ok, _} ->
+        Logger.info("[Cleanup] Monthly summary email sent successfully")
+
+      {:error, reason} ->
+        Logger.error("[Cleanup] Failed to send monthly summary: #{inspect(reason)}")
     end
   end
 

@@ -35,7 +35,10 @@ defmodule PrikkeWeb.PageController do
   def privacy(conn, _params) do
     conn
     |> assign(:page_title, "Privacy Policy")
-    |> assign(:page_description, "Privacy Policy for Runlater. EU-hosted, GDPR-compliant job scheduling.")
+    |> assign(
+      :page_description,
+      "Privacy Policy for Runlater. EU-hosted, GDPR-compliant job scheduling."
+    )
     |> render(:privacy)
   end
 

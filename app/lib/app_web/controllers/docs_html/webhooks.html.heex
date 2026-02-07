@@ -255,12 +255,16 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
 
   <h2 id="callbacks">Callbacks</h2>
   <p>
-    Get notified when an execution completes by setting a <code class="bg-slate-100 px-2 py-1 rounded text-sm">callback_url</code> on your task. After each execution finishes (success, failure, or timeout), Runlater will POST the result to your callback URL.
+    Get notified when an execution completes by setting a
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">callback_url</code>
+    on your task. After each execution finishes (success, failure, or timeout), Runlater will POST the result to your callback URL.
   </p>
 
   <h3>How Callbacks Work</h3>
   <ol>
-    <li>Set <code class="bg-slate-100 px-2 py-1 rounded text-sm">callback_url</code> on a task</li>
+    <li>
+      Set <code class="bg-slate-100 px-2 py-1 rounded text-sm">callback_url</code> on a task
+    </li>
     <li>Runlater executes your webhook as normal</li>
     <li>After completion, Runlater POSTs the result to your callback URL</li>
     <li>Callbacks retry up to 3 times with backoff (5s, 20s) on failure</li>
@@ -327,19 +331,24 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
   <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded-r-lg my-6">
     <strong class="text-emerald-800">Note:</strong>
     <span class="text-emerald-700">
-      Callbacks are signed with the same webhook secret as regular webhook requests. Verify the <code>X-Runlater-Signature</code> header to authenticate callbacks.
+      Callbacks are signed with the same webhook secret as regular webhook requests. Verify the
+      <code>X-Runlater-Signature</code>
+      header to authenticate callbacks.
     </span>
   </div>
 
   <h2 id="notifications">Notifications</h2>
   <p>
-    Runlater can notify you via email and webhook when task execution status changes. Configure these in
-    <a href="/organizations/notifications" class="text-emerald-600 hover:underline">Organization Settings → Notifications</a>.
+    Runlater can notify you via email and webhook when task execution status changes. Configure these in <a
+      href="/organizations/notifications"
+      class="text-emerald-600 hover:underline"
+    >Organization Settings → Notifications</a>.
   </p>
 
   <h3>Failure Notifications</h3>
   <p>
-    Triggered on the <strong>first failure</strong> in a sequence (not on every consecutive failure). If a task fails 5 times in a row, you only get one notification.
+    Triggered on the <strong>first failure</strong>
+    in a sequence (not on every consecutive failure). If a task fails 5 times in a row, you only get one notification.
   </p>
 
   <h3>Recovery Notifications</h3>
@@ -347,7 +356,9 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
     Triggered when a task <strong>succeeds after a failure</strong>. This lets you know your service is back to normal without manually checking the dashboard.
   </p>
 
-  <p>Both notification types are sent to your configured email and webhook URL. Webhook payloads are auto-formatted for Slack and Discord.</p>
+  <p>
+    Both notification types are sent to your configured email and webhook URL. Webhook payloads are auto-formatted for Slack and Discord.
+  </p>
 
   <h3>Notification Webhook Payloads</h3>
   <pre

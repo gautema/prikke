@@ -142,7 +142,7 @@ defmodule PrikkeWeb.TaskLive.ExecutionShow do
               </div>
             </div>
           </div>
-
+          
     <!-- Request Details -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Request</h3>
@@ -167,7 +167,7 @@ defmodule PrikkeWeb.TaskLive.ExecutionShow do
               <% end %>
             </div>
           </div>
-
+          
     <!-- Response Details -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Response</h3>
@@ -212,7 +212,7 @@ defmodule PrikkeWeb.TaskLive.ExecutionShow do
               <% end %>
             </div>
           </div>
-
+          
     <!-- Metadata -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Metadata</h3>

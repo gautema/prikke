@@ -818,7 +818,10 @@ defmodule PrikkeWeb.CoreComponents do
       <.marketing_header />
       <.marketing_header menu_id="login-menu" current_scope={@current_scope} />
   """
-  attr :menu_id, :string, default: "marketing-menu-toggle", doc: "ID for the mobile menu checkbox toggle"
+  attr :menu_id, :string,
+    default: "marketing-menu-toggle",
+    doc: "ID for the mobile menu checkbox toggle"
+
   attr :current_scope, :map, default: nil
 
   def marketing_header(assigns) do

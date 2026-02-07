@@ -14,7 +14,12 @@ defmodule PrikkeWeb.PingController do
     is the authentication. Accepts both GET and POST requests.
     """,
     parameters: [
-      token: [in: :path, type: :string, description: "Monitor ping token (pm_xxx)", required: true]
+      token: [
+        in: :path,
+        type: :string,
+        description: "Monitor ping token (pm_xxx)",
+        required: true
+      ]
     ],
     responses: [
       ok: {"Ping recorded", "application/json", Schemas.PingResponse},

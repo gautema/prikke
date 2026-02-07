@@ -25,6 +25,53 @@ defmodule PrikkeWeb.TaskLiveTest do
 
       assert html =~ "No tasks yet"
     end
+
+    test "shows queue filter dropdown when tasks have queues", %{conn: conn, user: user} do
+      org = organization_fixture(%{user: user})
+      task_fixture(org, %{name: "Payment Task", queue: "payments"})
+      task_fixture(org, %{name: "Email Task", queue: "emails"})
+
+      {:ok, view, html} = live(conn, ~p"/tasks")
+
+      assert has_element?(view, "#queue-filter-select")
+      assert html =~ "All queues"
+      assert html =~ "payments"
+      assert html =~ "emails"
+    end
+
+    test "does not show queue filter when no tasks have queues", %{conn: conn, user: user} do
+      org = organization_fixture(%{user: user})
+      task_fixture(org, %{name: "No Queue Task"})
+
+      {:ok, view, _html} = live(conn, ~p"/tasks")
+
+      refute has_element?(view, "#queue-filter")
+    end
+
+    test "filtering by queue shows only matching tasks", %{conn: conn, user: user} do
+      org = organization_fixture(%{user: user})
+      task_fixture(org, %{name: "Payment Task", queue: "payments"})
+      task_fixture(org, %{name: "Email Task", queue: "emails"})
+
+      {:ok, view, _html} = live(conn, ~p"/tasks")
+
+      html =
+        view
+        |> element("#queue-filter form")
+        |> render_change(%{queue: "payments"})
+
+      assert html =~ "Payment Task"
+      refute html =~ "Email Task"
+    end
+
+    test "shows queue badge on task row", %{conn: conn, user: user} do
+      org = organization_fixture(%{user: user})
+      task_fixture(org, %{name: "Payment Task", queue: "payments"})
+
+      {:ok, _view, html} = live(conn, ~p"/tasks")
+
+      assert html =~ "payments"
+    end
   end
 
   describe "Task Show" do

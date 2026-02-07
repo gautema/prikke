@@ -281,7 +281,12 @@ defmodule Prikke.Executions do
       on: e.task_id == lt.task_id and e.scheduled_for == lt.max_scheduled,
       select:
         {e.task_id,
-         %{status: e.status, attempt: e.attempt, scheduled_for: e.scheduled_for, duration_ms: e.duration_ms}}
+         %{
+           status: e.status,
+           attempt: e.attempt,
+           scheduled_for: e.scheduled_for,
+           duration_ms: e.duration_ms
+         }}
     )
     |> Repo.all()
     |> Map.new()
@@ -382,7 +387,9 @@ defmodule Prikke.Executions do
     now = DateTime.utc_now()
 
     from(o in Organization,
-      where: is_nil(o.monthly_execution_reset_at) or o.monthly_execution_reset_at < ^start_of_current_month()
+      where:
+        is_nil(o.monthly_execution_reset_at) or
+          o.monthly_execution_reset_at < ^start_of_current_month()
     )
     |> Repo.update_all(set: [monthly_execution_count: 0, monthly_execution_reset_at: now])
   end
@@ -526,7 +533,8 @@ defmodule Prikke.Executions do
 
     data =
       from(e in Execution,
-        join: t in Task, on: e.task_id == t.id,
+        join: t in Task,
+        on: e.task_id == t.id,
         where: t.organization_id == ^organization.id and e.scheduled_for >= ^since,
         group_by: fragment("DATE(?)", e.scheduled_for),
         select: {
