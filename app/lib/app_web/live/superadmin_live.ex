@@ -583,7 +583,7 @@ defmodule PrikkeWeb.SuperadminLive do
     <!-- Recent Activity -->
       <div class="grid md:grid-cols-2 gap-8 mb-8">
         <!-- Recent Signups -->
-        <div class="glass-card rounded-2xl p-6">
+        <div class="glass-card rounded-2xl p-6 hover:z-10">
           <h2 class="text-lg font-semibold text-slate-900 mb-4">Recent Signups</h2>
           <div class="space-y-3">
             <%= for user <- @recent_users do %>
@@ -601,7 +601,7 @@ defmodule PrikkeWeb.SuperadminLive do
         </div>
         
     <!-- Recent Jobs -->
-        <div class="glass-card rounded-2xl p-6">
+        <div class="glass-card rounded-2xl p-6 hover:z-10">
           <h2 class="text-lg font-semibold text-slate-900 mb-4">Recent Jobs</h2>
           <div class="space-y-3">
             <%= for job <- @recent_jobs do %>
@@ -627,7 +627,7 @@ defmodule PrikkeWeb.SuperadminLive do
     <!-- Recent Executions & Audit Logs -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <!-- Recent Executions -->
-        <div class="glass-card rounded-2xl">
+        <div class="glass-card rounded-2xl hover:z-10">
           <div class="px-6 py-4 border-b border-white/50">
             <h2 class="text-lg font-semibold text-slate-900">Recent Executions</h2>
           </div>
@@ -653,7 +653,7 @@ defmodule PrikkeWeb.SuperadminLive do
         </div>
         
     <!-- Audit Logs -->
-        <div class="glass-card rounded-2xl">
+        <div class="glass-card rounded-2xl hover:z-10">
           <div class="px-6 py-4 border-b border-white/50">
             <h2 class="text-lg font-semibold text-slate-900">Recent Audit Logs</h2>
           </div>
