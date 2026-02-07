@@ -234,6 +234,15 @@ defmodule PrikkeWeb.MonitorLive.Index do
                     </div>
                   </.link>
                   <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                    <%= if monitor.last_ping_at do %>
+                      <span class="text-xs text-slate-400 hidden sm:inline">
+                        <.local_time
+                          id={"mon-#{monitor.id}-last-ping"}
+                          datetime={monitor.last_ping_at}
+                        />
+                      </span>
+                      <span class="text-slate-200 hidden sm:inline">·</span>
+                    <% end %>
                     <span class="text-xs text-slate-400 font-mono">{format_schedule(monitor)}</span>
                     <button
                       type="button"

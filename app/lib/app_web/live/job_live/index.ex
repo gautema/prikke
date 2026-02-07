@@ -208,6 +208,11 @@ defmodule PrikkeWeb.JobLive.Index do
     """
   end
 
+  defp format_duration(nil), do: "—"
+  defp format_duration(ms) when ms < 1000, do: "#{ms}ms"
+  defp format_duration(ms) when ms < 60_000, do: "#{Float.round(ms / 1000, 1)}s"
+  defp format_duration(ms), do: "#{Float.round(ms / 60_000, 1)}m"
+
   defp run_status_color("success"), do: "bg-emerald-500"
   defp run_status_color("failed"), do: "bg-red-500"
   defp run_status_color("timeout"), do: "bg-amber-500"
@@ -297,6 +302,27 @@ defmodule PrikkeWeb.JobLive.Index do
                       <.local_time id={"job-#{job.id}-scheduled"} datetime={job.scheduled_at} />
                     <% end %>
                   </div>
+                  <%= if @latest_statuses[job.id] do %>
+                    <div class="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                      <span>Last run:</span>
+                      <.local_time
+                        id={"job-#{job.id}-last-run"}
+                        datetime={@latest_statuses[job.id].scheduled_for}
+                      />
+                      <%= if @latest_statuses[job.id].duration_ms do %>
+                        <span class="text-slate-300">·</span>
+                        <span>{format_duration(@latest_statuses[job.id].duration_ms)}</span>
+                      <% end %>
+                      <span class="text-slate-300">·</span>
+                      <span class={[
+                        @latest_statuses[job.id].status == "success" && "text-emerald-600",
+                        @latest_statuses[job.id].status == "failed" && "text-red-600",
+                        @latest_statuses[job.id].status == "timeout" && "text-amber-600"
+                      ]}>
+                        {@latest_statuses[job.id].status}
+                      </span>
+                    </div>
+                  <% end %>
                 </div>
                 <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                   <%= if job.schedule_type == "cron" do %>

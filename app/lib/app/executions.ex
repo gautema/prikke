@@ -361,7 +361,9 @@ defmodule Prikke.Executions do
     from(e in Execution,
       join: lt in subquery(latest_times),
       on: e.job_id == lt.job_id and e.scheduled_for == lt.max_scheduled,
-      select: {e.job_id, %{status: e.status, attempt: e.attempt}}
+      select:
+        {e.job_id,
+         %{status: e.status, attempt: e.attempt, scheduled_for: e.scheduled_for, duration_ms: e.duration_ms}}
     )
     |> Repo.all()
     |> Map.new()

@@ -262,6 +262,18 @@ defmodule PrikkeWeb.DashboardLive do
                         <span class="text-sm text-slate-900 truncate">{job.name}</span>
                         <.job_status_badge job={job} latest_info={@latest_statuses[job.id]} />
                       </div>
+                      <%= if @latest_statuses[job.id] do %>
+                        <div class="text-xs text-slate-400 mt-0.5 pl-[18px] flex items-center gap-1.5">
+                          <.local_time
+                            id={"dash-job-#{job.id}-last-run"}
+                            datetime={@latest_statuses[job.id].scheduled_for}
+                          />
+                          <%= if @latest_statuses[job.id].duration_ms do %>
+                            <span class="text-slate-300">·</span>
+                            <span>{format_duration_short(@latest_statuses[job.id].duration_ms)}</span>
+                          <% end %>
+                        </div>
+                      <% end %>
                     </div>
                     <div class="text-xs text-slate-400 ml-4 text-right shrink-0">
                       <%= if job.schedule_type == "cron" do %>
@@ -329,6 +341,14 @@ defmodule PrikkeWeb.DashboardLive do
                         {monitor_status_label(monitor.status)}
                       </span>
                     </div>
+                    <%= if monitor.last_ping_at do %>
+                      <span class="text-xs text-slate-400 shrink-0">
+                        <.local_time
+                          id={"dash-mon-#{monitor.id}-last-ping"}
+                          datetime={monitor.last_ping_at}
+                        />
+                      </span>
+                    <% end %>
                   </div>
                 </.link>
               <% end %>
@@ -690,6 +710,11 @@ defmodule PrikkeWeb.DashboardLive do
     </div>
     """
   end
+
+  defp format_duration_short(nil), do: "—"
+  defp format_duration_short(ms) when ms < 1000, do: "#{ms}ms"
+  defp format_duration_short(ms) when ms < 60_000, do: "#{Float.round(ms / 1000, 1)}s"
+  defp format_duration_short(ms), do: "#{Float.round(ms / 60_000, 1)}m"
 
   defp monitor_dot_color("up"), do: "bg-emerald-500"
   defp monitor_dot_color("down"), do: "bg-red-500"
