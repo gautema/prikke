@@ -568,7 +568,7 @@ defmodule PrikkeWeb.JobLive.Show do
                 <% end %>
               </div>
             <% else %>
-              <div class="bg-white/30 rounded-xl overflow-hidden divide-y divide-white/30">
+              <div class="bg-white/30 rounded-xl divide-y divide-white/30">
                 <%= for exec <- @executions do %>
                   <.link
                     navigate={~p"/jobs/#{@job.id}/executions/#{exec.id}"}
