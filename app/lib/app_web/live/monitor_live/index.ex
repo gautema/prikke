@@ -178,7 +178,7 @@ defmodule PrikkeWeb.MonitorLive.Index do
           </.link>
         </div>
 
-        <div class="flex justify-between items-center mb-6 sm:mb-8">
+        <div class="flex justify-between items-center mb-6 sm:mb-8 pl-1 sm:pl-0">
           <div>
             <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Monitors</h1>
             <p class="text-slate-500 mt-1 text-sm">Heartbeat monitoring for your external cron jobs</p>
