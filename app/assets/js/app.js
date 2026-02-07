@@ -54,6 +54,10 @@ document.addEventListener("click", (e) => {
     e.preventDefault()
     const dropdown = toggle.closest("[data-dropdown]")
     const menu = dropdown.querySelector("[data-dropdown-menu]")
+    // Close all other dropdowns first
+    document.querySelectorAll("[data-dropdown-menu]").forEach(other => {
+      if (other !== menu) other.classList.add("hidden")
+    })
     menu.classList.toggle("hidden")
   } else {
     // Close all dropdowns when clicking outside
