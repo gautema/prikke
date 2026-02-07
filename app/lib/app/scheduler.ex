@@ -103,10 +103,10 @@ defmodule Prikke.Scheduler do
   # Tick interval in milliseconds (10 seconds)
   @tick_interval 10_000
 
-  # Lookahead window in seconds (30 seconds)
+  # Lookahead window in seconds (10 seconds)
   # Jobs are created this far in advance for more precise timing.
   # Workers only claim executions when scheduled_for <= now.
-  @lookahead_seconds 30
+  @lookahead_seconds 10
 
   ## Client API
 
