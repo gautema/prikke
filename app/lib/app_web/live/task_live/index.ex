@@ -222,7 +222,7 @@ defmodule PrikkeWeb.TaskLive.Index do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-4xl mx-auto py-6 sm:py-8 px-2 sm:px-4">
+    <Layouts.app flash={@flash} current_scope={@current_scope}>
       <div class="mb-4">
         <.link
           navigate={~p"/dashboard"}
@@ -235,16 +235,14 @@ defmodule PrikkeWeb.TaskLive.Index do
       <div class="flex justify-between items-center mb-6 sm:mb-8 pl-1 sm:pl-0">
         <div>
           <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Tasks</h1>
-          <p class="text-slate-500 mt-1 text-sm sm:text-base">{@organization.name}</p>
+          <p class="text-slate-500 mt-1 text-sm">Scheduled webhooks and background tasks</p>
         </div>
-        <div class="flex gap-2">
-          <.link
-            navigate={~p"/tasks/new"}
-            class="font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-3 sm:px-4 py-2 rounded-md transition-colors text-sm sm:text-base"
-          >
-            New Task
-          </.link>
-        </div>
+        <.link
+          navigate={~p"/tasks/new"}
+          class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-3 sm:px-4 py-2 rounded-md transition-colors no-underline whitespace-nowrap"
+        >
+          New Task
+        </.link>
       </div>
 
       <%= if @tasks == [] do %>
@@ -360,7 +358,7 @@ defmodule PrikkeWeb.TaskLive.Index do
           <% end %>
         </div>
       <% end %>
-    </div>
+    </Layouts.app>
     """
   end
 end

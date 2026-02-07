@@ -64,7 +64,8 @@ defmodule Prikke.Tasks.Task do
         :queue
       ])
       |> trim_url()
-      |> validate_required([:name, :url, :schedule_type])
+      |> maybe_generate_name()
+      |> validate_required([:url, :schedule_type])
       |> validate_inclusion(:method, @http_methods)
       |> validate_inclusion(:schedule_type, @schedule_types)
       |> validate_url(:url)
@@ -99,6 +100,18 @@ defmodule Prikke.Tasks.Task do
     case get_change(changeset, :url) do
       nil -> changeset
       url -> put_change(changeset, :url, String.trim(url))
+    end
+  end
+
+  defp maybe_generate_name(changeset) do
+    name = get_field(changeset, :name)
+    url = get_field(changeset, :url)
+
+    if (is_nil(name) or name == "") and is_binary(url) and url != "" do
+      host = url |> URI.parse() |> Map.get(:host) |> to_string()
+      put_change(changeset, :name, host)
+    else
+      changeset
     end
   end
 
@@ -187,7 +200,10 @@ defmodule Prikke.Tasks.Task do
 
   defp validate_future_date(changeset) do
     validate_change(changeset, :scheduled_at, fn _, scheduled_at ->
-      if DateTime.compare(scheduled_at, DateTime.utc_now()) == :gt do
+      # Allow a small window for immediate tasks and form submission lag
+      cutoff = DateTime.add(DateTime.utc_now(), -300, :second)
+
+      if DateTime.compare(scheduled_at, cutoff) == :gt do
         []
       else
         [scheduled_at: "must be in the future"]

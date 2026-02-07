@@ -121,9 +121,7 @@ defmodule PrikkeWeb.TaskLiveTest do
         |> form("#task-form",
           task: %{
             name: "",
-            url: "https://example.com",
-            schedule_type: "cron",
-            cron_expression: "0 * * * *"
+            url: ""
           }
         )
         |> render_change()
@@ -131,17 +129,56 @@ defmodule PrikkeWeb.TaskLiveTest do
       assert html =~ "can't be blank" or html =~ "can&#39;t be blank"
     end
 
-    test "renders cron builder in simple mode by default", %{conn: conn, user: user} do
+    test "defaults to immediate mode", %{conn: conn, user: user} do
       _org = organization_fixture(%{user: user})
 
       {:ok, _view, html} = live(conn, ~p"/tasks/new")
 
+      assert html =~ "Immediate"
+      assert html =~ "immediately after creation"
+    end
+
+    test "switching to cron shows cron builder", %{conn: conn, user: user} do
+      _org = organization_fixture(%{user: user})
+
+      {:ok, view, _html} = live(conn, ~p"/tasks/new")
+
+      html =
+        view
+        |> form("#task-form", timing_mode: "cron")
+        |> render_change()
+
       assert html =~ "Simple"
       assert html =~ "Advanced"
       assert html =~ "Every hour"
-      assert html =~ "Daily"
-      assert html =~ "Weekly"
-      assert html =~ "Monthly"
+    end
+
+    test "switching to delay shows delay buttons", %{conn: conn, user: user} do
+      _org = organization_fixture(%{user: user})
+
+      {:ok, view, _html} = live(conn, ~p"/tasks/new")
+
+      html =
+        view
+        |> form("#task-form", timing_mode: "delay")
+        |> render_change()
+
+      assert html =~ "5 min"
+      assert html =~ "1 hour"
+      assert html =~ "30 days"
+    end
+
+    test "switching to schedule shows datetime picker", %{conn: conn, user: user} do
+      _org = organization_fixture(%{user: user})
+
+      {:ok, view, _html} = live(conn, ~p"/tasks/new")
+
+      html =
+        view
+        |> form("#task-form", timing_mode: "schedule")
+        |> render_change()
+
+      assert html =~ "Scheduled Time (UTC)"
     end
 
     test "switching cron preset updates the preview", %{conn: conn, user: user} do
@@ -149,33 +186,15 @@ defmodule PrikkeWeb.TaskLiveTest do
 
       {:ok, view, _html} = live(conn, ~p"/tasks/new")
 
+      # First switch to cron mode
+      view
+      |> form("#task-form", timing_mode: "cron")
+      |> render_change()
+
       html = view |> element("button", "Daily") |> render_click()
 
       assert html =~ "Time (UTC)"
       assert html =~ "daily at 9:00"
-    end
-
-    test "switching to weekly shows day pills", %{conn: conn, user: user} do
-      _org = organization_fixture(%{user: user})
-
-      {:ok, view, _html} = live(conn, ~p"/tasks/new")
-
-      html = view |> element("button", "Weekly") |> render_click()
-
-      assert html =~ "Days"
-      assert html =~ "Mon"
-      assert html =~ "Tue"
-      assert html =~ "Sun"
-    end
-
-    test "switching to advanced mode shows text input", %{conn: conn, user: user} do
-      _org = organization_fixture(%{user: user})
-
-      {:ok, view, _html} = live(conn, ~p"/tasks/new")
-
-      html = view |> element("button", "Advanced") |> render_click()
-
-      assert html =~ "minute hour day month weekday"
     end
   end
 

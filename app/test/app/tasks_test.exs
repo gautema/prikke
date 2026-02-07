@@ -252,7 +252,6 @@ defmodule Prikke.TasksTest do
       org = organization_fixture()
 
       assert {:error, changeset} = Tasks.create_task(org, %{})
-      assert "can't be blank" in errors_on(changeset).name
       assert "can't be blank" in errors_on(changeset).url
       assert "can't be blank" in errors_on(changeset).schedule_type
     end

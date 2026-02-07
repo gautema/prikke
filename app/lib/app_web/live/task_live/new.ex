@@ -12,13 +12,14 @@ defmodule PrikkeWeb.TaskLive.New do
     org = get_organization(socket, session)
 
     if org do
-      changeset = Tasks.change_new_task(org)
+      changeset = Tasks.change_new_task(org, %{"schedule_type" => "once"})
 
       {:ok,
        socket
        |> assign(:organization, org)
        |> assign(:page_title, "New Task")
-       |> assign(:schedule_type, "cron")
+       |> assign(:timing_mode, "immediate")
+       |> assign(:selected_delay, "5m")
        |> assign(:cron_mode, :simple)
        |> assign(:cron_preset, "every_hour")
        |> assign(:cron_minute, "0")
@@ -37,22 +38,38 @@ defmodule PrikkeWeb.TaskLive.New do
   end
 
   @impl true
-  def handle_event("validate", %{"task" => task_params}, socket) do
-    schedule_type = task_params["schedule_type"] || socket.assigns.schedule_type
+  def handle_event("validate", %{"task" => task_params} = params, socket) do
+    timing_mode = params["timing_mode"] || socket.assigns.timing_mode
+    schedule_type = if timing_mode == "cron", do: "cron", else: "once"
 
-    # Default scheduled_at to current UTC time for one-time tasks if not set
+    task_params = Map.put(task_params, "schedule_type", schedule_type)
+
     task_params =
-      if schedule_type == "once" and
-           (task_params["scheduled_at"] == "" or is_nil(task_params["scheduled_at"])) do
-        # Default to 5 minutes from now to ensure it's in the future
-        default_time =
-          DateTime.utc_now()
-          |> DateTime.add(5, :minute)
-          |> Calendar.strftime("%Y-%m-%dT%H:%M")
+      case timing_mode do
+        mode when mode in ["immediate", "delay"] ->
+          delay = if mode == "delay", do: delay_to_seconds(socket.assigns.selected_delay), else: 0
 
-        Map.put(task_params, "scheduled_at", default_time)
-      else
-        task_params
+          scheduled_at =
+            DateTime.utc_now()
+            |> DateTime.add(delay)
+            |> Calendar.strftime("%Y-%m-%dT%H:%M")
+
+          Map.put(task_params, "scheduled_at", scheduled_at)
+
+        "schedule" ->
+          if task_params["scheduled_at"] in ["", nil] do
+            scheduled_at =
+              DateTime.utc_now()
+              |> DateTime.add(5, :minute)
+              |> Calendar.strftime("%Y-%m-%dT%H:%M")
+
+            Map.put(task_params, "scheduled_at", scheduled_at)
+          else
+            task_params
+          end
+
+        _ ->
+          task_params
       end
 
     changeset =
@@ -61,11 +78,35 @@ defmodule PrikkeWeb.TaskLive.New do
 
     {:noreply,
      socket
-     |> assign(:schedule_type, schedule_type)
+     |> assign(:timing_mode, timing_mode)
      |> assign_form(changeset)}
   end
 
   def handle_event("save", %{"task" => task_params}, socket) do
+    task_params =
+      case socket.assigns.timing_mode do
+        "immediate" ->
+          task_params
+          |> Map.put("schedule_type", "once")
+          |> Map.put("scheduled_at", Calendar.strftime(DateTime.utc_now(), "%Y-%m-%dT%H:%M"))
+
+        "delay" ->
+          scheduled_at =
+            DateTime.utc_now()
+            |> DateTime.add(delay_to_seconds(socket.assigns.selected_delay))
+            |> Calendar.strftime("%Y-%m-%dT%H:%M")
+
+          task_params
+          |> Map.put("schedule_type", "once")
+          |> Map.put("scheduled_at", scheduled_at)
+
+        "schedule" ->
+          Map.put(task_params, "schedule_type", "once")
+
+        "cron" ->
+          Map.put(task_params, "schedule_type", "cron")
+      end
+
     case Tasks.create_task(socket.assigns.organization, task_params,
            scope: socket.assigns.current_scope
          ) do
@@ -83,6 +124,10 @@ defmodule PrikkeWeb.TaskLive.New do
          |> put_flash(:error, "Could not create task. Please check the errors below.")
          |> assign_form(changeset)}
     end
+  end
+
+  def handle_event("set_delay", %{"delay" => delay}, socket) do
+    {:noreply, assign(socket, :selected_delay, delay)}
   end
 
   def handle_event("set_cron_mode", %{"mode" => mode}, socket) do
@@ -243,6 +288,17 @@ defmodule PrikkeWeb.TaskLive.New do
 
   def handle_info(_msg, socket), do: {:noreply, socket}
 
+  defp delay_to_seconds("5m"), do: 5 * 60
+  defp delay_to_seconds("10m"), do: 10 * 60
+  defp delay_to_seconds("15m"), do: 15 * 60
+  defp delay_to_seconds("1h"), do: 3600
+  defp delay_to_seconds("6h"), do: 6 * 3600
+  defp delay_to_seconds("12h"), do: 12 * 3600
+  defp delay_to_seconds("1d"), do: 86_400
+  defp delay_to_seconds("7d"), do: 7 * 86_400
+  defp delay_to_seconds("30d"), do: 30 * 86_400
+  defp delay_to_seconds(_), do: 5 * 60
+
   defp parse_timeout(val) when is_integer(val), do: val
 
   defp parse_timeout(val) when is_binary(val) do
@@ -399,7 +455,7 @@ defmodule PrikkeWeb.TaskLive.New do
           <div class="space-y-4">
             <div>
               <label for="task_name" class="block text-sm font-medium text-slate-700 mb-1">Name</label>
-              <.input field={@form[:name]} type="text" placeholder="My scheduled task" />
+              <.input field={@form[:name]} type="text" placeholder="My task" />
             </div>
 
             <div>
@@ -411,34 +467,52 @@ defmodule PrikkeWeb.TaskLive.New do
           </div>
         </div>
 
-    <!-- Schedule -->
+    <!-- Type -->
         <div class="glass-card rounded-2xl p-6">
-          <h2 class="text-lg font-semibold text-slate-900 mb-4">Schedule</h2>
+          <h2 class="text-lg font-semibold text-slate-900 mb-4">Type</h2>
+          <input type="hidden" name="task[schedule_type]" value={if @timing_mode == "cron", do: "cron", else: "once"} />
 
           <div class="space-y-4">
             <div>
-              <label for="task_schedule_type" class="block text-sm font-medium text-slate-700 mb-1">
-                Schedule Type
-              </label>
-              <.input
-                field={@form[:schedule_type]}
-                type="select"
-                options={[{"Recurring (Cron)", "cron"}, {"One-time", "once"}]}
-              />
+              <label class="block text-sm font-medium text-slate-700 mb-1">When to run</label>
+              <select
+                name="timing_mode"
+                class="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
+              >
+                <option value="immediate" selected={@timing_mode == "immediate"}>Immediate</option>
+                <option value="delay" selected={@timing_mode == "delay"}>Delayed</option>
+                <option value="schedule" selected={@timing_mode == "schedule"}>Scheduled</option>
+                <option value="cron" selected={@timing_mode == "cron"}>Recurring (Cron)</option>
+              </select>
             </div>
 
-            <%= if @schedule_type == "cron" do %>
-              <.cron_builder
-                form={@form}
-                cron_mode={@cron_mode}
-                cron_preset={@cron_preset}
-                cron_minute={@cron_minute}
-                cron_hour={@cron_hour}
-                cron_weekdays={@cron_weekdays}
-                cron_day_of_month={@cron_day_of_month}
-                tier={@organization.tier}
-              />
-            <% else %>
+            <%= if @timing_mode == "immediate" do %>
+              <p class="text-sm text-slate-500">This task will execute immediately after creation.</p>
+            <% end %>
+
+            <%= if @timing_mode == "delay" do %>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Run after</label>
+                <div class="flex flex-wrap gap-2">
+                  <%= for {label, value} <- [{"5 min", "5m"}, {"10 min", "10m"}, {"15 min", "15m"}, {"1 hour", "1h"}, {"6 hours", "6h"}, {"12 hours", "12h"}, {"1 day", "1d"}, {"7 days", "7d"}, {"30 days", "30d"}] do %>
+                    <button
+                      type="button"
+                      phx-click="set_delay"
+                      phx-value-delay={value}
+                      class={[
+                        "px-3 py-1.5 text-sm font-medium rounded-full border transition-colors cursor-pointer",
+                        @selected_delay == value && "bg-emerald-600 text-white border-emerald-600",
+                        @selected_delay != value && "bg-white text-slate-600 border-slate-300 hover:border-emerald-400 hover:text-emerald-600"
+                      ]}
+                    >
+                      {label}
+                    </button>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+
+            <%= if @timing_mode == "schedule" do %>
               <div phx-feedback-for={@form[:scheduled_at].name}>
                 <label for="task_scheduled_at" class="block text-sm font-medium text-slate-700 mb-1">
                   Scheduled Time (UTC)
@@ -470,6 +544,19 @@ defmodule PrikkeWeb.TaskLive.New do
                   }
                 }
               </script>
+            <% end %>
+
+            <%= if @timing_mode == "cron" do %>
+              <.cron_builder
+                form={@form}
+                cron_mode={@cron_mode}
+                cron_preset={@cron_preset}
+                cron_minute={@cron_minute}
+                cron_hour={@cron_hour}
+                cron_weekdays={@cron_weekdays}
+                cron_day_of_month={@cron_day_of_month}
+                tier={@organization.tier}
+              />
             <% end %>
           </div>
         </div>
