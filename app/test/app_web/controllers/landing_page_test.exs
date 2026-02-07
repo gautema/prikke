@@ -8,8 +8,8 @@ defmodule PrikkeWeb.LandingPageTest do
 
       # Check hero section
       assert html =~ "Defer anything"
-      assert html =~ "We'll make sure it runs"
-      assert html =~ "Fire and forget"
+      assert html =~ "make sure it runs"
+      assert html =~ "Queues, crons, delays, and retries"
 
       # Check marketing header is present
       assert html =~ "runlater"
@@ -20,28 +20,30 @@ defmodule PrikkeWeb.LandingPageTest do
 
       # Check problem section
       assert html =~ "The problem"
-      assert html =~ "serverless"
 
-      # Check what Runlater does section
-      assert html =~ "What Runlater does"
-      assert html =~ "Cron jobs"
-      assert html =~ "Deferred tasks"
-      assert html =~ "Automatic retries"
-      assert html =~ "Cron monitoring"
+      # Check core capabilities section
+      assert html =~ "One API for all async work"
+      assert html =~ "Queues"
+      assert html =~ "Delays"
+      assert html =~ "Crons"
+      assert html =~ "Retries"
+      assert html =~ "Callbacks"
+      assert html =~ "Monitoring"
 
-      # Check fire and forget section
-      assert html =~ "Fire and forget"
-      assert html =~ "Set it and sleep well"
-      assert html =~ "Retries handled"
-      assert html =~ "Alerts when it matters"
-      assert html =~ "Full history"
+      # Check built for production section
+      assert html =~ "Built for production"
+      assert html =~ "Webhook signatures"
+      assert html =~ "Idempotency"
+      assert html =~ "Custom headers and payloads"
+      assert html =~ "Full execution history"
+      assert html =~ "Slack, Discord, or email"
 
       # Check why Runlater section
       assert html =~ "Why Runlater"
       assert html =~ "EU-hosted, GDPR-native"
-      assert html =~ "Built for reliability"
+      assert html =~ "Built on the BEAM"
       assert html =~ "Privacy by design"
-      assert html =~ "API + Dashboard"
+      assert html =~ "API-first with a dashboard"
 
       # Check tech mentions
       assert html =~ "Elixir"

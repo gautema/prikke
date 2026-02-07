@@ -268,9 +268,9 @@ defmodule Prikke.SchedulerTest do
       %{user: user, organization: org}
     end
 
-    test "schedules jobs within 30-second lookahead window", %{organization: org} do
-      # Create a one-time job scheduled 15 seconds in the future
-      future = DateTime.utc_now() |> DateTime.add(15, :second) |> DateTime.truncate(:second)
+    test "schedules jobs within 10-second lookahead window", %{organization: org} do
+      # Create a one-time job scheduled 3 seconds in the future (well within 10s lookahead)
+      future = DateTime.utc_now() |> DateTime.add(3, :second) |> DateTime.truncate(:second)
 
       {:ok, job} =
         Jobs.create_job(org, %{
@@ -299,9 +299,9 @@ defmodule Prikke.SchedulerTest do
       assert DateTime.diff(execution.scheduled_for, future, :second) == 0
     end
 
-    test "does not schedule jobs beyond 30-second lookahead window", %{organization: org} do
-      # Create a one-time job scheduled 60 seconds in the future (beyond 30s lookahead)
-      future = DateTime.utc_now() |> DateTime.add(60, :second) |> DateTime.truncate(:second)
+    test "does not schedule jobs beyond 10-second lookahead window", %{organization: org} do
+      # Create a one-time job scheduled 20 seconds in the future (beyond 10s lookahead)
+      future = DateTime.utc_now() |> DateTime.add(20, :second) |> DateTime.truncate(:second)
 
       {:ok, job} =
         Jobs.create_job(org, %{
@@ -380,7 +380,7 @@ defmodule Prikke.SchedulerTest do
       organization: org
     } do
       # This tests that workers get the precise scheduled time
-      exact_time = DateTime.utc_now() |> DateTime.add(20, :second) |> DateTime.truncate(:second)
+      exact_time = DateTime.utc_now() |> DateTime.add(3, :second) |> DateTime.truncate(:second)
 
       {:ok, job} =
         Jobs.create_job(org, %{

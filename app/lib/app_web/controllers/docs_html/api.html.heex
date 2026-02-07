@@ -21,7 +21,7 @@
 
   <h2>Queue API</h2>
   <p>
-    The simplest way to execute a webhook immediately. Just POST the URL and it runs right away.
+    The simplest way to execute a webhook. Runs immediately by default, or pass a <code>delay</code> to defer execution.
   </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
@@ -33,7 +33,7 @@
         <span class="font-mono text-sm">/queue</span>
       </div>
       <p class="text-slate-600 m-0 mb-4">
-        Queue a request for immediate execution. Creates a one-time job and executes it right away.
+        Queue a request for immediate or delayed execution. Creates a one-time job and executes it right away, or after the specified delay.
       </p>
 
       <h4 class="text-sm font-semibold mt-4 mb-2 text-slate-900">Headers</h4>
@@ -81,6 +81,13 @@
           <td class="py-2 pr-4"><code class="text-sky-600">body</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
           <td class="py-2 text-slate-600">Request body, max 256KB (optional)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">delay</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            Delay before execution. Number with unit: <code>"30s"</code>, <code>"5m"</code>, <code>"2h"</code>, <code>"1d"</code>. Runs immediately if omitted. (optional)
+          </td>
         </tr>
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">name</code></td>

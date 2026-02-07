@@ -3,7 +3,7 @@
     <%= unless @current_scope do %>
       <.marketing_header menu_id="landing-menu-toggle" />
     <% end %>
-    
+
 <!-- Hero -->
     <section class="py-12 sm:py-20 text-center">
       <div class="inline-flex items-center gap-1.5 glass-button px-4 py-2 rounded-full text-sm text-slate-600 mb-6">
@@ -12,8 +12,8 @@
       <h1 class="text-3xl sm:text-5xl font-bold leading-tight tracking-tight mb-6 text-slate-900">
         Defer anything.<br />We'll make sure it runs.
       </h1>
-      <p class="text-lg sm:text-xl text-slate-600 mb-8 max-w-[520px] mx-auto">
-        Defer any task to run in 5 minutes or 5 months. Schedule recurring crons. Monitor that they run. Built-in retries. Fire and forget.
+      <p class="text-lg sm:text-xl text-slate-600 mb-8 max-w-[560px] mx-auto">
+        Queues, crons, delays, and retries — one API, zero infrastructure. EU-hosted and GDPR-native.
       </p>
       <div class="flex flex-col sm:flex-row gap-3 justify-center mb-10">
         <a
@@ -31,7 +31,7 @@
       </div>
       <p class="text-sm text-slate-400">No credit card required · 5 jobs free forever</p>
     </section>
-    
+
 <!-- The problem -->
     <section class="py-14 border-t border-slate-200">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-6">
@@ -39,95 +39,95 @@
       </h2>
       <div class="glass-card rounded-2xl p-6">
         <p class="text-[15px] text-slate-600 mb-4">
-          Your app needs to do things later. Send a reminder email in 24 hours. Retry a failed payment tomorrow. Clean up expired sessions every night. Process a webhook without blocking the response.
+          Your app needs to do things later. Send a reminder email in 24 hours. Retry a failed payment tomorrow. Process a webhook without blocking the response. Run cleanup every night.
         </p>
         <p class="text-[15px] text-slate-600 m-0">
-          But you're on serverless. No background workers. No persistent processes. You're stitching together queues, schedulers, and containers just to run async tasks. There's a simpler way.
+          You're stitching together queues, schedulers, and cron containers — or you're locked into a US provider and hoping your DPO doesn't ask questions. There's a simpler way.
         </p>
       </div>
     </section>
-    
-<!-- What we do -->
+
+<!-- Core capabilities -->
     <section class="py-14 border-t border-slate-200">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
-        What Runlater does
+        One API for all async work
       </h2>
       <div class="grid sm:grid-cols-2 gap-4">
         <div class="glass-card rounded-2xl p-5">
-          <h3 class="text-base font-semibold mb-2 text-slate-900">Deferred tasks</h3>
+          <h3 class="text-base font-semibold mb-2 text-slate-900">Queues</h3>
           <p class="text-[15px] text-slate-500 m-0">
-            Send a reminder in 24 hours. Process a payment tomorrow. Expire a session next week. Just POST with a timestamp.
+            Push a task and we run it immediately. Offload work from your request cycle. One POST, instant execution.
           </p>
         </div>
         <div class="glass-card rounded-2xl p-5">
-          <h3 class="text-base font-semibold mb-2 text-slate-900">Cron jobs</h3>
+          <h3 class="text-base font-semibold mb-2 text-slate-900">Delays</h3>
+          <p class="text-[15px] text-slate-500 m-0">
+            Schedule a task for any time in the future. Send a reminder in 24 hours. Expire a trial in 14 days. Just set a timestamp.
+          </p>
+        </div>
+        <div class="glass-card rounded-2xl p-5">
+          <h3 class="text-base font-semibold mb-2 text-slate-900">Crons</h3>
           <p class="text-[15px] text-slate-500 m-0">
             Daily reports, hourly syncs, weekly cleanups. Standard cron expressions. We call your endpoint on schedule.
           </p>
         </div>
         <div class="glass-card rounded-2xl p-5">
-          <h3 class="text-base font-semibold mb-2 text-slate-900">Automatic retries</h3>
+          <h3 class="text-base font-semibold mb-2 text-slate-900">Retries</h3>
           <p class="text-[15px] text-slate-500 m-0">
-            Endpoint down? We retry with exponential backoff. Your task runs even when things go wrong.
+            Endpoint down? We retry with exponential backoff — up to 10 attempts. Your task runs even when things go wrong.
           </p>
         </div>
         <div class="glass-card rounded-2xl p-5">
-          <h3 class="text-base font-semibold mb-2 text-slate-900">Cron monitoring</h3>
+          <h3 class="text-base font-semibold mb-2 text-slate-900">Callbacks</h3>
           <p class="text-[15px] text-slate-500 m-0">
-            Dead man's switch for your cron jobs. Get alerted if they stop running. Recovery notifications when they're back.
+            Get notified when a task completes. We POST the result — status, duration, response — back to your endpoint.
           </p>
         </div>
         <div class="glass-card rounded-2xl p-5">
-          <h3 class="text-base font-semibold mb-2 text-slate-900">Full REST API</h3>
+          <h3 class="text-base font-semibold mb-2 text-slate-900">Monitoring</h3>
           <p class="text-[15px] text-slate-500 m-0">
-            Manage jobs and monitors programmatically. Create, update, delete, and check execution history from your code.
-          </p>
-        </div>
-        <div class="glass-card rounded-2xl p-5">
-          <h3 class="text-base font-semibold mb-2 text-slate-900">Team workspaces</h3>
-          <p class="text-[15px] text-slate-500 m-0">
-            Organize by team with role-based access. Shared dashboards, API keys per organization, and invite your whole team.
+            Dead man's switch for your cron jobs. Get alerted when they stop running. Recovery notifications when they're back.
           </p>
         </div>
       </div>
     </section>
-    
-<!-- Fire and forget -->
+
+<!-- Built for production -->
     <section class="py-14 border-t border-slate-200">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
-        Fire and forget
+        Built for production
       </h2>
       <div class="grid gap-5">
         <div class="flex gap-4">
           <div class="flex-shrink-0 w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
-            <.icon name="hero-clock" class="w-4 h-4 text-white" />
+            <.icon name="hero-finger-print" class="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 class="text-base font-semibold mb-1 text-slate-900">Set it and sleep well</h3>
+            <h3 class="text-base font-semibold mb-1 text-slate-900">Webhook signatures</h3>
             <p class="text-[15px] text-slate-600 m-0">
-              Configure your job once. We run it forever. No servers to maintain, no infrastructure to worry about.
+              Every request signed with HMAC-SHA256. Verify that requests to your endpoint actually came from Runlater.
             </p>
           </div>
         </div>
         <div class="flex gap-4">
           <div class="flex-shrink-0 w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
-            <.icon name="hero-arrow-path" class="w-4 h-4 text-white" />
+            <.icon name="hero-key" class="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 class="text-base font-semibold mb-1 text-slate-900">Retries handled</h3>
+            <h3 class="text-base font-semibold mb-1 text-slate-900">Idempotency</h3>
             <p class="text-[15px] text-slate-600 m-0">
-              Transient failures happen. We retry automatically with exponential backoff. You don't lift a finger.
+              Pass an idempotency key and we guarantee exactly-once task creation. Safe to retry from your client without duplicates.
             </p>
           </div>
         </div>
         <div class="flex gap-4">
           <div class="flex-shrink-0 w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
-            <.icon name="hero-bell-alert" class="w-4 h-4 text-white" />
+            <.icon name="hero-adjustments-horizontal" class="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 class="text-base font-semibold mb-1 text-slate-900">Alerts when it matters</h3>
+            <h3 class="text-base font-semibold mb-1 text-slate-900">Custom headers and payloads</h3>
             <p class="text-[15px] text-slate-600 m-0">
-              Get notified via email or webhook only when something actually fails. No noise, just signal.
+              Send any HTTP method, headers, and request body. Forward webhooks, trigger APIs, authenticate with your own tokens.
             </p>
           </div>
         </div>
@@ -136,15 +136,26 @@
             <.icon name="hero-document-text" class="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 class="text-base font-semibold mb-1 text-slate-900">Full history</h3>
+            <h3 class="text-base font-semibold mb-1 text-slate-900">Full execution history</h3>
             <p class="text-[15px] text-slate-600 m-0">
-              Every execution logged with status, duration, and response. Debug issues without digging through logs.
+              Every run logged with status code, duration, and response body. Debug failures without digging through your own logs.
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="flex-shrink-0 w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
+            <.icon name="hero-bell-alert" class="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h3 class="text-base font-semibold mb-1 text-slate-900">Alerts to Slack, Discord, or email</h3>
+            <p class="text-[15px] text-slate-600 m-0">
+              Get notified only when something fails. We auto-detect Slack and Discord webhook URLs and format the message for you.
             </p>
           </div>
         </div>
       </div>
     </section>
-    
+
 <!-- How it works -->
     <section class="py-14 border-t border-slate-200">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
@@ -153,16 +164,18 @@
       <pre
         phx-no-curly-interpolation
         class="bg-slate-900 text-slate-100 p-4 sm:p-6 rounded-lg font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto"
-      ><span class="text-slate-500"># Run something right now</span>
+      ><span class="text-slate-500"># Push to a queue — runs immediately</span>
 curl -X POST https://runlater.eu/api/v1/queue \
   -H "Authorization: Bearer pk_live_xxx" \
   -d '{
-    <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/process"</span>
+    <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/process"</span>,
+    <span class="text-sky-300">"callback_url"</span>: <span class="text-green-300">"https://myapp.com/api/callback"</span>
   }'
 
-<span class="text-slate-500"># Defer a task - run it in 24 hours</span>
+<span class="text-slate-500"># Delay a task — runs in 24 hours</span>
 curl -X POST https://runlater.eu/api/v1/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
+  -H "Idempotency-Key: reminder-user-42" \
   -d '{
     <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Send reminder"</span>,
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/remind"</span>,
@@ -170,7 +183,7 @@ curl -X POST https://runlater.eu/api/v1/jobs \
     <span class="text-sky-300">"scheduled_at"</span>: <span class="text-green-300">"2026-03-01T09:00:00Z"</span>
   }'
 
-<span class="text-slate-500"># Or schedule a recurring cron job</span>
+<span class="text-slate-500"># Schedule a recurring cron</span>
 curl -X POST https://runlater.eu/api/v1/jobs \
   -H "Authorization: Bearer pk_live_xxx" \
   -d '{
@@ -180,28 +193,9 @@ curl -X POST https://runlater.eu/api/v1/jobs \
     <span class="text-sky-300">"cron_expression"</span>: <span class="text-green-300">"0 6 * * *"</span>
   }'
 
-<span class="text-slate-500"># That's it. We handle the rest.</span></pre>
+<span class="text-slate-500"># That's it. We handle retries, callbacks, and alerts.</span></pre>
     </section>
-    
-<!-- Built for reliability -->
-    <section class="py-14 border-t border-slate-200">
-      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-6">
-        Built for reliability
-      </h2>
-      <div class="glass-card rounded-2xl p-6">
-        <p class="text-[15px] text-slate-600 mb-4">
-          Runlater runs on <strong class="text-slate-900">Elixir and the BEAM VM</strong>
-          — the same technology that powers WhatsApp, Discord, and telecom systems requiring 99.9999% uptime.
-        </p>
-        <p class="text-[15px] text-slate-600 mb-4">
-          The BEAM was designed for systems that never stop. Lightweight processes, fault isolation, and hot code upgrades mean your scheduled jobs keep running even during deployments.
-        </p>
-        <p class="text-[15px] text-slate-600 m-0">
-          No complex infrastructure. No Redis. No message queues. Just battle-tested technology that's been running telephony systems for 30+ years.
-        </p>
-      </div>
-    </section>
-    
+
 <!-- Why Runlater -->
     <section class="py-14 border-t border-slate-200">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
@@ -221,6 +215,28 @@ curl -X POST https://runlater.eu/api/v1/jobs \
         </div>
         <div class="flex gap-4">
           <div class="flex-shrink-0 w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
+            <.icon name="hero-bolt" class="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h3 class="text-base font-semibold mb-1 text-slate-900">Built on the BEAM</h3>
+            <p class="text-[15px] text-slate-600 m-0">
+              Elixir and the BEAM VM — the same technology behind WhatsApp and telecom systems. Designed for systems that never stop.
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="flex-shrink-0 w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
+            <.icon name="hero-code-bracket" class="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h3 class="text-base font-semibold mb-1 text-slate-900">API-first with a dashboard</h3>
+            <p class="text-[15px] text-slate-600 m-0">
+              Full REST API with OpenAPI docs. Real-time dashboard for when you need visibility. Team workspaces with role-based access.
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="flex-shrink-0 w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
             <.icon name="hero-lock-closed" class="w-4 h-4 text-white" />
           </div>
           <div>
@@ -230,20 +246,9 @@ curl -X POST https://runlater.eu/api/v1/jobs \
             </p>
           </div>
         </div>
-        <div class="flex gap-4">
-          <div class="flex-shrink-0 w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
-            <.icon name="hero-code-bracket" class="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <h3 class="text-base font-semibold mb-1 text-slate-900">API + Dashboard</h3>
-            <p class="text-[15px] text-slate-600 m-0">
-              Manage jobs via REST API or our real-time dashboard. Whatever fits your workflow.
-            </p>
-          </div>
-        </div>
       </div>
     </section>
-    
+
 <!-- Pricing -->
     <section class="py-14 border-t border-slate-200 text-center">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
@@ -281,12 +286,12 @@ curl -X POST https://runlater.eu/api/v1/jobs \
         </div>
       </div>
     </section>
-    
+
 <!-- CTA -->
     <section class="py-20 text-center border-t border-slate-200">
-      <h2 class="text-2xl font-bold mb-4 text-slate-900">Ready to defer your first task?</h2>
+      <h2 class="text-2xl font-bold mb-4 text-slate-900">Ready to offload your first task?</h2>
       <p class="text-slate-600 mb-8">
-        Create your free account and schedule your first job in minutes.
+        Create your free account and push your first job in minutes.
       </p>
       <a
         href="/users/register"

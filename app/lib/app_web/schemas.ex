@@ -391,6 +391,12 @@ defmodule PrikkeWeb.Schemas do
           description: "HTTP headers"
         },
         body: %Schema{type: :string, nullable: true, description: "Request body"},
+        delay: %Schema{
+          type: :string,
+          nullable: true,
+          description:
+            "Delay before execution. Use a number with unit: \"30s\", \"5m\", \"2h\", \"1d\". If omitted, runs immediately."
+        },
         name: %Schema{type: :string, nullable: true, description: "Optional name for the job"},
         timeout_ms: %Schema{
           type: :integer,

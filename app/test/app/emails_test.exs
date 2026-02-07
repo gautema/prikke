@@ -76,13 +76,19 @@ defmodule Prikke.EmailsTest do
 
   describe "list_recent_emails/1" do
     test "returns recent emails ordered by most recent first" do
-      {:ok, _old} =
+      {:ok, old} =
         Emails.log_email(%{
           to: "old@test.com",
           subject: "Old",
           email_type: "test",
           status: "sent"
         })
+
+      # Backdate the first email so ordering is deterministic
+      Prikke.Repo.update_all(
+        from(e in Prikke.Emails.EmailLog, where: e.id == ^old.id),
+        set: [inserted_at: DateTime.add(DateTime.utc_now(), -60, :second)]
+      )
 
       {:ok, _new} =
         Emails.log_email(%{

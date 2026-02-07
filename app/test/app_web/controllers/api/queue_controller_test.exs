@@ -29,7 +29,7 @@ defmodule PrikkeWeb.Api.QueueControllerTest do
       conn = post(conn, ~p"/api/v1/queue", params)
       response = json_response(conn, 202)
 
-      assert response["message"] == "Request queued for immediate execution"
+      assert response["message"] == "Request queued for execution"
       assert response["data"]["status"] == "pending"
       assert response["data"]["job_id"]
       assert response["data"]["execution_id"]
@@ -161,6 +161,102 @@ defmodule PrikkeWeb.Api.QueueControllerTest do
       response2 = json_response(conn2, 202)
 
       refute response1["data"]["job_id"] == response2["data"]["job_id"]
+    end
+  end
+
+  describe "POST /api/v1/queue with delay" do
+    test "delays execution by seconds", %{conn: conn} do
+      params = %{"url" => "https://example.com/webhook", "delay" => "30s"}
+
+      conn = post(conn, ~p"/api/v1/queue", params)
+      response = json_response(conn, 202)
+
+      scheduled_for = response["data"]["scheduled_for"]
+      {:ok, scheduled_dt, _} = DateTime.from_iso8601(scheduled_for)
+      diff = DateTime.diff(scheduled_dt, DateTime.utc_now())
+
+      # Should be roughly 30 seconds in the future (allow some tolerance)
+      assert diff >= 28 and diff <= 32
+    end
+
+    test "delays execution by minutes", %{conn: conn} do
+      params = %{"url" => "https://example.com/webhook", "delay" => "5m"}
+
+      conn = post(conn, ~p"/api/v1/queue", params)
+      response = json_response(conn, 202)
+
+      scheduled_for = response["data"]["scheduled_for"]
+      {:ok, scheduled_dt, _} = DateTime.from_iso8601(scheduled_for)
+      diff = DateTime.diff(scheduled_dt, DateTime.utc_now())
+
+      assert diff >= 298 and diff <= 302
+    end
+
+    test "delays execution by hours", %{conn: conn} do
+      params = %{"url" => "https://example.com/webhook", "delay" => "2h"}
+
+      conn = post(conn, ~p"/api/v1/queue", params)
+      response = json_response(conn, 202)
+
+      scheduled_for = response["data"]["scheduled_for"]
+      {:ok, scheduled_dt, _} = DateTime.from_iso8601(scheduled_for)
+      diff = DateTime.diff(scheduled_dt, DateTime.utc_now())
+
+      assert diff >= 7198 and diff <= 7202
+    end
+
+    test "delays execution by days", %{conn: conn} do
+      params = %{"url" => "https://example.com/webhook", "delay" => "1d"}
+
+      conn = post(conn, ~p"/api/v1/queue", params)
+      response = json_response(conn, 202)
+
+      scheduled_for = response["data"]["scheduled_for"]
+      {:ok, scheduled_dt, _} = DateTime.from_iso8601(scheduled_for)
+      diff = DateTime.diff(scheduled_dt, DateTime.utc_now())
+
+      assert diff >= 86398 and diff <= 86402
+    end
+
+    test "returns error for invalid delay format", %{conn: conn} do
+      params = %{"url" => "https://example.com/webhook", "delay" => "abc"}
+
+      conn = post(conn, ~p"/api/v1/queue", params)
+      response = json_response(conn, 400)
+
+      assert response["error"]["code"] == "invalid_delay"
+    end
+
+    test "returns error for delay without unit", %{conn: conn} do
+      params = %{"url" => "https://example.com/webhook", "delay" => "30"}
+
+      conn = post(conn, ~p"/api/v1/queue", params)
+      response = json_response(conn, 400)
+
+      assert response["error"]["code"] == "invalid_delay"
+    end
+
+    test "returns error for zero delay", %{conn: conn} do
+      params = %{"url" => "https://example.com/webhook", "delay" => "0s"}
+
+      conn = post(conn, ~p"/api/v1/queue", params)
+      response = json_response(conn, 400)
+
+      assert response["error"]["code"] == "invalid_delay"
+    end
+
+    test "runs immediately when no delay specified", %{conn: conn} do
+      params = %{"url" => "https://example.com/webhook"}
+
+      conn = post(conn, ~p"/api/v1/queue", params)
+      response = json_response(conn, 202)
+
+      scheduled_for = response["data"]["scheduled_for"]
+      {:ok, scheduled_dt, _} = DateTime.from_iso8601(scheduled_for)
+      diff = DateTime.diff(scheduled_dt, DateTime.utc_now())
+
+      # Should be within a couple seconds of now
+      assert diff >= 0 and diff <= 3
     end
   end
 end
