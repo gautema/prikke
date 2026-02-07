@@ -6,10 +6,10 @@
 
   <h2>How It Works</h2>
   <p>
-    When a job triggers, Runlater makes an HTTP request to your configured URL. Your endpoint processes the request and returns a response.
+    When a task triggers, Runlater makes an HTTP request to your configured URL. Your endpoint processes the request and returns a response.
   </p>
   <ol>
-    <li>Job triggers (cron schedule or one-time)</li>
+    <li>Task triggers (cron schedule or one-time)</li>
     <li>Runlater sends HTTP request to your URL</li>
     <li>Your server processes the request</li>
     <li>Return 2xx status for success</li>
@@ -24,7 +24,7 @@
   ><span class="text-purple-300">POST</span> /your-endpoint HTTP/1.1
 <span class="text-sky-300">Host</span>: your-app.com
 <span class="text-sky-300">Content-Type</span>: application/json
-<span class="text-sky-300">X-Runlater-Job-Id</span>: 01JJXYZ...
+<span class="text-sky-300">X-Runlater-Task-Id</span>: 01JJXYZ...
 <span class="text-sky-300">X-Runlater-Execution-Id</span>: 01JJXYZ...
 <span class="text-sky-300">X-Runlater-Signature</span>: sha256=a1b2c3d4...
 <span class="text-sky-300">Authorization</span>: Bearer your-token  <span class="text-slate-500">(if configured)</span>
@@ -42,8 +42,8 @@
       </thead>
       <tbody class="text-slate-600">
         <tr class="border-b border-slate-100">
-          <td class="py-3 px-4"><code class="text-sky-600">X-Runlater-Job-Id</code></td>
-          <td class="py-3 px-4">The ID of the job being executed</td>
+          <td class="py-3 px-4"><code class="text-sky-600">X-Runlater-Task-Id</code></td>
+          <td class="py-3 px-4">The ID of the task being executed</td>
         </tr>
         <tr class="border-b border-slate-100">
           <td class="py-3 px-4"><code class="text-sky-600">X-Runlater-Execution-Id</code></td>
@@ -95,10 +95,10 @@ app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; {
   }
 
   <span class="text-slate-500">// Safe to process - request is from Runlater</span>
-  <span class="text-purple-300">const</span> jobId = req.headers[<span class="text-green-300">'x-runlater-job-id'</span>];
+  <span class="text-purple-300">const</span> taskId = req.headers[<span class="text-green-300">'x-runlater-task-id'</span>];
   <span class="text-purple-300">const</span> executionId = req.headers[<span class="text-green-300">'x-runlater-execution-id'</span>];
 
-  <span class="text-slate-500">// Process the job...</span>
+  <span class="text-slate-500">// Process the task...</span>
   res.json({ <span class="text-sky-300">ok</span>: <span class="text-orange-300">true</span> });
 });</pre>
   </div>
@@ -118,22 +118,22 @@ app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; {
         <tr class="border-b border-slate-100">
           <td class="py-3 px-4"><code class="text-emerald-600">2xx</code></td>
           <td class="py-3 px-4">Success</td>
-          <td class="py-3 px-4">Job marked complete</td>
+          <td class="py-3 px-4">Task marked complete</td>
         </tr>
         <tr class="border-b border-slate-100">
           <td class="py-3 px-4"><code class="text-amber-600">4xx</code></td>
           <td class="py-3 px-4">Client error</td>
-          <td class="py-3 px-4">Job marked failed (no retry)</td>
+          <td class="py-3 px-4">Task marked failed (no retry)</td>
         </tr>
         <tr class="border-b border-slate-100">
           <td class="py-3 px-4"><code class="text-red-600">5xx</code></td>
           <td class="py-3 px-4">Server error</td>
-          <td class="py-3 px-4">Job retried with backoff</td>
+          <td class="py-3 px-4">Task retried with backoff</td>
         </tr>
         <tr>
           <td class="py-3 px-4"><code class="text-slate-500">Timeout</code></td>
           <td class="py-3 px-4">Timeout</td>
-          <td class="py-3 px-4">Job retried with backoff</td>
+          <td class="py-3 px-4">Task retried with backoff</td>
         </tr>
       </tbody>
     </table>
@@ -155,15 +155,15 @@ app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; {
   <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg my-6">
     <strong class="text-amber-800">Long-running tasks:</strong>
     <span class="text-amber-700">
-      If your job takes longer than 30 seconds, acknowledge the request immediately and process asynchronously. Return 200 to indicate the job was accepted.
+      If your task takes longer than 30 seconds, acknowledge the request immediately and process asynchronously. Return 200 to indicate the task was accepted.
     </span>
   </div>
 
   <h2>Automatic Retries</h2>
-  <p>Retry behavior depends on the job type:</p>
+  <p>Retry behavior depends on the task type:</p>
 
-  <h3>One-time Jobs (run_at)</h3>
-  <p>One-time jobs automatically retry with exponential backoff:</p>
+  <h3>One-time Tasks (run_at)</h3>
+  <p>One-time tasks automatically retry with exponential backoff:</p>
   <div class="overflow-x-auto my-6">
     <table class="w-full text-sm">
       <thead>
@@ -197,12 +197,12 @@ app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; {
     </table>
   </div>
   <p>
-    After 5 failed attempts, the job is marked as permanently failed and you'll receive an alert (if configured).
+    After 5 failed attempts, the task is marked as permanently failed and you'll receive an alert (if configured).
   </p>
 
-  <h3>Recurring Jobs (cron)</h3>
+  <h3>Recurring Tasks (cron)</h3>
   <p>
-    Cron jobs do <strong>not</strong>
+    Cron tasks do <strong>not</strong>
     retry. If a scheduled run fails, the next scheduled run will execute as normal. This prevents retry storms and duplicate executions.
   </p>
 
@@ -245,7 +245,7 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
     <span class="text-purple-300">return</span> res.json({ <span class="text-sky-300">status</span>: <span class="text-green-300">'already_processed'</span> });
   }
 
-  <span class="text-slate-500">// Process the job...</span>
+  <span class="text-slate-500">// Process the task...</span>
   <span class="text-purple-300">await</span> doWork();
 
   processed.add(executionId);
@@ -255,12 +255,12 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
 
   <h2 id="callbacks">Callbacks</h2>
   <p>
-    Get notified when an execution completes by setting a <code class="bg-slate-100 px-2 py-1 rounded text-sm">callback_url</code> on your job or queue request. After each execution finishes (success, failure, or timeout), Runlater will POST the result to your callback URL.
+    Get notified when an execution completes by setting a <code class="bg-slate-100 px-2 py-1 rounded text-sm">callback_url</code> on your task. After each execution finishes (success, failure, or timeout), Runlater will POST the result to your callback URL.
   </p>
 
   <h3>How Callbacks Work</h3>
   <ol>
-    <li>Set <code class="bg-slate-100 px-2 py-1 rounded text-sm">callback_url</code> on a job or queue request</li>
+    <li>Set <code class="bg-slate-100 px-2 py-1 rounded text-sm">callback_url</code> on a task</li>
     <li>Runlater executes your webhook as normal</li>
     <li>After completion, Runlater POSTs the result to your callback URL</li>
     <li>Callbacks retry up to 3 times with backoff (5s, 20s) on failure</li>
@@ -276,7 +276,7 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
 
 {
   <span class="text-sky-300">"event"</span>: <span class="text-green-300">"execution.completed"</span>,
-  <span class="text-sky-300">"job_id"</span>: <span class="text-green-300">"01JJXYZ..."</span>,
+  <span class="text-sky-300">"task_id"</span>: <span class="text-green-300">"01JJXYZ..."</span>,
   <span class="text-sky-300">"execution_id"</span>: <span class="text-green-300">"01JJXYZ..."</span>,
   <span class="text-sky-300">"status"</span>: <span class="text-green-300">"success"</span>,
   <span class="text-sky-300">"status_code"</span>: <span class="text-orange-300">200</span>,
@@ -288,13 +288,13 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
 
   <h3>Callback Priority</h3>
   <p>
-    Callbacks can be set at two levels. The execution-level callback (from a queue push) takes priority over the job-level callback:
+    Callbacks can be set at two levels. The execution-level callback (from a queue push) takes priority over the task-level callback:
   </p>
   <div class="overflow-x-auto my-6">
     <table class="w-full text-sm">
       <thead>
         <tr class="border-b border-white/50">
-          <th class="text-left py-3 px-4 font-semibold text-slate-700">Job callback_url</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Task callback_url</th>
           <th class="text-left py-3 px-4 font-semibold text-slate-700">Queue callback_url</th>
           <th class="text-left py-3 px-4 font-semibold text-slate-700">Result</th>
         </tr>
@@ -303,7 +303,7 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
         <tr class="border-b border-slate-100">
           <td class="py-3 px-4">Set</td>
           <td class="py-3 px-4">Not set</td>
-          <td class="py-3 px-4">Uses job callback_url</td>
+          <td class="py-3 px-4">Uses task callback_url</td>
         </tr>
         <tr class="border-b border-slate-100">
           <td class="py-3 px-4">Set</td>
@@ -333,18 +333,18 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
 
   <h2 id="notifications">Notifications</h2>
   <p>
-    Runlater can notify you via email and webhook when job execution status changes. Configure these in
+    Runlater can notify you via email and webhook when task execution status changes. Configure these in
     <a href="/organizations/notifications" class="text-emerald-600 hover:underline">Organization Settings → Notifications</a>.
   </p>
 
   <h3>Failure Notifications</h3>
   <p>
-    Triggered on the <strong>first failure</strong> in a sequence (not on every consecutive failure). If a job fails 5 times in a row, you only get one notification.
+    Triggered on the <strong>first failure</strong> in a sequence (not on every consecutive failure). If a task fails 5 times in a row, you only get one notification.
   </p>
 
   <h3>Recovery Notifications</h3>
   <p>
-    Triggered when a job <strong>succeeds after a failure</strong>. This lets you know your service is back to normal without manually checking the dashboard.
+    Triggered when a task <strong>succeeds after a failure</strong>. This lets you know your service is back to normal without manually checking the dashboard.
   </p>
 
   <p>Both notification types are sent to your configured email and webhook URL. Webhook payloads are auto-formatted for Slack and Discord.</p>
@@ -355,28 +355,28 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
     class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto"
   ><span class="text-slate-500">// Failure notification</span>
 {
-  <span class="text-sky-300">"event"</span>: <span class="text-green-300">"job.failed"</span>,
-  <span class="text-sky-300">"job"</span>: { <span class="text-sky-300">"id"</span>: <span class="text-green-300">"..."</span>, <span class="text-sky-300">"name"</span>: <span class="text-green-300">"..."</span>, <span class="text-sky-300">"url"</span>: <span class="text-green-300">"..."</span> },
+  <span class="text-sky-300">"event"</span>: <span class="text-green-300">"task.failed"</span>,
+  <span class="text-sky-300">"task"</span>: { <span class="text-sky-300">"id"</span>: <span class="text-green-300">"..."</span>, <span class="text-sky-300">"name"</span>: <span class="text-green-300">"..."</span>, <span class="text-sky-300">"url"</span>: <span class="text-green-300">"..."</span> },
   <span class="text-sky-300">"execution"</span>: { <span class="text-sky-300">"status"</span>: <span class="text-green-300">"failed"</span>, <span class="text-sky-300">"status_code"</span>: <span class="text-orange-300">500</span>, ... }
 }
 
 <span class="text-slate-500">// Recovery notification</span>
 {
-  <span class="text-sky-300">"event"</span>: <span class="text-green-300">"job.recovered"</span>,
-  <span class="text-sky-300">"job"</span>: { <span class="text-sky-300">"id"</span>: <span class="text-green-300">"..."</span>, <span class="text-sky-300">"name"</span>: <span class="text-green-300">"..."</span>, <span class="text-sky-300">"url"</span>: <span class="text-green-300">"..."</span> },
+  <span class="text-sky-300">"event"</span>: <span class="text-green-300">"task.recovered"</span>,
+  <span class="text-sky-300">"task"</span>: { <span class="text-sky-300">"id"</span>: <span class="text-green-300">"..."</span>, <span class="text-sky-300">"name"</span>: <span class="text-green-300">"..."</span>, <span class="text-sky-300">"url"</span>: <span class="text-green-300">"..."</span> },
   <span class="text-sky-300">"execution"</span>: { <span class="text-sky-300">"status"</span>: <span class="text-green-300">"success"</span>, <span class="text-sky-300">"status_code"</span>: <span class="text-orange-300">200</span>, ... }
 }</pre>
 
   <h2>Custom Headers</h2>
-  <p>You can configure custom headers when creating a job:</p>
+  <p>You can configure custom headers when creating a task:</p>
   <pre
     phx-no-curly-interpolation
     class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto"
-  >curl -X POST https://runlater.eu/api/v1/jobs \
+  >curl -X POST https://runlater.eu/api/v1/tasks \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
-    <span class="text-sky-300">"name"</span>: <span class="text-green-300">"My job"</span>,
+    <span class="text-sky-300">"name"</span>: <span class="text-green-300">"My task"</span>,
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/webhook"</span>,
     <span class="text-sky-300">"schedule_type"</span>: <span class="text-green-300">"cron"</span>,
     <span class="text-sky-300">"cron_expression"</span>: <span class="text-green-300">"0 * * * *"</span>,

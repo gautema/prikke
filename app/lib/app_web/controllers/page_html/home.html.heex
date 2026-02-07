@@ -29,7 +29,7 @@
           View docs
         </a>
       </div>
-      <p class="text-sm text-slate-400">No credit card required · 5 jobs free forever</p>
+      <p class="text-sm text-slate-400">No credit card required · 5,000 requests/mo free forever</p>
     </section>
 
 <!-- The problem -->
@@ -122,6 +122,17 @@
         </div>
         <div class="flex gap-4">
           <div class="flex-shrink-0 w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
+            <.icon name="hero-funnel" class="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h3 class="text-base font-semibold mb-1 text-slate-900">Deduplication</h3>
+            <p class="text-[15px] text-slate-600 m-0">
+              Idempotency keys prevent duplicate tasks. Retry the same request safely — we'll return the original result, not create a new task.
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="flex-shrink-0 w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
             <.icon name="hero-adjustments-horizontal" class="w-4 h-4 text-white" />
           </div>
           <div>
@@ -161,39 +172,65 @@
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
         How it works
       </h2>
-      <pre
-        phx-no-curly-interpolation
-        class="bg-slate-900 text-slate-100 p-4 sm:p-6 rounded-lg font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto"
-      ><span class="text-slate-500"># Push to a queue — runs immediately</span>
-curl -X POST https://runlater.eu/api/v1/queue \
-  -H "Authorization: Bearer pk_live_xxx" \
-  -d '{
-    <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/process"</span>,
-    <span class="text-sky-300">"callback_url"</span>: <span class="text-green-300">"https://myapp.com/api/callback"</span>
-  }'
-
-<span class="text-slate-500"># Delay a task — runs in 24 hours</span>
-curl -X POST https://runlater.eu/api/v1/jobs \
+      <div class="space-y-6">
+        <%!-- Step 1 --%>
+        <div class="glass-card rounded-2xl overflow-hidden">
+          <div class="px-5 py-3 border-b border-slate-200/60 flex items-center gap-3">
+            <span class="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center text-white text-xs font-bold">1</span>
+            <div>
+              <h3 class="text-sm font-semibold text-slate-900 m-0">Delay a task</h3>
+              <p class="text-xs text-slate-500 m-0">Something happened, do this in 24 hours</p>
+            </div>
+          </div>
+          <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto m-0 rounded-none">curl -X POST https://runlater.eu/api/v1/queue \
   -H "Authorization: Bearer pk_live_xxx" \
   -H "Idempotency-Key: reminder-user-42" \
   -d '{
-    <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Send reminder"</span>,
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/remind"</span>,
-    <span class="text-sky-300">"schedule_type"</span>: <span class="text-green-300">"once"</span>,
-    <span class="text-sky-300">"scheduled_at"</span>: <span class="text-green-300">"2026-03-01T09:00:00Z"</span>
-  }'
+    <span class="text-sky-300">"delay"</span>: <span class="text-green-300">"24h"</span>
+  }'</pre>
+        </div>
 
-<span class="text-slate-500"># Schedule a recurring cron</span>
-curl -X POST https://runlater.eu/api/v1/jobs \
+        <%!-- Step 2 --%>
+        <div class="glass-card rounded-2xl overflow-hidden">
+          <div class="px-5 py-3 border-b border-slate-200/60 flex items-center gap-3">
+            <span class="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center text-white text-xs font-bold">2</span>
+            <div>
+              <h3 class="text-sm font-semibold text-slate-900 m-0">Queue a task</h3>
+              <p class="text-xs text-slate-500 m-0">Offload work from your request cycle</p>
+            </div>
+          </div>
+          <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto m-0 rounded-none">curl -X POST https://runlater.eu/api/v1/queue \
+  -H "Authorization: Bearer pk_live_xxx" \
+  -d '{
+    <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/process"</span>,
+    <span class="text-sky-300">"queue"</span>: <span class="text-green-300">"payments"</span>,
+    <span class="text-sky-300">"callback_url"</span>: <span class="text-green-300">"https://myapp.com/api/done"</span>
+  }'</pre>
+        </div>
+
+        <%!-- Step 3 --%>
+        <div class="glass-card rounded-2xl overflow-hidden">
+          <div class="px-5 py-3 border-b border-slate-200/60 flex items-center gap-3">
+            <span class="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center text-white text-xs font-bold">3</span>
+            <div>
+              <h3 class="text-sm font-semibold text-slate-900 m-0">Schedule a cron</h3>
+              <p class="text-xs text-slate-500 m-0">Recurring jobs on any schedule</p>
+            </div>
+          </div>
+          <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto m-0 rounded-none">curl -X POST https://runlater.eu/api/v1/cron \
   -H "Authorization: Bearer pk_live_xxx" \
   -d '{
     <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Daily backup"</span>,
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/backup"</span>,
-    <span class="text-sky-300">"schedule_type"</span>: <span class="text-green-300">"cron"</span>,
     <span class="text-sky-300">"cron_expression"</span>: <span class="text-green-300">"0 6 * * *"</span>
-  }'
+  }'</pre>
+        </div>
 
-<span class="text-slate-500"># That's it. We handle retries, callbacks, and alerts.</span></pre>
+        <p class="text-center text-sm text-slate-500 pt-2">
+          That's it. We handle retries, callbacks, and alerts.
+        </p>
+      </div>
     </section>
 
 <!-- Why Runlater -->
@@ -259,7 +296,7 @@ curl -X POST https://runlater.eu/api/v1/jobs \
           <h3 class="text-base font-semibold mb-2 text-slate-900">Free</h3>
           <div class="text-3xl font-bold mb-1 text-slate-900">€0</div>
           <p class="text-sm text-slate-500 m-0">
-            5 jobs, 2 users, 5k requests/mo, hourly intervals
+            5 tasks, 2 users, 5k requests/mo, hourly crons
           </p>
         </div>
         <div class="glass-card rounded-2xl p-6">
@@ -268,7 +305,7 @@ curl -X POST https://runlater.eu/api/v1/jobs \
             €29<span class="text-sm font-normal text-slate-500">/mo</span>
           </div>
           <p class="text-sm text-slate-500 m-0">
-            Unlimited jobs & users, 250k requests/mo, per-minute intervals
+            Unlimited tasks & users, 250k requests/mo, per-minute crons
           </p>
         </div>
         <div class="glass-card rounded-2xl p-6">
@@ -291,7 +328,7 @@ curl -X POST https://runlater.eu/api/v1/jobs \
     <section class="py-20 text-center border-t border-slate-200">
       <h2 class="text-2xl font-bold mb-4 text-slate-900">Ready to offload your first task?</h2>
       <p class="text-slate-600 mb-8">
-        Create your free account and push your first job in minutes.
+        Create your free account and push your first task in minutes.
       </p>
       <a
         href="/users/register"

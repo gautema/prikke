@@ -6,7 +6,7 @@ defmodule Prikke.WorkerPoolTest do
   alias Prikke.Executions
 
   import Prikke.AccountsFixtures
-  import Prikke.JobsFixtures
+  import Prikke.TasksFixtures
 
   describe "worker pool scaling" do
     setup do
@@ -29,12 +29,12 @@ defmodule Prikke.WorkerPoolTest do
 
     test "scale spawns workers up to queue depth" do
       org = organization_fixture()
-      # Use a cron job (no scheduled_at validation issues)
-      job = job_fixture(org)
+      # Use a cron task (no scheduled_at validation issues)
+      task = task_fixture(org)
 
       # Create 5 pending executions
       for _ <- 1..5 do
-        {:ok, _} = Executions.create_execution_for_job(job, DateTime.utc_now())
+        {:ok, _} = Executions.create_execution_for_task(task, DateTime.utc_now())
       end
 
       {:ok, result} = WorkerPool.scale()
@@ -46,11 +46,11 @@ defmodule Prikke.WorkerPoolTest do
 
     test "scale respects max_workers limit" do
       org = organization_fixture()
-      job = job_fixture(org)
+      task = task_fixture(org)
 
       # Create 30 pending executions (more than max_workers of 20)
       for _ <- 1..30 do
-        {:ok, _} = Executions.create_execution_for_job(job, DateTime.utc_now())
+        {:ok, _} = Executions.create_execution_for_task(task, DateTime.utc_now())
       end
 
       {:ok, result} = WorkerPool.scale()

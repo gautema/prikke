@@ -1,36 +1,36 @@
-defmodule PrikkeWeb.JobLive.ExecutionShow do
+defmodule PrikkeWeb.TaskLive.ExecutionShow do
   use PrikkeWeb, :live_view
 
-  alias Prikke.Jobs
+  alias Prikke.Tasks
   alias Prikke.Executions
 
   @impl true
-  def mount(%{"job_id" => job_id, "id" => execution_id}, session, socket) do
+  def mount(%{"task_id" => task_id, "id" => execution_id}, session, socket) do
     org = get_organization(socket, session)
 
     if org do
-      case Jobs.get_job(org, job_id) do
+      case Tasks.get_task(org, task_id) do
         nil ->
           {:ok,
            socket
-           |> put_flash(:error, "Job not found")
-           |> redirect(to: ~p"/jobs")}
+           |> put_flash(:error, "Task not found")
+           |> redirect(to: ~p"/tasks")}
 
-        job ->
-          execution = Executions.get_execution_for_job(job, execution_id)
+        task ->
+          execution = Executions.get_execution_for_task(task, execution_id)
 
           if execution do
             {:ok,
              socket
              |> assign(:organization, org)
-             |> assign(:job, job)
+             |> assign(:task, task)
              |> assign(:execution, execution)
              |> assign(:page_title, "Execution Details")}
           else
             {:ok,
              socket
              |> put_flash(:error, "Execution not found")
-             |> redirect(to: ~p"/jobs/#{job_id}")}
+             |> redirect(to: ~p"/tasks/#{task_id}")}
           end
       end
     else
@@ -57,21 +57,20 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
 
   @impl true
   def handle_event("retry", _params, socket) do
-    job = socket.assigns.job
+    task = socket.assigns.task
     now = DateTime.utc_now() |> DateTime.truncate(:second)
 
-    # Set attempt to max so this manual retry won't auto-retry on failure
-    case Executions.create_execution_for_job(job, now, attempt: job.retry_attempts) do
+    case Executions.create_execution_for_task(task, now, attempt: task.retry_attempts) do
       {:ok, execution} ->
         {:noreply,
          socket
-         |> put_flash(:info, "Job triggered - new execution created")
-         |> redirect(to: ~p"/jobs/#{job.id}/executions/#{execution.id}")}
+         |> put_flash(:info, "Task triggered - new execution created")
+         |> redirect(to: ~p"/tasks/#{task.id}/executions/#{execution.id}")}
 
       {:error, _changeset} ->
         {:noreply,
          socket
-         |> put_flash(:error, "Failed to trigger job")}
+         |> put_flash(:error, "Failed to trigger task")}
     end
   end
 
@@ -81,10 +80,10 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
     <div class="max-w-4xl mx-auto py-6 sm:py-8 px-2 sm:px-4">
       <div class="mb-4 sm:mb-6">
         <.link
-          navigate={~p"/jobs/#{@job.id}"}
+          navigate={~p"/tasks/#{@task.id}"}
           class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
         >
-          <.icon name="hero-chevron-left" class="w-4 h-4" /> Back to {@job.name}
+          <.icon name="hero-chevron-left" class="w-4 h-4" /> Back to {@task.name}
         </.link>
       </div>
 
@@ -143,32 +142,32 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
               </div>
             </div>
           </div>
-          
+
     <!-- Request Details -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Request</h3>
             <div class="bg-white/30 rounded-xl p-3 sm:p-4 space-y-3">
               <div class="flex items-start sm:items-center gap-2 flex-col sm:flex-row">
                 <span class="font-mono text-sm bg-slate-200 px-2 py-1 rounded font-medium shrink-0">
-                  {@job.method}
+                  {@task.method}
                 </span>
-                <code class="text-sm text-slate-700 break-all">{@job.url}</code>
+                <code class="text-sm text-slate-700 break-all">{@task.url}</code>
               </div>
-              <%= if @job.headers && @job.headers != %{} do %>
+              <%= if @task.headers && @task.headers != %{} do %>
                 <div>
                   <span class="text-xs text-slate-500 uppercase">Headers</span>
-                  <pre class="text-xs bg-slate-100 p-2 rounded mt-1 overflow-x-auto"><%= Jason.encode!(@job.headers, pretty: true) %></pre>
+                  <pre class="text-xs bg-slate-100 p-2 rounded mt-1 overflow-x-auto"><%= Jason.encode!(@task.headers, pretty: true) %></pre>
                 </div>
               <% end %>
-              <%= if @job.body && @job.body != "" do %>
+              <%= if @task.body && @task.body != "" do %>
                 <div>
                   <span class="text-xs text-slate-500 uppercase">Body</span>
-                  <pre class="text-xs bg-slate-100 p-2 rounded mt-1 overflow-x-auto whitespace-pre-wrap"><%= @job.body %></pre>
+                  <pre class="text-xs bg-slate-100 p-2 rounded mt-1 overflow-x-auto whitespace-pre-wrap"><%= @task.body %></pre>
                 </div>
               <% end %>
             </div>
           </div>
-          
+
     <!-- Response Details -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Response</h3>
@@ -213,7 +212,7 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
               <% end %>
             </div>
           </div>
-          
+
     <!-- Metadata -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Metadata</h3>
@@ -223,8 +222,8 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
                 <p class="font-mono text-slate-700 text-xs break-all">{@execution.id}</p>
               </div>
               <div>
-                <span class="text-xs text-slate-500 uppercase">Job ID</span>
-                <p class="font-mono text-slate-700 text-xs break-all">{@job.id}</p>
+                <span class="text-xs text-slate-500 uppercase">Task ID</span>
+                <p class="font-mono text-slate-700 text-xs break-all">{@task.id}</p>
               </div>
               <div>
                 <span class="text-xs text-slate-500 uppercase">Created At</span>
@@ -233,8 +232,8 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
                 </p>
               </div>
               <div>
-                <span class="text-xs text-slate-500 uppercase">Job Name</span>
-                <p class="text-slate-700">{@job.name}</p>
+                <span class="text-xs text-slate-500 uppercase">Task Name</span>
+                <p class="text-slate-700">{@task.name}</p>
               </div>
             </div>
           </div>
@@ -282,7 +281,6 @@ defmodule PrikkeWeb.JobLive.ExecutionShow do
   defp format_duration(ms), do: "#{Float.round(ms / 60_000, 2)}m"
 
   defp format_response_body(body) when is_binary(body) do
-    # Try to pretty-print JSON
     case Jason.decode(body) do
       {:ok, decoded} -> Jason.encode!(decoded, pretty: true)
       {:error, _} -> body

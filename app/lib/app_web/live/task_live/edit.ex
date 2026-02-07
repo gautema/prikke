@@ -1,46 +1,45 @@
-defmodule PrikkeWeb.JobLive.Edit do
+defmodule PrikkeWeb.TaskLive.Edit do
   use PrikkeWeb, :live_view
 
   import PrikkeWeb.CronBuilder
 
   alias Prikke.Cron
-  alias Prikke.Jobs
-  alias Prikke.Jobs.Job
+  alias Prikke.Tasks
+  alias Prikke.Tasks.Task
 
   @impl true
   def mount(%{"id" => id}, session, socket) do
     org = get_organization(socket, session)
 
     if org do
-      case Jobs.get_job(org, id) do
+      case Tasks.get_task(org, id) do
         nil ->
           {:ok,
            socket
-           |> put_flash(:error, "Job not found")
-           |> redirect(to: ~p"/jobs")}
+           |> put_flash(:error, "Task not found")
+           |> redirect(to: ~p"/tasks")}
 
-        job ->
-          # Convert headers map to JSON string for editing
+        task ->
           headers_json =
-            case job.headers do
+            case task.headers do
               nil -> "{}"
               headers when headers == %{} -> "{}"
               headers -> Jason.encode!(headers, pretty: true)
             end
 
           changeset =
-            Jobs.change_job(job)
+            Tasks.change_task(task)
             |> Ecto.Changeset.put_change(:headers_json, headers_json)
 
           {cron_mode, cron_preset, cron_minute, cron_hour, cron_weekdays, cron_day_of_month} =
-            parse_cron_for_builder(job.cron_expression)
+            parse_cron_for_builder(task.cron_expression)
 
           {:ok,
            socket
            |> assign(:organization, org)
-           |> assign(:job, job)
-           |> assign(:page_title, "Edit: #{job.name}")
-           |> assign(:schedule_type, job.schedule_type)
+           |> assign(:task, task)
+           |> assign(:page_title, "Edit: #{task.name}")
+           |> assign(:schedule_type, task.schedule_type)
            |> assign(:cron_mode, cron_mode)
            |> assign(:cron_preset, cron_preset)
            |> assign(:cron_minute, cron_minute)
@@ -60,11 +59,11 @@ defmodule PrikkeWeb.JobLive.Edit do
   end
 
   @impl true
-  def handle_event("validate", %{"job" => job_params}, socket) do
-    schedule_type = job_params["schedule_type"] || socket.assigns.schedule_type
+  def handle_event("validate", %{"task" => task_params}, socket) do
+    schedule_type = task_params["schedule_type"] || socket.assigns.schedule_type
 
     changeset =
-      Job.changeset(socket.assigns.job, job_params, skip_ssrf: true)
+      Task.changeset(socket.assigns.task, task_params, skip_ssrf: true)
       |> Map.put(:action, :validate)
 
     {:noreply,
@@ -73,33 +72,24 @@ defmodule PrikkeWeb.JobLive.Edit do
      |> assign_form(changeset)}
   end
 
-  def handle_event("save", %{"job" => job_params}, socket) do
-    require Logger
-    Logger.info("[JobLive.Edit] Save event received with params: #{inspect(job_params)}")
+  def handle_event("save", %{"task" => task_params}, socket) do
+    task_params = parse_headers(task_params)
 
-    job_params = parse_headers(job_params)
-
-    case Jobs.update_job(socket.assigns.organization, socket.assigns.job, job_params,
+    case Tasks.update_task(socket.assigns.organization, socket.assigns.task, task_params,
            scope: socket.assigns.current_scope
          ) do
-      {:ok, job} ->
-        Logger.info(
-          "[JobLive.Edit] Job updated successfully, redirecting to #{~p"/jobs/#{job.id}"}"
-        )
-
+      {:ok, task} ->
         {:noreply,
          socket
-         |> put_flash(:info, "Job updated successfully")
-         |> redirect(to: ~p"/jobs/#{job.id}")}
+         |> put_flash(:info, "Task updated successfully")
+         |> redirect(to: ~p"/tasks/#{task.id}")}
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        Logger.warning("[JobLive.Edit] Job update failed: #{inspect(changeset.errors)}")
-        # Set action to :validate so errors are displayed
         changeset = Map.put(changeset, :action, :validate)
 
         {:noreply,
          socket
-         |> put_flash(:error, "Could not save job. Please check the errors below.")
+         |> put_flash(:error, "Could not save task. Please check the errors below.")
          |> assign_form(changeset)}
     end
   end
@@ -203,9 +193,9 @@ defmodule PrikkeWeb.JobLive.Edit do
     timeout_ms = parse_timeout(Ecto.Changeset.get_field(changeset, :timeout_ms))
     headers = Ecto.Changeset.get_field(changeset, :headers) || %{}
 
-    task =
-      Task.async(fn ->
-        Jobs.test_webhook(%{
+    async_task =
+      Elixir.Task.async(fn ->
+        Tasks.test_webhook(%{
           url: url,
           method: method,
           headers: headers,
@@ -218,7 +208,7 @@ defmodule PrikkeWeb.JobLive.Edit do
      socket
      |> assign(:testing, true)
      |> assign(:test_result, nil)
-     |> assign(:test_task_ref, task.ref)}
+     |> assign(:test_task_ref, async_task.ref)}
   end
 
   def handle_event("dismiss_test_result", _, socket) do
@@ -305,7 +295,7 @@ defmodule PrikkeWeb.JobLive.Edit do
 
   defp update_cron_expression(socket, expr) do
     changeset =
-      Job.changeset(socket.assigns.job, %{"cron_expression" => expr, "schedule_type" => "cron"}, skip_ssrf: true)
+      Task.changeset(socket.assigns.task, %{"cron_expression" => expr, "schedule_type" => "cron"}, skip_ssrf: true)
       |> Map.put(:action, :validate)
 
     assign_form(socket, changeset)
@@ -380,21 +370,21 @@ defmodule PrikkeWeb.JobLive.Edit do
     <div class="max-w-4xl mx-auto py-8 px-2 sm:px-4">
       <div class="mb-6">
         <.link
-          navigate={~p"/jobs/#{@job.id}"}
+          navigate={~p"/tasks/#{@task.id}"}
           class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
         >
-          <.icon name="hero-chevron-left" class="w-4 h-4" /> Back to Job
+          <.icon name="hero-chevron-left" class="w-4 h-4" /> Back to Task
         </.link>
       </div>
 
       <div class="mb-6">
-        <h1 class="text-2xl font-bold text-slate-900">Edit Job</h1>
-        <p class="text-slate-500 mt-1">{@job.name}</p>
+        <h1 class="text-2xl font-bold text-slate-900">Edit Task</h1>
+        <p class="text-slate-500 mt-1">{@task.name}</p>
       </div>
 
       <.form
         for={@form}
-        id="job-form"
+        id="task-form"
         phx-change="validate"
         phx-submit="save"
         class="space-y-6"
@@ -407,7 +397,7 @@ defmodule PrikkeWeb.JobLive.Edit do
               <span class="text-sm font-medium text-slate-700">Enabled</span>
               <button
                 type="button"
-                phx-click={JS.dispatch("click", to: "#job_enabled_checkbox")}
+                phx-click={JS.dispatch("click", to: "#task_enabled_checkbox")}
                 class={[
                   "relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2",
                   Phoenix.HTML.Form.normalize_value("checkbox", @form[:enabled].value) &&
@@ -428,7 +418,7 @@ defmodule PrikkeWeb.JobLive.Edit do
               <input type="hidden" name={@form[:enabled].name} value="false" />
               <input
                 type="checkbox"
-                id="job_enabled_checkbox"
+                id="task_enabled_checkbox"
                 name={@form[:enabled].name}
                 value="true"
                 checked={Phoenix.HTML.Form.normalize_value("checkbox", @form[:enabled].value)}
@@ -439,26 +429,26 @@ defmodule PrikkeWeb.JobLive.Edit do
 
           <div class="space-y-4">
             <div>
-              <label for="job_name" class="block text-sm font-medium text-slate-700 mb-1">Name</label>
-              <.input field={@form[:name]} type="text" placeholder="My scheduled job" />
+              <label for="task_name" class="block text-sm font-medium text-slate-700 mb-1">Name</label>
+              <.input field={@form[:name]} type="text" placeholder="My scheduled task" />
             </div>
 
             <div>
-              <label for="job_url" class="block text-sm font-medium text-slate-700 mb-1">
+              <label for="task_url" class="block text-sm font-medium text-slate-700 mb-1">
                 Webhook URL
               </label>
               <.input field={@form[:url]} type="text" placeholder="https://example.com/webhook" />
             </div>
           </div>
         </div>
-        
+
     <!-- Schedule -->
         <div class="glass-card rounded-2xl p-6">
           <h2 class="text-lg font-semibold text-slate-900 mb-4">Schedule</h2>
 
           <div class="space-y-4">
             <div>
-              <label for="job_schedule_type" class="block text-sm font-medium text-slate-700 mb-1">
+              <label for="task_schedule_type" class="block text-sm font-medium text-slate-700 mb-1">
                 Schedule Type
               </label>
               <.input
@@ -481,7 +471,7 @@ defmodule PrikkeWeb.JobLive.Edit do
               />
             <% else %>
               <div>
-                <label for="job_scheduled_at" class="block text-sm font-medium text-slate-700 mb-1">
+                <label for="task_scheduled_at" class="block text-sm font-medium text-slate-700 mb-1">
                   Scheduled Time (UTC)
                 </label>
                 <% existing_value =
@@ -494,7 +484,7 @@ defmodule PrikkeWeb.JobLive.Edit do
                 <input
                   type="datetime-local"
                   name={@form[:scheduled_at].name}
-                  id="job_scheduled_at_edit"
+                  id="task_scheduled_at_edit"
                   value={existing_value}
                   phx-hook=".UtcDatetimePickerEdit"
                   class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
@@ -507,7 +497,6 @@ defmodule PrikkeWeb.JobLive.Edit do
                 export default {
                   mounted() {
                     const input = this.el;
-                    // Set min to current UTC time
                     const now = new Date();
                     const utcString = now.toISOString().slice(0, 16);
                     input.min = utcString;
@@ -517,7 +506,7 @@ defmodule PrikkeWeb.JobLive.Edit do
             <% end %>
           </div>
         </div>
-        
+
     <!-- Request Settings -->
         <div class="glass-card rounded-2xl p-6">
           <div class="flex items-center justify-between mb-4">
@@ -551,7 +540,7 @@ defmodule PrikkeWeb.JobLive.Edit do
           <div class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label for="job_method" class="block text-sm font-medium text-slate-700 mb-1">
+                <label for="task_method" class="block text-sm font-medium text-slate-700 mb-1">
                   Method
                 </label>
                 <.input
@@ -561,7 +550,7 @@ defmodule PrikkeWeb.JobLive.Edit do
                 />
               </div>
               <div>
-                <label for="job_timeout_ms" class="block text-sm font-medium text-slate-700 mb-1">
+                <label for="task_timeout_ms" class="block text-sm font-medium text-slate-700 mb-1">
                   Timeout (ms)
                 </label>
                 <.input field={@form[:timeout_ms]} type="number" min="1000" max="300000" />
@@ -569,7 +558,7 @@ defmodule PrikkeWeb.JobLive.Edit do
             </div>
 
             <div>
-              <label for="job_headers" class="block text-sm font-medium text-slate-700 mb-1">
+              <label for="task_headers" class="block text-sm font-medium text-slate-700 mb-1">
                 Headers <span class="text-slate-400 font-normal">(JSON)</span>
               </label>
               <.input
@@ -583,7 +572,7 @@ defmodule PrikkeWeb.JobLive.Edit do
             </div>
 
             <div>
-              <label for="job_body" class="block text-sm font-medium text-slate-700 mb-1">
+              <label for="task_body" class="block text-sm font-medium text-slate-700 mb-1">
                 Request Body
               </label>
               <.input
@@ -597,7 +586,7 @@ defmodule PrikkeWeb.JobLive.Edit do
             </div>
 
             <div>
-              <label for="job_callback_url" class="block text-sm font-medium text-slate-700 mb-1">
+              <label for="task_callback_url" class="block text-sm font-medium text-slate-700 mb-1">
                 Callback URL <span class="text-slate-400 font-normal">(optional)</span>
               </label>
               <.input
@@ -653,7 +642,7 @@ defmodule PrikkeWeb.JobLive.Edit do
     <!-- Actions -->
         <div class="flex justify-end gap-4">
           <.link
-            navigate={~p"/jobs/#{@job.id}"}
+            navigate={~p"/tasks/#{@task.id}"}
             class="px-4 py-2.5 text-slate-600 hover:text-slate-800"
           >
             Cancel

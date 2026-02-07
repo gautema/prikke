@@ -1,6 +1,6 @@
 defmodule PrikkeWeb.Api.SyncController do
   @moduledoc """
-  Declarative synchronization endpoint for jobs and monitors.
+  Declarative synchronization endpoint for tasks and monitors.
 
   PUT /api/sync
 
@@ -12,7 +12,7 @@ defmodule PrikkeWeb.Api.SyncController do
 
   ```json
   {
-    "jobs": [...],
+    "tasks": [...],
     "monitors": [...],
     "delete_removed": false
   }
@@ -25,12 +25,12 @@ defmodule PrikkeWeb.Api.SyncController do
   - If it doesn't exist, it's created
   - If `delete_removed: true`, resources not in the list are deleted
   - Returns a summary of changes made
-  - At least one of `jobs` or `monitors` must be provided
+  - At least one of `tasks` or `monitors` must be provided
   """
   use PrikkeWeb, :controller
   use OpenApiSpex.ControllerSpecs
 
-  alias Prikke.Jobs
+  alias Prikke.Tasks
   alias Prikke.Monitors
   alias Prikke.Repo
   alias PrikkeWeb.Schemas
@@ -41,14 +41,14 @@ defmodule PrikkeWeb.Api.SyncController do
   security([%{"bearerAuth" => []}])
 
   operation(:sync,
-    summary: "Sync jobs and monitors declaratively",
+    summary: "Sync tasks and monitors declaratively",
     description: """
     Declarative synchronization. Resources are matched by name:
     - If a resource exists with that name, it's updated
     - If no resource exists, it's created
     - If `delete_removed: true`, resources not in the list are deleted
 
-    At least one of `jobs` or `monitors` must be provided.
+    At least one of `tasks` or `monitors` must be provided.
     Ideal for CI/CD pipelines where definitions are stored in code.
     """,
     request_body: {"Sync request", "application/json", Schemas.SyncRequest},
@@ -60,19 +60,19 @@ defmodule PrikkeWeb.Api.SyncController do
   )
 
   def sync(conn, params) do
-    jobs_params = params["jobs"]
+    tasks_params = params["tasks"]
     monitors_params = params["monitors"]
 
-    has_jobs = is_list(jobs_params)
+    has_tasks = is_list(tasks_params)
     has_monitors = is_list(monitors_params)
 
-    if not has_jobs and not has_monitors do
+    if not has_tasks and not has_monitors do
       conn
       |> put_status(:bad_request)
       |> json(%{
         error: %{
           code: "bad_request",
-          message: "Request body must include 'jobs' and/or 'monitors' array"
+          message: "Request body must include 'tasks' and/or 'monitors' array"
         }
       })
     else
@@ -82,9 +82,9 @@ defmodule PrikkeWeb.Api.SyncController do
 
       result =
         Repo.transaction(fn ->
-          jobs_summary =
-            if has_jobs do
-              sync_jobs(org, jobs_params, delete_removed, api_key_name)
+          tasks_summary =
+            if has_tasks do
+              sync_tasks(org, tasks_params, delete_removed, api_key_name)
             else
               empty_summary()
             end
@@ -96,15 +96,15 @@ defmodule PrikkeWeb.Api.SyncController do
               empty_summary()
             end
 
-          %{jobs: jobs_summary, monitors: monitors_summary}
+          %{tasks: tasks_summary, monitors: monitors_summary}
         end)
 
       case result do
         {:ok, summary} ->
-          # Include top-level job fields for backwards compatibility
+          # Include top-level task fields for backwards compatibility
           data =
-            Map.merge(summary.jobs, %{
-              jobs: summary.jobs,
+            Map.merge(summary.tasks, %{
+              tasks: summary.tasks,
               monitors: summary.monitors
             })
 
@@ -130,31 +130,31 @@ defmodule PrikkeWeb.Api.SyncController do
     }
   end
 
-  defp sync_jobs(org, jobs_params, delete_removed, api_key_name) do
-    existing_jobs = Jobs.list_jobs(org) |> Map.new(&{&1.name, &1})
-    declared_names = MapSet.new(jobs_params, & &1["name"])
+  defp sync_tasks(org, tasks_params, delete_removed, api_key_name) do
+    existing_tasks = Tasks.list_cron_tasks(org) |> Map.new(&{&1.name, &1})
+    declared_names = MapSet.new(tasks_params, & &1["name"])
 
     {created, updated, errors} =
-      Enum.reduce(jobs_params, {[], [], []}, fn job_params, {created, updated, errors} ->
-        name = job_params["name"]
+      Enum.reduce(tasks_params, {[], [], []}, fn task_params, {created, updated, errors} ->
+        name = task_params["name"]
 
         if is_nil(name) or name == "" do
           {created, updated, [%{name: name, error: "name is required"} | errors]}
         else
-          case Map.get(existing_jobs, name) do
+          case Map.get(existing_tasks, name) do
             nil ->
-              case Jobs.create_job(org, job_params, api_key_name: api_key_name) do
-                {:ok, job} ->
-                  {[job.name | created], updated, errors}
+              case Tasks.create_task(org, task_params, api_key_name: api_key_name) do
+                {:ok, task} ->
+                  {[task.name | created], updated, errors}
 
                 {:error, changeset} ->
                   {created, updated,
                    [%{name: name, error: format_changeset_error(changeset)} | errors]}
               end
 
-            existing_job ->
-              case Jobs.update_job(org, existing_job, job_params, api_key_name: api_key_name) do
-                {:ok, _job} ->
+            existing_task ->
+              case Tasks.update_task(org, existing_task, task_params, api_key_name: api_key_name) do
+                {:ok, _task} ->
                   {created, [name | updated], errors}
 
                 {:error, changeset} ->
@@ -167,10 +167,10 @@ defmodule PrikkeWeb.Api.SyncController do
 
     deleted =
       if delete_removed do
-        existing_jobs
-        |> Enum.filter(fn {name, _job} -> not MapSet.member?(declared_names, name) end)
-        |> Enum.reduce([], fn {name, job}, deleted ->
-          case Jobs.delete_job(org, job, api_key_name: api_key_name) do
+        existing_tasks
+        |> Enum.filter(fn {name, _task} -> not MapSet.member?(declared_names, name) end)
+        |> Enum.reduce([], fn {name, task}, deleted ->
+          case Tasks.delete_task(org, task, api_key_name: api_key_name) do
             {:ok, _} -> [name | deleted]
             {:error, _} -> deleted
           end
@@ -266,12 +266,12 @@ defmodule PrikkeWeb.Api.SyncController do
     |> Enum.join("; ")
   end
 
-  defp format_summary_message(%{jobs: jobs, monitors: monitors}) do
+  defp format_summary_message(%{tasks: tasks, monitors: monitors}) do
     parts = []
 
-    total_created = jobs.created_count + monitors.created_count
-    total_updated = jobs.updated_count + monitors.updated_count
-    total_deleted = jobs.deleted_count + monitors.deleted_count
+    total_created = tasks.created_count + monitors.created_count
+    total_updated = tasks.updated_count + monitors.updated_count
+    total_deleted = tasks.deleted_count + monitors.deleted_count
 
     parts = if total_created > 0, do: ["#{total_created} created" | parts], else: parts
     parts = if total_updated > 0, do: ["#{total_updated} updated" | parts], else: parts

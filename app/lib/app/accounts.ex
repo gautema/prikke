@@ -638,7 +638,7 @@ defmodule Prikke.Accounts do
   Only sends one notification per threshold per month.
   """
   def maybe_send_limit_notification(organization, current_count) do
-    tier_limits = Prikke.Jobs.get_tier_limits(organization.tier)
+    tier_limits = Prikke.Tasks.get_tier_limits(organization.tier)
     limit = tier_limits.max_monthly_executions
 
     # Skip if unlimited
@@ -1019,10 +1019,10 @@ defmodule Prikke.Accounts do
     start_of_month = Date.new!(now.year, now.month, 1) |> DateTime.new!(~T[00:00:00], "Etc/UTC")
 
     from(o in Organization,
-      join: j in Prikke.Jobs.Job,
-      on: j.organization_id == o.id,
+      join: t in Prikke.Tasks.Task,
+      on: t.organization_id == o.id,
       join: e in Prikke.Executions.Execution,
-      on: e.job_id == j.id,
+      on: e.task_id == t.id,
       where: e.scheduled_for >= ^start_of_month,
       group_by: o.id,
       order_by: [desc: count(e.id)],

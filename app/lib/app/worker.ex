@@ -1,6 +1,6 @@
 defmodule Prikke.Worker do
   @moduledoc """
-  Worker GenServer that claims and executes pending job executions.
+  Worker GenServer that claims and executes pending task executions.
 
   ## Lifecycle
 
@@ -27,13 +27,13 @@ defmodule Prikke.Worker do
 
   ## Retries
 
-  One-time jobs retry up to `job.retry_attempts` times with exponential backoff.
-  Cron jobs do NOT retry - the next scheduled run is the implicit retry.
+  One-time tasks retry up to `task.retry_attempts` times with exponential backoff.
+  Cron tasks do NOT retry - the next scheduled run is the implicit retry.
 
   ## HTTP Client
 
   Uses Req library with connection pooling via Finch.
-  Respects job.timeout_ms for request timeout.
+  Respects task.timeout_ms for request timeout.
   """
 
   use GenServer, restart: :transient
@@ -41,7 +41,7 @@ defmodule Prikke.Worker do
 
   alias Prikke.Callbacks
   alias Prikke.Executions
-  alias Prikke.Jobs
+  alias Prikke.Tasks
   alias Prikke.Notifications
   alias Prikke.WebhookSignature
 
@@ -151,20 +151,20 @@ defmodule Prikke.Worker do
   ## Private Functions
 
   defp execute(execution) do
-    # Load the job with organization for context
-    execution = Executions.get_execution_with_job(execution.id)
+    # Load the task with organization for context
+    execution = Executions.get_execution_with_task(execution.id)
 
-    if is_nil(execution) or is_nil(execution.job) do
-      Logger.error("[Worker] Execution or job not found: #{inspect(execution)}")
+    if is_nil(execution) or is_nil(execution.task) do
+      Logger.error("[Worker] Execution or task not found: #{inspect(execution)}")
       return_error(execution)
     else
-      job = execution.job
-      Logger.info("[Worker] Executing job #{job.name} (#{job.id})")
+      task = execution.task
+      Logger.info("[Worker] Executing task #{task.name} (#{task.id})")
 
       # Track start time with millisecond precision for accurate duration
       start_time = System.monotonic_time(:millisecond)
 
-      result = make_request(job, execution)
+      result = make_request(task, execution)
 
       # Calculate duration from monotonic clock (more accurate than timestamps)
       duration_ms = System.monotonic_time(:millisecond) - start_time
@@ -182,18 +182,18 @@ defmodule Prikke.Worker do
     end
   end
 
-  defp make_request(job, execution) do
-    body = if job.method in ["POST", "PUT", "PATCH"], do: job.body || "", else: ""
+  defp make_request(task, execution) do
+    body = if task.method in ["POST", "PUT", "PATCH"], do: task.body || "", else: ""
 
     headers =
-      build_headers(job.headers)
-      |> add_runlater_headers(job, execution, body)
+      build_headers(task.headers)
+      |> add_runlater_headers(task, execution, body)
 
     opts = [
-      method: String.downcase(job.method) |> String.to_existing_atom(),
-      url: job.url,
+      method: String.downcase(task.method) |> String.to_existing_atom(),
+      url: task.url,
       headers: headers,
-      receive_timeout: job.timeout_ms,
+      receive_timeout: task.timeout_ms,
       connect_options: [timeout: 10_000],
       # We handle retries ourselves
       retry: false
@@ -201,8 +201,8 @@ defmodule Prikke.Worker do
 
     # Add body for methods that support it
     opts =
-      if job.method in ["POST", "PUT", "PATCH"] and job.body do
-        Keyword.put(opts, :body, job.body)
+      if task.method in ["POST", "PUT", "PATCH"] and task.body do
+        Keyword.put(opts, :body, task.body)
       else
         opts
       end
@@ -216,18 +216,18 @@ defmodule Prikke.Worker do
     Enum.map(headers, fn {k, v} -> {to_string(k), to_string(v)} end)
   end
 
-  defp add_runlater_headers(headers, job, execution, body) do
-    webhook_secret = job.organization.webhook_secret
-    runlater_headers = WebhookSignature.build_headers(job.id, execution.id, body, webhook_secret)
+  defp add_runlater_headers(headers, task, execution, body) do
+    webhook_secret = task.organization.webhook_secret
+    runlater_headers = WebhookSignature.build_headers(task.id, execution.id, body, webhook_secret)
     headers ++ runlater_headers
   end
 
   defp handle_success(execution, response, duration_ms) do
-    job = execution.job
+    task = execution.task
 
-    case check_response_assertions(job, response) do
+    case check_response_assertions(task, response) do
       :ok ->
-        Logger.info("[Worker] Job succeeded with status #{response.status} in #{duration_ms}ms")
+        Logger.info("[Worker] Task succeeded with status #{response.status} in #{duration_ms}ms")
 
         {:ok, updated_execution} =
           Executions.complete_execution(execution, %{
@@ -244,7 +244,7 @@ defmodule Prikke.Worker do
 
       {:error, error_message} ->
         Logger.warning(
-          "[Worker] Job assertion failed: #{error_message} (status #{response.status}) in #{duration_ms}ms"
+          "[Worker] Task assertion failed: #{error_message} (status #{response.status}) in #{duration_ms}ms"
         )
 
         {:ok, updated_execution} =
@@ -269,9 +269,9 @@ defmodule Prikke.Worker do
     end
   end
 
-  defp check_response_assertions(job, response) do
-    with :ok <- check_status_assertion(job, response.status),
-         :ok <- check_body_assertion(job, response.body) do
+  defp check_response_assertions(task, response) do
+    with :ok <- check_status_assertion(task, response.status),
+         :ok <- check_body_assertion(task, response.body) do
       :ok
     end
   end
@@ -285,7 +285,7 @@ defmodule Prikke.Worker do
   end
 
   defp check_status_assertion(%{expected_status_codes: codes}, status) do
-    allowed = Jobs.parse_status_codes(codes)
+    allowed = Tasks.parse_status_codes(codes)
 
     if status in allowed do
       :ok
@@ -308,7 +308,7 @@ defmodule Prikke.Worker do
   defp check_body_assertion(%{expected_body_pattern: _pattern}, _body), do: :ok
 
   defp handle_timeout(execution, duration_ms) do
-    Logger.warning("[Worker] Job timed out after #{duration_ms}ms")
+    Logger.warning("[Worker] Task timed out after #{duration_ms}ms")
 
     {:ok, updated_execution} = Executions.timeout_execution(execution, duration_ms)
 
@@ -321,7 +321,7 @@ defmodule Prikke.Worker do
 
   defp handle_failure(execution, error, duration_ms) do
     error_message = format_error(error)
-    Logger.warning("[Worker] Job failed: #{error_message} after #{duration_ms}ms")
+    Logger.warning("[Worker] Task failed: #{error_message} after #{duration_ms}ms")
 
     {:ok, updated_execution} =
       Executions.fail_execution(execution, %{
@@ -336,40 +336,40 @@ defmodule Prikke.Worker do
     maybe_retry(execution, nil)
   end
 
-  # Send notification for failed execution (preserves job/org from original execution)
+  # Send notification for failed execution (preserves task/org from original execution)
   defp notify_failure(updated_execution) do
     # The updated execution loses preloads, so we need to re-fetch with associations
-    execution_with_job = Executions.get_execution_with_job(updated_execution.id)
-    Notifications.notify_failure(execution_with_job)
+    execution_with_task = Executions.get_execution_with_task(updated_execution.id)
+    Notifications.notify_failure(execution_with_task)
   end
 
   # Send recovery notification when execution succeeds after a failure
   defp notify_recovery(updated_execution) do
-    execution_with_job = Executions.get_execution_with_job(updated_execution.id)
-    Notifications.notify_recovery(execution_with_job)
+    execution_with_task = Executions.get_execution_with_task(updated_execution.id)
+    Notifications.notify_recovery(execution_with_task)
   end
 
   # Send callback notification if callback_url is configured
   defp send_callback(updated_execution) do
-    execution_with_job = Executions.get_execution_with_job(updated_execution.id)
-    Callbacks.send_callback(execution_with_job)
+    execution_with_task = Executions.get_execution_with_task(updated_execution.id)
+    Callbacks.send_callback(execution_with_task)
   end
 
   defp return_error(nil), do: :ok
 
   defp return_error(execution) do
     Executions.fail_execution(execution, %{
-      error_message: "Internal error: execution or job not found"
+      error_message: "Internal error: execution or task not found"
     })
   end
 
-  # Retry logic: only one-time jobs retry, cron jobs don't
+  # Retry logic: only one-time tasks retry, cron tasks don't
   # (the next scheduled run is the implicit retry for cron)
   # When retry_after_ms is provided (from 429 Retry-After), use it instead of backoff
   defp maybe_retry(execution, retry_after_ms) do
-    job = execution.job
+    task = execution.task
 
-    if job.schedule_type == "once" and execution.attempt < job.retry_attempts do
+    if task.schedule_type == "once" and execution.attempt < task.retry_attempts do
       # Use Retry-After delay if provided, otherwise exponential backoff
       delay_ms =
         if retry_after_ms do
@@ -385,13 +385,13 @@ defmodule Prikke.Worker do
       retry_source = if retry_after_ms, do: " (from Retry-After)", else: ""
 
       Logger.info(
-        "[Worker] Scheduling retry #{execution.attempt + 1}/#{job.retry_attempts} in #{delay_ms}ms#{retry_source}"
+        "[Worker] Scheduling retry #{execution.attempt + 1}/#{task.retry_attempts} in #{delay_ms}ms#{retry_source}"
       )
 
-      case Executions.create_execution_for_job(job, scheduled_for, execution.attempt + 1) do
+      case Executions.create_execution_for_task(task, scheduled_for, execution.attempt + 1) do
         {:ok, _retry_execution} ->
           # Wake the scheduler to process the retry when it's due
-          Jobs.notify_scheduler()
+          Tasks.notify_scheduler()
           :ok
 
         {:error, reason} ->

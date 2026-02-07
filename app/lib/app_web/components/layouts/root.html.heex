@@ -6,18 +6,18 @@
     <meta name="csrf-token" content={get_csrf_token()} />
     <meta
       name="description"
-      content={assigns[:page_description] || "Simple cron scheduling and webhook delivery. EU-hosted, GDPR-native. Schedule HTTP jobs, monitor executions, get notified on failures."}
+      content={assigns[:page_description] || "Queue delayed tasks, schedule recurring jobs, and monitor everything. One API, zero infrastructure, fully GDPR-native."}
     />
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Runlater" />
     <meta
       property="og:title"
-      content={(assigns[:page_title] || "Schedule Jobs Simply") <> " · Runlater"}
+      content={(assigns[:page_title] || "Async Task Infrastructure for Europe") <> " · Runlater"}
     />
     <meta
       property="og:description"
-      content={assigns[:page_description] || "Simple cron scheduling and webhook delivery. EU-hosted, GDPR-native. Schedule HTTP jobs, monitor executions, get notified on failures."}
+      content={assigns[:page_description] || "Queue delayed tasks, schedule recurring jobs, and monitor everything. One API, zero infrastructure, fully GDPR-native."}
     />
     <meta property="og:url" content="https://runlater.eu" />
     <meta property="og:locale" content="en_US" />
@@ -25,15 +25,15 @@
     <meta name="twitter:card" content="summary" />
     <meta
       name="twitter:title"
-      content={(assigns[:page_title] || "Schedule Jobs Simply") <> " · Runlater"}
+      content={(assigns[:page_title] || "Async Task Infrastructure for Europe") <> " · Runlater"}
     />
     <meta
       name="twitter:description"
-      content={assigns[:page_description] || "Simple cron scheduling and webhook delivery. EU-hosted, GDPR-native. Schedule HTTP jobs, monitor executions, get notified on failures."}
+      content={assigns[:page_description] || "Queue delayed tasks, schedule recurring jobs, and monitor everything. One API, zero infrastructure, fully GDPR-native."}
     />
     <link rel="canonical" href="https://runlater.eu" />
     <.live_title suffix=" · Runlater">
-      {assigns[:page_title] || "Schedule Jobs Simply"}
+      {assigns[:page_title] || "Async Task Infrastructure for Europe"}
     </.live_title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
@@ -107,10 +107,10 @@
                 Dashboard
               </.link>
               <.link
-                href={~p"/jobs"}
+                href={~p"/tasks"}
                 class="text-sm font-medium text-slate-600 hover:text-emerald-600 px-3 py-1.5 rounded-md hover:bg-slate-100/60 transition-colors"
               >
-                Jobs
+                Tasks
               </.link>
               <.link
                 href={~p"/monitors"}
@@ -247,8 +247,8 @@
               <.link href={~p"/dashboard"} class="block py-3 text-base font-medium text-slate-700">
                 Dashboard
               </.link>
-              <.link href={~p"/jobs"} class="block py-3 text-base font-medium text-slate-700">
-                Jobs
+              <.link href={~p"/tasks"} class="block py-3 text-base font-medium text-slate-700">
+                Tasks
               </.link>
               <.link href={~p"/monitors"} class="block py-3 text-base font-medium text-slate-700">
                 Monitors

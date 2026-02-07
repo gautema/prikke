@@ -3,7 +3,7 @@ defmodule PrikkeWeb.DashboardLiveTest do
 
   import Phoenix.LiveViewTest
   import Prikke.AccountsFixtures
-  import Prikke.JobsFixtures
+  import Prikke.TasksFixtures
 
   describe "Dashboard" do
     setup :register_and_log_in_user
@@ -18,38 +18,38 @@ defmodule PrikkeWeb.DashboardLiveTest do
       assert html =~ org.name
 
       # Check stats cards are present
-      assert html =~ "Active Jobs"
+      assert html =~ "Active Tasks"
       assert html =~ "Executions Today"
       assert html =~ "Success Rate"
       assert html =~ "Avg Duration"
     end
 
-    test "shows empty state when no jobs", %{conn: conn, user: user} do
+    test "shows empty state when no tasks", %{conn: conn, user: user} do
       _org = organization_fixture(%{user: user})
 
       {:ok, _view, html} = live(conn, ~p"/dashboard")
 
-      assert html =~ "No jobs yet"
-      assert html =~ "Create your first job"
+      assert html =~ "No tasks yet"
+      assert html =~ "Create your first task"
     end
 
-    test "shows jobs list when jobs exist", %{conn: conn, user: user} do
+    test "shows tasks list when tasks exist", %{conn: conn, user: user} do
       org = organization_fixture(%{user: user})
-      job = job_fixture(org, %{name: "My Test Job", cron_expression: "0 * * * *"})
+      task = task_fixture(org, %{name: "My Test Task", cron_expression: "0 * * * *"})
 
       {:ok, _view, html} = live(conn, ~p"/dashboard")
 
-      assert html =~ job.name
+      assert html =~ task.name
       # Human-readable cron
       assert html =~ "every hour"
     end
 
-    test "shows new job button", %{conn: conn, user: user} do
+    test "shows new task button", %{conn: conn, user: user} do
       _org = organization_fixture(%{user: user})
 
       {:ok, _view, html} = live(conn, ~p"/dashboard")
 
-      assert html =~ "New Job"
+      assert html =~ "New Task"
     end
   end
 end

@@ -20,7 +20,7 @@ defmodule Prikke.Audit.AuditLog do
 
   @actor_types ~w(user system api)
   @actions ~w(created updated deleted enabled disabled triggered retried upgraded downgraded invited removed role_changed api_key_created api_key_deleted)
-  @resource_types ~w(organization job execution membership invite api_key)
+  @resource_types ~w(organization task execution membership invite api_key)
 
   @doc false
   def changeset(audit_log, attrs) do

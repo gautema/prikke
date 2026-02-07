@@ -1,85 +1,85 @@
-defmodule Prikke.JobsTest do
+defmodule Prikke.TasksTest do
   use Prikke.DataCase
 
-  alias Prikke.Jobs
-  alias Prikke.Jobs.Job
+  alias Prikke.Tasks
+  alias Prikke.Tasks.Task
 
   import Prikke.AccountsFixtures, only: [organization_fixture: 0, organization_fixture: 1]
-  import Prikke.JobsFixtures
+  import Prikke.TasksFixtures
 
-  describe "list_jobs/1" do
-    test "returns all jobs for an organization" do
+  describe "list_tasks/1" do
+    test "returns all tasks for an organization" do
       org = organization_fixture()
       other_org = organization_fixture()
 
-      job = job_fixture(org)
-      _other_job = job_fixture(other_org)
+      task = task_fixture(org)
+      _other_task = task_fixture(other_org)
 
-      assert Jobs.list_jobs(org) == [job]
+      assert Tasks.list_tasks(org) == [task]
     end
 
-    test "returns all jobs for an organization (multiple)" do
+    test "returns all tasks for an organization (multiple)" do
       org = organization_fixture()
-      job1 = job_fixture(org, %{name: "First"})
-      job2 = job_fixture(org, %{name: "Second"})
+      task1 = task_fixture(org, %{name: "First"})
+      task2 = task_fixture(org, %{name: "Second"})
 
-      jobs = Jobs.list_jobs(org)
-      assert length(jobs) == 2
-      assert Enum.any?(jobs, &(&1.id == job1.id))
-      assert Enum.any?(jobs, &(&1.id == job2.id))
+      tasks = Tasks.list_tasks(org)
+      assert length(tasks) == 2
+      assert Enum.any?(tasks, &(&1.id == task1.id))
+      assert Enum.any?(tasks, &(&1.id == task2.id))
     end
   end
 
-  describe "list_enabled_jobs/1" do
-    test "returns only enabled jobs" do
+  describe "list_enabled_tasks/1" do
+    test "returns only enabled tasks" do
       org = organization_fixture()
-      enabled_job = job_fixture(org, %{enabled: true})
-      _disabled_job = job_fixture(org, %{enabled: false})
+      enabled_task = task_fixture(org, %{enabled: true})
+      _disabled_task = task_fixture(org, %{enabled: false})
 
-      assert Jobs.list_enabled_jobs(org) == [enabled_job]
+      assert Tasks.list_enabled_tasks(org) == [enabled_task]
     end
   end
 
-  describe "get_job!/2" do
-    test "returns the job with given id" do
+  describe "get_task!/2" do
+    test "returns the task with given id" do
       org = organization_fixture()
-      job = job_fixture(org)
-      assert Jobs.get_job!(org, job.id) == job
+      task = task_fixture(org)
+      assert Tasks.get_task!(org, task.id) == task
     end
 
-    test "raises for job from different organization" do
+    test "raises for task from different organization" do
       org = organization_fixture()
       other_org = organization_fixture()
-      job = job_fixture(org)
+      task = task_fixture(org)
 
       assert_raise Ecto.NoResultsError, fn ->
-        Jobs.get_job!(other_org, job.id)
+        Tasks.get_task!(other_org, task.id)
       end
     end
   end
 
-  describe "get_job/2" do
-    test "returns the job with given id" do
+  describe "get_task/2" do
+    test "returns the task with given id" do
       org = organization_fixture()
-      job = job_fixture(org)
-      assert Jobs.get_job(org, job.id) == job
+      task = task_fixture(org)
+      assert Tasks.get_task(org, task.id) == task
     end
 
-    test "returns nil for job from different organization" do
+    test "returns nil for task from different organization" do
       org = organization_fixture()
       other_org = organization_fixture()
-      job = job_fixture(org)
+      task = task_fixture(org)
 
-      assert Jobs.get_job(other_org, job.id) == nil
+      assert Tasks.get_task(other_org, task.id) == nil
     end
   end
 
-  describe "create_job/2" do
-    test "with valid cron data creates a job (free tier, hourly)" do
+  describe "create_task/2" do
+    test "with valid cron data creates a task (free tier, hourly)" do
       org = organization_fixture()
 
       valid_attrs = %{
-        name: "My Cron Job",
+        name: "My Cron Task",
         url: "https://example.com/webhook",
         method: "POST",
         headers: %{"Authorization" => "Bearer token"},
@@ -89,107 +89,107 @@ defmodule Prikke.JobsTest do
         timezone: "UTC"
       }
 
-      assert {:ok, %Job{} = job} = Jobs.create_job(org, valid_attrs)
-      assert job.name == "My Cron Job"
-      assert job.url == "https://example.com/webhook"
-      assert job.method == "POST"
-      assert job.headers == %{"Authorization" => "Bearer token"}
-      assert job.schedule_type == "cron"
-      assert job.cron_expression == "0 * * * *"
-      assert job.organization_id == org.id
-      assert job.enabled == true
-      assert job.interval_minutes == 60
+      assert {:ok, %Task{} = task} = Tasks.create_task(org, valid_attrs)
+      assert task.name == "My Cron Task"
+      assert task.url == "https://example.com/webhook"
+      assert task.method == "POST"
+      assert task.headers == %{"Authorization" => "Bearer token"}
+      assert task.schedule_type == "cron"
+      assert task.cron_expression == "0 * * * *"
+      assert task.organization_id == org.id
+      assert task.enabled == true
+      assert task.interval_minutes == 60
     end
 
-    test "with valid cron data creates a job (pro tier, per-minute)" do
+    test "with valid cron data creates a task (pro tier, per-minute)" do
       org = organization_fixture(tier: "pro")
 
       valid_attrs = %{
-        name: "My Cron Job",
+        name: "My Cron Task",
         url: "https://example.com/webhook",
         method: "POST",
         schedule_type: "cron",
         cron_expression: "*/5 * * * *"
       }
 
-      assert {:ok, %Job{} = job} = Jobs.create_job(org, valid_attrs)
-      assert job.cron_expression == "*/5 * * * *"
-      assert job.interval_minutes == 5
+      assert {:ok, %Task{} = task} = Tasks.create_task(org, valid_attrs)
+      assert task.cron_expression == "*/5 * * * *"
+      assert task.interval_minutes == 5
     end
 
-    test "with valid once data creates a job" do
+    test "with valid once data creates a task" do
       org = organization_fixture()
       scheduled_at = DateTime.add(DateTime.utc_now(), 3600, :second)
 
       valid_attrs = %{
-        name: "One-time Job",
+        name: "One-time Task",
         url: "https://example.com/run-once",
         schedule_type: "once",
         scheduled_at: scheduled_at
       }
 
-      assert {:ok, %Job{} = job} = Jobs.create_job(org, valid_attrs)
-      assert job.name == "One-time Job"
-      assert job.schedule_type == "once"
-      assert job.scheduled_at == DateTime.truncate(scheduled_at, :second)
-      assert job.interval_minutes == nil
+      assert {:ok, %Task{} = task} = Tasks.create_task(org, valid_attrs)
+      assert task.name == "One-time Task"
+      assert task.schedule_type == "once"
+      assert task.scheduled_at == DateTime.truncate(scheduled_at, :second)
+      assert task.interval_minutes == nil
     end
 
-    test "with valid callback_url creates a job" do
+    test "with valid callback_url creates a task" do
       org = organization_fixture()
 
       attrs = %{
-        name: "Callback Job",
+        name: "Callback Task",
         url: "https://example.com/webhook",
         schedule_type: "cron",
         cron_expression: "0 * * * *",
         callback_url: "https://example.com/callback"
       }
 
-      assert {:ok, %Job{} = job} = Jobs.create_job(org, attrs)
-      assert job.callback_url == "https://example.com/callback"
+      assert {:ok, %Task{} = task} = Tasks.create_task(org, attrs)
+      assert task.callback_url == "https://example.com/callback"
     end
 
     test "with invalid callback_url returns error" do
       org = organization_fixture()
 
       attrs = %{
-        name: "Bad Callback Job",
+        name: "Bad Callback Task",
         url: "https://example.com/webhook",
         schedule_type: "cron",
         cron_expression: "0 * * * *",
         callback_url: "not-a-url"
       }
 
-      assert {:error, changeset} = Jobs.create_job(org, attrs)
+      assert {:error, changeset} = Tasks.create_task(org, attrs)
       assert "must be a valid HTTP or HTTPS URL" in errors_on(changeset).callback_url
     end
 
-    test "with nil callback_url creates a job without callback" do
+    test "with nil callback_url creates a task without callback" do
       org = organization_fixture()
 
       attrs = %{
-        name: "No Callback Job",
+        name: "No Callback Task",
         url: "https://example.com/webhook",
         schedule_type: "cron",
         cron_expression: "0 * * * *"
       }
 
-      assert {:ok, %Job{} = job} = Jobs.create_job(org, attrs)
-      assert job.callback_url == nil
+      assert {:ok, %Task{} = task} = Tasks.create_task(org, attrs)
+      assert task.callback_url == nil
     end
 
     test "with invalid URL returns error" do
       org = organization_fixture()
 
       invalid_attrs = %{
-        name: "Bad URL Job",
+        name: "Bad URL Task",
         url: "not-a-url",
         schedule_type: "cron",
         cron_expression: "0 * * * *"
       }
 
-      assert {:error, changeset} = Jobs.create_job(org, invalid_attrs)
+      assert {:error, changeset} = Tasks.create_task(org, invalid_attrs)
       assert "must be a valid HTTP or HTTPS URL" in errors_on(changeset).url
     end
 
@@ -197,13 +197,13 @@ defmodule Prikke.JobsTest do
       org = organization_fixture()
 
       invalid_attrs = %{
-        name: "Bad Cron Job",
+        name: "Bad Cron Task",
         url: "https://example.com/webhook",
         schedule_type: "cron",
         cron_expression: "not valid cron"
       }
 
-      assert {:error, changeset} = Jobs.create_job(org, invalid_attrs)
+      assert {:error, changeset} = Tasks.create_task(org, invalid_attrs)
       assert "is not a valid cron expression" in errors_on(changeset).cron_expression
     end
 
@@ -212,17 +212,17 @@ defmodule Prikke.JobsTest do
       past_time = DateTime.add(DateTime.utc_now(), -3600, :second)
 
       invalid_attrs = %{
-        name: "Past Job",
+        name: "Past Task",
         url: "https://example.com/webhook",
         schedule_type: "once",
         scheduled_at: past_time
       }
 
-      assert {:error, changeset} = Jobs.create_job(org, invalid_attrs)
+      assert {:error, changeset} = Tasks.create_task(org, invalid_attrs)
       assert "must be in the future" in errors_on(changeset).scheduled_at
     end
 
-    test "cron job without cron_expression returns error" do
+    test "cron task without cron_expression returns error" do
       org = organization_fixture()
 
       invalid_attrs = %{
@@ -231,11 +231,11 @@ defmodule Prikke.JobsTest do
         schedule_type: "cron"
       }
 
-      assert {:error, changeset} = Jobs.create_job(org, invalid_attrs)
+      assert {:error, changeset} = Tasks.create_task(org, invalid_attrs)
       assert "can't be blank" in errors_on(changeset).cron_expression
     end
 
-    test "once job without scheduled_at returns error" do
+    test "once task without scheduled_at returns error" do
       org = organization_fixture()
 
       invalid_attrs = %{
@@ -244,209 +244,165 @@ defmodule Prikke.JobsTest do
         schedule_type: "once"
       }
 
-      assert {:error, changeset} = Jobs.create_job(org, invalid_attrs)
+      assert {:error, changeset} = Tasks.create_task(org, invalid_attrs)
       assert "can't be blank" in errors_on(changeset).scheduled_at
     end
 
     test "with missing required fields returns error" do
       org = organization_fixture()
 
-      assert {:error, changeset} = Jobs.create_job(org, %{})
+      assert {:error, changeset} = Tasks.create_task(org, %{})
       assert "can't be blank" in errors_on(changeset).name
       assert "can't be blank" in errors_on(changeset).url
       assert "can't be blank" in errors_on(changeset).schedule_type
     end
 
-    test "free tier rejects per-minute cron jobs" do
+    test "free tier rejects per-minute cron tasks" do
       org = organization_fixture(tier: "free")
 
       attrs = %{
-        name: "Minute Job",
+        name: "Minute Task",
         url: "https://example.com/webhook",
         schedule_type: "cron",
         cron_expression: "* * * * *"
       }
 
-      assert {:error, changeset} = Jobs.create_job(org, attrs)
+      assert {:error, changeset} = Tasks.create_task(org, attrs)
 
       assert "Free plan only allows hourly or less frequent schedules" <> _ =
                hd(errors_on(changeset).cron_expression)
     end
 
-    test "free tier allows hourly cron jobs" do
+    test "free tier allows hourly cron tasks" do
       org = organization_fixture(tier: "free")
 
       attrs = %{
-        name: "Hourly Job",
+        name: "Hourly Task",
         url: "https://example.com/webhook",
         schedule_type: "cron",
         cron_expression: "0 * * * *"
       }
 
-      assert {:ok, job} = Jobs.create_job(org, attrs)
-      assert job.interval_minutes == 60
+      assert {:ok, task} = Tasks.create_task(org, attrs)
+      assert task.interval_minutes == 60
     end
 
-    test "free tier enforces max job limit" do
-      org = organization_fixture(tier: "free")
-      limits = Jobs.get_tier_limits("free")
-
-      # Create max number of jobs
-      for i <- 1..limits.max_jobs do
-        {:ok, _} =
-          Jobs.create_job(org, %{
-            name: "Job #{i}",
-            url: "https://example.com/webhook",
-            schedule_type: "cron",
-            cron_expression: "0 * * * *"
-          })
-      end
-
-      # Next job should fail
-      attrs = %{
-        name: "One Too Many",
-        url: "https://example.com/webhook",
-        schedule_type: "cron",
-        cron_expression: "0 * * * *"
-      }
-
-      assert {:error, changeset} = Jobs.create_job(org, attrs)
-      assert "You've reached the maximum number of jobs" <> _ = hd(errors_on(changeset).base)
-    end
-
-    test "pro tier allows per-minute cron jobs" do
+    test "pro tier allows per-minute cron tasks" do
       org = organization_fixture(tier: "pro")
 
       attrs = %{
-        name: "Minute Job",
+        name: "Minute Task",
         url: "https://example.com/webhook",
         schedule_type: "cron",
         cron_expression: "* * * * *"
       }
 
-      assert {:ok, job} = Jobs.create_job(org, attrs)
-      assert job.interval_minutes == 1
-    end
-
-    test "pro tier has no job limit" do
-      org = organization_fixture(tier: "pro")
-
-      # Create more than free tier limit
-      for i <- 1..7 do
-        {:ok, _} =
-          Jobs.create_job(org, %{
-            name: "Job #{i}",
-            url: "https://example.com/webhook",
-            schedule_type: "cron",
-            cron_expression: "* * * * *"
-          })
-      end
-
-      assert Jobs.count_jobs(org) == 7
+      assert {:ok, task} = Tasks.create_task(org, attrs)
+      assert task.interval_minutes == 1
     end
   end
 
-  describe "update_job/3" do
-    test "with valid data updates the job" do
+  describe "update_task/3" do
+    test "with valid data updates the task" do
       org = organization_fixture()
-      job = job_fixture(org)
+      task = task_fixture(org)
 
       update_attrs = %{
         name: "Updated Name",
         enabled: false
       }
 
-      assert {:ok, %Job{} = updated} = Jobs.update_job(org, job, update_attrs)
+      assert {:ok, %Task{} = updated} = Tasks.update_task(org, task, update_attrs)
       assert updated.name == "Updated Name"
       assert updated.enabled == false
     end
 
     test "with invalid data returns error changeset" do
       org = organization_fixture()
-      job = job_fixture(org)
+      task = task_fixture(org)
 
-      assert {:error, changeset} = Jobs.update_job(org, job, %{url: "bad-url"})
+      assert {:error, changeset} = Tasks.update_task(org, task, %{url: "bad-url"})
       assert "must be a valid HTTP or HTTPS URL" in errors_on(changeset).url
 
-      # Job should be unchanged
-      assert Jobs.get_job!(org, job.id) == job
+      # Task should be unchanged
+      assert Tasks.get_task!(org, task.id) == task
     end
 
     test "with wrong organization raises" do
       org = organization_fixture()
       other_org = organization_fixture()
-      job = job_fixture(org)
+      task = task_fixture(org)
 
-      assert_raise ArgumentError, "job does not belong to organization", fn ->
-        Jobs.update_job(other_org, job, %{name: "Hacked"})
+      assert_raise ArgumentError, "task does not belong to organization", fn ->
+        Tasks.update_task(other_org, task, %{name: "Hacked"})
       end
     end
 
     test "free tier rejects updating to per-minute cron" do
       org = organization_fixture(tier: "free")
-      job = job_fixture(org, %{cron_expression: "0 * * * *"})
+      task = task_fixture(org, %{cron_expression: "0 * * * *"})
 
       # Try to update to per-minute cron
-      assert {:error, changeset} = Jobs.update_job(org, job, %{cron_expression: "* * * * *"})
+      assert {:error, changeset} = Tasks.update_task(org, task, %{cron_expression: "* * * * *"})
 
       assert "Free plan only allows hourly or less frequent schedules" <> _ =
                hd(errors_on(changeset).cron_expression)
 
-      # Job should be unchanged
-      unchanged_job = Jobs.get_job!(org, job.id)
-      assert unchanged_job.cron_expression == "0 * * * *"
+      # Task should be unchanged
+      unchanged_task = Tasks.get_task!(org, task.id)
+      assert unchanged_task.cron_expression == "0 * * * *"
     end
   end
 
-  describe "delete_job/2" do
-    test "deletes the job" do
+  describe "delete_task/2" do
+    test "deletes the task" do
       org = organization_fixture()
-      job = job_fixture(org)
+      task = task_fixture(org)
 
-      assert {:ok, %Job{}} = Jobs.delete_job(org, job)
-      assert_raise Ecto.NoResultsError, fn -> Jobs.get_job!(org, job.id) end
+      assert {:ok, %Task{}} = Tasks.delete_task(org, task)
+      assert_raise Ecto.NoResultsError, fn -> Tasks.get_task!(org, task.id) end
     end
 
     test "with wrong organization raises" do
       org = organization_fixture()
       other_org = organization_fixture()
-      job = job_fixture(org)
+      task = task_fixture(org)
 
-      assert_raise ArgumentError, "job does not belong to organization", fn ->
-        Jobs.delete_job(other_org, job)
+      assert_raise ArgumentError, "task does not belong to organization", fn ->
+        Tasks.delete_task(other_org, task)
       end
     end
   end
 
-  describe "toggle_job/2" do
+  describe "toggle_task/2" do
     test "toggles enabled to disabled" do
       org = organization_fixture()
-      job = job_fixture(org, %{enabled: true})
+      task = task_fixture(org, %{enabled: true})
 
-      assert {:ok, %Job{enabled: false}} = Jobs.toggle_job(org, job)
+      assert {:ok, %Task{enabled: false}} = Tasks.toggle_task(org, task)
     end
 
     test "toggles disabled to enabled" do
       org = organization_fixture()
-      job = job_fixture(org, %{enabled: false})
+      task = task_fixture(org, %{enabled: false})
 
-      assert {:ok, %Job{enabled: true}} = Jobs.toggle_job(org, job)
+      assert {:ok, %Task{enabled: true}} = Tasks.toggle_task(org, task)
     end
 
-    test "re-enabling a cron job resets next_run_at to future time (skips missed executions)" do
+    test "re-enabling a cron task resets next_run_at to future time (skips missed executions)" do
       org = organization_fixture()
-      # Create a cron job that runs every hour
-      {:ok, job} =
-        Jobs.create_job(org, %{
-          name: "Hourly Job",
+      # Create a cron task that runs every hour
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: "Hourly Task",
           url: "https://example.com/webhook",
           schedule_type: "cron",
           cron_expression: "0 * * * *"
         })
 
-      # Disable the job
-      {:ok, disabled_job} = Jobs.toggle_job(org, job)
-      assert disabled_job.enabled == false
+      # Disable the task
+      {:ok, disabled_task} = Tasks.toggle_task(org, task)
+      assert disabled_task.enabled == false
 
       # Manually set next_run_at to a past time (simulating missed executions)
       past_time =
@@ -454,45 +410,45 @@ defmodule Prikke.JobsTest do
         |> DateTime.add(-7200, :second)
         |> DateTime.truncate(:second)
 
-      {:ok, job_with_past_next_run} =
-        disabled_job
+      {:ok, task_with_past_next_run} =
+        disabled_task
         |> Ecto.Changeset.change(next_run_at: past_time)
         |> Prikke.Repo.update()
 
-      assert DateTime.compare(job_with_past_next_run.next_run_at, DateTime.utc_now()) == :lt
+      assert DateTime.compare(task_with_past_next_run.next_run_at, DateTime.utc_now()) == :lt
 
-      # Re-enable the job
-      {:ok, re_enabled_job} = Jobs.toggle_job(org, job_with_past_next_run)
-      assert re_enabled_job.enabled == true
+      # Re-enable the task
+      {:ok, re_enabled_task} = Tasks.toggle_task(org, task_with_past_next_run)
+      assert re_enabled_task.enabled == true
 
       # next_run_at should now be in the future (not the past time)
-      assert re_enabled_job.next_run_at != nil
-      assert DateTime.compare(re_enabled_job.next_run_at, DateTime.utc_now()) == :gt
+      assert re_enabled_task.next_run_at != nil
+      assert DateTime.compare(re_enabled_task.next_run_at, DateTime.utc_now()) == :gt
     end
 
-    test "re-enabling a one-time job with future scheduled_at keeps it scheduled" do
+    test "re-enabling a one-time task with future scheduled_at keeps it scheduled" do
       org = organization_fixture()
       future_time = DateTime.add(DateTime.utc_now(), 3600, :second)
 
-      {:ok, job} =
-        Jobs.create_job(org, %{
-          name: "Future One-time Job",
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: "Future One-time Task",
           url: "https://example.com/webhook",
           schedule_type: "once",
           scheduled_at: future_time
         })
 
       # Disable and re-enable
-      {:ok, disabled_job} = Jobs.toggle_job(org, job)
-      {:ok, re_enabled_job} = Jobs.toggle_job(org, disabled_job)
+      {:ok, disabled_task} = Tasks.toggle_task(org, task)
+      {:ok, re_enabled_task} = Tasks.toggle_task(org, disabled_task)
 
-      assert re_enabled_job.enabled == true
-      assert re_enabled_job.next_run_at != nil
+      assert re_enabled_task.enabled == true
+      assert re_enabled_task.next_run_at != nil
       # Should be the original scheduled_at time
-      assert DateTime.compare(re_enabled_job.next_run_at, DateTime.utc_now()) == :gt
+      assert DateTime.compare(re_enabled_task.next_run_at, DateTime.utc_now()) == :gt
     end
 
-    test "re-enabling a one-time job with past scheduled_at does not schedule it" do
+    test "re-enabling a one-time task with past scheduled_at does not schedule it" do
       org = organization_fixture()
 
       future_time =
@@ -500,16 +456,16 @@ defmodule Prikke.JobsTest do
         |> DateTime.add(3600, :second)
         |> DateTime.truncate(:second)
 
-      {:ok, job} =
-        Jobs.create_job(org, %{
-          name: "One-time Job",
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: "One-time Task",
           url: "https://example.com/webhook",
           schedule_type: "once",
           scheduled_at: future_time
         })
 
-      # Disable the job
-      {:ok, disabled_job} = Jobs.toggle_job(org, job)
+      # Disable the task
+      {:ok, disabled_task} = Tasks.toggle_task(org, task)
 
       # Manually set scheduled_at to a past time (simulating time passing)
       past_time =
@@ -517,93 +473,93 @@ defmodule Prikke.JobsTest do
         |> DateTime.add(-3600, :second)
         |> DateTime.truncate(:second)
 
-      {:ok, job_with_past_scheduled_at} =
-        disabled_job
+      {:ok, task_with_past_scheduled_at} =
+        disabled_task
         |> Ecto.Changeset.change(scheduled_at: past_time, next_run_at: nil)
         |> Prikke.Repo.update()
 
-      # Re-enable the job
-      {:ok, re_enabled_job} = Jobs.toggle_job(org, job_with_past_scheduled_at)
-      assert re_enabled_job.enabled == true
+      # Re-enable the task
+      {:ok, re_enabled_task} = Tasks.toggle_task(org, task_with_past_scheduled_at)
+      assert re_enabled_task.enabled == true
 
       # next_run_at should be nil since scheduled_at is in the past
-      assert re_enabled_job.next_run_at == nil
+      assert re_enabled_task.next_run_at == nil
     end
   end
 
-  describe "change_job/2" do
-    test "returns a job changeset" do
-      job = job_fixture()
-      assert %Ecto.Changeset{} = Jobs.change_job(job)
+  describe "change_task/2" do
+    test "returns a task changeset" do
+      task = task_fixture()
+      assert %Ecto.Changeset{} = Tasks.change_task(task)
     end
   end
 
-  describe "count_jobs/1" do
-    test "counts all jobs for organization" do
+  describe "count_tasks/1" do
+    test "counts all tasks for organization" do
       org = organization_fixture()
-      assert Jobs.count_jobs(org) == 0
+      assert Tasks.count_tasks(org) == 0
 
-      job_fixture(org)
-      job_fixture(org)
-      assert Jobs.count_jobs(org) == 2
+      task_fixture(org)
+      task_fixture(org)
+      assert Tasks.count_tasks(org) == 2
     end
   end
 
-  describe "count_enabled_jobs/1" do
-    test "counts only enabled jobs" do
+  describe "count_enabled_tasks/1" do
+    test "counts only enabled tasks" do
       org = organization_fixture()
-      job_fixture(org, %{enabled: true})
-      job_fixture(org, %{enabled: false})
+      task_fixture(org, %{enabled: true})
+      task_fixture(org, %{enabled: false})
 
-      assert Jobs.count_enabled_jobs(org) == 1
+      assert Tasks.count_enabled_tasks(org) == 1
     end
   end
 
-  describe "clone_job/3" do
-    test "clones a cron job with (copy) suffix" do
+  describe "clone_task/3" do
+    test "clones a cron task with (copy) suffix" do
       org = organization_fixture()
-      job = job_fixture(org, %{name: "My Cron Job", url: "https://example.com/webhook", method: "POST"})
+      task = task_fixture(org, %{name: "My Cron Task", url: "https://example.com/webhook", method: "POST"})
 
-      assert {:ok, %Job{} = cloned} = Jobs.clone_job(org, job)
-      assert cloned.name == "My Cron Job (copy)"
-      assert cloned.url == job.url
-      assert cloned.method == job.method
-      assert cloned.headers == job.headers
-      assert cloned.body == job.body
-      assert cloned.schedule_type == job.schedule_type
-      assert cloned.cron_expression == job.cron_expression
-      assert cloned.timezone == job.timezone
-      assert cloned.timeout_ms == job.timeout_ms
-      assert cloned.retry_attempts == job.retry_attempts
+      assert {:ok, %Task{} = cloned} = Tasks.clone_task(org, task)
+      assert cloned.name == "My Cron Task (copy)"
+      assert cloned.url == task.url
+      assert cloned.method == task.method
+      assert cloned.headers == task.headers
+      assert cloned.body == task.body
+      assert cloned.schedule_type == task.schedule_type
+      assert cloned.cron_expression == task.cron_expression
+      assert cloned.timezone == task.timezone
+      assert cloned.timeout_ms == task.timeout_ms
+      assert cloned.retry_attempts == task.retry_attempts
       assert cloned.enabled == true
-      assert cloned.id != job.id
+      assert cloned.id != task.id
     end
 
-    test "clones a one-time job with future scheduled_at" do
+    test "clones a one-time task with future scheduled_at" do
       org = organization_fixture()
       future_time = DateTime.add(DateTime.utc_now(), 7200, :second)
 
-      {:ok, job} =
-        Jobs.create_job(org, %{
+      {:ok, task} =
+        Tasks.create_task(org, %{
           name: "Future One-time",
           url: "https://example.com/webhook",
           schedule_type: "once",
           scheduled_at: future_time
         })
 
-      assert {:ok, %Job{} = cloned} = Jobs.clone_job(org, job)
+      assert {:ok, %Task{} = cloned} = Tasks.clone_task(org, task)
       assert cloned.name == "Future One-time (copy)"
       assert cloned.schedule_type == "once"
       # Should keep the original future time
       assert DateTime.compare(cloned.scheduled_at, DateTime.utc_now()) == :gt
     end
 
-    test "clones a one-time job with past scheduled_at adjusts to 1 hour from now" do
+    test "clones a one-time task with past scheduled_at adjusts to 1 hour from now" do
       org = organization_fixture()
       future_time = DateTime.add(DateTime.utc_now(), 3600, :second)
 
-      {:ok, job} =
-        Jobs.create_job(org, %{
+      {:ok, task} =
+        Tasks.create_task(org, %{
           name: "Past One-time",
           url: "https://example.com/webhook",
           schedule_type: "once",
@@ -613,38 +569,15 @@ defmodule Prikke.JobsTest do
       # Manually set scheduled_at to the past
       past_time = DateTime.add(DateTime.utc_now(), -3600, :second) |> DateTime.truncate(:second)
 
-      {:ok, job} =
-        job
+      {:ok, task} =
+        task
         |> Ecto.Changeset.change(scheduled_at: past_time, next_run_at: nil)
         |> Prikke.Repo.update()
 
-      assert {:ok, %Job{} = cloned} = Jobs.clone_job(org, job)
+      assert {:ok, %Task{} = cloned} = Tasks.clone_task(org, task)
       assert cloned.name == "Past One-time (copy)"
       # Should be adjusted to ~1 hour from now
       assert DateTime.compare(cloned.scheduled_at, DateTime.utc_now()) == :gt
-    end
-
-    test "respects free tier job limit" do
-      org = organization_fixture(tier: "free")
-      limits = Jobs.get_tier_limits("free")
-
-      # Create max number of jobs
-      for i <- 1..limits.max_jobs do
-        {:ok, _} =
-          Jobs.create_job(org, %{
-            name: "Job #{i}",
-            url: "https://example.com/webhook",
-            schedule_type: "cron",
-            cron_expression: "0 * * * *"
-          })
-      end
-
-      # Get the last job to clone
-      [job | _] = Jobs.list_jobs(org)
-
-      # Clone should fail due to job limit
-      assert {:error, changeset} = Jobs.clone_job(org, job)
-      assert "You've reached the maximum number of jobs" <> _ = hd(errors_on(changeset).base)
     end
   end
 
@@ -656,7 +589,7 @@ defmodule Prikke.JobsTest do
         Plug.Conn.resp(conn, 200, "OK")
       end)
 
-      assert {:ok, result} = Jobs.test_webhook(%{url: "http://localhost:#{bypass.port}/test"})
+      assert {:ok, result} = Tasks.test_webhook(%{url: "http://localhost:#{bypass.port}/test"})
       assert result.status == 200
       assert result.body == "OK"
       assert is_integer(result.duration_ms)
@@ -664,7 +597,7 @@ defmodule Prikke.JobsTest do
     end
 
     test "returns error for connection failure" do
-      assert {:error, message} = Jobs.test_webhook(%{url: "http://localhost:1/nope"})
+      assert {:error, message} = Tasks.test_webhook(%{url: "http://localhost:1/nope"})
       assert is_binary(message)
       assert message =~ "Connection error" or message =~ "Request failed"
     end
@@ -678,7 +611,7 @@ defmodule Prikke.JobsTest do
       end)
 
       assert {:ok, result} =
-               Jobs.test_webhook(%{
+               Tasks.test_webhook(%{
                  url: "http://localhost:#{bypass.port}/test",
                  method: "POST",
                  body: "hello"
@@ -697,7 +630,7 @@ defmodule Prikke.JobsTest do
       end)
 
       assert {:ok, _result} =
-               Jobs.test_webhook(%{
+               Tasks.test_webhook(%{
                  url: "http://localhost:#{bypass.port}/test",
                  headers: %{"X-Custom" => "test-value"}
                })
@@ -713,7 +646,7 @@ defmodule Prikke.JobsTest do
       end)
 
       assert {:ok, _result} =
-               Jobs.test_webhook(%{
+               Tasks.test_webhook(%{
                  url: "http://localhost:#{bypass.port}/test",
                  method: "POST",
                  body: ~s({"key":"value"})
@@ -729,7 +662,7 @@ defmodule Prikke.JobsTest do
 
       # Even if we pass a large timeout, it should be capped
       assert {:ok, _result} =
-               Jobs.test_webhook(%{
+               Tasks.test_webhook(%{
                  url: "http://localhost:#{bypass.port}/test",
                  timeout_ms: 300_000
                })
@@ -744,7 +677,7 @@ defmodule Prikke.JobsTest do
       end)
 
       assert {:ok, result} =
-               Jobs.test_webhook(%{url: "http://localhost:#{bypass.port}/test"})
+               Tasks.test_webhook(%{url: "http://localhost:#{bypass.port}/test"})
 
       # 4KB = 4096 bytes + "... [truncated]" suffix
       assert byte_size(result.body) < byte_size(large_body)
@@ -758,7 +691,7 @@ defmodule Prikke.JobsTest do
         Plug.Conn.resp(conn, 404, "Not Found")
       end)
 
-      assert {:ok, result} = Jobs.test_webhook(%{url: "http://localhost:#{bypass.port}/test"})
+      assert {:ok, result} = Tasks.test_webhook(%{url: "http://localhost:#{bypass.port}/test"})
       assert result.status == 404
       assert result.body == "Not Found"
     end
@@ -768,90 +701,90 @@ defmodule Prikke.JobsTest do
     test "every minute cron (pro tier)" do
       org = organization_fixture(tier: "pro")
 
-      {:ok, job} =
-        Jobs.create_job(org, %{
+      {:ok, task} =
+        Tasks.create_task(org, %{
           name: "Every Minute",
           url: "https://example.com/webhook",
           schedule_type: "cron",
           cron_expression: "* * * * *"
         })
 
-      assert job.interval_minutes == 1
+      assert task.interval_minutes == 1
     end
 
     test "hourly cron" do
       org = organization_fixture()
 
-      {:ok, job} =
-        Jobs.create_job(org, %{
+      {:ok, task} =
+        Tasks.create_task(org, %{
           name: "Hourly",
           url: "https://example.com/webhook",
           schedule_type: "cron",
           cron_expression: "0 * * * *"
         })
 
-      assert job.interval_minutes == 60
+      assert task.interval_minutes == 60
     end
 
     test "daily cron" do
       org = organization_fixture()
 
-      {:ok, job} =
-        Jobs.create_job(org, %{
+      {:ok, task} =
+        Tasks.create_task(org, %{
           name: "Daily",
           url: "https://example.com/webhook",
           schedule_type: "cron",
           cron_expression: "0 9 * * *"
         })
 
-      assert job.interval_minutes == 24 * 60
+      assert task.interval_minutes == 24 * 60
     end
   end
 
   describe "response assertions" do
-    test "creating a job with expected_status_codes stores them" do
+    test "creating a task with expected_status_codes stores them" do
       org = organization_fixture()
 
       attrs = %{
-        name: "Assertion Job",
+        name: "Assertion Task",
         url: "https://example.com/webhook",
         schedule_type: "cron",
         cron_expression: "0 * * * *",
         expected_status_codes: "200,201"
       }
 
-      assert {:ok, %Job{} = job} = Jobs.create_job(org, attrs)
-      assert job.expected_status_codes == "200,201"
+      assert {:ok, %Task{} = task} = Tasks.create_task(org, attrs)
+      assert task.expected_status_codes == "200,201"
     end
 
-    test "creating a job with expected_body_pattern stores it" do
+    test "creating a task with expected_body_pattern stores it" do
       org = organization_fixture()
 
       attrs = %{
-        name: "Body Assertion Job",
+        name: "Body Assertion Task",
         url: "https://example.com/webhook",
         schedule_type: "cron",
         cron_expression: "0 * * * *",
         expected_body_pattern: "success"
       }
 
-      assert {:ok, %Job{} = job} = Jobs.create_job(org, attrs)
-      assert job.expected_body_pattern == "success"
+      assert {:ok, %Task{} = task} = Tasks.create_task(org, attrs)
+      assert task.expected_body_pattern == "success"
     end
 
     test "default values are nil" do
       org = organization_fixture()
 
       attrs = %{
-        name: "Default Assertion Job",
+        name: "Default Assertion Task",
         url: "https://example.com/webhook",
         schedule_type: "cron",
         cron_expression: "0 * * * *"
       }
 
-      assert {:ok, %Job{} = job} = Jobs.create_job(org, attrs)
-      assert job.expected_status_codes == nil
-      assert job.expected_body_pattern == nil
+      assert {:ok, %Task{} = task} = Tasks.create_task(org, attrs)
+      assert task.expected_status_codes == nil
+      assert task.expected_body_pattern == nil
     end
 
     test "invalid status codes are rejected" do
@@ -865,7 +798,7 @@ defmodule Prikke.JobsTest do
         expected_status_codes: "abc"
       }
 
-      assert {:error, changeset} = Jobs.create_job(org, attrs)
+      assert {:error, changeset} = Tasks.create_task(org, attrs)
       assert "must be comma-separated HTTP status codes (100-599)" in errors_on(changeset).expected_status_codes
     end
 
@@ -880,7 +813,7 @@ defmodule Prikke.JobsTest do
         expected_status_codes: "200,999"
       }
 
-      assert {:error, changeset} = Jobs.create_job(org, attrs)
+      assert {:error, changeset} = Tasks.create_task(org, attrs)
       assert "must be comma-separated HTTP status codes (100-599)" in errors_on(changeset).expected_status_codes
     end
 
@@ -895,26 +828,26 @@ defmodule Prikke.JobsTest do
         expected_status_codes: "200, 201, 204"
       }
 
-      assert {:ok, %Job{} = job} = Jobs.create_job(org, attrs)
-      assert job.expected_status_codes == "200, 201, 204"
+      assert {:ok, %Task{} = task} = Tasks.create_task(org, attrs)
+      assert task.expected_status_codes == "200, 201, 204"
     end
   end
 
   describe "parse_status_codes/1" do
     test "returns empty list for nil" do
-      assert Jobs.parse_status_codes(nil) == []
+      assert Tasks.parse_status_codes(nil) == []
     end
 
     test "returns empty list for empty string" do
-      assert Jobs.parse_status_codes("") == []
+      assert Tasks.parse_status_codes("") == []
     end
 
     test "parses single code" do
-      assert Jobs.parse_status_codes("200") == [200]
+      assert Tasks.parse_status_codes("200") == [200]
     end
 
     test "parses comma-separated codes with spaces" do
-      assert Jobs.parse_status_codes("200, 201, 204") == [200, 201, 204]
+      assert Tasks.parse_status_codes("200, 201, 204") == [200, 201, 204]
     end
   end
 end

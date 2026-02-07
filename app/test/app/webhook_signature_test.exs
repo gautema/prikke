@@ -103,9 +103,9 @@ defmodule Prikke.WebhookSignatureTest do
       assert length(headers) == 3
     end
 
-    test "includes job id header" do
+    test "includes task id header" do
       headers = WebhookSignature.build_headers("job-123", "exec-456", "body", "secret")
-      assert {"x-runlater-job-id", "job-123"} in headers
+      assert {"x-runlater-task-id", "job-123"} in headers
     end
 
     test "includes execution id header" do

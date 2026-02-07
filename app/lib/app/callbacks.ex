@@ -1,8 +1,8 @@
 defmodule Prikke.Callbacks do
   @moduledoc """
-  Sends callback notifications after job executions complete.
+  Sends callback notifications after task executions complete.
 
-  When a job or execution has a `callback_url` configured, the execution result
+  When a task or execution has a `callback_url` configured, the execution result
   is POSTed to that URL after the execution finishes (success, failure, or timeout).
 
   The callback request is signed with the organization's webhook secret using
@@ -23,10 +23,10 @@ defmodule Prikke.Callbacks do
   @doc """
   Sends a callback for a completed execution, if a callback_url is configured.
 
-  Resolves the callback URL from the execution first, falling back to the job's
+  Resolves the callback URL from the execution first, falling back to the task's
   callback_url. Spawns an async task for delivery.
 
-  Expects the execution to have job and job.organization preloaded.
+  Expects the execution to have task and task.organization preloaded.
   """
   def send_callback(execution) do
     callback_url = resolve_callback_url(execution)
@@ -42,7 +42,7 @@ defmodule Prikke.Callbacks do
 
   @doc false
   def resolve_callback_url(execution) do
-    execution.callback_url || (execution.job && execution.job.callback_url)
+    execution.callback_url || (execution.task && execution.task.callback_url)
   end
 
   @doc """
@@ -51,7 +51,7 @@ defmodule Prikke.Callbacks do
   def build_payload(execution) do
     %{
       event: "execution.completed",
-      job_id: execution.job_id,
+      task_id: execution.task_id,
       execution_id: execution.id,
       status: execution.status,
       status_code: execution.status_code,
@@ -68,14 +68,14 @@ defmodule Prikke.Callbacks do
     payload = build_payload(execution)
     body = Jason.encode!(payload)
 
-    webhook_secret = execution.job.organization.webhook_secret
+    webhook_secret = execution.task.organization.webhook_secret
     signature = WebhookSignature.sign(body, webhook_secret)
 
     headers = [
       {"content-type", "application/json"},
       {"user-agent", "Runlater/1.0"},
       {"x-runlater-signature", signature},
-      {"x-runlater-job-id", execution.job_id},
+      {"x-runlater-task-id", execution.task_id},
       {"x-runlater-execution-id", execution.id}
     ]
 

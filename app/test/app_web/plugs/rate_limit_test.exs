@@ -27,7 +27,7 @@ defmodule PrikkeWeb.RateLimitTest do
         response =
           conn
           |> put_req_header("authorization", "Bearer #{auth_token}")
-          |> get(~p"/api/v1/jobs")
+          |> get(~p"/api/v1/tasks")
 
         assert response.status == 200
       end
@@ -40,7 +40,7 @@ defmodule PrikkeWeb.RateLimitTest do
         for _ <- 1..(@limit + 1) do
           conn
           |> put_req_header("authorization", "Bearer #{auth_token}")
-          |> get(~p"/api/v1/jobs")
+          |> get(~p"/api/v1/tasks")
           |> Map.get(:status)
         end
 
@@ -55,14 +55,14 @@ defmodule PrikkeWeb.RateLimitTest do
       for _ <- 1..@limit do
         conn
         |> put_req_header("authorization", "Bearer #{auth_token}")
-        |> get(~p"/api/v1/jobs")
+        |> get(~p"/api/v1/tasks")
       end
 
       # Next request should be rate limited with JSON error
       response =
         conn
         |> put_req_header("authorization", "Bearer #{auth_token}")
-        |> get(~p"/api/v1/jobs")
+        |> get(~p"/api/v1/tasks")
 
       assert response.status == 429
 

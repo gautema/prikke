@@ -3,7 +3,7 @@ defmodule PrikkeWeb.SuperadminLiveTest do
 
   import Phoenix.LiveViewTest
   import Prikke.AccountsFixtures
-  import Prikke.JobsFixtures
+  import Prikke.TasksFixtures
 
   describe "SuperadminLive" do
     setup do
@@ -23,7 +23,7 @@ defmodule PrikkeWeb.SuperadminLiveTest do
       assert html =~ "Superadmin Dashboard"
       assert html =~ "Total Users"
       assert html =~ "Organizations"
-      assert html =~ "Total Jobs"
+      assert html =~ "Total Tasks"
       assert html =~ "Execution Stats"
     end
 
@@ -47,8 +47,8 @@ defmodule PrikkeWeb.SuperadminLiveTest do
     end
 
     test "displays platform stats", %{conn: conn, superadmin: superadmin, org: org} do
-      # Create a job to have some data
-      job_fixture(org)
+      # Create a task to have some data
+      task_fixture(org)
 
       {:ok, _view, html} =
         conn
@@ -57,7 +57,7 @@ defmodule PrikkeWeb.SuperadminLiveTest do
 
       assert html =~ "Total Users"
       assert html =~ "Organizations"
-      assert html =~ "Total Jobs"
+      assert html =~ "Total Tasks"
     end
 
     test "displays recent signups section", %{conn: conn, superadmin: superadmin} do
@@ -69,13 +69,13 @@ defmodule PrikkeWeb.SuperadminLiveTest do
       assert html =~ "Recent Signups"
     end
 
-    test "displays recent jobs section", %{conn: conn, superadmin: superadmin} do
+    test "displays recent tasks section", %{conn: conn, superadmin: superadmin} do
       {:ok, _view, html} =
         conn
         |> log_in_user(superadmin)
         |> live(~p"/superadmin")
 
-      assert html =~ "Recent Jobs"
+      assert html =~ "Recent Tasks"
     end
 
     test "displays pageviews section", %{conn: conn, superadmin: superadmin} do

@@ -21,8 +21,8 @@ defmodule Prikke.Accounts.UserNotifierTest do
         total_orgs: 10,
         new_orgs: 2,
         pro_orgs: 3,
-        total_jobs: 100,
-        enabled_jobs: 80,
+        total_tasks: 100,
+        enabled_tasks: 80,
         executions: %{
           total: 15_000,
           success: 14_500,

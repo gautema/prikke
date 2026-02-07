@@ -14,7 +14,7 @@ defmodule Prikke.WebhookSignature do
   ## Headers
 
   Three headers are added to every webhook request:
-  - `X-Runlater-Job-Id` - The job ID
+  - `X-Runlater-Task-Id` - The task ID
   - `X-Runlater-Execution-Id` - The execution ID (for deduplication)
   - `X-Runlater-Signature` - HMAC-SHA256 signature of the request body
   """
@@ -68,17 +68,17 @@ defmodule Prikke.WebhookSignature do
 
   ## Examples
 
-      iex> headers = Prikke.WebhookSignature.build_headers("job-123", "exec-456", "", "whsec_secret")
-      iex> Enum.find(headers, fn {k, _} -> k == "x-runlater-job-id" end)
-      {"x-runlater-job-id", "job-123"}
+      iex> headers = Prikke.WebhookSignature.build_headers("task-123", "exec-456", "", "whsec_secret")
+      iex> Enum.find(headers, fn {k, _} -> k == "x-runlater-task-id" end)
+      {"x-runlater-task-id", "task-123"}
 
   """
   @spec build_headers(binary(), binary(), binary(), binary()) :: [{binary(), binary()}]
-  def build_headers(job_id, execution_id, body, webhook_secret) do
+  def build_headers(task_id, execution_id, body, webhook_secret) do
     signature = sign(body, webhook_secret)
 
     [
-      {"x-runlater-job-id", job_id},
+      {"x-runlater-task-id", task_id},
       {"x-runlater-execution-id", execution_id},
       {"x-runlater-signature", signature}
     ]

@@ -16,7 +16,7 @@ defmodule Prikke.Executions.Execution do
     field :attempt, :integer, default: 1
     field :callback_url, :string
 
-    belongs_to :job, Prikke.Jobs.Job
+    belongs_to :task, Prikke.Tasks.Task, foreign_key: :task_id
 
     timestamps(type: :utc_datetime)
   end
@@ -27,7 +27,7 @@ defmodule Prikke.Executions.Execution do
   def changeset(execution, attrs) do
     execution
     |> cast(attrs, [
-      :job_id,
+      :task_id,
       :status,
       :scheduled_for,
       :started_at,
@@ -38,9 +38,9 @@ defmodule Prikke.Executions.Execution do
       :error_message,
       :attempt
     ])
-    |> validate_required([:job_id, :scheduled_for])
+    |> validate_required([:task_id, :scheduled_for])
     |> validate_inclusion(:status, @statuses)
-    |> foreign_key_constraint(:job_id)
+    |> foreign_key_constraint(:task_id)
   end
 
   @doc """
@@ -48,10 +48,10 @@ defmodule Prikke.Executions.Execution do
   """
   def create_changeset(execution, attrs) do
     execution
-    |> cast(attrs, [:job_id, :scheduled_for, :attempt, :callback_url])
-    |> validate_required([:job_id, :scheduled_for])
+    |> cast(attrs, [:task_id, :scheduled_for, :attempt, :callback_url])
+    |> validate_required([:task_id, :scheduled_for])
     |> put_change(:status, "pending")
-    |> foreign_key_constraint(:job_id)
+    |> foreign_key_constraint(:task_id)
   end
 
   @doc """
@@ -115,11 +115,11 @@ defmodule Prikke.Executions.Execution do
     now = DateTime.utc_now(:second)
 
     execution
-    |> cast(attrs, [:job_id, :scheduled_for])
-    |> validate_required([:job_id, :scheduled_for])
+    |> cast(attrs, [:task_id, :scheduled_for])
+    |> validate_required([:task_id, :scheduled_for])
     |> put_change(:status, "missed")
     |> put_change(:finished_at, now)
     |> put_change(:error_message, "Scheduler was unavailable at scheduled time")
-    |> foreign_key_constraint(:job_id)
+    |> foreign_key_constraint(:task_id)
   end
 end

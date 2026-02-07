@@ -2,7 +2,7 @@ defmodule PrikkeWeb.SuperadminLive do
   use PrikkeWeb, :live_view
 
   alias Prikke.Accounts
-  alias Prikke.Jobs
+  alias Prikke.Tasks
   alias Prikke.Executions
   alias Prikke.Monitors
   alias Prikke.Analytics
@@ -40,8 +40,8 @@ defmodule PrikkeWeb.SuperadminLive do
       users_this_week: Accounts.count_users_since(seven_days_ago),
       users_this_month: Accounts.count_users_since(thirty_days_ago),
       total_orgs: Accounts.count_organizations(),
-      total_jobs: Jobs.count_all_jobs(),
-      enabled_jobs: Jobs.count_all_enabled_jobs()
+      total_tasks: Tasks.count_all_tasks(),
+      enabled_tasks: Tasks.count_all_enabled_tasks()
     }
 
     # Execution stats
@@ -53,7 +53,7 @@ defmodule PrikkeWeb.SuperadminLive do
 
     # Recent activity
     recent_users = Accounts.list_recent_users(limit: 5)
-    recent_jobs = Jobs.list_recent_jobs_all(limit: 5)
+    recent_tasks = Tasks.list_recent_tasks_all(limit: 5)
     active_orgs = Accounts.list_active_organizations(limit: 5)
     recent_executions = Executions.list_recent_executions_all(limit: 10)
 
@@ -101,7 +101,7 @@ defmodule PrikkeWeb.SuperadminLive do
     |> assign(:success_rate, success_rate)
     |> assign(:analytics, analytics)
     |> assign(:recent_users, recent_users)
-    |> assign(:recent_jobs, recent_jobs)
+    |> assign(:recent_tasks, recent_tasks)
     |> assign(:active_orgs, active_orgs)
     |> assign(:recent_executions, recent_executions)
     |> assign(:pro_count, pro_count)
@@ -151,9 +151,9 @@ defmodule PrikkeWeb.SuperadminLive do
           subtitle={"#{@pro_count} Pro"}
         />
         <.stat_card
-          title="Total Jobs"
-          value={@platform_stats.total_jobs}
-          subtitle={"#{@platform_stats.enabled_jobs} enabled"}
+          title="Total Tasks"
+          value={@platform_stats.total_tasks}
+          subtitle={"#{@platform_stats.enabled_tasks} enabled"}
         />
         <.stat_card
           title="Monitors"
@@ -600,25 +600,25 @@ defmodule PrikkeWeb.SuperadminLive do
           </div>
         </div>
         
-    <!-- Recent Jobs -->
+    <!-- Recent Tasks -->
         <div class="glass-card rounded-2xl p-6 hover:z-10">
-          <h2 class="text-lg font-semibold text-slate-900 mb-4">Recent Jobs</h2>
+          <h2 class="text-lg font-semibold text-slate-900 mb-4">Recent Tasks</h2>
           <div class="space-y-3">
-            <%= for job <- @recent_jobs do %>
+            <%= for task <- @recent_tasks do %>
               <div class="flex justify-between items-center gap-2">
                 <div class="min-w-0 flex-1">
-                  <div class="font-medium text-slate-900 truncate">{job.name}</div>
+                  <div class="font-medium text-slate-900 truncate">{task.name}</div>
                   <div class="text-xs text-slate-500 truncate">
-                    {job.organization && job.organization.name}
+                    {task.organization && task.organization.name}
                   </div>
                 </div>
                 <span class="text-xs text-slate-400 whitespace-nowrap">
-                  <.relative_time id={"job-#{job.id}"} datetime={job.inserted_at} />
+                  <.relative_time id={"task-#{task.id}"} datetime={task.inserted_at} />
                 </span>
               </div>
             <% end %>
-            <%= if @recent_jobs == [] do %>
-              <div class="text-sm text-slate-400">No jobs yet</div>
+            <%= if @recent_tasks == [] do %>
+              <div class="text-sm text-slate-400">No tasks yet</div>
             <% end %>
           </div>
         </div>

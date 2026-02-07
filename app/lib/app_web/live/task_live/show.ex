@@ -1,7 +1,7 @@
-defmodule PrikkeWeb.JobLive.Show do
+defmodule PrikkeWeb.TaskLive.Show do
   use PrikkeWeb, :live_view
 
-  alias Prikke.Jobs
+  alias Prikke.Tasks
   alias Prikke.Executions
 
   @per_page 20
@@ -11,35 +11,35 @@ defmodule PrikkeWeb.JobLive.Show do
     org = get_organization(socket, session)
 
     if org do
-      case Jobs.get_job(org, id) do
+      case Tasks.get_task(org, id) do
         nil ->
           {:ok,
            socket
-           |> put_flash(:error, "Job not found")
-           |> redirect(to: ~p"/jobs")}
+           |> put_flash(:error, "Task not found")
+           |> redirect(to: ~p"/tasks")}
 
-        job ->
+        task ->
           status_filter = nil
-          executions = Executions.list_job_executions(job, limit: @per_page, status: status_filter)
-          total_count = Executions.count_job_executions(job, status: status_filter)
-          stats = Executions.get_job_stats(job)
+          executions = Executions.list_task_executions(task, limit: @per_page, status: status_filter)
+          total_count = Executions.count_task_executions(task, status: status_filter)
+          stats = Executions.get_task_stats(task)
           latest_info = get_latest_info(executions)
 
           if connected?(socket) do
-            Jobs.subscribe_jobs(org)
-            Executions.subscribe_job_executions(job.id)
+            Tasks.subscribe_tasks(org)
+            Executions.subscribe_task_executions(task.id)
           end
 
           {:ok,
            socket
            |> assign(:organization, org)
-           |> assign(:job, job)
+           |> assign(:task, task)
            |> assign(:executions, executions)
            |> assign(:stats, stats)
            |> assign(:latest_info, latest_info)
            |> assign(:status_filter, status_filter)
            |> assign(:total_count, total_count)
-           |> assign(:page_title, job.name)
+           |> assign(:page_title, task.name)
            |> assign(:menu_open, false)
            |> assign(:test_result, nil)
            |> assign(:testing, false)}
@@ -53,17 +53,17 @@ defmodule PrikkeWeb.JobLive.Show do
   end
 
   @impl true
-  def handle_info({:updated, job}, socket) do
-    if job.id == socket.assigns.job.id do
+  def handle_info({:updated, task}, socket) do
+    if task.id == socket.assigns.task.id do
       status_filter = socket.assigns.status_filter
-      executions = Executions.list_job_executions(job, limit: @per_page, status: status_filter)
-      total_count = Executions.count_job_executions(job, status: status_filter)
-      stats = Executions.get_job_stats(job)
+      executions = Executions.list_task_executions(task, limit: @per_page, status: status_filter)
+      total_count = Executions.count_task_executions(task, status: status_filter)
+      stats = Executions.get_task_stats(task)
       latest_info = get_latest_info(executions)
 
       {:noreply,
        socket
-       |> assign(:job, job)
+       |> assign(:task, task)
        |> assign(:executions, executions)
        |> assign(:total_count, total_count)
        |> assign(:stats, stats)
@@ -73,24 +73,23 @@ defmodule PrikkeWeb.JobLive.Show do
     end
   end
 
-  def handle_info({:deleted, job}, socket) do
-    if job.id == socket.assigns.job.id do
+  def handle_info({:deleted, task}, socket) do
+    if task.id == socket.assigns.task.id do
       {:noreply,
        socket
-       |> put_flash(:info, "Job was deleted")
-       |> redirect(to: ~p"/jobs")}
+       |> put_flash(:info, "Task was deleted")
+       |> redirect(to: ~p"/tasks")}
     else
       {:noreply, socket}
     end
   end
 
   def handle_info({:execution_updated, _execution}, socket) do
-    # Refresh executions list when any execution for this job changes
-    job = socket.assigns.job
+    task = socket.assigns.task
     status_filter = socket.assigns.status_filter
-    executions = Executions.list_job_executions(job, limit: @per_page, status: status_filter)
-    total_count = Executions.count_job_executions(job, status: status_filter)
-    stats = Executions.get_job_stats(job)
+    executions = Executions.list_task_executions(task, limit: @per_page, status: status_filter)
+    total_count = Executions.count_task_executions(task, status: status_filter)
+    stats = Executions.get_task_stats(task)
     latest_info = get_latest_info(executions)
 
     {:noreply,
@@ -122,18 +121,14 @@ defmodule PrikkeWeb.JobLive.Show do
 
   @impl true
   def handle_event("toggle", _, socket) do
-    require Logger
-    job = socket.assigns.job
-    Logger.info("[JobLive.Show] Toggle event for job #{job.id}, currently enabled=#{job.enabled}")
+    task = socket.assigns.task
 
-    case Jobs.toggle_job(socket.assigns.organization, job, scope: socket.assigns.current_scope) do
-      {:ok, updated_job} ->
-        Logger.info("[JobLive.Show] Toggle succeeded, now enabled=#{updated_job.enabled}")
-        {:noreply, assign(socket, :job, updated_job)}
+    case Tasks.toggle_task(socket.assigns.organization, task, scope: socket.assigns.current_scope) do
+      {:ok, updated_task} ->
+        {:noreply, assign(socket, :task, updated_task)}
 
-      {:error, changeset} ->
-        Logger.warning("[JobLive.Show] Toggle failed: #{inspect(changeset.errors)}")
-        {:noreply, put_flash(socket, :error, "Failed to toggle job")}
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Failed to toggle task")}
     end
   end
 
@@ -146,12 +141,12 @@ defmodule PrikkeWeb.JobLive.Show do
   end
 
   def handle_event("toggle_mute", _, socket) do
-    job = socket.assigns.job
+    task = socket.assigns.task
     org = socket.assigns.organization
 
-    case Jobs.update_job(org, job, %{muted: !job.muted}) do
-      {:ok, updated_job} ->
-        {:noreply, assign(socket, :job, updated_job)}
+    case Tasks.update_task(org, task, %{muted: !task.muted}) do
+      {:ok, updated_task} ->
+        {:noreply, assign(socket, :task, updated_task)}
 
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Failed to update mute setting")}
@@ -160,14 +155,14 @@ defmodule PrikkeWeb.JobLive.Show do
 
   def handle_event("clone", _, socket) do
     org = socket.assigns.organization
-    job = socket.assigns.job
+    task = socket.assigns.task
 
-    case Jobs.clone_job(org, job, scope: socket.assigns.current_scope) do
-      {:ok, cloned_job} ->
+    case Tasks.clone_task(org, task, scope: socket.assigns.current_scope) do
+      {:ok, cloned_task} ->
         {:noreply,
          socket
-         |> put_flash(:info, "Job cloned successfully")
-         |> push_navigate(to: ~p"/jobs/#{cloned_job.id}")}
+         |> put_flash(:info, "Task cloned successfully")
+         |> push_navigate(to: ~p"/tasks/#{cloned_task.id}")}
 
       {:error, changeset} ->
         message =
@@ -175,21 +170,21 @@ defmodule PrikkeWeb.JobLive.Show do
           |> Ecto.Changeset.traverse_errors(fn {msg, _opts} -> msg end)
           |> Enum.map_join(", ", fn {_field, msgs} -> Enum.join(msgs, ", ") end)
 
-        {:noreply, put_flash(socket, :error, "Failed to clone job: #{message}")}
+        {:noreply, put_flash(socket, :error, "Failed to clone task: #{message}")}
     end
   end
 
   def handle_event("test_url", _, socket) do
-    job = socket.assigns.job
+    task = socket.assigns.task
 
-    task =
+    async_task =
       Task.async(fn ->
-        Jobs.test_webhook(%{
-          url: job.url,
-          method: job.method,
-          headers: job.headers || %{},
-          body: job.body,
-          timeout_ms: job.timeout_ms
+        Tasks.test_webhook(%{
+          url: task.url,
+          method: task.method,
+          headers: task.headers || %{},
+          body: task.body,
+          timeout_ms: task.timeout_ms
         })
       end)
 
@@ -197,7 +192,7 @@ defmodule PrikkeWeb.JobLive.Show do
      socket
      |> assign(:testing, true)
      |> assign(:test_result, nil)
-     |> assign(:test_task_ref, task.ref)}
+     |> assign(:test_task_ref, async_task.ref)}
   end
 
   def handle_event("dismiss_test_result", _, socket) do
@@ -206,37 +201,34 @@ defmodule PrikkeWeb.JobLive.Show do
 
   def handle_event("delete", _, socket) do
     {:ok, _} =
-      Jobs.delete_job(socket.assigns.organization, socket.assigns.job,
+      Tasks.delete_task(socket.assigns.organization, socket.assigns.task,
         scope: socket.assigns.current_scope
       )
 
     {:noreply,
      socket
-     |> put_flash(:info, "Job deleted successfully")
-     |> redirect(to: ~p"/jobs")}
+     |> put_flash(:info, "Task deleted successfully")
+     |> redirect(to: ~p"/tasks")}
   end
 
   def handle_event("run_now", _, socket) do
-    job = socket.assigns.job
+    task = socket.assigns.task
     scheduled_for = DateTime.utc_now() |> DateTime.truncate(:second)
 
-    # If this is a retry (last execution failed), make it single-attempt
     opts = if get_status(socket.assigns.latest_info) in ["failed", "timeout"] do
-      [attempt: job.retry_attempts]
+      [attempt: task.retry_attempts]
     else
       []
     end
 
-    case Executions.create_execution_for_job(job, scheduled_for, opts) do
+    case Executions.create_execution_for_task(task, scheduled_for, opts) do
       {:ok, _execution} ->
-        # Wake workers to process immediately
-        Jobs.notify_workers()
+        Tasks.notify_workers()
 
-        # Refresh executions list
         status_filter = socket.assigns.status_filter
-        executions = Executions.list_job_executions(job, limit: @per_page, status: status_filter)
-        total_count = Executions.count_job_executions(job, status: status_filter)
-        stats = Executions.get_job_stats(job)
+        executions = Executions.list_task_executions(task, limit: @per_page, status: status_filter)
+        total_count = Executions.count_task_executions(task, status: status_filter)
+        stats = Executions.get_task_stats(task)
         latest_info = get_latest_info(executions)
 
         {:noreply,
@@ -245,18 +237,18 @@ defmodule PrikkeWeb.JobLive.Show do
          |> assign(:total_count, total_count)
          |> assign(:stats, stats)
          |> assign(:latest_info, latest_info)
-         |> put_flash(:info, "Job queued for immediate execution")}
+         |> put_flash(:info, "Task queued for immediate execution")}
 
       {:error, _reason} ->
-        {:noreply, put_flash(socket, :error, "Failed to queue job")}
+        {:noreply, put_flash(socket, :error, "Failed to queue task")}
     end
   end
 
   def handle_event("filter", %{"status" => status}, socket) do
-    job = socket.assigns.job
+    task = socket.assigns.task
     status_filter = if status == "", do: nil, else: status
-    executions = Executions.list_job_executions(job, limit: @per_page, status: status_filter)
-    total_count = Executions.count_job_executions(job, status: status_filter)
+    executions = Executions.list_task_executions(task, limit: @per_page, status: status_filter)
+    total_count = Executions.count_task_executions(task, status: status_filter)
 
     {:noreply,
      socket
@@ -266,12 +258,12 @@ defmodule PrikkeWeb.JobLive.Show do
   end
 
   def handle_event("load_more", _, socket) do
-    job = socket.assigns.job
+    task = socket.assigns.task
     status_filter = socket.assigns.status_filter
     current_count = length(socket.assigns.executions)
 
     more_executions =
-      Executions.list_job_executions(job,
+      Executions.list_task_executions(task,
         limit: @per_page,
         offset: current_count,
         status: status_filter
@@ -314,16 +306,16 @@ defmodule PrikkeWeb.JobLive.Show do
           <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
             <div>
               <div class="flex items-center gap-3 flex-wrap">
-                <h1 class="text-lg sm:text-xl font-bold text-slate-900">{@job.name}</h1>
-                <%= if @job.muted do %>
+                <h1 class="text-lg sm:text-xl font-bold text-slate-900">{@task.name}</h1>
+                <%= if @task.muted do %>
                   <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-500" title="Notifications muted">
                     <.icon name="hero-bell-slash" class="w-3.5 h-3.5" /> Muted
                   </span>
                 <% end %>
-                <.job_status_badge job={@job} latest_info={@latest_info} />
+                <.task_status_badge task={@task} latest_info={@latest_info} />
               </div>
               <p class="text-sm text-slate-500 mt-1">
-                Created <.local_time id="job-created" datetime={@job.inserted_at} format="date" />
+                Created <.local_time id="task-created" datetime={@task.inserted_at} format="date" />
               </p>
             </div>
             <div class="flex items-center gap-2">
@@ -355,7 +347,7 @@ defmodule PrikkeWeb.JobLive.Show do
                   <.icon name="hero-play" class="w-4 h-4" /> Run Now
                 <% end %>
               </button>
-              <div class="relative" id="job-actions-menu" phx-hook=".ClickOutside">
+              <div class="relative" id="task-actions-menu" phx-hook=".ClickOutside">
                 <button
                   type="button"
                   phx-click="toggle_menu"
@@ -366,13 +358,13 @@ defmodule PrikkeWeb.JobLive.Show do
                 </button>
                 <%= if @menu_open do %>
                   <div class="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
-                    <%= if @job.schedule_type == "cron" do %>
+                    <%= if @task.schedule_type == "cron" do %>
                       <button
                         type="button"
                         phx-click="toggle"
                         class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
                       >
-                        <%= if @job.enabled do %>
+                        <%= if @task.enabled do %>
                           <.icon name="hero-pause" class="w-4 h-4 text-slate-400" /> Pause
                         <% else %>
                           <.icon name="hero-play" class="w-4 h-4 text-slate-400" /> Enable
@@ -380,7 +372,7 @@ defmodule PrikkeWeb.JobLive.Show do
                       </button>
                     <% end %>
                     <.link
-                      navigate={~p"/jobs/#{@job.id}/edit"}
+                      navigate={~p"/tasks/#{@task.id}/edit"}
                       class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                     >
                       <.icon name="hero-pencil" class="w-4 h-4 text-slate-400" /> Edit
@@ -390,7 +382,7 @@ defmodule PrikkeWeb.JobLive.Show do
                       phx-click="toggle_mute"
                       class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
                     >
-                      <%= if @job.muted do %>
+                      <%= if @task.muted do %>
                         <.icon name="hero-bell" class="w-4 h-4 text-slate-400" /> Unmute
                       <% else %>
                         <.icon name="hero-bell-slash" class="w-4 h-4 text-slate-400" /> Mute
@@ -407,7 +399,7 @@ defmodule PrikkeWeb.JobLive.Show do
                     <button
                       type="button"
                       phx-click="delete"
-                      data-confirm="Are you sure you want to delete this job? This cannot be undone."
+                      data-confirm="Are you sure you want to delete this task? This cannot be undone."
                       class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer"
                     >
                       <.icon name="hero-trash" class="w-4 h-4" /> Delete
@@ -429,82 +421,88 @@ defmodule PrikkeWeb.JobLive.Show do
             <div class="bg-white/30 rounded-xl p-3 sm:p-4 space-y-3">
               <div class="flex items-start sm:items-center gap-2 flex-col sm:flex-row">
                 <span class="font-mono text-sm bg-slate-200 px-2 py-1 rounded font-medium shrink-0">
-                  {@job.method}
+                  {@task.method}
                 </span>
-                <code class="text-sm text-slate-700 break-all">{@job.url}</code>
+                <code class="text-sm text-slate-700 break-all">{@task.url}</code>
               </div>
-              <%= if @job.headers && @job.headers != %{} do %>
+              <%= if @task.headers && @task.headers != %{} do %>
                 <div>
                   <span class="text-xs text-slate-500 uppercase">Headers</span>
-                  <pre class="text-xs bg-slate-100 p-2 rounded mt-1 overflow-x-auto"><%= Jason.encode!(@job.headers, pretty: true) %></pre>
+                  <pre class="text-xs bg-slate-100 p-2 rounded mt-1 overflow-x-auto"><%= Jason.encode!(@task.headers, pretty: true) %></pre>
                 </div>
               <% end %>
-              <%= if @job.body && @job.body != "" do %>
+              <%= if @task.body && @task.body != "" do %>
                 <div>
                   <span class="text-xs text-slate-500 uppercase">Body</span>
-                  <pre class="text-xs bg-slate-100 p-2 rounded mt-1 overflow-x-auto"><%= @job.body %></pre>
+                  <pre class="text-xs bg-slate-100 p-2 rounded mt-1 overflow-x-auto"><%= @task.body %></pre>
                 </div>
               <% end %>
             </div>
           </div>
-          
+
     <!-- Schedule -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Schedule</h3>
             <div class="bg-white/30 rounded-xl p-3 sm:p-4">
-              <%= if @job.schedule_type == "cron" do %>
+              <%= if @task.schedule_type == "cron" do %>
                 <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                   <span class="font-mono text-base sm:text-lg bg-slate-200 px-3 py-1 rounded w-fit">
-                    {@job.cron_expression}
+                    {@task.cron_expression}
                   </span>
-                  <span class="text-slate-600">{Prikke.Cron.describe(@job.cron_expression)}</span>
+                  <span class="text-slate-600">{Prikke.Cron.describe(@task.cron_expression)}</span>
                 </div>
-                <p class="text-sm text-slate-500 mt-2">Timezone: {@job.timezone}</p>
+                <p class="text-sm text-slate-500 mt-2">Timezone: {@task.timezone}</p>
               <% else %>
                 <div>
                   <span class="text-slate-900 font-medium">One-time execution</span>
                   <p class="text-slate-600 mt-1">
                     Scheduled for
-                    <.local_time id="job-scheduled" datetime={@job.scheduled_at} format="full" />
+                    <.local_time id="task-scheduled" datetime={@task.scheduled_at} format="full" />
                   </p>
                 </div>
               <% end %>
             </div>
           </div>
-          
+
     <!-- Settings -->
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Settings</h3>
             <div class="bg-white/30 rounded-xl p-3 sm:p-4 grid grid-cols-2 gap-4">
               <div>
                 <span class="text-xs text-slate-500 uppercase">Timeout</span>
-                <p class="text-slate-900">{format_timeout(@job.timeout_ms)}</p>
+                <p class="text-slate-900">{format_timeout(@task.timeout_ms)}</p>
               </div>
               <div>
                 <span class="text-xs text-slate-500 uppercase">Retry Attempts</span>
-                <p class="text-slate-900">{@job.retry_attempts}</p>
+                <p class="text-slate-900">{@task.retry_attempts}</p>
               </div>
-              <%= if @job.callback_url do %>
+              <%= if @task.queue do %>
+                <div>
+                  <span class="text-xs text-slate-500 uppercase">Queue</span>
+                  <p class="text-slate-900 font-mono text-sm">{@task.queue}</p>
+                </div>
+              <% end %>
+              <%= if @task.callback_url do %>
                 <div class="col-span-2">
                   <span class="text-xs text-slate-500 uppercase">Callback URL</span>
-                  <p class="text-slate-900 font-mono text-sm break-all">{@job.callback_url}</p>
+                  <p class="text-slate-900 font-mono text-sm break-all">{@task.callback_url}</p>
                 </div>
               <% end %>
-              <%= if @job.expected_status_codes do %>
+              <%= if @task.expected_status_codes do %>
                 <div>
                   <span class="text-xs text-slate-500 uppercase">Expected Status Codes</span>
-                  <p class="text-slate-900 font-mono text-sm">{@job.expected_status_codes}</p>
+                  <p class="text-slate-900 font-mono text-sm">{@task.expected_status_codes}</p>
                 </div>
               <% end %>
-              <%= if @job.expected_body_pattern do %>
+              <%= if @task.expected_body_pattern do %>
                 <div>
                   <span class="text-xs text-slate-500 uppercase">Response Body Contains</span>
-                  <p class="text-slate-900 font-mono text-sm">"{@job.expected_body_pattern}"</p>
+                  <p class="text-slate-900 font-mono text-sm">"{@task.expected_body_pattern}"</p>
                 </div>
               <% end %>
             </div>
           </div>
-          
+
     <!-- Stats (24h) -->
           <%= if @stats.total > 0 do %>
             <div>
@@ -533,7 +531,7 @@ defmodule PrikkeWeb.JobLive.Show do
               </div>
             </div>
           <% end %>
-          
+
     <!-- Execution History -->
           <div>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
@@ -564,14 +562,14 @@ defmodule PrikkeWeb.JobLive.Show do
                 <%= if @status_filter do %>
                   No executions matching this filter.
                 <% else %>
-                  No executions yet. This job will run according to its schedule.
+                  No executions yet. This task will run according to its schedule.
                 <% end %>
               </div>
             <% else %>
               <div class="bg-white/30 rounded-xl divide-y divide-white/30">
                 <%= for exec <- @executions do %>
                   <.link
-                    navigate={~p"/jobs/#{@job.id}/executions/#{exec.id}"}
+                    navigate={~p"/tasks/#{@task.id}/executions/#{exec.id}"}
                     class="block px-4 py-3 hover:bg-slate-100 transition-colors"
                   >
                     <div class="flex items-center justify-between">
@@ -707,12 +705,12 @@ defmodule PrikkeWeb.JobLive.Show do
   defp get_attempt(nil), do: 1
   defp get_attempt(%{attempt: attempt}), do: attempt
 
-  defp job_completed?(job, latest_info) do
-    job.schedule_type == "once" and is_nil(job.next_run_at) and
+  defp task_completed?(task, latest_info) do
+    task.schedule_type == "once" and is_nil(task.next_run_at) and
       get_status(latest_info) == "success"
   end
 
-  defp job_status_badge(assigns) do
+  defp task_status_badge(assigns) do
     status = get_status(assigns.latest_info)
     attempt = get_attempt(assigns.latest_info)
     assigns = assign(assigns, :status, status)
@@ -720,19 +718,19 @@ defmodule PrikkeWeb.JobLive.Show do
 
     ~H"""
     <%= cond do %>
-      <% job_completed?(@job, @latest_info) -> %>
+      <% task_completed?(@task, @latest_info) -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600">
           Completed
         </span>
-      <% @job.schedule_type == "once" and @status in ["failed", "timeout"] -> %>
+      <% @task.schedule_type == "once" and @status in ["failed", "timeout"] -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-red-100 text-red-700">Failed</span>
-      <% @job.schedule_type == "once" and @status in ["pending", "running"] and @attempt > 1 -> %>
+      <% @task.schedule_type == "once" and @status in ["pending", "running"] and @attempt > 1 -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">
-          Retrying ({@attempt}/{@job.retry_attempts})
+          Retrying ({@attempt}/{@task.retry_attempts})
         </span>
-      <% @job.schedule_type == "once" and @status in ["pending", "running"] -> %>
+      <% @task.schedule_type == "once" and @status in ["pending", "running"] -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-blue-100 text-blue-700">Running</span>
-      <% @job.enabled -> %>
+      <% @task.enabled -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
           Active
         </span>

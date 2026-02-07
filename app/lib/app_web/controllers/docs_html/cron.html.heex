@@ -1,6 +1,6 @@
 <.docs_layout current_scope={@current_scope}>
   <h1>Cron Syntax</h1>
-  <p class="text-xl text-slate-600 mb-10">How to write cron expressions for recurring jobs.</p>
+  <p class="text-xl text-slate-600 mb-10">How to write cron expressions for recurring tasks.</p>
 
   <h2>Format</h2>
   <p>A cron expression has 5 fields:</p>
@@ -174,9 +174,9 @@
 
   <h2>Timezone</h2>
   <p>
-    All cron expressions run in <strong>UTC</strong>. Convert your local time to UTC when setting up jobs.
+    All cron expressions run in <strong>UTC</strong>. Convert your local time to UTC when setting up tasks.
   </p>
-  <p>For example, if you want a job to run at 9:00 AM CET (Central European Time):</p>
+  <p>For example, if you want a task to run at 9:00 AM CET (Central European Time):</p>
   <ul>
     <li>CET is UTC+1, so 9:00 AM CET = 8:00 AM UTC</li>
     <li>Use: <code class="bg-slate-100 px-2 py-1 rounded text-emerald-600">0 8 * * *</code></li>

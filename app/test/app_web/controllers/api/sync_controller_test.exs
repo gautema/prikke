@@ -2,11 +2,11 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
   use PrikkeWeb.ConnCase, async: true
 
   import Prikke.AccountsFixtures
-  import Prikke.JobsFixtures
+  import Prikke.TasksFixtures
   import Prikke.MonitorsFixtures
 
   alias Prikke.Accounts
-  alias Prikke.Jobs
+  alias Prikke.Tasks
   alias Prikke.Monitors
 
   setup %{conn: conn} do
@@ -23,18 +23,18 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
     %{conn: conn, org: org}
   end
 
-  describe "PUT /api/v1/sync - jobs" do
-    test "creates new jobs", %{conn: conn, org: org} do
+  describe "PUT /api/v1/sync - tasks" do
+    test "creates new tasks", %{conn: conn, org: org} do
       params = %{
-        "jobs" => [
+        "tasks" => [
           %{
-            "name" => "Job A",
+            "name" => "Task A",
             "url" => "https://example.com/a",
             "schedule_type" => "cron",
             "cron_expression" => "0 * * * *"
           },
           %{
-            "name" => "Job B",
+            "name" => "Task B",
             "url" => "https://example.com/b",
             "schedule_type" => "cron",
             "cron_expression" => "0 0 * * *"
@@ -47,22 +47,22 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
 
       assert response["data"]["created_count"] == 2
       assert response["data"]["updated_count"] == 0
-      assert "Job A" in response["data"]["created"]
-      assert "Job B" in response["data"]["created"]
+      assert "Task A" in response["data"]["created"]
+      assert "Task B" in response["data"]["created"]
 
-      # Verify jobs exist
-      jobs = Jobs.list_jobs(org)
-      assert length(jobs) == 2
+      # Verify tasks exist
+      tasks = Tasks.list_tasks(org)
+      assert length(tasks) == 2
     end
 
-    test "updates existing jobs", %{conn: conn, org: org} do
-      # Create an existing job
-      job_fixture(org, %{name: "Existing Job", url: "https://old-url.com"})
+    test "updates existing tasks", %{conn: conn, org: org} do
+      # Create an existing task
+      task_fixture(org, %{name: "Existing Task", url: "https://old-url.com"})
 
       params = %{
-        "jobs" => [
+        "tasks" => [
           %{
-            "name" => "Existing Job",
+            "name" => "Existing Task",
             "url" => "https://new-url.com",
             "schedule_type" => "cron",
             "cron_expression" => "0 * * * *"
@@ -75,26 +75,26 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
 
       assert response["data"]["created_count"] == 0
       assert response["data"]["updated_count"] == 1
-      assert "Existing Job" in response["data"]["updated"]
+      assert "Existing Task" in response["data"]["updated"]
 
       # Verify URL was updated
-      [job] = Jobs.list_jobs(org)
-      assert job.url == "https://new-url.com"
+      [task] = Tasks.list_tasks(org)
+      assert task.url == "https://new-url.com"
     end
 
     test "creates and updates in same request", %{conn: conn, org: org} do
-      job_fixture(org, %{name: "Existing Job"})
+      task_fixture(org, %{name: "Existing Task"})
 
       params = %{
-        "jobs" => [
+        "tasks" => [
           %{
-            "name" => "Existing Job",
+            "name" => "Existing Task",
             "url" => "https://updated.com",
             "schedule_type" => "cron",
             "cron_expression" => "0 * * * *"
           },
           %{
-            "name" => "New Job",
+            "name" => "New Task",
             "url" => "https://new.com",
             "schedule_type" => "cron",
             "cron_expression" => "0 0 * * *"
@@ -109,12 +109,12 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
       assert response["data"]["updated_count"] == 1
     end
 
-    test "deletes removed jobs when delete_removed is true", %{conn: conn, org: org} do
-      job_fixture(org, %{name: "Keep This"})
-      job_fixture(org, %{name: "Delete This"})
+    test "deletes removed tasks when delete_removed is true", %{conn: conn, org: org} do
+      task_fixture(org, %{name: "Keep This"})
+      task_fixture(org, %{name: "Delete This"})
 
       params = %{
-        "jobs" => [
+        "tasks" => [
           %{
             "name" => "Keep This",
             "url" => "https://example.com",
@@ -131,19 +131,19 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
       assert response["data"]["deleted_count"] == 1
       assert "Delete This" in response["data"]["deleted"]
 
-      # Verify only one job remains
-      jobs = Jobs.list_jobs(org)
-      assert length(jobs) == 1
-      assert hd(jobs).name == "Keep This"
+      # Verify only one task remains
+      tasks = Tasks.list_tasks(org)
+      assert length(tasks) == 1
+      assert hd(tasks).name == "Keep This"
     end
 
-    test "does not delete removed jobs by default", %{conn: conn, org: org} do
-      job_fixture(org, %{name: "Existing Job"})
+    test "does not delete removed tasks by default", %{conn: conn, org: org} do
+      task_fixture(org, %{name: "Existing Task"})
 
       params = %{
-        "jobs" => [
+        "tasks" => [
           %{
-            "name" => "New Job",
+            "name" => "New Task",
             "url" => "https://example.com",
             "schedule_type" => "cron",
             "cron_expression" => "0 * * * *"
@@ -156,14 +156,14 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
 
       assert response["data"]["deleted_count"] == 0
 
-      # Verify both jobs exist
-      jobs = Jobs.list_jobs(org)
-      assert length(jobs) == 2
+      # Verify both tasks exist
+      tasks = Tasks.list_tasks(org)
+      assert length(tasks) == 2
     end
 
-    test "returns error for invalid jobs", %{conn: conn} do
+    test "returns error for invalid tasks", %{conn: conn} do
       params = %{
-        "jobs" => [
+        "tasks" => [
           %{
             "name" => "",
             "url" => "not-a-url"
@@ -177,10 +177,10 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
       assert response["error"]["code"] == "validation_error"
     end
 
-    test "handles empty jobs array", %{conn: conn, org: org} do
-      job_fixture(org, %{name: "Existing Job"})
+    test "handles empty tasks array", %{conn: conn, org: org} do
+      task_fixture(org, %{name: "Existing Task"})
 
-      params = %{"jobs" => []}
+      params = %{"tasks" => []}
 
       conn = put(conn, ~p"/api/v1/sync", params)
       response = json_response(conn, 200)
@@ -308,12 +308,12 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
   end
 
   describe "PUT /api/v1/sync - combined" do
-    test "syncs jobs and monitors together", %{conn: conn, org: org} do
+    test "syncs tasks and monitors together", %{conn: conn, org: org} do
       params = %{
-        "jobs" => [
+        "tasks" => [
           %{
-            "name" => "My Job",
-            "url" => "https://example.com/job",
+            "name" => "My Task",
+            "url" => "https://example.com/task",
             "schedule_type" => "cron",
             "cron_expression" => "0 * * * *"
           }
@@ -330,26 +330,26 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
       conn = put(conn, ~p"/api/v1/sync", params)
       response = json_response(conn, 200)
 
-      # Job-level backwards compat fields
+      # Task-level backwards compat fields
       assert response["data"]["created_count"] == 1
-      assert "My Job" in response["data"]["created"]
+      assert "My Task" in response["data"]["created"]
 
       # Nested structure
-      assert response["data"]["jobs"]["created_count"] == 1
+      assert response["data"]["tasks"]["created_count"] == 1
       assert response["data"]["monitors"]["created_count"] == 1
 
       assert response["message"] == "Sync complete: 2 created"
 
-      assert length(Jobs.list_jobs(org)) == 1
+      assert length(Tasks.list_tasks(org)) == 1
       assert length(Monitors.list_monitors(org)) == 1
     end
 
-    test "delete_removed applies to both jobs and monitors", %{conn: conn, org: org} do
-      job_fixture(org, %{name: "Old Job"})
+    test "delete_removed applies to both tasks and monitors", %{conn: conn, org: org} do
+      task_fixture(org, %{name: "Old Task"})
       monitor_fixture(org, %{name: "Old Monitor"})
 
       params = %{
-        "jobs" => [],
+        "tasks" => [],
         "monitors" => [],
         "delete_removed" => true
       }
@@ -357,21 +357,21 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
       conn = put(conn, ~p"/api/v1/sync", params)
       response = json_response(conn, 200)
 
-      assert response["data"]["jobs"]["deleted_count"] == 1
+      assert response["data"]["tasks"]["deleted_count"] == 1
       assert response["data"]["monitors"]["deleted_count"] == 1
 
-      assert Jobs.list_jobs(org) == []
+      assert Tasks.list_tasks(org) == []
       assert Monitors.list_monitors(org) == []
     end
 
-    test "returns error without jobs or monitors array", %{conn: conn} do
+    test "returns error without tasks or monitors array", %{conn: conn} do
       conn = put(conn, ~p"/api/v1/sync", %{})
       response = json_response(conn, 400)
 
       assert response["error"]["code"] == "bad_request"
     end
 
-    test "can sync only monitors without jobs", %{conn: conn, org: org} do
+    test "can sync only monitors without tasks", %{conn: conn, org: org} do
       params = %{
         "monitors" => [
           %{
@@ -386,8 +386,8 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
       response = json_response(conn, 200)
 
       assert response["data"]["monitors"]["created_count"] == 1
-      # Jobs should be empty/zero since not provided
-      assert response["data"]["jobs"]["created_count"] == 0
+      # Tasks should be empty/zero since not provided
+      assert response["data"]["tasks"]["created_count"] == 0
 
       assert length(Monitors.list_monitors(org)) == 1
     end

@@ -2,7 +2,7 @@ defmodule PrikkeWeb.DashboardLive do
   use PrikkeWeb, :live_view
 
   alias Prikke.Accounts
-  alias Prikke.Jobs
+  alias Prikke.Tasks
   alias Prikke.Executions
   alias Prikke.Monitors
   alias Prikke.Cron
@@ -23,16 +23,16 @@ defmodule PrikkeWeb.DashboardLive do
 
     current_org = current_org || List.first(organizations)
 
-    # Subscribe to job, execution, and monitor updates if we have an organization
+    # Subscribe to task, execution, and monitor updates if we have an organization
     if current_org && connected?(socket) do
-      Jobs.subscribe_jobs(current_org)
+      Tasks.subscribe_tasks(current_org)
       Executions.subscribe_organization_executions(current_org.id)
       Monitors.subscribe_monitors(current_org)
     end
 
-    recent_jobs = load_recent_jobs(current_org)
-    job_ids = Enum.map(recent_jobs, & &1.id)
-    latest_statuses = Executions.get_latest_statuses(job_ids)
+    recent_tasks = load_recent_tasks(current_org)
+    task_ids = Enum.map(recent_tasks, & &1.id)
+    latest_statuses = Executions.get_latest_statuses(task_ids)
     {monitors, monitor_trend} = load_monitors_data(current_org)
 
     socket =
@@ -42,7 +42,7 @@ defmodule PrikkeWeb.DashboardLive do
       |> assign(:organizations, organizations)
       |> assign(:pending_invites_count, length(pending_invites))
       |> assign(:stats, load_stats(current_org))
-      |> assign(:recent_jobs, recent_jobs)
+      |> assign(:recent_tasks, recent_tasks)
       |> assign(:latest_statuses, latest_statuses)
       |> assign(:monitors, monitors)
       |> assign(:monitor_trend, monitor_trend)
@@ -51,17 +51,17 @@ defmodule PrikkeWeb.DashboardLive do
   end
 
   @impl true
-  def handle_info({:created, _job}, socket) do
+  def handle_info({:created, _task}, socket) do
     org = socket.assigns.current_organization
     {:noreply, reload_data(socket, org)}
   end
 
-  def handle_info({:updated, _job}, socket) do
+  def handle_info({:updated, _task}, socket) do
     org = socket.assigns.current_organization
     {:noreply, reload_data(socket, org)}
   end
 
-  def handle_info({:deleted, _job}, socket) do
+  def handle_info({:deleted, _task}, socket) do
     org = socket.assigns.current_organization
     {:noreply, reload_data(socket, org)}
   end
@@ -87,14 +87,14 @@ defmodule PrikkeWeb.DashboardLive do
   end
 
   defp reload_data(socket, org) do
-    recent_jobs = load_recent_jobs(org)
-    job_ids = Enum.map(recent_jobs, & &1.id)
-    latest_statuses = Executions.get_latest_statuses(job_ids)
+    recent_tasks = load_recent_tasks(org)
+    task_ids = Enum.map(recent_tasks, & &1.id)
+    latest_statuses = Executions.get_latest_statuses(task_ids)
     {monitors, monitor_trend} = load_monitors_data(org)
 
     socket
     |> assign(:stats, load_stats(org))
-    |> assign(:recent_jobs, recent_jobs)
+    |> assign(:recent_tasks, recent_tasks)
     |> assign(:latest_statuses, latest_statuses)
     |> assign(:monitors, monitors)
     |> assign(:monitor_trend, monitor_trend)
@@ -159,7 +159,7 @@ defmodule PrikkeWeb.DashboardLive do
               )
             ]}>
               <%= if usage_percent(@stats.monthly_executions, @stats.monthly_limit) >= 100 do %>
-                Monthly limit reached. Jobs will be skipped until next month.
+                Monthly limit reached. Tasks will be skipped until next month.
                 <%= if @current_organization.tier == "free" do %>
                   <.link navigate={~p"/organizations/settings"} class="underline">
                     Upgrade to Pro
@@ -187,11 +187,11 @@ defmodule PrikkeWeb.DashboardLive do
         <!-- Quick Stats -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
           <.link
-            navigate={~p"/jobs"}
+            navigate={~p"/tasks"}
             class="glass-card rounded-2xl p-6 hover:border-slate-300 transition-colors"
           >
-            <div class="text-sm font-medium text-slate-500 mb-1">Active Jobs</div>
-            <div class="text-3xl font-bold text-slate-900">{@stats.active_jobs}</div>
+            <div class="text-sm font-medium text-slate-500 mb-1">Active Tasks</div>
+            <div class="text-3xl font-bold text-slate-900">{@stats.active_tasks}</div>
           </.link>
           <div class="glass-card rounded-2xl p-6">
             <div class="text-sm font-medium text-slate-500 mb-1">Executions Today</div>
@@ -216,68 +216,62 @@ defmodule PrikkeWeb.DashboardLive do
           </div>
         </div>
 
-        <!-- Jobs Section -->
+        <!-- Tasks Section -->
         <div class="glass-card rounded-2xl mb-4">
           <div class="px-4 sm:px-6 py-4 border-b border-white/50 flex justify-between items-center gap-2">
             <div class="flex items-center gap-3">
-              <h2 class="text-lg font-semibold text-slate-900">Jobs</h2>
-              <.job_summary stats={@stats} />
+              <h2 class="text-lg font-semibold text-slate-900">Tasks</h2>
+              <.task_summary stats={@stats} />
             </div>
             <div class="flex gap-1.5 sm:gap-2">
               <.link
-                navigate={~p"/queue"}
-                class="text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md transition-colors no-underline flex items-center gap-1"
-              >
-                <.icon name="hero-bolt" class="w-4 h-4" /> Queue
-              </.link>
-              <.link
-                navigate={~p"/jobs/new"}
+                navigate={~p"/tasks/new"}
                 class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md transition-colors no-underline"
               >
-                New Job
+                New Task
               </.link>
             </div>
           </div>
-          <%= if @recent_jobs == [] do %>
+          <%= if @recent_tasks == [] do %>
             <div class="p-8 text-center">
-              <p class="text-slate-500 mb-2">No jobs yet.</p>
-              <.link navigate={~p"/jobs/new"} class="text-emerald-600 text-sm font-medium hover:underline">
-                Create your first job →
+              <p class="text-slate-500 mb-2">No tasks yet.</p>
+              <.link navigate={~p"/tasks/new"} class="text-emerald-600 text-sm font-medium hover:underline">
+                Create your first task →
               </.link>
             </div>
           <% else %>
             <!-- Execution Trend -->
             <.execution_trend trend={@stats.execution_trend} days={@stats.trend_days} />
-            <!-- Job List -->
+            <!-- Task List -->
             <div class="divide-y divide-white/30">
-              <%= for job <- @recent_jobs do %>
+              <%= for task <- @recent_tasks do %>
                 <.link
-                  navigate={~p"/jobs/#{job.id}"}
+                  navigate={~p"/tasks/#{task.id}"}
                   class="block px-6 py-3 hover:bg-white/50 transition-colors"
                 >
                   <div class="flex items-center justify-between">
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-2">
-                        <.execution_status_dot status={get_status(@latest_statuses[job.id])} />
-                        <span class="text-sm text-slate-900 truncate">{job.name}</span>
-                        <.job_status_badge job={job} latest_info={@latest_statuses[job.id]} />
+                        <.execution_status_dot status={get_status(@latest_statuses[task.id])} />
+                        <span class="text-sm text-slate-900 truncate">{task.name}</span>
+                        <.task_status_badge task={task} latest_info={@latest_statuses[task.id]} />
                       </div>
-                      <%= if @latest_statuses[job.id] do %>
+                      <%= if @latest_statuses[task.id] do %>
                         <div class="text-xs text-slate-400 mt-0.5 pl-[18px] flex items-center gap-1.5">
                           <.local_time
-                            id={"dash-job-#{job.id}-last-run"}
-                            datetime={@latest_statuses[job.id].scheduled_for}
+                            id={"dash-task-#{task.id}-last-run"}
+                            datetime={@latest_statuses[task.id].scheduled_for}
                           />
-                          <%= if @latest_statuses[job.id].duration_ms do %>
+                          <%= if @latest_statuses[task.id].duration_ms do %>
                             <span class="text-slate-300">·</span>
-                            <span>{format_duration_short(@latest_statuses[job.id].duration_ms)}</span>
+                            <span>{format_duration_short(@latest_statuses[task.id].duration_ms)}</span>
                           <% end %>
                         </div>
                       <% end %>
                     </div>
                     <div class="text-xs text-slate-400 ml-4 text-right shrink-0">
-                      <%= if job.schedule_type == "cron" do %>
-                        {Cron.describe(job.cron_expression)}
+                      <%= if task.schedule_type == "cron" do %>
+                        {Cron.describe(task.cron_expression)}
                       <% else %>
                         One-time
                       <% end %>
@@ -287,8 +281,8 @@ defmodule PrikkeWeb.DashboardLive do
               <% end %>
             </div>
             <div class="px-6 py-3 border-t border-slate-200 text-center">
-              <.link navigate={~p"/jobs"} class="text-sm text-emerald-600 hover:underline">
-                View all jobs →
+              <.link navigate={~p"/tasks"} class="text-sm text-emerald-600 hover:underline">
+                View all tasks →
               </.link>
             </div>
           <% end %>
@@ -368,7 +362,7 @@ defmodule PrikkeWeb.DashboardLive do
             <.icon name="hero-building-office" class="w-6 h-6 text-emerald-600" />
           </div>
           <h3 class="text-lg font-medium text-slate-900 mb-1">Create your first organization</h3>
-          <p class="text-slate-500 mb-6">Organizations help you manage jobs and team members.</p>
+          <p class="text-slate-500 mb-6">Organizations help you manage tasks and team members.</p>
           <a
             href={~p"/organizations/new"}
             class="inline-block px-6 py-3 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors no-underline"
@@ -383,8 +377,8 @@ defmodule PrikkeWeb.DashboardLive do
 
   defp load_stats(nil),
     do: %{
-      active_jobs: 0,
-      total_jobs: 0,
+      active_tasks: 0,
+      total_tasks: 0,
       executions_today: 0,
       today_failed: 0,
       success_rate: "—",
@@ -401,7 +395,7 @@ defmodule PrikkeWeb.DashboardLive do
   defp load_stats(organization) do
     organization = Prikke.Repo.reload!(organization)
     exec_stats = Executions.get_today_stats(organization)
-    tier_limits = Jobs.get_tier_limits(organization.tier)
+    tier_limits = Tasks.get_tier_limits(organization.tier)
     monthly_executions = Executions.count_current_month_executions(organization)
     trend_days = if organization.tier == "pro", do: 30, else: 7
 
@@ -412,8 +406,8 @@ defmodule PrikkeWeb.DashboardLive do
     success_rate_7d = calculate_success_rate(stats_7d)
 
     %{
-      active_jobs: Jobs.count_enabled_jobs(organization),
-      total_jobs: Jobs.count_jobs(organization),
+      active_tasks: Tasks.count_enabled_tasks(organization),
+      total_tasks: Tasks.count_tasks(organization),
       executions_today: exec_stats.total,
       today_failed: exec_stats.failed,
       success_rate: success_rate,
@@ -500,11 +494,11 @@ defmodule PrikkeWeb.DashboardLive do
     {monitors, monitor_trend}
   end
 
-  defp load_recent_jobs(nil), do: []
+  defp load_recent_tasks(nil), do: []
 
-  defp load_recent_jobs(organization) do
+  defp load_recent_tasks(organization) do
     organization
-    |> Jobs.list_jobs()
+    |> Tasks.list_tasks()
     |> Enum.take(5)
   end
 
@@ -514,12 +508,12 @@ defmodule PrikkeWeb.DashboardLive do
   defp get_attempt(nil), do: 1
   defp get_attempt(%{attempt: attempt}), do: attempt
 
-  defp job_completed?(job, latest_info) do
-    job.schedule_type == "once" and is_nil(job.next_run_at) and
+  defp task_completed?(task, latest_info) do
+    task.schedule_type == "once" and is_nil(task.next_run_at) and
       get_status(latest_info) == "success"
   end
 
-  defp job_status_badge(assigns) do
+  defp task_status_badge(assigns) do
     status = get_status(assigns.latest_info)
     attempt = get_attempt(assigns.latest_info)
     assigns = assign(assigns, :status, status)
@@ -527,19 +521,19 @@ defmodule PrikkeWeb.DashboardLive do
 
     ~H"""
     <%= cond do %>
-      <% job_completed?(@job, @latest_info) -> %>
+      <% task_completed?(@task, @latest_info) -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600">
           Completed
         </span>
-      <% @job.schedule_type == "once" and @status in ["failed", "timeout"] -> %>
+      <% @task.schedule_type == "once" and @status in ["failed", "timeout"] -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-red-100 text-red-700">Failed</span>
-      <% @job.schedule_type == "once" and @status in ["pending", "running"] and @attempt > 1 -> %>
+      <% @task.schedule_type == "once" and @status in ["pending", "running"] and @attempt > 1 -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">
-          Retrying ({@attempt}/{@job.retry_attempts})
+          Retrying ({@attempt}/{@task.retry_attempts})
         </span>
-      <% @job.schedule_type == "once" and @status in ["pending", "running"] -> %>
+      <% @task.schedule_type == "once" and @status in ["pending", "running"] -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-blue-100 text-blue-700">Running</span>
-      <% @job.enabled -> %>
+      <% @task.enabled -> %>
         <span class="text-xs font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
           Active
         </span>
@@ -679,10 +673,10 @@ defmodule PrikkeWeb.DashboardLive do
     end
   end
 
-  defp job_summary(assigns) do
+  defp task_summary(assigns) do
     ~H"""
     <div class="flex items-center gap-2 text-xs">
-      <span class="text-slate-500">{@stats.active_jobs} active</span>
+      <span class="text-slate-500">{@stats.active_tasks} active</span>
       <%= if @stats.today_failed > 0 do %>
         <span class="text-red-600 font-medium">{@stats.today_failed} failed today</span>
       <% end %>

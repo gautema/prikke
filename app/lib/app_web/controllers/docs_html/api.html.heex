@@ -19,7 +19,7 @@
   <p>All API requests require an API key. Include it in the Authorization header:</p>
   <pre class="bg-slate-900 text-slate-100 p-5 rounded-lg text-sm font-mono leading-relaxed overflow-x-auto">Authorization: Bearer <span class="text-green-300">pk_live_xxx.sk_live_yyy</span></pre>
 
-  <h2>Queue API</h2>
+  <h2>Tasks API</h2>
   <p>
     The simplest way to execute a webhook. Runs immediately by default, or pass a <code>delay</code> to defer execution.
   </p>
@@ -30,10 +30,10 @@
         <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-emerald-600 text-white">
           POST
         </span>
-        <span class="font-mono text-sm">/queue</span>
+        <span class="font-mono text-sm">/tasks</span>
       </div>
       <p class="text-slate-600 m-0 mb-4">
-        Queue a request for immediate or delayed execution. Creates a one-time job and executes it right away, or after the specified delay.
+        Queue a request for immediate or delayed execution. Creates a one-time task and executes it right away, or after the specified delay.
       </p>
 
       <h4 class="text-sm font-semibold mt-4 mb-2 text-slate-900">Headers</h4>
@@ -48,7 +48,7 @@
           <td class="py-2 pr-4 text-slate-500">string</td>
           <td class="py-2 text-slate-600">
             Unique key to prevent duplicate requests. If the same key is sent again within 24 hours,
-            the original response is returned without creating a new job. (optional)
+            the original response is returned without creating a new task. (optional)
           </td>
         </tr>
       </table>
@@ -130,7 +130,7 @@
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
-    >curl -X POST https://runlater.eu/api/v1/queue \
+    >curl -X POST https://runlater.eu/api/v1/tasks \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
@@ -141,8 +141,8 @@
   }'</pre>
   </div>
 
-  <h2>Jobs API</h2>
-  <p>Full CRUD operations for managing scheduled jobs.</p>
+  <h2>Scheduled Tasks API</h2>
+  <p>Full CRUD operations for managing scheduled tasks.</p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="p-6 border-b border-slate-100">
@@ -150,11 +150,11 @@
         <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-blue-500 text-white">
           GET
         </span>
-        <span class="font-mono text-sm">/jobs</span>
+        <span class="font-mono text-sm">/tasks</span>
       </div>
-      <p class="text-slate-600 m-0">List all jobs for your organization.</p>
+      <p class="text-slate-600 m-0">List all tasks for your organization.</p>
     </div>
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://runlater.eu/api/v1/jobs \
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://runlater.eu/api/v1/tasks \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
   </div>
 
@@ -164,11 +164,11 @@
         <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-blue-500 text-white">
           GET
         </span>
-        <span class="font-mono text-sm">/jobs/:id</span>
+        <span class="font-mono text-sm">/tasks/:id</span>
       </div>
-      <p class="text-slate-600 m-0">Get a single job by ID.</p>
+      <p class="text-slate-600 m-0">Get a single task by ID.</p>
     </div>
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://runlater.eu/api/v1/jobs/job_abc123 \
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://runlater.eu/api/v1/tasks/task_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
   </div>
 
@@ -178,9 +178,9 @@
         <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-emerald-600 text-white">
           POST
         </span>
-        <span class="font-mono text-sm">/jobs</span>
+        <span class="font-mono text-sm">/tasks</span>
       </div>
-      <p class="text-slate-600 m-0 mb-4">Create a new scheduled job.</p>
+      <p class="text-slate-600 m-0 mb-4">Create a new scheduled task.</p>
 
       <h4 class="text-sm font-semibold mt-4 mb-2 text-slate-900">Headers</h4>
       <table class="text-sm w-full mb-4">
@@ -194,7 +194,7 @@
           <td class="py-2 pr-4 text-slate-500">string</td>
           <td class="py-2 text-slate-600">
             Unique key to prevent duplicate requests. If the same key is sent again within 24 hours,
-            the original response is returned without creating a new job. (optional)
+            the original response is returned without creating a new task. (optional)
           </td>
         </tr>
       </table>
@@ -209,7 +209,7 @@
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">name</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
-          <td class="py-2 text-slate-600">Display name for this job (required)</td>
+          <td class="py-2 text-slate-600">Display name for this task (required)</td>
         </tr>
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">url</code></td>
@@ -247,7 +247,7 @@
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">timezone</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
-          <td class="py-2 text-slate-600">Timezone for cron jobs (default: UTC)</td>
+          <td class="py-2 text-slate-600">Timezone for cron tasks (default: UTC)</td>
         </tr>
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">headers</code></td>
@@ -267,12 +267,12 @@
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">retry_attempts</code></td>
           <td class="py-2 pr-4 text-slate-500">integer</td>
-          <td class="py-2 text-slate-600">Retry attempts for one-time jobs (default: 5)</td>
+          <td class="py-2 text-slate-600">Retry attempts for one-time tasks (default: 5)</td>
         </tr>
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">enabled</code></td>
           <td class="py-2 pr-4 text-slate-500">boolean</td>
-          <td class="py-2 text-slate-600">Whether the job is active (default: true)</td>
+          <td class="py-2 text-slate-600">Whether the task is active (default: true)</td>
         </tr>
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">callback_url</code></td>
@@ -284,7 +284,7 @@
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">muted</code></td>
           <td class="py-2 pr-4 text-slate-500">boolean</td>
-          <td class="py-2 text-slate-600">Mute failure/recovery notifications for this job (default: false)</td>
+          <td class="py-2 text-slate-600">Mute failure/recovery notifications for this task (default: false)</td>
         </tr>
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">expected_status_codes</code></td>
@@ -299,11 +299,11 @@
       </table>
     </div>
     <div class="border-b border-slate-800">
-      <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800">Recurring Job (cron)</div>
+      <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800">Recurring Task (cron)</div>
       <pre
         phx-no-curly-interpolation
         class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
-      >curl -X POST https://runlater.eu/api/v1/jobs \
+      >curl -X POST https://runlater.eu/api/v1/tasks \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
@@ -315,11 +315,11 @@
   }'</pre>
     </div>
     <div>
-      <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800">One-time Job</div>
+      <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800">One-time Task</div>
       <pre
         phx-no-curly-interpolation
         class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
-      >curl -X POST https://runlater.eu/api/v1/jobs \
+      >curl -X POST https://runlater.eu/api/v1/tasks \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
@@ -337,14 +337,14 @@
         <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-amber-500 text-white">
           PUT
         </span>
-        <span class="font-mono text-sm">/jobs/:id</span>
+        <span class="font-mono text-sm">/tasks/:id</span>
       </div>
-      <p class="text-slate-600 m-0">Update a job. Only include the fields you want to change.</p>
+      <p class="text-slate-600 m-0">Update a task. Only include the fields you want to change.</p>
     </div>
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
-    >curl -X PUT https://runlater.eu/api/v1/jobs/job_abc123 \
+    >curl -X PUT https://runlater.eu/api/v1/tasks/task_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
@@ -359,11 +359,11 @@
         <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-red-500 text-white">
           DELETE
         </span>
-        <span class="font-mono text-sm">/jobs/:id</span>
+        <span class="font-mono text-sm">/tasks/:id</span>
       </div>
-      <p class="text-slate-600 m-0">Delete a job and all its execution history.</p>
+      <p class="text-slate-600 m-0">Delete a task and all its execution history.</p>
     </div>
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X DELETE https://runlater.eu/api/v1/jobs/job_abc123 \
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X DELETE https://runlater.eu/api/v1/tasks/task_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
   </div>
 
@@ -373,13 +373,13 @@
         <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-emerald-600 text-white">
           POST
         </span>
-        <span class="font-mono text-sm">/jobs/:id/trigger</span>
+        <span class="font-mono text-sm">/tasks/:id/trigger</span>
       </div>
       <p class="text-slate-600 m-0">
-        Trigger a job to run immediately. Creates a new execution that runs right away.
+        Trigger a task to run immediately. Creates a new execution that runs right away.
       </p>
     </div>
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://runlater.eu/api/v1/jobs/job_abc123/trigger \
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://runlater.eu/api/v1/tasks/task_abc123/trigger \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
   </div>
 
@@ -391,9 +391,9 @@
         <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-blue-500 text-white">
           GET
         </span>
-        <span class="font-mono text-sm">/jobs/:id/executions</span>
+        <span class="font-mono text-sm">/tasks/:id/executions</span>
       </div>
-      <p class="text-slate-600 m-0 mb-4">Get execution history for a job.</p>
+      <p class="text-slate-600 m-0 mb-4">Get execution history for a task.</p>
 
       <h4 class="text-sm font-semibold mt-4 mb-2 text-slate-900">Query Parameters</h4>
       <table class="text-sm w-full">
@@ -664,52 +664,52 @@
           <th class="text-left py-2 text-slate-700">Description</th>
         </tr>
         <tr class="border-b border-slate-50">
-          <td class="py-2 pr-4"><code class="text-sky-600">jobs</code></td>
+          <td class="py-2 pr-4"><code class="text-sky-600">tasks</code></td>
           <td class="py-2 pr-4 text-slate-500">array</td>
-          <td class="py-2 text-slate-600">Array of job configurations</td>
+          <td class="py-2 text-slate-600">Array of task configurations</td>
         </tr>
         <tr class="border-b border-slate-50">
-          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].key</code></td>
+          <td class="py-2 pr-4"><code class="text-sky-600">tasks[].key</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
-          <td class="py-2 text-slate-600">Unique key for this job (your identifier)</td>
+          <td class="py-2 text-slate-600">Unique key for this task (your identifier)</td>
         </tr>
         <tr class="border-b border-slate-50">
-          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].name</code></td>
+          <td class="py-2 pr-4"><code class="text-sky-600">tasks[].name</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
-          <td class="py-2 text-slate-600">Display name for this job</td>
+          <td class="py-2 text-slate-600">Display name for this task</td>
         </tr>
         <tr class="border-b border-slate-50">
-          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].url</code></td>
+          <td class="py-2 pr-4"><code class="text-sky-600">tasks[].url</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
           <td class="py-2 text-slate-600">The URL to call</td>
         </tr>
         <tr class="border-b border-slate-50">
-          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].method</code></td>
+          <td class="py-2 pr-4"><code class="text-sky-600">tasks[].method</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
           <td class="py-2 text-slate-600">HTTP method (default: POST)</td>
         </tr>
         <tr class="border-b border-slate-50">
-          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].schedule_type</code></td>
+          <td class="py-2 pr-4"><code class="text-sky-600">tasks[].schedule_type</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
           <td class="py-2 text-slate-600">"cron" for recurring or "once" for one-time</td>
         </tr>
         <tr class="border-b border-slate-50">
-          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].cron_expression</code></td>
+          <td class="py-2 pr-4"><code class="text-sky-600">tasks[].cron_expression</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
           <td class="py-2 text-slate-600">Cron expression (when schedule_type is "cron")</td>
         </tr>
         <tr class="border-b border-slate-50">
-          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].scheduled_at</code></td>
+          <td class="py-2 pr-4"><code class="text-sky-600">tasks[].scheduled_at</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
           <td class="py-2 text-slate-600">ISO 8601 timestamp (when schedule_type is "once")</td>
         </tr>
         <tr class="border-b border-slate-50">
-          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].headers</code></td>
+          <td class="py-2 pr-4"><code class="text-sky-600">tasks[].headers</code></td>
           <td class="py-2 pr-4 text-slate-500">object</td>
           <td class="py-2 text-slate-600">Custom headers (optional)</td>
         </tr>
         <tr class="border-b border-slate-50">
-          <td class="py-2 pr-4"><code class="text-sky-600">jobs[].body</code></td>
+          <td class="py-2 pr-4"><code class="text-sky-600">tasks[].body</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
           <td class="py-2 text-slate-600">Request body, max 256KB (optional)</td>
         </tr>
@@ -751,7 +751,7 @@
         <tr>
           <td class="py-2 pr-4"><code class="text-sky-600">delete_removed</code></td>
           <td class="py-2 pr-4 text-slate-500">boolean</td>
-          <td class="py-2 text-slate-600">Delete jobs/monitors not in config (default: false)</td>
+          <td class="py-2 text-slate-600">Delete tasks/monitors not in config (default: false)</td>
         </tr>
       </table>
     </div>
@@ -762,7 +762,7 @@
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
-    <span class="text-sky-300">"jobs"</span>: [{
+    <span class="text-sky-300">"tasks"</span>: [{
       <span class="text-sky-300">"key"</span>: <span class="text-green-300">"daily-backup"</span>,
       <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Daily backup"</span>,
       <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/backup"</span>,
@@ -804,12 +804,12 @@
         <tr class="border-b border-slate-100">
           <td class="py-3 px-4">Request timeout</td>
           <td class="py-3 px-4"><code class="text-sky-600">1s - 5min</code></td>
-          <td class="py-3 px-4">Configurable per job (default: 30s)</td>
+          <td class="py-3 px-4">Configurable per task (default: 30s)</td>
         </tr>
         <tr>
           <td class="py-3 px-4">Retry attempts</td>
           <td class="py-3 px-4"><code class="text-sky-600">0 - 10</code></td>
-          <td class="py-3 px-4">For one-time jobs only (default: 5)</td>
+          <td class="py-3 px-4">For one-time tasks only (default: 5)</td>
         </tr>
       </tbody>
     </table>

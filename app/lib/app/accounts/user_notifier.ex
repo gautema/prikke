@@ -465,7 +465,7 @@ defmodule Prikke.Accounts.UserNotifier do
   The `stats` map should contain:
   - :total_users, :new_users - user counts
   - :total_orgs, :new_orgs, :pro_orgs - organization counts
-  - :total_jobs, :enabled_jobs - job counts
+  - :total_tasks, :enabled_tasks - task counts
   - :executions - map with :total, :success, :failed, :timeout
   - :success_rate - percentage or nil
   - :top_orgs - list of {org, count, limit} tuples
@@ -485,7 +485,7 @@ defmodule Prikke.Accounts.UserNotifier do
 
       Users: #{format_number(stats.total_users)} total, #{format_number(stats.new_users)} new
       Organizations: #{format_number(stats.total_orgs)} total, #{format_number(stats.new_orgs)} new, #{format_number(stats.pro_orgs)} pro
-      Jobs: #{format_number(stats.total_jobs)} total, #{format_number(stats.enabled_jobs)} enabled
+      Tasks: #{format_number(stats.total_tasks)} total, #{format_number(stats.enabled_tasks)} enabled
       Monitors: #{format_number(stats.total_monitors)} total, #{format_number(stats.down_monitors)} down
 
       Executions this month:
@@ -595,9 +595,9 @@ defmodule Prikke.Accounts.UserNotifier do
                     <tr>
                       <td width="50%" style="padding-right: 6px;">
                         <div style="background-color: #f8fafc; border-radius: 6px; padding: 16px; border: 1px solid #e2e8f0;">
-                          <p style="margin: 0; font-size: 11px; color: #64748b; text-transform: uppercase;">Jobs</p>
-                          <p style="margin: 4px 0 0 0; font-size: 22px; font-weight: 700; color: #0f172a;">#{format_number(stats.total_jobs)}</p>
-                          <p style="margin: 4px 0 0 0; font-size: 12px; color: #64748b;">#{format_number(stats.enabled_jobs)} enabled</p>
+                          <p style="margin: 0; font-size: 11px; color: #64748b; text-transform: uppercase;">Tasks</p>
+                          <p style="margin: 4px 0 0 0; font-size: 22px; font-weight: 700; color: #0f172a;">#{format_number(stats.total_tasks)}</p>
+                          <p style="margin: 4px 0 0 0; font-size: 12px; color: #64748b;">#{format_number(stats.enabled_tasks)} enabled</p>
                         </div>
                       </td>
                       <td width="50%" style="padding-left: 6px;">

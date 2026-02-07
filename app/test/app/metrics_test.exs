@@ -67,7 +67,7 @@ defmodule Prikke.MetricsTest do
 
   describe "historical query functions" do
     import Prikke.AccountsFixtures
-    import Prikke.JobsFixtures
+    import Prikke.TasksFixtures
 
     alias Prikke.Executions
 
@@ -82,10 +82,10 @@ defmodule Prikke.MetricsTest do
 
     test "get_duration_percentiles/1 with execution data" do
       org = organization_fixture()
-      job = job_fixture(org)
+      task = task_fixture(org)
 
       # Create a completed execution
-      {:ok, execution} = Executions.create_execution_for_job(job, DateTime.utc_now())
+      {:ok, execution} = Executions.create_execution_for_task(task, DateTime.utc_now())
 
       {:ok, _} =
         Executions.complete_execution(execution, %{
@@ -113,9 +113,9 @@ defmodule Prikke.MetricsTest do
 
     test "throughput_per_minute/1 with execution data" do
       org = organization_fixture()
-      job = job_fixture(org)
+      task = task_fixture(org)
 
-      {:ok, execution} = Executions.create_execution_for_job(job, DateTime.utc_now())
+      {:ok, execution} = Executions.create_execution_for_task(task, DateTime.utc_now())
 
       {:ok, _} =
         Executions.complete_execution(execution, %{

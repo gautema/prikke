@@ -1,10 +1,10 @@
 defmodule Prikke.Scheduler do
   @moduledoc """
-  Scheduler GenServer that creates pending executions for due jobs.
+  Scheduler GenServer that creates pending executions for due tasks.
 
   ## Overview
 
-  The scheduler is responsible for finding jobs that are due to run and creating
+  The scheduler is responsible for finding tasks that are due to run and creating
   pending executions for them. Workers then claim and execute these pending
   executions.
 
@@ -16,9 +16,9 @@ defmodule Prikke.Scheduler do
   │                                                                  │
   │  1. Tick every 10s or wake via PubSub                            │
   │  2. Acquire advisory lock (leader election)                      │
-  │  3. Query: SELECT * FROM jobs WHERE enabled AND                  │
+  │  3. Query: SELECT * FROM tasks WHERE enabled AND                 │
   │            next_run_at <= now + 30 seconds (lookahead)           │
-  │  4. For each due job:                                            │
+  │  4. For each due task:                                           │
   │     a. Check monthly execution limit                             │
   │     b. Create pending execution with scheduled_for = next_run_at │
   │     c. Advance next_run_at (cron) or clear it (one-time)        │
@@ -40,28 +40,28 @@ defmodule Prikke.Scheduler do
   ## Wake-up Mechanism
 
   In addition to the 10-second tick interval, the scheduler can be woken immediately
-  when a job becomes due:
+  when a task becomes due:
 
   - Subscribes to PubSub topic "scheduler"
-  - `Jobs.notify_scheduler/0` broadcasts `:wake` message
-  - Called when a job is enabled or updated to be due soon
-  - Reduces latency for one-time jobs and recently-enabled jobs
+  - `Tasks.notify_scheduler/0` broadcasts `:wake` message
+  - Called when a task is enabled or updated to be due soon
+  - Reduces latency for one-time tasks and recently-enabled tasks
 
-  ## Job Scheduling Flow
+  ## Task Scheduling Flow
 
-  For **cron jobs**:
-  1. Job created with `next_run_at` = next cron time (computed from expression)
-  2. Scheduler finds job when `next_run_at <= now + 30s` (lookahead)
+  For **cron tasks**:
+  1. Task created with `next_run_at` = next cron time (computed from expression)
+  2. Scheduler finds task when `next_run_at <= now + 30s` (lookahead)
   3. Creates pending execution with `scheduled_for = next_run_at`
   4. Advances `next_run_at` to next cron time
   5. Workers claim execution when `scheduled_for <= now` (precise timing)
   6. Repeat forever
 
-  For **one-time jobs**:
-  1. Job created with `next_run_at = scheduled_at`
-  2. Scheduler finds job when `next_run_at <= now + 30s` (lookahead)
+  For **one-time tasks**:
+  1. Task created with `next_run_at = scheduled_at`
+  2. Scheduler finds task when `next_run_at <= now + 30s` (lookahead)
   3. Creates pending execution with `scheduled_for = next_run_at`
-  4. Sets `next_run_at = nil` (job won't run again)
+  4. Sets `next_run_at = nil` (task won't run again)
   5. Workers claim execution when `scheduled_for <= now`
 
   ## Monthly Limits
@@ -72,7 +72,7 @@ defmodule Prikke.Scheduler do
   - Free: 5,000 executions/month
   - Pro: 250,000 executions/month
 
-  If the limit is reached, the job is skipped but `next_run_at` is still advanced
+  If the limit is reached, the task is skipped but `next_run_at` is still advanced
   to prevent infinite retry loops.
 
   ## Configuration
@@ -93,7 +93,7 @@ defmodule Prikke.Scheduler do
 
   import Ecto.Query
   alias Prikke.Repo
-  alias Prikke.Jobs.Job
+  alias Prikke.Tasks.Task
   alias Prikke.Executions
 
   # Advisory lock ID - arbitrary unique number for this application
@@ -104,7 +104,7 @@ defmodule Prikke.Scheduler do
   @tick_interval 10_000
 
   # Lookahead window in seconds (10 seconds)
-  # Jobs are created this far in advance for more precise timing.
+  # Tasks are created this far in advance for more precise timing.
   # Workers only claim executions when scheduled_for <= now.
   @lookahead_seconds 10
 
@@ -132,8 +132,8 @@ defmodule Prikke.Scheduler do
   @doc """
   Manually trigger a scheduler tick.
 
-  Finds all due jobs and creates pending executions. Returns `{:ok, count}`
-  where count is the number of jobs scheduled.
+  Finds all due tasks and creates pending executions. Returns `{:ok, count}`
+  where count is the number of tasks scheduled.
 
   This is primarily used for testing. In production, the scheduler ticks
   automatically every 10 seconds and responds to PubSub wake-ups.
@@ -175,7 +175,7 @@ defmodule Prikke.Scheduler do
 
   @impl true
   def handle_info(:wake, state) do
-    # Immediately check for due jobs when notified
+    # Immediately check for due tasks when notified
     run_with_lock(state)
     {:noreply, state}
   end
@@ -188,19 +188,19 @@ defmodule Prikke.Scheduler do
 
   ## Private Functions
 
-  # Runs schedule_due_jobs inside a transaction with an advisory lock.
+  # Runs schedule_due_tasks inside a transaction with an advisory lock.
   # Uses pg_try_advisory_xact_lock which auto-releases when transaction commits.
   # This avoids connection pool issues with session-level locks.
   defp run_with_lock(%{test_mode: true}) do
     # In test mode, skip advisory lock (each test has its own scheduler)
-    schedule_due_jobs()
+    schedule_due_tasks()
   end
 
   defp run_with_lock(_state) do
     Repo.transaction(fn ->
       case Repo.query("SELECT pg_try_advisory_xact_lock($1)", [@advisory_lock_id]) do
         {:ok, %{rows: [[true]]}} ->
-          schedule_due_jobs()
+          schedule_due_tasks()
 
         _ ->
           # Another node holds the lock for this tick
@@ -213,25 +213,25 @@ defmodule Prikke.Scheduler do
     end
   end
 
-  # Finds all due jobs and creates pending executions for them.
-  # A job is "due" when: enabled = true AND next_run_at <= now + lookahead
-  # Jobs within the lookahead window get executions created early, but workers
+  # Finds all due tasks and creates pending executions for them.
+  # A task is "due" when: enabled = true AND next_run_at <= now + lookahead
+  # Tasks within the lookahead window get executions created early, but workers
   # only claim them when scheduled_for <= now, giving precise timing.
-  # Returns {:ok, count} where count is jobs successfully scheduled.
-  defp schedule_due_jobs do
+  # Returns {:ok, count} where count is tasks successfully scheduled.
+  defp schedule_due_tasks do
     now = DateTime.utc_now()
     lookahead_time = DateTime.add(now, @lookahead_seconds, :second)
 
-    due_jobs =
-      from(j in Job,
-        where: j.enabled == true and j.next_run_at <= ^lookahead_time,
+    due_tasks =
+      from(t in Task,
+        where: t.enabled == true and t.next_run_at <= ^lookahead_time,
         preload: [:organization]
       )
       |> Repo.all()
 
     scheduled_count =
-      Enum.reduce(due_jobs, 0, fn job, count ->
-        case schedule_job(job) do
+      Enum.reduce(due_tasks, 0, fn task, count ->
+        case schedule_task(task) do
           :ok -> count + 1
           :skipped -> count
           :error -> count
@@ -239,22 +239,22 @@ defmodule Prikke.Scheduler do
       end)
 
     if scheduled_count > 0 do
-      Logger.info("[Scheduler] Scheduled #{scheduled_count} job(s)")
+      Logger.info("[Scheduler] Scheduled #{scheduled_count} task(s)")
       # Wake workers to process the new executions
-      Prikke.Jobs.notify_workers()
+      Prikke.Tasks.notify_workers()
     end
 
     {:ok, scheduled_count}
   end
 
-  # Schedules a single job, handling both upcoming and overdue jobs.
+  # Schedules a single task, handling both upcoming and overdue tasks.
   #
-  # For upcoming jobs (next_run_at > now but within lookahead):
+  # For upcoming tasks (next_run_at > now but within lookahead):
   # - Create pending execution with scheduled_for = next_run_at
   # - Workers will claim it when scheduled_for <= now
   # - Advance next_run_at to next cron time
   #
-  # For overdue jobs (next_run_at <= now):
+  # For overdue tasks (next_run_at <= now):
   # - Use catch-up logic for missed runs
   # - Grace period: 50% of interval (min 30s, max 1 hour)
   #
@@ -262,46 +262,46 @@ defmodule Prikke.Scheduler do
   # - :ok - execution created
   # - :skipped - monthly limit reached or no executions created
   # - :error - failed to create execution
-  defp schedule_job(job) do
+  defp schedule_task(task) do
     now = DateTime.utc_now()
 
-    if DateTime.compare(job.next_run_at, now) == :gt do
-      # Upcoming job (within lookahead window) - pre-schedule for precise timing
-      schedule_upcoming_job(job)
+    if DateTime.compare(task.next_run_at, now) == :gt do
+      # Upcoming task (within lookahead window) - pre-schedule for precise timing
+      schedule_upcoming_task(task)
     else
-      # Overdue job - use catch-up logic
-      schedule_overdue_job(job, now)
+      # Overdue task - use catch-up logic
+      schedule_overdue_task(task, now)
     end
   end
 
-  # Schedules an upcoming job by creating an execution in advance.
-  # The execution has scheduled_for set to the job's next_run_at,
+  # Schedules an upcoming task by creating an execution in advance.
+  # The execution has scheduled_for set to the task's next_run_at,
   # so workers will only claim it at the right time.
-  defp schedule_upcoming_job(job) do
-    if within_monthly_limit?(job) do
-      case Executions.create_execution_for_job(job, job.next_run_at) do
+  defp schedule_upcoming_task(task) do
+    if within_monthly_limit?(task) do
+      case Executions.create_execution_for_task(task, task.next_run_at) do
         {:ok, _} ->
-          advance_next_run_at(job)
+          advance_next_run_at(task)
           # Check if we should notify about approaching/reaching limit
-          check_limit_notification(job.organization)
+          check_limit_notification(task.organization)
           :ok
 
         {:error, reason} ->
           Logger.error(
-            "[Scheduler] Failed to create execution for job #{job.id}: #{inspect(reason)}"
+            "[Scheduler] Failed to create execution for task #{task.id}: #{inspect(reason)}"
           )
 
           :error
       end
     else
       Logger.warning(
-        "[Scheduler] Job #{job.id} skipped - monthly limit reached for org #{job.organization_id}"
+        "[Scheduler] Task #{task.id} skipped - monthly limit reached for org #{task.organization_id}"
       )
 
       # Still advance to prevent infinite retries
-      advance_next_run_at(job)
+      advance_next_run_at(task)
       # Notify that limit was reached
-      check_limit_notification(job.organization)
+      check_limit_notification(task.organization)
       :skipped
     end
   end
@@ -313,38 +313,38 @@ defmodule Prikke.Scheduler do
     Prikke.Accounts.maybe_send_limit_notification(org, current_count)
   end
 
-  # Schedules an overdue job, handling any missed runs if the scheduler was down.
-  defp schedule_overdue_job(job, now) do
+  # Schedules an overdue task, handling any missed runs if the scheduler was down.
+  defp schedule_overdue_task(task, now) do
     # Compute all missed run times
-    missed_times = compute_missed_run_times(job, now)
+    missed_times = compute_missed_run_times(task, now)
 
     if Enum.empty?(missed_times) do
       :skipped
     else
       # Create executions for each missed time
-      result = create_catchup_executions(job, missed_times, now)
+      result = create_catchup_executions(task, missed_times, now)
 
       # Advance next_run_at past all missed times
-      advance_job_past_missed(job, missed_times)
+      advance_task_past_missed(task, missed_times)
 
       result
     end
   end
 
   # Computes all run times that were missed between next_run_at and now.
-  # For cron jobs, this can be multiple times if scheduler was down.
-  # For one-time jobs, this is just the single scheduled time.
-  # Only includes times AFTER the job was created (no backfill for new jobs).
-  defp compute_missed_run_times(job, now) do
+  # For cron tasks, this can be multiple times if scheduler was down.
+  # For one-time tasks, this is just the single scheduled time.
+  # Only includes times AFTER the task was created (no backfill for new tasks).
+  defp compute_missed_run_times(task, now) do
     times =
-      case job.schedule_type do
+      case task.schedule_type do
         "cron" ->
-          compute_missed_cron_times(job, now, [])
+          compute_missed_cron_times(task, now, [])
 
         "once" ->
-          # One-time jobs have only one run time
-          if job.next_run_at && DateTime.compare(job.next_run_at, now) != :gt do
-            [job.next_run_at]
+          # One-time tasks have only one run time
+          if task.next_run_at && DateTime.compare(task.next_run_at, now) != :gt do
+            [task.next_run_at]
           else
             []
           end
@@ -353,23 +353,23 @@ defmodule Prikke.Scheduler do
           []
       end
 
-    # Filter out any times before the job was created
-    # This prevents backfilling missed executions for newly created jobs
+    # Filter out any times before the task was created
+    # This prevents backfilling missed executions for newly created tasks
     Enum.filter(times, fn scheduled_for ->
-      DateTime.compare(scheduled_for, job.inserted_at) != :lt
+      DateTime.compare(scheduled_for, task.inserted_at) != :lt
     end)
   end
 
   # Recursively computes all missed cron times from next_run_at until now.
-  defp compute_missed_cron_times(job, now, acc) do
-    current_run = job.next_run_at
+  defp compute_missed_cron_times(task, now, acc) do
+    current_run = task.next_run_at
 
     if current_run && DateTime.compare(current_run, now) != :gt do
       # This time is due, add it and compute next
-      case compute_next_cron_time(job, current_run) do
+      case compute_next_cron_time(task, current_run) do
         {:ok, next_run} ->
-          updated_job = %{job | next_run_at: next_run}
-          compute_missed_cron_times(updated_job, now, acc ++ [current_run])
+          updated_task = %{task | next_run_at: next_run}
+          compute_missed_cron_times(updated_task, now, acc ++ [current_run])
 
         :error ->
           acc ++ [current_run]
@@ -380,8 +380,8 @@ defmodule Prikke.Scheduler do
   end
 
   # Computes the next cron time after a given reference time.
-  defp compute_next_cron_time(job, reference) do
-    case Crontab.CronExpression.Parser.parse(job.cron_expression) do
+  defp compute_next_cron_time(task, reference) do
+    case Crontab.CronExpression.Parser.parse(task.cron_expression) do
       {:ok, cron} ->
         # Add 1 minute to reference to get the NEXT run, not the same one
         reference_plus_one = DateTime.add(reference, 60, :second)
@@ -403,12 +403,12 @@ defmodule Prikke.Scheduler do
   # - All times except the last: "missed" status (for visibility)
   # - Last time within grace period: "pending" status (can still run)
   # - Last time past grace period: "missed" status
-  defp create_catchup_executions(job, missed_times, now) do
+  defp create_catchup_executions(task, missed_times, now) do
     {all_but_last, last} = split_last(missed_times)
 
     # Create missed executions for all but the last
     Enum.each(all_but_last, fn scheduled_for ->
-      Executions.create_missed_execution(job, scheduled_for)
+      Executions.create_missed_execution(task, scheduled_for)
     end)
 
     # For the last one, check grace period and monthly limit
@@ -417,27 +417,27 @@ defmodule Prikke.Scheduler do
         :skipped
 
       scheduled_for ->
-        if within_grace_period?(job, scheduled_for, now) and within_monthly_limit?(job) do
-          case Executions.create_execution_for_job(job, scheduled_for) do
+        if within_grace_period?(task, scheduled_for, now) and within_monthly_limit?(task) do
+          case Executions.create_execution_for_task(task, scheduled_for) do
             {:ok, _} ->
               :ok
 
             {:error, reason} ->
               Logger.error(
-                "[Scheduler] Failed to create execution for job #{job.id}: #{inspect(reason)}"
+                "[Scheduler] Failed to create execution for task #{task.id}: #{inspect(reason)}"
               )
 
               :error
           end
         else
           # Past grace period or over monthly limit - mark as missed
-          if not within_monthly_limit?(job) do
+          if not within_monthly_limit?(task) do
             Logger.warning(
-              "[Scheduler] Job #{job.id} skipped - monthly limit reached for org #{job.organization_id}"
+              "[Scheduler] Task #{task.id} skipped - monthly limit reached for org #{task.organization_id}"
             )
           end
 
-          Executions.create_missed_execution(job, scheduled_for)
+          Executions.create_missed_execution(task, scheduled_for)
           :skipped
         end
     end
@@ -452,11 +452,11 @@ defmodule Prikke.Scheduler do
 
   # Checks if a scheduled time is within the grace period.
   # Grace period = 50% of interval (min 30s, max 1 hour)
-  # One-time jobs always run (no grace limit) since they're explicitly scheduled.
-  defp within_grace_period?(job, scheduled_for, now) do
-    case job.interval_minutes do
+  # One-time tasks always run (no grace limit) since they're explicitly scheduled.
+  defp within_grace_period?(task, scheduled_for, now) do
+    case task.interval_minutes do
       nil ->
-        # One-time jobs: always within grace, they should always run
+        # One-time tasks: always within grace, they should always run
         true
 
       interval_minutes ->
@@ -466,7 +466,7 @@ defmodule Prikke.Scheduler do
     end
   end
 
-  # Computes grace period in seconds based on job interval.
+  # Computes grace period in seconds based on task interval.
   # 50% of interval, minimum 30 seconds, maximum 1 hour.
   defp compute_grace_period_seconds(interval_minutes) do
     # 50% of interval in seconds
@@ -477,15 +477,15 @@ defmodule Prikke.Scheduler do
     min(grace, 3600)
   end
 
-  # Advances the job's next_run_at to the next scheduled time.
-  # For cron jobs: computes next cron time from current next_run_at
-  # For one-time jobs: sets next_run_at to nil
-  defp advance_next_run_at(job) do
-    case job.schedule_type do
+  # Advances the task's next_run_at to the next scheduled time.
+  # For cron tasks: computes next cron time from current next_run_at
+  # For one-time tasks: sets next_run_at to nil
+  defp advance_next_run_at(task) do
+    case task.schedule_type do
       "cron" ->
-        case compute_next_cron_time(job, job.next_run_at) do
+        case compute_next_cron_time(task, task.next_run_at) do
           {:ok, next_run} ->
-            job
+            task
             |> Ecto.Changeset.change(next_run_at: next_run)
             |> Repo.update()
 
@@ -494,7 +494,7 @@ defmodule Prikke.Scheduler do
         end
 
       "once" ->
-        job
+        task
         |> Ecto.Changeset.change(next_run_at: nil)
         |> Repo.update()
 
@@ -503,16 +503,16 @@ defmodule Prikke.Scheduler do
     end
   end
 
-  # Advances the job's next_run_at past all missed times.
-  defp advance_job_past_missed(job, missed_times) do
-    case job.schedule_type do
+  # Advances the task's next_run_at past all missed times.
+  defp advance_task_past_missed(task, missed_times) do
+    case task.schedule_type do
       "cron" ->
         # Get the last missed time and compute next from there
         last_missed = List.last(missed_times)
 
-        case compute_next_cron_time(job, last_missed) do
+        case compute_next_cron_time(task, last_missed) do
           {:ok, next_run} ->
-            job
+            task
             |> Ecto.Changeset.change(next_run_at: next_run)
             |> Repo.update()
 
@@ -521,8 +521,8 @@ defmodule Prikke.Scheduler do
         end
 
       "once" ->
-        # One-time jobs set next_run_at to nil
-        job
+        # One-time tasks set next_run_at to nil
+        task
         |> Ecto.Changeset.change(next_run_at: nil)
         |> Repo.update()
 
@@ -532,13 +532,13 @@ defmodule Prikke.Scheduler do
   end
 
   # Checks if the organization is within their monthly execution limit.
-  # Limits are defined in Jobs.get_tier_limits/1:
+  # Limits are defined in Tasks.get_tier_limits/1:
   # - Free: 5,000 executions/month
   # - Pro: 250,000 executions/month
-  defp within_monthly_limit?(job) do
+  defp within_monthly_limit?(task) do
     # Reload org to get fresh counter value
-    org = Prikke.Repo.reload!(job.organization)
-    tier_limits = Prikke.Jobs.get_tier_limits(org.tier)
+    org = Prikke.Repo.reload!(task.organization)
+    tier_limits = Prikke.Tasks.get_tier_limits(org.tier)
 
     case tier_limits.max_monthly_executions do
       :unlimited ->

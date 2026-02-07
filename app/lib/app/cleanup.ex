@@ -4,7 +4,7 @@ defmodule Prikke.Cleanup do
 
   Runs daily at 3 AM UTC and cleans up:
   1. Executions older than tier retention limit
-  2. Completed one-time jobs older than tier retention limit
+  2. Completed one-time tasks older than tier retention limit
 
   Retention limits:
   - Free: 7 days
@@ -23,7 +23,7 @@ defmodule Prikke.Cleanup do
   alias Prikke.Executions
   alias Prikke.Emails
   alias Prikke.Idempotency
-  alias Prikke.Jobs
+  alias Prikke.Tasks
   alias Prikke.Monitors
 
   # Advisory lock ID for cleanup (different from scheduler)
@@ -141,20 +141,20 @@ defmodule Prikke.Cleanup do
 
     organizations = Accounts.list_all_organizations()
 
-    {total_executions, total_jobs, total_pings} =
-      Enum.reduce(organizations, {0, 0, 0}, fn org, {exec_acc, job_acc, ping_acc} ->
+    {total_executions, total_tasks, total_pings} =
+      Enum.reduce(organizations, {0, 0, 0}, fn org, {exec_acc, task_acc, ping_acc} ->
         retention_days = get_retention_days(org.tier)
 
         # Clean old executions
         {exec_deleted, _} = Executions.cleanup_old_executions(org, retention_days)
 
-        # Clean completed one-time jobs
-        {jobs_deleted, _} = Jobs.cleanup_completed_once_jobs(org, retention_days)
+        # Clean completed one-time tasks
+        {tasks_deleted, _} = Tasks.cleanup_completed_once_tasks(org, retention_days)
 
         # Clean old monitor pings (respects tier retention)
         {pings_deleted, _} = Monitors.cleanup_old_pings(org, retention_days)
 
-        {exec_acc + exec_deleted, job_acc + jobs_deleted, ping_acc + pings_deleted}
+        {exec_acc + exec_deleted, task_acc + tasks_deleted, ping_acc + pings_deleted}
       end)
 
     # Clean expired idempotency keys (24-hour TTL)
@@ -168,19 +168,19 @@ defmodule Prikke.Cleanup do
 
     pings_deleted = total_pings
 
-    if total_executions > 0 or total_jobs > 0 or idempotency_deleted > 0 or pings_deleted > 0 or emails_deleted > 0 do
+    if total_executions > 0 or total_tasks > 0 or idempotency_deleted > 0 or pings_deleted > 0 or emails_deleted > 0 do
       Logger.info(
-        "[Cleanup] Deleted #{total_executions} executions, #{total_jobs} completed one-time jobs, #{idempotency_deleted} idempotency keys, #{pings_deleted} monitor pings, #{emails_deleted} email logs"
+        "[Cleanup] Deleted #{total_executions} executions, #{total_tasks} completed one-time tasks, #{idempotency_deleted} idempotency keys, #{pings_deleted} monitor pings, #{emails_deleted} email logs"
       )
     else
       Logger.info("[Cleanup] Nothing to clean up")
     end
 
-    {:ok, %{executions: total_executions, jobs: total_jobs, idempotency_keys: idempotency_deleted, monitor_pings: pings_deleted, email_logs: emails_deleted}}
+    {:ok, %{executions: total_executions, tasks: total_tasks, idempotency_keys: idempotency_deleted, monitor_pings: pings_deleted, email_logs: emails_deleted}}
   end
 
   defp get_retention_days(tier) do
-    limits = Jobs.get_tier_limits(tier)
+    limits = Tasks.get_tier_limits(tier)
     limits.retention_days
   end
 
@@ -215,8 +215,8 @@ defmodule Prikke.Cleanup do
       total_orgs: Accounts.count_organizations(),
       new_orgs: Accounts.count_organizations_since(month_start),
       pro_orgs: Accounts.count_pro_organizations(),
-      total_jobs: Jobs.count_all_jobs(),
-      enabled_jobs: Jobs.count_all_enabled_jobs(),
+      total_tasks: Tasks.count_all_tasks(),
+      enabled_tasks: Tasks.count_all_enabled_tasks(),
       executions: %{
         total: this_month.total,
         success: this_month.success,

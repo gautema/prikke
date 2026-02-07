@@ -16,7 +16,7 @@ defmodule PrikkeWeb.ApiSpec do
         title: "Runlater API",
         version: "1.0.0",
         description: """
-        API for managing scheduled jobs and webhooks.
+        API for managing scheduled tasks and webhooks.
 
         ## Authentication
 

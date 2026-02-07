@@ -1,6 +1,6 @@
 defmodule Prikke.Notifications do
   @moduledoc """
-  Handles sending notifications for job execution failures.
+  Handles sending notifications for task execution failures.
 
   Supports:
   - Email notifications via Swoosh/Mailjet
@@ -46,11 +46,11 @@ defmodule Prikke.Notifications do
   end
 
   defp send_recovery_notifications(execution) do
-    job = execution.job
-    org = job.organization
+    task = execution.task
+    org = task.organization
 
-    if org.notify_on_recovery and not job.muted do
-      previous_status = Prikke.Executions.get_previous_status(job, execution.id)
+    if org.notify_on_recovery and not task.muted do
+      previous_status = Prikke.Executions.get_previous_status(task, execution.id)
 
       if should_notify_recovery?(previous_status) do
         if email = notification_email(org) do
@@ -76,13 +76,13 @@ defmodule Prikke.Notifications do
   defp should_notify_recovery?(_failed_status), do: true
 
   defp send_failure_notifications(execution) do
-    job = execution.job
-    org = job.organization
+    task = execution.task
+    org = task.organization
 
-    # Check if notifications are enabled and job is not muted
-    if org.notify_on_failure and not job.muted do
+    # Check if notifications are enabled and task is not muted
+    if org.notify_on_failure and not task.muted do
       # Only notify on status change (first failure in a sequence)
-      previous_status = Prikke.Executions.get_previous_status(job, execution.id)
+      previous_status = Prikke.Executions.get_previous_status(task, execution.id)
 
       if should_notify?(previous_status) do
         # Send email notification
@@ -123,16 +123,16 @@ defmodule Prikke.Notifications do
   Sends a failure notification email.
   """
   def send_failure_email(execution, to_email) do
-    job = execution.job
+    task = execution.task
 
     config = Application.get_env(:app, Prikke.Mailer, [])
     from_name = Keyword.get(config, :from_name, "Runlater")
     from_email = Keyword.get(config, :from_email, "noreply@runlater.eu")
 
-    subject = "[Runlater] Job failed: #{job.name}"
+    subject = "[Runlater] Task failed: #{task.name}"
 
     text_body = """
-    Your job "#{job.name}" has failed.
+    Your task "#{task.name}" has failed.
 
     Status: #{execution.status}
     #{if execution.status_code, do: "HTTP Status: #{execution.status_code}", else: ""}
@@ -141,15 +141,15 @@ defmodule Prikke.Notifications do
     Scheduled for: #{format_datetime(execution.scheduled_for)}
     #{if execution.finished_at, do: "Finished at: #{format_datetime(execution.finished_at)}", else: ""}
 
-    Job URL: #{job.url}
-    Method: #{job.method}
+    Task URL: #{task.url}
+    Method: #{task.method}
 
     ---
-    View execution details: https://runlater.eu/jobs/#{job.id}
+    View execution details: https://runlater.eu/tasks/#{task.id}
     """
 
-    execution_url = "https://runlater.eu/jobs/#{job.id}/executions/#{execution.id}"
-    html_body = failure_email_template(execution, job, execution_url)
+    execution_url = "https://runlater.eu/tasks/#{task.id}/executions/#{execution.id}"
+    html_body = failure_email_template(execution, task, execution_url)
 
     email =
       new()
@@ -159,9 +159,9 @@ defmodule Prikke.Notifications do
       |> text_body(String.trim(text_body))
       |> html_body(html_body)
 
-    case Mailer.deliver_and_log(email, "job_failure", organization_id: job.organization_id) do
+    case Mailer.deliver_and_log(email, "task_failure", organization_id: task.organization_id) do
       {:ok, _} ->
-        Logger.info("[Notifications] Email sent to #{to_email} for job #{job.id}")
+        Logger.info("[Notifications] Email sent to #{to_email} for task #{task.id}")
         :ok
 
       {:error, reason} ->
@@ -170,7 +170,7 @@ defmodule Prikke.Notifications do
     end
   end
 
-  defp failure_email_template(execution, job, execution_url) do
+  defp failure_email_template(execution, task, execution_url) do
     status_code_row = if execution.status_code do
       """
       <tr>
@@ -221,9 +221,9 @@ defmodule Prikke.Notifications do
               <!-- Content -->
               <tr>
                 <td style="padding: 32px;">
-                  <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #dc2626;">Job Failed</h2>
+                  <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #dc2626;">Task Failed</h2>
                   <p style="margin: 0 0 16px 0; font-size: 14px; color: #475569; line-height: 1.6;">
-                    Your job <strong>#{job.name}</strong> has failed.
+                    Your task <strong>#{task.name}</strong> has failed.
                   </p>
                   <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 6px;">
                     <tr>
@@ -237,7 +237,7 @@ defmodule Prikke.Notifications do
                     <tr>
                       <td style="padding: 8px 16px;">
                         <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">URL</p>
-                        <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a;">#{job.method} #{job.url}</p>
+                        <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a;">#{task.method} #{task.url}</p>
                       </td>
                     </tr>
                     <tr>
@@ -261,7 +261,7 @@ defmodule Prikke.Notifications do
               <tr>
                 <td style="padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
                   <p style="margin: 0; font-size: 12px; color: #94a3b8;">
-                    Runlater - Schedule jobs, simply.
+                    Runlater - Schedule tasks, simply.
                   </p>
                 </td>
               </tr>
@@ -279,7 +279,7 @@ defmodule Prikke.Notifications do
   Auto-detects Slack and Discord webhooks and formats accordingly.
   """
   def send_failure_webhook(execution, webhook_url) do
-    job = execution.job
+    task = execution.task
 
     {payload, content_type} = build_webhook_payload(execution, webhook_url)
 
@@ -290,7 +290,7 @@ defmodule Prikke.Notifications do
 
     case Req.post(webhook_url, body: payload, headers: headers) do
       {:ok, %{status: status}} when status in 200..299 ->
-        Logger.info("[Notifications] Webhook sent to #{webhook_url} for job #{job.id}")
+        Logger.info("[Notifications] Webhook sent to #{webhook_url} for task #{task.id}")
         :ok
 
       {:ok, %{status: status, body: body}} ->
@@ -322,15 +322,15 @@ defmodule Prikke.Notifications do
 
   # Slack payload format
   defp build_slack_payload(execution) do
-    job = execution.job
+    task = execution.task
 
     text = """
-    :x: *Job Failed: #{job.name}*
+    :x: *Task Failed: #{task.name}*
 
     • Status: `#{execution.status}`
     #{if execution.status_code, do: "• HTTP Status: `#{execution.status_code}`", else: ""}
     #{if execution.error_message, do: "• Error: #{execution.error_message}", else: ""}
-    • URL: #{job.url}
+    • URL: #{task.url}
     • Scheduled: #{format_datetime(execution.scheduled_for)}
     """
 
@@ -339,15 +339,15 @@ defmodule Prikke.Notifications do
 
   # Discord payload format
   defp build_discord_payload(execution) do
-    job = execution.job
+    task = execution.task
 
     content = """
-    ❌ **Job Failed: #{job.name}**
+    ❌ **Task Failed: #{task.name}**
 
     • Status: `#{execution.status}`
     #{if execution.status_code, do: "• HTTP Status: `#{execution.status_code}`", else: ""}
     #{if execution.error_message, do: "• Error: #{execution.error_message}", else: ""}
-    • URL: #{job.url}
+    • URL: #{task.url}
     • Scheduled: #{format_datetime(execution.scheduled_for)}
     """
 
@@ -356,15 +356,15 @@ defmodule Prikke.Notifications do
 
   # Generic JSON payload
   defp build_generic_payload(execution) do
-    job = execution.job
+    task = execution.task
 
     Jason.encode!(%{
-      event: "job.failed",
-      job: %{
-        id: job.id,
-        name: job.name,
-        url: job.url,
-        method: job.method
+      event: "task.failed",
+      task: %{
+        id: task.id,
+        name: task.name,
+        url: task.url,
+        method: task.method
       },
       execution: %{
         id: execution.id,
@@ -382,16 +382,16 @@ defmodule Prikke.Notifications do
   Sends a recovery notification email.
   """
   def send_recovery_email(execution, to_email) do
-    job = execution.job
+    task = execution.task
 
     config = Application.get_env(:app, Prikke.Mailer, [])
     from_name = Keyword.get(config, :from_name, "Runlater")
     from_email = Keyword.get(config, :from_email, "noreply@runlater.eu")
 
-    subject = "[Runlater] Job recovered: #{job.name}"
+    subject = "[Runlater] Task recovered: #{task.name}"
 
     text_body = """
-    Your job "#{job.name}" has recovered and is succeeding again.
+    Your task "#{task.name}" has recovered and is succeeding again.
 
     Status: #{execution.status}
     #{if execution.status_code, do: "HTTP Status: #{execution.status_code}", else: ""}
@@ -399,15 +399,15 @@ defmodule Prikke.Notifications do
     Scheduled for: #{format_datetime(execution.scheduled_for)}
     #{if execution.finished_at, do: "Finished at: #{format_datetime(execution.finished_at)}", else: ""}
 
-    Job URL: #{job.url}
-    Method: #{job.method}
+    Task URL: #{task.url}
+    Method: #{task.method}
 
     ---
-    View execution details: https://runlater.eu/jobs/#{job.id}
+    View execution details: https://runlater.eu/tasks/#{task.id}
     """
 
-    execution_url = "https://runlater.eu/jobs/#{job.id}/executions/#{execution.id}"
-    html_body = recovery_email_template(execution, job, execution_url)
+    execution_url = "https://runlater.eu/tasks/#{task.id}/executions/#{execution.id}"
+    html_body = recovery_email_template(execution, task, execution_url)
 
     email =
       new()
@@ -417,9 +417,9 @@ defmodule Prikke.Notifications do
       |> text_body(String.trim(text_body))
       |> html_body(html_body)
 
-    case Mailer.deliver_and_log(email, "job_recovery", organization_id: job.organization_id) do
+    case Mailer.deliver_and_log(email, "task_recovery", organization_id: task.organization_id) do
       {:ok, _} ->
-        Logger.info("[Notifications] Recovery email sent to #{to_email} for job #{job.id}")
+        Logger.info("[Notifications] Recovery email sent to #{to_email} for task #{task.id}")
         :ok
 
       {:error, reason} ->
@@ -428,7 +428,7 @@ defmodule Prikke.Notifications do
     end
   end
 
-  defp recovery_email_template(execution, job, execution_url) do
+  defp recovery_email_template(execution, task, execution_url) do
     status_code_row = if execution.status_code do
       """
       <tr>
@@ -466,9 +466,9 @@ defmodule Prikke.Notifications do
               <!-- Content -->
               <tr>
                 <td style="padding: 32px;">
-                  <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #10b981;">Job Recovered</h2>
+                  <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #10b981;">Task Recovered</h2>
                   <p style="margin: 0 0 16px 0; font-size: 14px; color: #475569; line-height: 1.6;">
-                    Your job <strong>#{job.name}</strong> is succeeding again after a failure.
+                    Your task <strong>#{task.name}</strong> is succeeding again after a failure.
                   </p>
                   <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 6px;">
                     <tr>
@@ -481,7 +481,7 @@ defmodule Prikke.Notifications do
                     <tr>
                       <td style="padding: 8px 16px;">
                         <p style="margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase;">URL</p>
-                        <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a;">#{job.method} #{job.url}</p>
+                        <p style="margin: 4px 0 0 0; font-size: 14px; color: #0f172a;">#{task.method} #{task.url}</p>
                       </td>
                     </tr>
                     <tr>
@@ -505,7 +505,7 @@ defmodule Prikke.Notifications do
               <tr>
                 <td style="padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
                   <p style="margin: 0; font-size: 12px; color: #94a3b8;">
-                    Runlater - Schedule jobs, simply.
+                    Runlater - Schedule tasks, simply.
                   </p>
                 </td>
               </tr>
@@ -523,7 +523,7 @@ defmodule Prikke.Notifications do
   Auto-detects Slack and Discord webhooks and formats accordingly.
   """
   def send_recovery_webhook(execution, webhook_url) do
-    job = execution.job
+    task = execution.task
 
     {payload, content_type} = build_recovery_webhook_payload(execution, webhook_url)
 
@@ -534,7 +534,7 @@ defmodule Prikke.Notifications do
 
     case Req.post(webhook_url, body: payload, headers: headers) do
       {:ok, %{status: status}} when status in 200..299 ->
-        Logger.info("[Notifications] Recovery webhook sent to #{webhook_url} for job #{job.id}")
+        Logger.info("[Notifications] Recovery webhook sent to #{webhook_url} for task #{task.id}")
         :ok
 
       {:ok, %{status: status, body: body}} ->
@@ -561,14 +561,14 @@ defmodule Prikke.Notifications do
   end
 
   defp build_slack_recovery_payload(execution) do
-    job = execution.job
+    task = execution.task
 
     text = """
-    :white_check_mark: *Job Recovered: #{job.name}*
+    :white_check_mark: *Task Recovered: #{task.name}*
 
     • Status: `#{execution.status}`
     #{if execution.status_code, do: "• HTTP Status: `#{execution.status_code}`", else: ""}
-    • URL: #{job.url}
+    • URL: #{task.url}
     • Scheduled: #{format_datetime(execution.scheduled_for)}
     """
 
@@ -576,14 +576,14 @@ defmodule Prikke.Notifications do
   end
 
   defp build_discord_recovery_payload(execution) do
-    job = execution.job
+    task = execution.task
 
     content = """
-    :white_check_mark: **Job Recovered: #{job.name}**
+    :white_check_mark: **Task Recovered: #{task.name}**
 
     • Status: `#{execution.status}`
     #{if execution.status_code, do: "• HTTP Status: `#{execution.status_code}`", else: ""}
-    • URL: #{job.url}
+    • URL: #{task.url}
     • Scheduled: #{format_datetime(execution.scheduled_for)}
     """
 
@@ -591,15 +591,15 @@ defmodule Prikke.Notifications do
   end
 
   defp build_generic_recovery_payload(execution) do
-    job = execution.job
+    task = execution.task
 
     Jason.encode!(%{
-      event: "job.recovered",
-      job: %{
-        id: job.id,
-        name: job.name,
-        url: job.url,
-        method: job.method
+      event: "task.recovered",
+      task: %{
+        id: task.id,
+        name: task.name,
+        url: task.url,
+        method: task.method
       },
       execution: %{
         id: execution.id,
@@ -878,7 +878,7 @@ defmodule Prikke.Notifications do
               </tr>
               <tr>
                 <td style="padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
-                  <p style="margin: 0; font-size: 12px; color: #94a3b8;">Runlater - Schedule jobs, simply.</p>
+                  <p style="margin: 0; font-size: 12px; color: #94a3b8;">Runlater - Schedule tasks, simply.</p>
                 </td>
               </tr>
             </table>

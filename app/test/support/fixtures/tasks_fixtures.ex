@@ -1,24 +1,24 @@
-defmodule Prikke.JobsFixtures do
+defmodule Prikke.TasksFixtures do
   @moduledoc """
   This module defines test helpers for creating
-  entities via the `Prikke.Jobs` context.
+  entities via the `Prikke.Tasks` context.
   """
 
   import Prikke.AccountsFixtures, only: [organization_fixture: 0]
 
   @doc """
-  Generate a cron job.
+  Generate a cron task.
   """
-  def job_fixture(org \\ nil, attrs \\ %{})
+  def task_fixture(org \\ nil, attrs \\ %{})
 
-  def job_fixture(nil, attrs) do
-    job_fixture(organization_fixture(), attrs)
+  def task_fixture(nil, attrs) do
+    task_fixture(organization_fixture(), attrs)
   end
 
-  def job_fixture(org, attrs) do
+  def task_fixture(org, attrs) do
     attrs =
       Enum.into(attrs, %{
-        name: "Test Job #{System.unique_integer([:positive])}",
+        name: "Test Task #{System.unique_integer([:positive])}",
         url: "https://example.com/webhook",
         method: "POST",
         headers: %{"Content-Type" => "application/json"},
@@ -31,26 +31,25 @@ defmodule Prikke.JobsFixtures do
         timeout_ms: 30000
       })
 
-    {:ok, job} = Prikke.Jobs.create_job(org, attrs)
-    job
+    {:ok, task} = Prikke.Tasks.create_task(org, attrs)
+    task
   end
 
   @doc """
-  Generate a one-time job.
+  Generate a one-time task.
   """
-  def once_job_fixture(org \\ nil, attrs \\ %{})
+  def once_task_fixture(org \\ nil, attrs \\ %{})
 
-  def once_job_fixture(nil, attrs) do
-    once_job_fixture(organization_fixture(), attrs)
+  def once_task_fixture(nil, attrs) do
+    once_task_fixture(organization_fixture(), attrs)
   end
 
-  def once_job_fixture(org, attrs) do
-    # Schedule for 1 hour in the future
+  def once_task_fixture(org, attrs) do
     scheduled_at = DateTime.add(DateTime.utc_now(), 3600, :second)
 
     attrs =
       Enum.into(attrs, %{
-        name: "One-time Job #{System.unique_integer([:positive])}",
+        name: "One-time Task #{System.unique_integer([:positive])}",
         url: "https://example.com/webhook",
         method: "GET",
         schedule_type: "once",
@@ -59,7 +58,7 @@ defmodule Prikke.JobsFixtures do
         enabled: true
       })
 
-    {:ok, job} = Prikke.Jobs.create_job(org, attrs)
-    job
+    {:ok, task} = Prikke.Tasks.create_task(org, attrs)
+    task
   end
 end

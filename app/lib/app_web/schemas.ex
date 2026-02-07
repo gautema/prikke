@@ -4,17 +4,17 @@ defmodule PrikkeWeb.Schemas do
   """
   alias OpenApiSpex.Schema
 
-  defmodule Job do
+  defmodule Task do
     require OpenApiSpex
 
     OpenApiSpex.schema(%{
-      title: "Job",
-      description: "A scheduled job",
+      title: "Task",
+      description: "A scheduled task",
       type: :object,
       required: [:id, :name, :url, :schedule_type],
       properties: %{
-        id: %Schema{type: :string, format: :uuid, description: "Job ID"},
-        name: %Schema{type: :string, description: "Job name"},
+        id: %Schema{type: :string, format: :uuid, description: "Task ID"},
+        name: %Schema{type: :string, description: "Task name"},
         url: %Schema{type: :string, format: :uri, description: "Webhook URL to call"},
         method: %Schema{
           type: :string,
@@ -39,21 +39,21 @@ defmodule PrikkeWeb.Schemas do
         cron_expression: %Schema{
           type: :string,
           nullable: true,
-          description: "Cron expression (for cron jobs)"
+          description: "Cron expression (for cron tasks)"
         },
         scheduled_at: %Schema{
           type: :string,
           format: :"date-time",
           nullable: true,
-          description: "Scheduled time (for one-time jobs)"
+          description: "Scheduled time (for one-time tasks)"
         },
         timezone: %Schema{
           type: :string,
           default: "UTC",
           description: "Timezone for cron expression"
         },
-        enabled: %Schema{type: :boolean, default: true, description: "Whether the job is enabled"},
-        muted: %Schema{type: :boolean, default: false, description: "Whether notifications are muted for this job"},
+        enabled: %Schema{type: :boolean, default: true, description: "Whether the task is enabled"},
+        muted: %Schema{type: :boolean, default: false, description: "Whether notifications are muted for this task"},
         timeout_ms: %Schema{
           type: :integer,
           default: 30000,
@@ -62,7 +62,7 @@ defmodule PrikkeWeb.Schemas do
         retry_attempts: %Schema{
           type: :integer,
           default: 3,
-          description: "Number of retry attempts for one-time jobs"
+          description: "Number of retry attempts for one-time tasks"
         },
         callback_url: %Schema{
           type: :string,
@@ -117,16 +117,16 @@ defmodule PrikkeWeb.Schemas do
     })
   end
 
-  defmodule JobRequest do
+  defmodule TaskRequest do
     require OpenApiSpex
 
     OpenApiSpex.schema(%{
-      title: "JobRequest",
-      description: "Request body for creating or updating a job",
+      title: "TaskRequest",
+      description: "Request body for creating or updating a task",
       type: :object,
       required: [:name, :url, :schedule_type],
       properties: %{
-        name: %Schema{type: :string, description: "Job name"},
+        name: %Schema{type: :string, description: "Task name"},
         url: %Schema{type: :string, format: :uri, description: "Webhook URL to call"},
         method: %Schema{
           type: :string,
@@ -139,17 +139,17 @@ defmodule PrikkeWeb.Schemas do
         cron_expression: %Schema{
           type: :string,
           nullable: true,
-          description: "Required for cron jobs"
+          description: "Required for cron tasks"
         },
         scheduled_at: %Schema{
           type: :string,
           format: :"date-time",
           nullable: true,
-          description: "Required for one-time jobs"
+          description: "Required for one-time tasks"
         },
         timezone: %Schema{type: :string, default: "UTC"},
         enabled: %Schema{type: :boolean, default: true},
-        muted: %Schema{type: :boolean, default: false, description: "Mute notifications for this job"},
+        muted: %Schema{type: :boolean, default: false, description: "Mute notifications for this task"},
         timeout_ms: %Schema{type: :integer, default: 30000},
         retry_attempts: %Schema{type: :integer, default: 3},
         callback_url: %Schema{
@@ -179,28 +179,28 @@ defmodule PrikkeWeb.Schemas do
     })
   end
 
-  defmodule JobResponse do
+  defmodule TaskResponse do
     require OpenApiSpex
 
     OpenApiSpex.schema(%{
-      title: "JobResponse",
-      description: "Response containing a job",
+      title: "TaskResponse",
+      description: "Response containing a task",
       type: :object,
       properties: %{
-        data: Job
+        data: Task
       }
     })
   end
 
-  defmodule JobsResponse do
+  defmodule TasksResponse do
     require OpenApiSpex
 
     OpenApiSpex.schema(%{
-      title: "JobsResponse",
-      description: "Response containing a list of jobs",
+      title: "TasksResponse",
+      description: "Response containing a list of tasks",
       type: :object,
       properties: %{
-        data: %Schema{type: :array, items: Job}
+        data: %Schema{type: :array, items: Task}
       }
     })
   end
@@ -210,7 +210,7 @@ defmodule PrikkeWeb.Schemas do
 
     OpenApiSpex.schema(%{
       title: "Execution",
-      description: "A job execution record",
+      description: "A task execution record",
       type: :object,
       properties: %{
         id: %Schema{type: :string, format: :uuid},
@@ -247,7 +247,7 @@ defmodule PrikkeWeb.Schemas do
 
     OpenApiSpex.schema(%{
       title: "TriggerResponse",
-      description: "Response from triggering a job",
+      description: "Response from triggering a task",
       type: :object,
       properties: %{
         data: %Schema{
@@ -268,10 +268,10 @@ defmodule PrikkeWeb.Schemas do
 
     OpenApiSpex.schema(%{
       title: "SyncRequest",
-      description: "Request body for declarative sync of jobs and/or monitors",
+      description: "Request body for declarative sync of tasks and/or monitors",
       type: :object,
       properties: %{
-        jobs: %Schema{type: :array, items: JobRequest, description: "List of jobs to sync"},
+        tasks: %Schema{type: :array, items: TaskRequest, description: "List of tasks to sync"},
         monitors: %Schema{
           type: :array,
           items: MonitorRequest,
@@ -280,13 +280,13 @@ defmodule PrikkeWeb.Schemas do
         delete_removed: %Schema{
           type: :boolean,
           default: false,
-          description: "Delete jobs/monitors not in the list"
+          description: "Delete tasks/monitors not in the list"
         }
       },
       example: %{
-        jobs: [
+        tasks: [
           %{
-            name: "Job A",
+            name: "Task A",
             url: "https://example.com/a",
             schedule_type: "cron",
             cron_expression: "0 * * * *"
@@ -333,137 +333,38 @@ defmodule PrikkeWeb.Schemas do
         data: %Schema{
           type: :object,
           properties: %{
-            jobs: SyncResourceResult,
+            tasks: SyncResourceResult,
             monitors: SyncResourceResult,
             created: %Schema{
               type: :array,
               items: %Schema{type: :string},
-              description: "Deprecated: use jobs.created"
+              description: "Deprecated: use tasks.created"
             },
             updated: %Schema{
               type: :array,
               items: %Schema{type: :string},
-              description: "Deprecated: use jobs.updated"
+              description: "Deprecated: use tasks.updated"
             },
             deleted: %Schema{
               type: :array,
               items: %Schema{type: :string},
-              description: "Deprecated: use jobs.deleted"
+              description: "Deprecated: use tasks.deleted"
             },
             created_count: %Schema{
               type: :integer,
-              description: "Deprecated: use jobs.created_count"
+              description: "Deprecated: use tasks.created_count"
             },
             updated_count: %Schema{
               type: :integer,
-              description: "Deprecated: use jobs.updated_count"
+              description: "Deprecated: use tasks.updated_count"
             },
             deleted_count: %Schema{
               type: :integer,
-              description: "Deprecated: use jobs.deleted_count"
+              description: "Deprecated: use tasks.deleted_count"
             }
           }
         },
         message: %Schema{type: :string}
-      }
-    })
-  end
-
-  defmodule QueueRequest do
-    require OpenApiSpex
-
-    OpenApiSpex.schema(%{
-      title: "QueueRequest",
-      description: "Request to queue an HTTP request for immediate execution",
-      type: :object,
-      required: [:url],
-      properties: %{
-        url: %Schema{type: :string, format: :uri, description: "Webhook URL to call"},
-        method: %Schema{
-          type: :string,
-          enum: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-          default: "POST",
-          description: "HTTP method"
-        },
-        headers: %Schema{
-          type: :object,
-          additionalProperties: %Schema{type: :string},
-          description: "HTTP headers"
-        },
-        body: %Schema{type: :string, nullable: true, description: "Request body"},
-        delay: %Schema{
-          type: :string,
-          nullable: true,
-          description:
-            "Delay before execution. Use a number with unit: \"30s\", \"5m\", \"2h\", \"1d\". If omitted, runs immediately."
-        },
-        name: %Schema{type: :string, nullable: true, description: "Optional name for the job"},
-        timeout_ms: %Schema{
-          type: :integer,
-          default: 30000,
-          description: "Request timeout in milliseconds"
-        },
-        callback_url: %Schema{
-          type: :string,
-          format: :uri,
-          nullable: true,
-          description: "URL to receive POST with execution results when complete"
-        },
-        expected_status_codes: %Schema{
-          type: :string,
-          nullable: true,
-          description: "Comma-separated HTTP status codes that count as success (e.g. \"200,201\"). Empty means any 2xx."
-        },
-        expected_body_pattern: %Schema{
-          type: :string,
-          nullable: true,
-          description: "Response body must contain this text to count as success. Empty means any body."
-        }
-      },
-      example: %{
-        url: "https://example.com/api/webhook",
-        method: "POST",
-        headers: %{"Content-Type" => "application/json", "Authorization" => "Bearer token"},
-        body: ~s({"event": "user.created", "user_id": 123})
-      }
-    })
-  end
-
-  defmodule QueueResponse do
-    require OpenApiSpex
-
-    OpenApiSpex.schema(%{
-      title: "QueueResponse",
-      description: "Response from queuing a request",
-      type: :object,
-      properties: %{
-        data: %Schema{
-          type: :object,
-          properties: %{
-            job_id: %Schema{type: :string, format: :uuid, description: "Created job ID"},
-            execution_id: %Schema{
-              type: :string,
-              format: :uuid,
-              description: "Pending execution ID"
-            },
-            status: %Schema{type: :string, description: "Execution status (pending)"},
-            scheduled_for: %Schema{
-              type: :string,
-              format: :"date-time",
-              description: "Scheduled execution time"
-            }
-          }
-        },
-        message: %Schema{type: :string}
-      },
-      example: %{
-        data: %{
-          job_id: "019c0123-4567-7890-abcd-ef1234567890",
-          execution_id: "019c0123-4567-7890-abcd-ef1234567891",
-          status: "pending",
-          scheduled_for: "2026-01-29T15:30:00Z"
-        },
-        message: "Request queued for immediate execution"
       }
     })
   end

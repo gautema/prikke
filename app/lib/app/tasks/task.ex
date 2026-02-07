@@ -1,10 +1,10 @@
-defmodule Prikke.Jobs.Job do
+defmodule Prikke.Tasks.Task do
   use Ecto.Schema
   import Ecto.Changeset
 
   @primary_key {:id, Prikke.UUID7, autogenerate: true}
   @foreign_key_type :binary_id
-  schema "jobs" do
+  schema "tasks" do
     field :name, :string
     field :url, :string
     field :method, :string, default: "GET"
@@ -23,12 +23,13 @@ defmodule Prikke.Jobs.Job do
     field :callback_url, :string
     field :expected_status_codes, :string
     field :expected_body_pattern, :string
+    field :queue, :string
 
     # Virtual field for form editing
     field :headers_json, :string, virtual: true
 
     belongs_to :organization, Prikke.Accounts.Organization
-    has_many :executions, Prikke.Executions.Execution
+    has_many :executions, Prikke.Executions.Execution, foreign_key: :task_id
 
     timestamps(type: :utc_datetime)
   end
@@ -37,11 +38,11 @@ defmodule Prikke.Jobs.Job do
   @schedule_types ~w(cron once)
 
   @doc false
-  def changeset(job, attrs, opts \\ []) do
+  def changeset(task, attrs, opts \\ []) do
     skip_ssrf = Keyword.get(opts, :skip_ssrf, false)
 
     cs =
-      job
+      task
       |> cast(attrs, [
         :name,
         :url,
@@ -59,7 +60,8 @@ defmodule Prikke.Jobs.Job do
         :callback_url,
         :muted,
         :expected_status_codes,
-        :expected_body_pattern
+        :expected_body_pattern,
+        :queue
       ])
       |> trim_url()
       |> validate_required([:name, :url, :schedule_type])
@@ -84,10 +86,10 @@ defmodule Prikke.Jobs.Job do
   end
 
   @doc """
-  Changeset for creating a job within an organization.
+  Changeset for creating a task within an organization.
   """
-  def create_changeset(job, attrs, organization_id, opts \\ []) do
-    job
+  def create_changeset(task, attrs, organization_id, opts \\ []) do
+    task
     |> changeset(attrs, opts)
     |> put_change(:organization_id, organization_id)
     |> validate_required([:organization_id])
@@ -210,13 +212,13 @@ defmodule Prikke.Jobs.Job do
           end
       end
     else
-      # One-time jobs don't have interval
+      # One-time tasks don't have interval
       put_change(changeset, :interval_minutes, nil)
     end
   end
 
   # Estimate the interval in minutes from a cron expression
-  # This is used for job priority (minute jobs > hourly > daily)
+  # This is used for task priority (minute tasks > hourly > daily)
   defp estimate_interval_minutes(%Crontab.CronExpression{} = cron) do
     minute_interval = estimate_minute_interval(cron.minute)
 
@@ -260,7 +262,7 @@ defmodule Prikke.Jobs.Job do
           compute_next_cron_run(changeset)
 
         "once" ->
-          # One-time jobs run at scheduled_at
+          # One-time tasks run at scheduled_at
           scheduled_at = get_field(changeset, :scheduled_at)
           put_change(changeset, :next_run_at, scheduled_at)
 
@@ -268,7 +270,7 @@ defmodule Prikke.Jobs.Job do
           changeset
       end
     else
-      # Disabled jobs don't have a next run
+      # Disabled tasks don't have a next run
       put_change(changeset, :next_run_at, nil)
     end
   end
@@ -299,16 +301,16 @@ defmodule Prikke.Jobs.Job do
   end
 
   @doc """
-  Computes the next run time for a cron job after it has been scheduled.
+  Computes the next run time for a cron task after it has been scheduled.
   Called by the scheduler after creating an execution.
   """
-  def advance_next_run_changeset(job) do
-    case job.schedule_type do
+  def advance_next_run_changeset(task) do
+    case task.schedule_type do
       "cron" ->
-        case Crontab.CronExpression.Parser.parse(job.cron_expression) do
+        case Crontab.CronExpression.Parser.parse(task.cron_expression) do
           {:ok, cron} ->
             # Get next run after the current next_run_at (or now if nil)
-            reference = job.next_run_at || DateTime.utc_now()
+            reference = task.next_run_at || DateTime.utc_now()
 
             case Crontab.Scheduler.get_next_run_date(cron, DateTime.to_naive(reference)) do
               {:ok, naive_next} ->
@@ -329,22 +331,22 @@ defmodule Prikke.Jobs.Job do
                     next_run
                   end
 
-                change(job, next_run_at: next_run)
+                change(task, next_run_at: next_run)
 
               {:error, _} ->
-                change(job, %{})
+                change(task, %{})
             end
 
           {:error, _} ->
-            change(job, %{})
+            change(task, %{})
         end
 
       "once" ->
-        # One-time jobs don't advance, they get disabled or next_run_at set to nil
-        change(job, next_run_at: nil)
+        # One-time tasks don't advance, they get disabled or next_run_at set to nil
+        change(task, next_run_at: nil)
 
       _ ->
-        change(job, %{})
+        change(task, %{})
     end
   end
 end

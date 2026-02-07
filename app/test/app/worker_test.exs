@@ -6,22 +6,22 @@ defmodule Prikke.WorkerTest do
   alias Prikke.Repo
 
   import Prikke.AccountsFixtures
-  import Prikke.JobsFixtures
+  import Prikke.TasksFixtures
 
   describe "worker execution" do
     setup do
       org = organization_fixture()
-      # Use a cron job (no future date validation)
-      job = job_fixture(org, %{retry_attempts: 3})
-      %{org: org, job: job}
+      # Use a cron task (no future date validation)
+      task = task_fixture(org, %{retry_attempts: 3})
+      %{org: org, task: task}
     end
 
-    test "claims and executes pending execution", %{job: job} do
+    test "claims and executes pending execution", %{task: task} do
       # Trap exits so we don't crash when stopping the worker
       Process.flag(:trap_exit, true)
 
       # Create a pending execution that's ready to run NOW
-      {:ok, execution} = Executions.create_execution_for_job(job, DateTime.utc_now())
+      {:ok, execution} = Executions.create_execution_for_task(task, DateTime.utc_now())
 
       # Start worker - it will claim and try to execute
       {:ok, pid} = Worker.start_link()
@@ -61,11 +61,11 @@ defmodule Prikke.WorkerTest do
   describe "execution status updates" do
     setup do
       org = organization_fixture()
-      # Use a cron job
-      job = job_fixture(org)
+      # Use a cron task
+      task = task_fixture(org)
       # Create a pending execution ready to run
-      {:ok, execution} = Executions.create_execution_for_job(job, DateTime.utc_now())
-      %{org: org, job: job, execution: execution}
+      {:ok, execution} = Executions.create_execution_for_task(task, DateTime.utc_now())
+      %{org: org, task: task, execution: execution}
     end
 
     test "execution starts as pending", %{execution: execution} do
@@ -126,14 +126,14 @@ defmodule Prikke.WorkerTest do
       %{org: org}
     end
 
-    # Insert a job directly into the DB bypassing URL validation (needed for localhost/Bypass URLs)
-    defp insert_job_for_bypass(org, url, extra_attrs \\ %{}) do
+    # Insert a task directly into the DB bypassing URL validation (needed for localhost/Bypass URLs)
+    defp insert_task_for_bypass(org, url, extra_attrs \\ %{}) do
       now = DateTime.utc_now() |> DateTime.truncate(:second)
 
       attrs =
         Map.merge(
           %{
-            name: "Bypass Job #{System.unique_integer([:positive])}",
+            name: "Bypass Task #{System.unique_integer([:positive])}",
             url: url,
             method: "POST",
             headers: %{},
@@ -153,12 +153,12 @@ defmodule Prikke.WorkerTest do
           extra_attrs
         )
 
-      %Prikke.Jobs.Job{}
+      %Prikke.Tasks.Task{}
       |> Ecto.Changeset.change(attrs)
       |> Repo.insert!()
     end
 
-    test "job with expected_status_codes '200' and response 201 → failure", %{org: org} do
+    test "task with expected_status_codes '200' and response 201 -> failure", %{org: org} do
       Process.flag(:trap_exit, true)
 
       bypass = Bypass.open()
@@ -167,12 +167,12 @@ defmodule Prikke.WorkerTest do
         Plug.Conn.resp(conn, 201, "Created")
       end)
 
-      job =
-        insert_job_for_bypass(org, "http://localhost:#{bypass.port}/webhook", %{
+      task =
+        insert_task_for_bypass(org, "http://localhost:#{bypass.port}/webhook", %{
           expected_status_codes: "200"
         })
 
-      {:ok, execution} = Executions.create_execution_for_job(job, DateTime.utc_now())
+      {:ok, execution} = Executions.create_execution_for_task(task, DateTime.utc_now())
 
       {:ok, pid} = Worker.start_link()
       Process.sleep(500)
@@ -184,7 +184,7 @@ defmodule Prikke.WorkerTest do
       GenServer.stop(pid, :normal)
     end
 
-    test "job with expected_status_codes '200,201' and response 201 → success", %{org: org} do
+    test "task with expected_status_codes '200,201' and response 201 -> success", %{org: org} do
       Process.flag(:trap_exit, true)
 
       bypass = Bypass.open()
@@ -193,12 +193,12 @@ defmodule Prikke.WorkerTest do
         Plug.Conn.resp(conn, 201, "Created")
       end)
 
-      job =
-        insert_job_for_bypass(org, "http://localhost:#{bypass.port}/webhook", %{
+      task =
+        insert_task_for_bypass(org, "http://localhost:#{bypass.port}/webhook", %{
           expected_status_codes: "200,201"
         })
 
-      {:ok, execution} = Executions.create_execution_for_job(job, DateTime.utc_now())
+      {:ok, execution} = Executions.create_execution_for_task(task, DateTime.utc_now())
 
       {:ok, pid} = Worker.start_link()
       Process.sleep(500)
@@ -209,7 +209,7 @@ defmodule Prikke.WorkerTest do
       GenServer.stop(pid, :normal)
     end
 
-    test "job with expected_body_pattern 'ok' and body 'result: ok' → success", %{org: org} do
+    test "task with expected_body_pattern 'ok' and body 'result: ok' -> success", %{org: org} do
       Process.flag(:trap_exit, true)
 
       bypass = Bypass.open()
@@ -218,12 +218,12 @@ defmodule Prikke.WorkerTest do
         Plug.Conn.resp(conn, 200, "result: ok")
       end)
 
-      job =
-        insert_job_for_bypass(org, "http://localhost:#{bypass.port}/webhook", %{
+      task =
+        insert_task_for_bypass(org, "http://localhost:#{bypass.port}/webhook", %{
           expected_body_pattern: "ok"
         })
 
-      {:ok, execution} = Executions.create_execution_for_job(job, DateTime.utc_now())
+      {:ok, execution} = Executions.create_execution_for_task(task, DateTime.utc_now())
 
       {:ok, pid} = Worker.start_link()
       Process.sleep(500)
@@ -234,7 +234,7 @@ defmodule Prikke.WorkerTest do
       GenServer.stop(pid, :normal)
     end
 
-    test "job with expected_body_pattern 'ok' and body 'error' → failure", %{org: org} do
+    test "task with expected_body_pattern 'ok' and body 'error' -> failure", %{org: org} do
       Process.flag(:trap_exit, true)
 
       bypass = Bypass.open()
@@ -243,12 +243,12 @@ defmodule Prikke.WorkerTest do
         Plug.Conn.resp(conn, 200, "error")
       end)
 
-      job =
-        insert_job_for_bypass(org, "http://localhost:#{bypass.port}/webhook", %{
+      task =
+        insert_task_for_bypass(org, "http://localhost:#{bypass.port}/webhook", %{
           expected_body_pattern: "ok"
         })
 
-      {:ok, execution} = Executions.create_execution_for_job(job, DateTime.utc_now())
+      {:ok, execution} = Executions.create_execution_for_task(task, DateTime.utc_now())
 
       {:ok, pid} = Worker.start_link()
       Process.sleep(500)
@@ -260,7 +260,7 @@ defmodule Prikke.WorkerTest do
       GenServer.stop(pid, :normal)
     end
 
-    test "job with no assertions and 200 response → success (backward compat)", %{org: org} do
+    test "task with no assertions and 200 response -> success (backward compat)", %{org: org} do
       Process.flag(:trap_exit, true)
 
       bypass = Bypass.open()
@@ -269,9 +269,9 @@ defmodule Prikke.WorkerTest do
         Plug.Conn.resp(conn, 200, "OK")
       end)
 
-      job = insert_job_for_bypass(org, "http://localhost:#{bypass.port}/webhook")
+      task = insert_task_for_bypass(org, "http://localhost:#{bypass.port}/webhook")
 
-      {:ok, execution} = Executions.create_execution_for_job(job, DateTime.utc_now())
+      {:ok, execution} = Executions.create_execution_for_task(task, DateTime.utc_now())
 
       {:ok, pid} = Worker.start_link()
       Process.sleep(500)

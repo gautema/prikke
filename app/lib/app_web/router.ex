@@ -78,20 +78,16 @@ defmodule PrikkeWeb.Router do
   scope "/api/v1", PrikkeWeb.Api do
     pipe_through [:api, :api_auth]
 
-    # Jobs CRUD
-    resources "/jobs", JobController, except: [:new, :edit] do
-      # Nested routes
-      get "/executions", JobController, :executions
-      post "/trigger", JobController, :trigger
+    # Tasks CRUD (unified: cron, delayed, scheduled, immediate)
+    resources "/tasks", TaskController, except: [:new, :edit] do
+      get "/executions", TaskController, :executions
+      post "/trigger", TaskController, :trigger
     end
 
     # Monitors CRUD
     resources "/monitors", MonitorController, except: [:new, :edit] do
       get "/pings", MonitorController, :pings
     end
-
-    # On-demand queue - simple API for immediate execution
-    post "/queue", QueueController, :push
 
     # Declarative sync
     put "/sync", SyncController, :sync
@@ -131,13 +127,11 @@ defmodule PrikkeWeb.Router do
       session: {__MODULE__, :live_session_data, []} do
       live "/dashboard", DashboardLive
 
-      live "/jobs", JobLive.Index, :index
-      live "/jobs/new", JobLive.New, :new
-      live "/jobs/:id", JobLive.Show, :show
-      live "/jobs/:id/edit", JobLive.Edit, :edit
-      live "/jobs/:job_id/executions/:id", JobLive.ExecutionShow, :show
-
-      live "/queue", QueueLive
+      live "/tasks", TaskLive.Index, :index
+      live "/tasks/new", TaskLive.New, :new
+      live "/tasks/:id", TaskLive.Show, :show
+      live "/tasks/:id/edit", TaskLive.Edit, :edit
+      live "/tasks/:task_id/executions/:id", TaskLive.ExecutionShow, :show
 
       live "/monitors", MonitorLive.Index, :index
       live "/monitors/new", MonitorLive.New, :new

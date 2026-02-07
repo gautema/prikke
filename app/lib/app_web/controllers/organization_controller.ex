@@ -4,7 +4,7 @@ defmodule PrikkeWeb.OrganizationController do
   import Phoenix.Component, only: [to_form: 1]
 
   alias Prikke.Accounts
-  alias Prikke.Jobs
+  alias Prikke.Tasks
   alias Prikke.Executions
   alias Prikke.Audit
 
@@ -57,7 +57,7 @@ defmodule PrikkeWeb.OrganizationController do
     if organization do
       organization = Prikke.Repo.reload!(organization)
       changeset = Accounts.change_organization(organization)
-      tier_limits = Jobs.get_tier_limits(organization.tier)
+      tier_limits = Tasks.get_tier_limits(organization.tier)
       monthly_executions = Executions.count_current_month_executions(organization)
 
       render(conn, :edit,

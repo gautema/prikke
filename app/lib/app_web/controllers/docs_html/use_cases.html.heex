@@ -25,7 +25,7 @@
         phx-no-curly-interpolation
         class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
       ><span class="text-slate-500">// Schedule welcome email 24 hours after signup</span>
-<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/jobs'</span>, {
+<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/tasks'</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">'POST'</span>,
   <span class="text-sky-300">headers</span>: { <span class="text-sky-300">'Authorization'</span>: <span class="text-green-300">'Bearer YOUR_API_KEY'</span> },
   <span class="text-sky-300">body</span>: JSON.stringify({
@@ -52,7 +52,7 @@
         phx-no-curly-interpolation
         class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
       ><span class="text-slate-500">// Return immediately, process in background</span>
-<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/queue'</span>, {
+<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/tasks'</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">'POST'</span>,
   <span class="text-sky-300">headers</span>: { <span class="text-sky-300">'Authorization'</span>: <span class="text-green-300">'Bearer YOUR_API_KEY'</span> },
   <span class="text-sky-300">body</span>: JSON.stringify({
@@ -80,7 +80,7 @@
       ><span class="text-slate-500">// Stripe webhook - return 200 immediately</span>
 <span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(req) {
   <span class="text-purple-300">const</span> event = <span class="text-purple-300">await</span> req.json();
-  <span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/queue'</span>, {
+  <span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/tasks'</span>, {
     <span class="text-sky-300">method</span>: <span class="text-green-300">'POST'</span>,
     <span class="text-sky-300">headers</span>: { <span class="text-sky-300">'Authorization'</span>: <span class="text-green-300">'Bearer YOUR_API_KEY'</span> },
     <span class="text-sky-300">body</span>: JSON.stringify({
@@ -176,9 +176,9 @@
         <.icon name="hero-check" class="w-4 h-4 text-emerald-600" />
       </div>
       <div>
-        <div class="font-semibold text-slate-900">Cron + one-time jobs</div>
+        <div class="font-semibold text-slate-900">Cron + one-time tasks</div>
         <p class="text-slate-600 text-sm mt-1 mb-0">
-          Recurring schedules and delayed jobs in one simple API.
+          Recurring schedules and delayed tasks in one simple API.
         </p>
       </div>
     </div>
@@ -223,7 +223,7 @@
         </tr>
         <tr class="border-b border-slate-100">
           <td class="py-3 px-4">Database polling</td>
-          <td class="py-3 px-4">You're building job infrastructure</td>
+          <td class="py-3 px-4">You're building task infrastructure</td>
         </tr>
         <tr class="border-b border-slate-100">
           <td class="py-3 px-4">SQS/RabbitMQ</td>
@@ -231,7 +231,7 @@
         </tr>
         <tr class="border-b border-slate-100">
           <td class="py-3 px-4">Vercel/CloudFlare cron</td>
-          <td class="py-3 px-4">No one-time jobs, no retries, platform lock-in</td>
+          <td class="py-3 px-4">No one-time tasks, no retries, platform lock-in</td>
         </tr>
       </tbody>
     </table>

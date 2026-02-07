@@ -182,7 +182,7 @@ defmodule Prikke.Audit do
   Formats a resource type for display.
   """
   def format_resource_type("organization"), do: "Organization"
-  def format_resource_type("job"), do: "Job"
+  def format_resource_type("task"), do: "Task"
   def format_resource_type("execution"), do: "Execution"
   def format_resource_type("membership"), do: "Member"
   def format_resource_type("invite"), do: "Invite"

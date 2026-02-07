@@ -4,7 +4,7 @@ defmodule Prikke.AuditTest do
   alias Prikke.Audit
   alias Prikke.Accounts.Scope
   import Prikke.AccountsFixtures
-  import Prikke.JobsFixtures
+  import Prikke.TasksFixtures
 
   describe "log/5" do
     test "creates an audit log for a user action" do
@@ -13,17 +13,17 @@ defmodule Prikke.AuditTest do
       scope = Scope.for_user(user)
 
       {:ok, log} =
-        Audit.log(scope, :created, :job, Ecto.UUID.generate(),
+        Audit.log(scope, :created, :task, Ecto.UUID.generate(),
           organization_id: org.id,
-          changes: %{"name" => "Test Job"}
+          changes: %{"name" => "Test Task"}
         )
 
       assert log.actor_id == user.id
       assert log.actor_type == "user"
       assert log.action == "created"
-      assert log.resource_type == "job"
+      assert log.resource_type == "task"
       assert log.organization_id == org.id
-      assert log.changes == %{"name" => "Test Job"}
+      assert log.changes == %{"name" => "Test Task"}
     end
   end
 
@@ -32,7 +32,7 @@ defmodule Prikke.AuditTest do
       org = organization_fixture()
 
       {:ok, log} =
-        Audit.log_api("my-api-key", :updated, :job, Ecto.UUID.generate(),
+        Audit.log_api("my-api-key", :updated, :task, Ecto.UUID.generate(),
           organization_id: org.id,
           changes: %{"enabled" => %{"from" => false, "to" => true}}
         )
@@ -60,8 +60,8 @@ defmodule Prikke.AuditTest do
       org = organization_fixture(%{user: user})
       scope = Scope.for_user(user)
 
-      Audit.log(scope, :created, :job, Ecto.UUID.generate(), organization_id: org.id)
-      Audit.log(scope, :updated, :job, Ecto.UUID.generate(), organization_id: org.id)
+      Audit.log(scope, :created, :task, Ecto.UUID.generate(), organization_id: org.id)
+      Audit.log(scope, :updated, :task, Ecto.UUID.generate(), organization_id: org.id)
 
       logs = Audit.list_organization_logs(org)
       assert length(logs) == 2
@@ -93,17 +93,17 @@ defmodule Prikke.AuditTest do
     end
   end
 
-  describe "integration with Jobs context" do
-    test "creates audit log when job is created with scope" do
+  describe "integration with Tasks context" do
+    test "creates audit log when task is created with scope" do
       user = user_fixture()
       org = organization_fixture(%{user: user})
       scope = Scope.for_user(user)
 
-      {:ok, job} =
-        Prikke.Jobs.create_job(
+      {:ok, task} =
+        Prikke.Tasks.create_task(
           org,
           %{
-            name: "Test Job",
+            name: "Test Task",
             url: "https://example.com/webhook",
             schedule_type: "cron",
             cron_expression: "0 * * * *"
@@ -116,38 +116,38 @@ defmodule Prikke.AuditTest do
 
       log = hd(logs)
       assert log.action == "created"
-      assert log.resource_type == "job"
-      assert log.resource_id == job.id
+      assert log.resource_type == "task"
+      assert log.resource_id == task.id
       assert log.actor_id == user.id
     end
 
-    test "creates audit log when job is updated with scope" do
+    test "creates audit log when task is updated with scope" do
       user = user_fixture()
       org = organization_fixture(%{user: user})
       scope = Scope.for_user(user)
-      job = job_fixture(org)
+      task = task_fixture(org)
 
-      {:ok, _updated} = Prikke.Jobs.update_job(org, job, %{name: "Updated Name"}, scope: scope)
+      {:ok, _updated} = Prikke.Tasks.update_task(org, task, %{name: "Updated Name"}, scope: scope)
 
       logs = Audit.list_organization_logs(org)
       log = hd(logs)
       assert log.action == "updated"
-      assert log.changes["name"]["from"] == job.name
+      assert log.changes["name"]["from"] == task.name
       assert log.changes["name"]["to"] == "Updated Name"
     end
 
-    test "creates audit log when job is deleted with scope" do
+    test "creates audit log when task is deleted with scope" do
       user = user_fixture()
       org = organization_fixture(%{user: user})
       scope = Scope.for_user(user)
-      job = job_fixture(org)
+      task = task_fixture(org)
 
-      {:ok, _deleted} = Prikke.Jobs.delete_job(org, job, scope: scope)
+      {:ok, _deleted} = Prikke.Tasks.delete_task(org, task, scope: scope)
 
       logs = Audit.list_organization_logs(org)
       log = hd(logs)
       assert log.action == "deleted"
-      assert log.metadata["job_name"] == job.name
+      assert log.metadata["task_name"] == task.name
     end
   end
 end

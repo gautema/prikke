@@ -5,7 +5,7 @@ defmodule Prikke.CleanupTest do
   alias Prikke.Executions
 
   import Prikke.AccountsFixtures
-  import Prikke.JobsFixtures
+  import Prikke.TasksFixtures
 
   describe "run_monthly_summary/0" do
     setup do
@@ -42,14 +42,14 @@ defmodule Prikke.CleanupTest do
 
     test "deletes executions older than retention period" do
       org = organization_fixture()
-      job = job_fixture(org)
+      task = task_fixture(org)
 
       # Create an old execution (8 days ago - older than free tier's 7 days)
       old_time = DateTime.utc_now() |> DateTime.add(-8, :day) |> DateTime.truncate(:second)
 
       {:ok, old_exec} =
         Executions.create_execution(%{
-          job_id: job.id,
+          task_id: task.id,
           scheduled_for: old_time
         })
 
@@ -68,7 +68,7 @@ defmodule Prikke.CleanupTest do
 
       {:ok, recent_exec} =
         Executions.create_execution(%{
-          job_id: job.id,
+          task_id: task.id,
           scheduled_for: recent_time
         })
 
@@ -92,25 +92,25 @@ defmodule Prikke.CleanupTest do
       assert Executions.get_execution(recent_exec.id) != nil
     end
 
-    test "deletes completed one-time jobs older than retention period" do
+    test "deletes completed one-time tasks older than retention period" do
       org = organization_fixture()
 
-      # Create one-time jobs first with future dates, then backdate them
+      # Create one-time tasks first with future dates, then backdate them
       future = DateTime.utc_now() |> DateTime.add(1, :day) |> DateTime.truncate(:second)
       old_time = DateTime.utc_now() |> DateTime.add(-8, :day) |> DateTime.truncate(:second)
       recent_time = DateTime.utc_now() |> DateTime.add(-1, :day) |> DateTime.truncate(:second)
 
-      # Create and then backdate to simulate an old completed one-time job
-      old_job = job_fixture(org, %{schedule_type: "once", scheduled_at: future})
+      # Create and then backdate to simulate an old completed one-time task
+      old_task = task_fixture(org, %{schedule_type: "once", scheduled_at: future})
 
-      old_job
+      old_task
       |> Ecto.Changeset.change(%{next_run_at: nil, updated_at: old_time, scheduled_at: old_time})
       |> Prikke.Repo.update!()
 
-      # Create and then backdate to simulate a recent completed one-time job
-      recent_job = job_fixture(org, %{schedule_type: "once", scheduled_at: future})
+      # Create and then backdate to simulate a recent completed one-time task
+      recent_task = task_fixture(org, %{schedule_type: "once", scheduled_at: future})
 
-      recent_job
+      recent_task
       |> Ecto.Changeset.change(%{
         next_run_at: nil,
         updated_at: recent_time,
@@ -118,29 +118,29 @@ defmodule Prikke.CleanupTest do
       })
       |> Prikke.Repo.update!()
 
-      # Create a cron job (should not be deleted)
-      cron_job = job_fixture(org, %{schedule_type: "cron", cron_expression: "0 * * * *"})
+      # Create a cron task (should not be deleted)
+      cron_task = task_fixture(org, %{schedule_type: "cron", cron_expression: "0 * * * *"})
 
       # Run cleanup
       {:ok, result} = Cleanup.run_cleanup()
 
-      # Only old completed one-time job should be deleted
-      assert result.jobs == 1
-      assert Prikke.Jobs.get_job(org, old_job.id) == nil
-      assert Prikke.Jobs.get_job(org, recent_job.id) != nil
-      assert Prikke.Jobs.get_job(org, cron_job.id) != nil
+      # Only old completed one-time task should be deleted
+      assert result.tasks == 1
+      assert Prikke.Tasks.get_task(org, old_task.id) == nil
+      assert Prikke.Tasks.get_task(org, recent_task.id) != nil
+      assert Prikke.Tasks.get_task(org, cron_task.id) != nil
     end
 
     test "respects pro tier's longer retention" do
       org = organization_fixture(%{tier: "pro"})
-      job = job_fixture(org)
+      task = task_fixture(org)
 
       # Create an execution 15 days ago (within pro's 30 days)
       old_time = DateTime.utc_now() |> DateTime.add(-15, :day) |> DateTime.truncate(:second)
 
       {:ok, exec} =
         Executions.create_execution(%{
-          job_id: job.id,
+          task_id: task.id,
           scheduled_for: old_time
         })
 
