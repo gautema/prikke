@@ -218,21 +218,21 @@ defmodule PrikkeWeb.DashboardLive do
 
         <!-- Jobs Section -->
         <div class="glass-card rounded-2xl mb-4">
-          <div class="px-6 py-4 border-b border-white/50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+          <div class="px-4 sm:px-6 py-4 border-b border-white/50 flex justify-between items-center gap-2">
             <div class="flex items-center gap-3">
               <h2 class="text-lg font-semibold text-slate-900">Jobs</h2>
               <.job_summary stats={@stats} />
             </div>
-            <div class="flex gap-2">
+            <div class="flex gap-1.5 sm:gap-2">
               <.link
                 navigate={~p"/queue"}
-                class="text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-md transition-colors no-underline flex items-center gap-1.5"
+                class="text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md transition-colors no-underline flex items-center gap-1"
               >
                 <.icon name="hero-bolt" class="w-4 h-4" /> Queue
               </.link>
               <.link
                 navigate={~p"/jobs/new"}
-                class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-md transition-colors no-underline"
+                class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md transition-colors no-underline"
               >
                 New Job
               </.link>
@@ -296,7 +296,7 @@ defmodule PrikkeWeb.DashboardLive do
 
         <!-- Monitors Section -->
         <div class="glass-card rounded-2xl mb-4">
-          <div class="px-6 py-4 border-b border-white/50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+          <div class="px-4 sm:px-6 py-4 border-b border-white/50 flex justify-between items-center gap-2">
             <div class="flex items-center gap-3">
               <h2 class="text-lg font-semibold text-slate-900">Monitors</h2>
               <%= if @monitors != [] do %>
@@ -305,7 +305,7 @@ defmodule PrikkeWeb.DashboardLive do
             </div>
             <.link
               navigate={~p"/monitors/new"}
-              class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-md transition-colors no-underline w-fit"
+              class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md transition-colors no-underline"
             >
               New Monitor
             </.link>
