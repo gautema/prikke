@@ -24,7 +24,7 @@ defmodule Prikke.Emails do
     limit = Keyword.get(opts, :limit, 20)
 
     from(e in EmailLog,
-      order_by: [desc: e.inserted_at],
+      order_by: [desc: e.inserted_at, desc: e.id],
       limit: ^limit,
       preload: [:organization]
     )
