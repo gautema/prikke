@@ -12,10 +12,10 @@ defmodule PrikkeWeb.PageController do
       conn
       |> assign(:hide_header, true)
       |> assign(:hide_footer, true)
-      |> assign(:page_title, "Simple Cron & Job Scheduling")
+      |> assign(:page_title, "Async Task Infrastructure for Europe")
       |> assign(
         :page_description,
-        "Schedule HTTP webhooks, cron jobs, and one-time tasks. EU-hosted, GDPR-native. Monitor executions, automatic retries, failure notifications."
+        "Queue delayed tasks, schedule recurring jobs, and monitor everything. One API, zero infrastructure, fully GDPR-native. Retries, callbacks, webhook signatures."
       )
       |> assign(
         :current_scope,

@@ -3,6 +3,6 @@ defmodule PrikkeWeb.PageControllerTest do
 
   test "GET /", %{conn: conn} do
     conn = get(conn, ~p"/")
-    assert html_response(conn, 200) =~ "Defer anything"
+    assert html_response(conn, 200) =~ "Async task infrastructure"
   end
 end
