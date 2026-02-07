@@ -35,7 +35,7 @@ defmodule PrikkeWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <main class="px-4 py-8 sm:px-6 lg:px-8">
+    <main class="px-2 py-6 sm:px-4 sm:py-8">
       <div class="mx-auto max-w-4xl">
         {render_slot(@inner_block)}
       </div>

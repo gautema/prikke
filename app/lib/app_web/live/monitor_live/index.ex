@@ -169,7 +169,6 @@ defmodule PrikkeWeb.MonitorLive.Index do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <div class="max-w-4xl mx-auto py-6 sm:py-8 px-2 sm:px-4">
         <div class="mb-4">
           <.link
             navigate={~p"/dashboard"}
@@ -186,7 +185,7 @@ defmodule PrikkeWeb.MonitorLive.Index do
           </div>
           <.link
             navigate={~p"/monitors/new"}
-            class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-md transition-colors no-underline"
+            class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-3 sm:px-4 py-2 rounded-md transition-colors no-underline whitespace-nowrap"
           >
             New Monitor
           </.link>
@@ -286,7 +285,6 @@ defmodule PrikkeWeb.MonitorLive.Index do
             <% end %>
           </div>
         <% end %>
-      </div>
     </Layouts.app>
     """
   end
