@@ -93,6 +93,67 @@
     </div>
   </div>
 
+  <h2>Named Queues</h2>
+  <p>
+    Use the <code class="bg-slate-100 px-2 py-1 rounded text-sm">queue</code> parameter to serialize execution.
+    Tasks in the same named queue run one at a time within your organization — each task waits for the previous one to finish before starting.
+    Tasks without a queue (or in different queues) run in parallel as normal.
+  </p>
+
+  <div class="space-y-6 my-8">
+    <div class="glass-card rounded-2xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100">
+        <div class="flex gap-2 mb-2">
+          <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">Payments</span>
+          <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">Ordering</span>
+        </div>
+        <h3 class="text-lg font-semibold text-slate-900 m-0">Payment Processing</h3>
+        <p class="text-slate-600 text-sm mt-1 mb-0">
+          Process charges one at a time per user to prevent double-billing or race conditions.
+        </p>
+      </div>
+      <pre
+        phx-no-curly-interpolation
+        class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+      ><span class="text-slate-500">// Each user gets their own queue — charges never overlap</span>
+<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/tasks'</span>, {
+  <span class="text-sky-300">method</span>: <span class="text-green-300">'POST'</span>,
+  <span class="text-sky-300">headers</span>: { <span class="text-sky-300">'Authorization'</span>: <span class="text-green-300">'Bearer YOUR_API_KEY'</span> },
+  <span class="text-sky-300">body</span>: JSON.stringify({
+    <span class="text-sky-300">url</span>: <span class="text-green-300">'https://myapp.com/api/charge'</span>,
+    <span class="text-sky-300">body</span>: JSON.stringify({ userId, amount }),
+    <span class="text-sky-300">queue</span>: <span class="text-green-300">`payments-user-${userId}`</span>
+  })
+});</pre>
+    </div>
+
+    <div class="glass-card rounded-2xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100">
+        <div class="flex gap-2 mb-2">
+          <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">API</span>
+          <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">Rate Limiting</span>
+        </div>
+        <h3 class="text-lg font-semibold text-slate-900 m-0">Sequential API Calls</h3>
+        <p class="text-slate-600 text-sm mt-1 mb-0">
+          Call a rate-limited third-party API without overwhelming it. One request finishes before the next starts.
+        </p>
+      </div>
+      <pre
+        phx-no-curly-interpolation
+        class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+      ><span class="text-slate-500">// All Shopify sync tasks run one at a time</span>
+<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/tasks'</span>, {
+  <span class="text-sky-300">method</span>: <span class="text-green-300">'POST'</span>,
+  <span class="text-sky-300">headers</span>: { <span class="text-sky-300">'Authorization'</span>: <span class="text-green-300">'Bearer YOUR_API_KEY'</span> },
+  <span class="text-sky-300">body</span>: JSON.stringify({
+    <span class="text-sky-300">url</span>: <span class="text-green-300">'https://myapp.com/api/sync-product'</span>,
+    <span class="text-sky-300">body</span>: JSON.stringify({ productId }),
+    <span class="text-sky-300">queue</span>: <span class="text-green-300">'shopify-sync'</span>
+  })
+});</pre>
+    </div>
+  </div>
+
   <h2>Scheduled Tasks</h2>
   <p>Replace server cron jobs with managed, observable scheduling.</p>
 

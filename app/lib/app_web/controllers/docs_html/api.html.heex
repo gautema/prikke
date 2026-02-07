@@ -146,6 +146,13 @@
           </td>
         </tr>
         <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">queue</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            Named queue for serialized execution. Tasks in the same queue run one at a time within your organization — the next task won't start until the current one finishes. Leave empty for default parallel execution. (optional)
+          </td>
+        </tr>
+        <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">enabled</code></td>
           <td class="py-2 pr-4 text-slate-500">boolean</td>
           <td class="py-2 text-slate-600">Whether the task is active (default: true)</td>
@@ -179,6 +186,21 @@
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/webhook"</span>,
     <span class="text-sky-300">"method"</span>: <span class="text-green-300">"POST"</span>,
     <span class="text-sky-300">"body"</span>: <span class="text-green-300">"{\"event\": \"test\"}"</span>
+  }'</pre>
+    </div>
+    <div class="border-b border-slate-800">
+      <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800">With named queue</div>
+      <pre
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl -X POST https://runlater.eu/api/v1/tasks \
+  -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
+  -H <span class="text-green-300">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/charge"</span>,
+    <span class="text-sky-300">"method"</span>: <span class="text-green-300">"POST"</span>,
+    <span class="text-sky-300">"body"</span>: <span class="text-green-300">"{\"user_id\": 42}"</span>,
+    <span class="text-sky-300">"queue"</span>: <span class="text-green-300">"payments"</span>
   }'</pre>
     </div>
     <div class="border-b border-slate-800">

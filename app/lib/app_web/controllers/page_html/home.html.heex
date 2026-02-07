@@ -54,9 +54,9 @@
       </h2>
       <div class="grid sm:grid-cols-2 gap-4">
         <div class="glass-card rounded-2xl p-5">
-          <h3 class="text-base font-semibold mb-2 text-slate-900">Queues</h3>
+          <h3 class="text-base font-semibold mb-2 text-slate-900">Named Queues</h3>
           <p class="text-[15px] text-slate-500 m-0">
-            Push a task and we run it immediately. Offload work from your request cycle. One POST, instant execution.
+            Group tasks into named queues for serial execution. Tasks in the same queue run one at a time — the next waits until the current one finishes. Perfect for payments, API rate limits, or anything that can't overlap.
           </p>
         </div>
         <div class="glass-card rounded-2xl p-5">
@@ -197,7 +197,7 @@
             <span class="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center text-white text-xs font-bold">2</span>
             <div>
               <h3 class="text-sm font-semibold text-slate-900 m-0">Queue a task</h3>
-              <p class="text-xs text-slate-500 m-0">Offload work from your request cycle</p>
+              <p class="text-xs text-slate-500 m-0">Named queue ensures tasks run one at a time</p>
             </div>
           </div>
           <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto m-0 rounded-none">curl -X POST https://runlater.eu/api/v1/tasks \
