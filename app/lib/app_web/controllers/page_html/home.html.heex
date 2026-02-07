@@ -182,7 +182,7 @@
               <p class="text-xs text-slate-500 m-0">Something happened, do this in 24 hours</p>
             </div>
           </div>
-          <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto m-0 rounded-none">curl -X POST https://runlater.eu/api/v1/queue \
+          <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto m-0 rounded-none">curl -X POST https://runlater.eu/api/v1/tasks \
   -H "Authorization: Bearer pk_live_xxx" \
   -H "Idempotency-Key: reminder-user-42" \
   -d '{
@@ -200,7 +200,7 @@
               <p class="text-xs text-slate-500 m-0">Offload work from your request cycle</p>
             </div>
           </div>
-          <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto m-0 rounded-none">curl -X POST https://runlater.eu/api/v1/queue \
+          <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto m-0 rounded-none">curl -X POST https://runlater.eu/api/v1/tasks \
   -H "Authorization: Bearer pk_live_xxx" \
   -d '{
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/process"</span>,
@@ -218,12 +218,12 @@
               <p class="text-xs text-slate-500 m-0">Recurring jobs on any schedule</p>
             </div>
           </div>
-          <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto m-0 rounded-none">curl -X POST https://runlater.eu/api/v1/cron \
+          <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto m-0 rounded-none">curl -X POST https://runlater.eu/api/v1/tasks \
   -H "Authorization: Bearer pk_live_xxx" \
   -d '{
     <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Daily backup"</span>,
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/backup"</span>,
-    <span class="text-sky-300">"cron_expression"</span>: <span class="text-green-300">"0 6 * * *"</span>
+    <span class="text-sky-300">"cron"</span>: <span class="text-green-300">"0 6 * * *"</span>
   }'</pre>
         </div>
 

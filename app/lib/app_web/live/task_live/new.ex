@@ -4,6 +4,7 @@ defmodule PrikkeWeb.TaskLive.New do
   import PrikkeWeb.CronBuilder
 
   alias Prikke.Cron
+  alias Prikke.Executions
   alias Prikke.Tasks
   alias Prikke.Tasks.Task
 
@@ -111,6 +112,13 @@ defmodule PrikkeWeb.TaskLive.New do
            scope: socket.assigns.current_scope
          ) do
       {:ok, task} ->
+        if socket.assigns.timing_mode in ["immediate", "delay"] do
+          scheduled_at = task.scheduled_at || DateTime.utc_now()
+          {:ok, _exec} = Executions.create_execution_for_task(task, scheduled_at)
+          Tasks.clear_next_run(task)
+          Tasks.notify_workers()
+        end
+
         {:noreply,
          socket
          |> put_flash(:info, "Task created successfully")
@@ -391,7 +399,7 @@ defmodule PrikkeWeb.TaskLive.New do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.flash_group flash={@flash} />
+    <Layouts.app flash={@flash} current_scope={@current_scope}>
     <div class="max-w-4xl mx-auto py-8 px-2 sm:px-4">
       <div class="mb-6">
         <.link
@@ -652,6 +660,23 @@ defmodule PrikkeWeb.TaskLive.New do
                 Receive a POST with execution results after each run completes.
               </p>
             </div>
+
+            <div>
+              <label for="task_queue" class="block text-sm font-medium text-slate-700 mb-1">
+                Queue <span class="text-slate-400 font-normal">(optional)</span>
+              </label>
+              <.input
+                field={@form[:queue]}
+                type="text"
+                placeholder="payments"
+              />
+              <p class="text-xs text-slate-500 mt-1">
+                Named queue for serialized execution. Tasks in the same queue run one at a time
+                within your organization — the next task won't start until the current one finishes.
+                Useful for ordering-sensitive work like payment processing or sequential API calls.
+                Leave empty for default parallel execution.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -707,6 +732,7 @@ defmodule PrikkeWeb.TaskLive.New do
         </div>
       </.form>
     </div>
+    </Layouts.app>
     """
   end
 end

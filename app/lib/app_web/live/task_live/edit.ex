@@ -598,6 +598,23 @@ defmodule PrikkeWeb.TaskLive.Edit do
                 Receive a POST with execution results after each run completes.
               </p>
             </div>
+
+            <div>
+              <label for="task_queue" class="block text-sm font-medium text-slate-700 mb-1">
+                Queue <span class="text-slate-400 font-normal">(optional)</span>
+              </label>
+              <.input
+                field={@form[:queue]}
+                type="text"
+                placeholder="payments"
+              />
+              <p class="text-xs text-slate-500 mt-1">
+                Named queue for serialized execution. Tasks in the same queue run one at a time
+                within your organization — the next task won't start until the current one finishes.
+                Useful for ordering-sensitive work like payment processing or sequential API calls.
+                Leave empty for default parallel execution.
+              </p>
+            </div>
           </div>
         </div>
 

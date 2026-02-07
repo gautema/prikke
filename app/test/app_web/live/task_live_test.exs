@@ -196,6 +196,36 @@ defmodule PrikkeWeb.TaskLiveTest do
       assert html =~ "Time (UTC)"
       assert html =~ "daily at 9:00"
     end
+
+    test "creating immediate task produces a pending execution", %{conn: conn, user: user} do
+      org = organization_fixture(%{user: user})
+
+      {:ok, view, _html} = live(conn, ~p"/tasks/new")
+
+      view
+      |> form("#task-form",
+        task: %{
+          name: "Immediate Test Task",
+          url: "https://example.com/webhook"
+        },
+        timing_mode: "immediate"
+      )
+      |> render_submit()
+
+      {path, flash} = assert_redirect(view)
+      assert flash["info"] =~ "created"
+
+      # Extract task ID from redirect path
+      task_id = path |> String.split("/") |> List.last()
+      task = Prikke.Tasks.get_task!(org, task_id)
+
+      # Verify an execution was created for this task
+      assert Prikke.Executions.count_task_executions(task) == 1
+
+      executions = Prikke.Executions.list_task_executions(task)
+      assert length(executions) == 1
+      assert hd(executions).status == "pending"
+    end
   end
 
   describe "Task Edit" do
