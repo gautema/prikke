@@ -374,7 +374,6 @@ defmodule PrikkeWeb.Api.TaskController do
       schedule_type: task.schedule_type,
       cron_expression: task.cron_expression,
       scheduled_at: task.scheduled_at,
-      timezone: task.timezone,
       enabled: task.enabled,
       timeout_ms: task.timeout_ms,
       retry_attempts: task.retry_attempts,

@@ -141,7 +141,6 @@ defmodule Prikke.WorkerTest do
             schedule_type: "cron",
             cron_expression: "0 * * * *",
             interval_minutes: 60,
-            timezone: "UTC",
             enabled: true,
             retry_attempts: 0,
             timeout_ms: 10_000,

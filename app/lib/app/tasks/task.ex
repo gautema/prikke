@@ -14,7 +14,6 @@ defmodule Prikke.Tasks.Task do
     field :cron_expression, :string
     field :interval_minutes, :integer
     field :scheduled_at, :utc_datetime
-    field :timezone, :string, default: "UTC"
     field :enabled, :boolean, default: true
     field :retry_attempts, :integer, default: 3
     field :timeout_ms, :integer, default: 30000
@@ -53,7 +52,6 @@ defmodule Prikke.Tasks.Task do
         :schedule_type,
         :cron_expression,
         :scheduled_at,
-        :timezone,
         :enabled,
         :retry_attempts,
         :timeout_ms,

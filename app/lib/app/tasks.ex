@@ -228,7 +228,6 @@ defmodule Prikke.Tasks do
           :schedule_type,
           :cron_expression,
           :scheduled_at,
-          :timezone,
           :enabled,
           :timeout_ms,
           :retry_attempts
@@ -423,7 +422,6 @@ defmodule Prikke.Tasks do
       schedule_type: task.schedule_type,
       cron_expression: task.cron_expression,
       scheduled_at: scheduled_at,
-      timezone: task.timezone,
       timeout_ms: task.timeout_ms,
       retry_attempts: task.retry_attempts,
       callback_url: task.callback_url,

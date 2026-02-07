@@ -451,7 +451,6 @@ defmodule PrikkeWeb.TaskLive.Show do
                   </span>
                   <span class="text-slate-600">{Prikke.Cron.describe(@task.cron_expression)}</span>
                 </div>
-                <p class="text-sm text-slate-500 mt-2">Timezone: {@task.timezone}</p>
               <% else %>
                 <div>
                   <span class="text-slate-900 font-medium">One-time execution</span>

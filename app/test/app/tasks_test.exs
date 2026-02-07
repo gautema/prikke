@@ -85,8 +85,7 @@ defmodule Prikke.TasksTest do
         headers: %{"Authorization" => "Bearer token"},
         body: ~s({"key": "value"}),
         schedule_type: "cron",
-        cron_expression: "0 * * * *",
-        timezone: "UTC"
+        cron_expression: "0 * * * *"
       }
 
       assert {:ok, %Task{} = task} = Tasks.create_task(org, valid_attrs)
@@ -527,7 +526,6 @@ defmodule Prikke.TasksTest do
       assert cloned.body == task.body
       assert cloned.schedule_type == task.schedule_type
       assert cloned.cron_expression == task.cron_expression
-      assert cloned.timezone == task.timezone
       assert cloned.timeout_ms == task.timeout_ms
       assert cloned.retry_attempts == task.retry_attempts
       assert cloned.enabled == true

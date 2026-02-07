@@ -47,11 +47,6 @@ defmodule PrikkeWeb.Schemas do
           nullable: true,
           description: "Scheduled time (for one-time tasks)"
         },
-        timezone: %Schema{
-          type: :string,
-          default: "UTC",
-          description: "Timezone for cron expression"
-        },
         enabled: %Schema{type: :boolean, default: true, description: "Whether the task is enabled"},
         muted: %Schema{type: :boolean, default: false, description: "Whether notifications are muted for this task"},
         timeout_ms: %Schema{
@@ -106,7 +101,6 @@ defmodule PrikkeWeb.Schemas do
         body: ~s({"action": "cleanup"}),
         schedule_type: "cron",
         cron_expression: "0 0 * * *",
-        timezone: "UTC",
         enabled: true,
         timeout_ms: 30000,
         retry_attempts: 3,
@@ -147,7 +141,6 @@ defmodule PrikkeWeb.Schemas do
           nullable: true,
           description: "Required for one-time tasks"
         },
-        timezone: %Schema{type: :string, default: "UTC"},
         enabled: %Schema{type: :boolean, default: true},
         muted: %Schema{type: :boolean, default: false, description: "Mute notifications for this task"},
         timeout_ms: %Schema{type: :integer, default: 30000},
@@ -274,7 +267,7 @@ defmodule PrikkeWeb.Schemas do
         tasks: %Schema{type: :array, items: TaskRequest, description: "List of tasks to sync"},
         monitors: %Schema{
           type: :array,
-          items: MonitorRequest,
+          items: PrikkeWeb.Schemas.MonitorRequest,
           description: "List of monitors to sync"
         },
         delete_removed: %Schema{

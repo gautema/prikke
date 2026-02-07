@@ -25,7 +25,6 @@ defmodule Prikke.TasksFixtures do
         body: ~s({"test": true}),
         schedule_type: "cron",
         cron_expression: "0 * * * *",
-        timezone: "UTC",
         enabled: true,
         retry_attempts: 3,
         timeout_ms: 30000
@@ -54,7 +53,6 @@ defmodule Prikke.TasksFixtures do
         method: "GET",
         schedule_type: "once",
         scheduled_at: scheduled_at,
-        timezone: "UTC",
         enabled: true
       })
 
