@@ -282,22 +282,40 @@ defmodule Prikke.Metrics do
 
   defp get_disk_usage do
     case :disksup.get_disk_data() do
-      [] ->
-        0
-
       disks when is_list(disks) ->
         case List.keyfind(disks, ~c"/", 0) do
-          {_, _, pct} -> pct
-          nil -> 0
+          {_, _, pct} when pct > 0 -> pct
+          _ -> get_disk_usage_from_df()
         end
+
+      _ ->
+        get_disk_usage_from_df()
+    end
+  rescue
+    _ -> 0
+  catch
+    :exit, _ -> 0
+  end
+
+  defp get_disk_usage_from_df do
+    case System.cmd("df", ["/"], stderr_to_stdout: true) do
+      {output, 0} ->
+        output
+        |> String.split("\n")
+        |> Enum.at(1, "")
+        |> String.split(~r/\s+/)
+        |> Enum.find_value(0, fn col ->
+          case Integer.parse(String.replace(col, "%", "")) do
+            {pct, ""} when pct > 0 and pct <= 100 -> pct
+            _ -> nil
+          end
+        end)
 
       _ ->
         0
     end
   rescue
     _ -> 0
-  catch
-    :exit, _ -> 0
   end
 
   defp check_alerts(sample, last_alert_at) do
