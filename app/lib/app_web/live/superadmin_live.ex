@@ -583,7 +583,7 @@ defmodule PrikkeWeb.SuperadminLive do
     <!-- Recent Activity -->
       <div class="grid md:grid-cols-2 gap-8 mb-8">
         <!-- Recent Signups -->
-        <div class="glass-card rounded-2xl p-6 overflow-hidden">
+        <div class="glass-card rounded-2xl p-6">
           <h2 class="text-lg font-semibold text-slate-900 mb-4">Recent Signups</h2>
           <div class="space-y-3">
             <%= for user <- @recent_users do %>
@@ -601,7 +601,7 @@ defmodule PrikkeWeb.SuperadminLive do
         </div>
         
     <!-- Recent Jobs -->
-        <div class="glass-card rounded-2xl p-6 overflow-hidden">
+        <div class="glass-card rounded-2xl p-6">
           <h2 class="text-lg font-semibold text-slate-900 mb-4">Recent Jobs</h2>
           <div class="space-y-3">
             <%= for job <- @recent_jobs do %>
