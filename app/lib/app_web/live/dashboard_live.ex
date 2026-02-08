@@ -5,6 +5,7 @@ defmodule PrikkeWeb.DashboardLive do
   alias Prikke.Tasks
   alias Prikke.Executions
   alias Prikke.Monitors
+  alias Prikke.Endpoints
   alias Prikke.Cron
 
   @impl true
@@ -28,12 +29,15 @@ defmodule PrikkeWeb.DashboardLive do
       Tasks.subscribe_tasks(current_org)
       Executions.subscribe_organization_executions(current_org.id)
       Monitors.subscribe_monitors(current_org)
+      Endpoints.subscribe_endpoints(current_org)
     end
 
     recent_tasks = load_recent_tasks(current_org)
     task_ids = Enum.map(recent_tasks, & &1.id)
     latest_statuses = Executions.get_latest_statuses(task_ids)
     {monitors, monitor_trend} = load_monitors_data(current_org)
+    endpoints = load_endpoints(current_org)
+    host = Application.get_env(:app, PrikkeWeb.Endpoint)[:url][:host] || "runlater.eu"
 
     socket =
       socket
@@ -46,6 +50,8 @@ defmodule PrikkeWeb.DashboardLive do
       |> assign(:latest_statuses, latest_statuses)
       |> assign(:monitors, monitors)
       |> assign(:monitor_trend, monitor_trend)
+      |> assign(:endpoints, endpoints)
+      |> assign(:host, host)
 
     {:ok, socket}
   end
@@ -86,6 +92,18 @@ defmodule PrikkeWeb.DashboardLive do
     {:noreply, socket |> assign(:monitors, monitors) |> assign(:monitor_trend, monitor_trend)}
   end
 
+  def handle_info({:endpoint_created, _endpoint}, socket) do
+    {:noreply, assign(socket, :endpoints, load_endpoints(socket.assigns.current_organization))}
+  end
+
+  def handle_info({:endpoint_updated, _endpoint}, socket) do
+    {:noreply, assign(socket, :endpoints, load_endpoints(socket.assigns.current_organization))}
+  end
+
+  def handle_info({:endpoint_deleted, _endpoint}, socket) do
+    {:noreply, assign(socket, :endpoints, load_endpoints(socket.assigns.current_organization))}
+  end
+
   defp reload_data(socket, org) do
     recent_tasks = load_recent_tasks(org)
     task_ids = Enum.map(recent_tasks, & &1.id)
@@ -98,6 +116,7 @@ defmodule PrikkeWeb.DashboardLive do
     |> assign(:latest_statuses, latest_statuses)
     |> assign(:monitors, monitors)
     |> assign(:monitor_trend, monitor_trend)
+    |> assign(:endpoints, load_endpoints(org))
   end
 
   @impl true
@@ -365,6 +384,68 @@ defmodule PrikkeWeb.DashboardLive do
             </div>
           <% end %>
         </div>
+
+    <!-- Endpoints Section -->
+        <div class="glass-card rounded-2xl mb-4">
+          <div class="px-4 sm:px-6 py-4 border-b border-white/50 flex justify-between items-center gap-2">
+            <div class="flex items-center gap-3">
+              <h2 class="text-lg font-semibold text-slate-900">Endpoints</h2>
+              <%= if @endpoints != [] do %>
+                <.endpoint_summary endpoints={@endpoints} />
+              <% end %>
+            </div>
+            <.link
+              navigate={~p"/endpoints/new"}
+              class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md transition-colors no-underline"
+            >
+              New Endpoint
+            </.link>
+          </div>
+          <%= if @endpoints == [] do %>
+            <div class="p-8 text-center">
+              <p class="text-slate-500 mb-2">No endpoints yet.</p>
+              <.link
+                navigate={~p"/endpoints/new"}
+                class="text-emerald-600 text-sm font-medium hover:underline"
+              >
+                Set up inbound webhooks →
+              </.link>
+            </div>
+          <% else %>
+            <div class="divide-y divide-white/30">
+              <%= for endpoint <- @endpoints do %>
+                <.link
+                  navigate={~p"/endpoints/#{endpoint.id}"}
+                  class="block px-6 py-3 hover:bg-white/50 transition-colors"
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2 min-w-0">
+                      <span class={[
+                        "w-2.5 h-2.5 rounded-full shrink-0",
+                        if(endpoint.enabled, do: "bg-emerald-500", else: "bg-slate-400")
+                      ]} />
+                      <span class="text-sm text-slate-900 truncate">{endpoint.name}</span>
+                      <span class={[
+                        "text-xs font-medium px-2 py-0.5 rounded",
+                        if(endpoint.enabled, do: "bg-emerald-100 text-emerald-700", else: "bg-slate-100 text-slate-600")
+                      ]}>
+                        {if endpoint.enabled, do: "Active", else: "Disabled"}
+                      </span>
+                    </div>
+                    <span class="text-xs text-slate-400 font-mono shrink-0 hidden sm:inline">
+                      /in/{endpoint.slug}
+                    </span>
+                  </div>
+                </.link>
+              <% end %>
+            </div>
+            <div class="px-6 py-3 border-t border-slate-200 text-center">
+              <.link navigate={~p"/endpoints"} class="text-sm text-emerald-600 hover:underline">
+                View all endpoints →
+              </.link>
+            </div>
+          <% end %>
+        </div>
       <% else %>
         <!-- No organization state -->
         <div class="glass-card rounded-2xl p-12 text-center">
@@ -506,6 +587,12 @@ defmodule PrikkeWeb.DashboardLive do
       end
 
     {monitors, monitor_trend}
+  end
+
+  defp load_endpoints(nil), do: []
+
+  defp load_endpoints(organization) do
+    Endpoints.list_endpoints(organization)
   end
 
   defp load_recent_tasks(nil), do: []
@@ -715,6 +802,23 @@ defmodule PrikkeWeb.DashboardLive do
       <% end %>
       <%= if @other > 0 do %>
         <span class="text-slate-400">{@other} other</span>
+      <% end %>
+    </div>
+    """
+  end
+
+  defp endpoint_summary(assigns) do
+    active = Enum.count(assigns.endpoints, & &1.enabled)
+    disabled = length(assigns.endpoints) - active
+    assigns = assign(assigns, %{active: active, disabled: disabled})
+
+    ~H"""
+    <div class="flex items-center gap-2 text-xs">
+      <%= if @active > 0 do %>
+        <span class="text-emerald-600 font-medium">{@active} active</span>
+      <% end %>
+      <%= if @disabled > 0 do %>
+        <span class="text-slate-400">{@disabled} disabled</span>
       <% end %>
     </div>
     """

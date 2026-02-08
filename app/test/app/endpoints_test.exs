@@ -162,9 +162,9 @@ defmodule Prikke.EndpointsTest do
       assert event.execution_id != nil
     end
 
-    test "creates task with endpoint slug as queue" do
+    test "creates task with slugified endpoint name as queue" do
       org = organization_fixture()
-      endpoint = endpoint_fixture(org)
+      endpoint = endpoint_fixture(org, %{name: "Stripe Webhooks"})
 
       {:ok, event} =
         Endpoints.receive_event(endpoint, %{
@@ -175,7 +175,7 @@ defmodule Prikke.EndpointsTest do
         })
 
       execution = Prikke.Repo.preload(event, execution: :task).execution
-      assert execution.task.queue == endpoint.slug
+      assert execution.task.queue == "stripe-webhooks"
       assert execution.task.url == endpoint.forward_url
       assert execution.task.method == "POST"
     end

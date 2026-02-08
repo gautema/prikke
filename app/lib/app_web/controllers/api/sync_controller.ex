@@ -1,6 +1,6 @@
 defmodule PrikkeWeb.Api.SyncController do
   @moduledoc """
-  Declarative synchronization endpoint for tasks and monitors.
+  Declarative synchronization endpoint for tasks, monitors, and endpoints.
 
   PUT /api/sync
 
@@ -14,6 +14,7 @@ defmodule PrikkeWeb.Api.SyncController do
   {
     "tasks": [...],
     "monitors": [...],
+    "endpoints": [...],
     "delete_removed": false
   }
   ```
@@ -25,13 +26,15 @@ defmodule PrikkeWeb.Api.SyncController do
   - If it doesn't exist, it's created
   - If `delete_removed: true`, resources not in the list are deleted
   - Returns a summary of changes made
-  - At least one of `tasks` or `monitors` must be provided
+  - At least one of `tasks`, `monitors`, or `endpoints` must be provided
+  - Only recurring (cron) tasks are synced; one-time and queued tasks are skipped
   """
   use PrikkeWeb, :controller
   use OpenApiSpex.ControllerSpecs
 
   alias Prikke.Tasks
   alias Prikke.Monitors
+  alias Prikke.Endpoints
   alias Prikke.Repo
   alias PrikkeWeb.Schemas
 
@@ -41,14 +44,15 @@ defmodule PrikkeWeb.Api.SyncController do
   security([%{"bearerAuth" => []}])
 
   operation(:sync,
-    summary: "Sync tasks and monitors declaratively",
+    summary: "Sync tasks, monitors, and endpoints declaratively",
     description: """
     Declarative synchronization. Resources are matched by name:
     - If a resource exists with that name, it's updated
     - If no resource exists, it's created
     - If `delete_removed: true`, resources not in the list are deleted
 
-    At least one of `tasks` or `monitors` must be provided.
+    At least one of `tasks`, `monitors`, or `endpoints` must be provided.
+    Only recurring (cron) tasks are synced; one-time and queued tasks are skipped.
     Ideal for CI/CD pipelines where definitions are stored in code.
     """,
     request_body: {"Sync request", "application/json", Schemas.SyncRequest},
@@ -62,17 +66,19 @@ defmodule PrikkeWeb.Api.SyncController do
   def sync(conn, params) do
     tasks_params = params["tasks"]
     monitors_params = params["monitors"]
+    endpoints_params = params["endpoints"]
 
     has_tasks = is_list(tasks_params)
     has_monitors = is_list(monitors_params)
+    has_endpoints = is_list(endpoints_params)
 
-    if not has_tasks and not has_monitors do
+    if not has_tasks and not has_monitors and not has_endpoints do
       conn
       |> put_status(:bad_request)
       |> json(%{
         error: %{
           code: "bad_request",
-          message: "Request body must include 'tasks' and/or 'monitors' array"
+          message: "Request body must include 'tasks', 'monitors', and/or 'endpoints' array"
         }
       })
     else
@@ -96,7 +102,14 @@ defmodule PrikkeWeb.Api.SyncController do
               empty_summary()
             end
 
-          %{tasks: tasks_summary, monitors: monitors_summary}
+          endpoints_summary =
+            if has_endpoints do
+              sync_endpoints(org, endpoints_params, delete_removed)
+            else
+              empty_summary()
+            end
+
+          %{tasks: tasks_summary, monitors: monitors_summary, endpoints: endpoints_summary}
         end)
 
       case result do
@@ -105,7 +118,8 @@ defmodule PrikkeWeb.Api.SyncController do
           data =
             Map.merge(summary.tasks, %{
               tasks: summary.tasks,
-              monitors: summary.monitors
+              monitors: summary.monitors,
+              endpoints: summary.endpoints
             })
 
           json(conn, %{
@@ -256,6 +270,69 @@ defmodule PrikkeWeb.Api.SyncController do
     end
   end
 
+  defp sync_endpoints(org, endpoints_params, delete_removed) do
+    existing_endpoints = Endpoints.list_endpoints(org) |> Map.new(&{&1.name, &1})
+    declared_names = MapSet.new(endpoints_params, & &1["name"])
+
+    {created, updated, errors} =
+      Enum.reduce(endpoints_params, {[], [], []}, fn endpoint_params, {created, updated, errors} ->
+        name = endpoint_params["name"]
+
+        if is_nil(name) or name == "" do
+          {created, updated, [%{name: name, error: "name is required"} | errors]}
+        else
+          case Map.get(existing_endpoints, name) do
+            nil ->
+              case Endpoints.create_endpoint(org, endpoint_params) do
+                {:ok, endpoint} ->
+                  {[endpoint.name | created], updated, errors}
+
+                {:error, changeset} ->
+                  {created, updated,
+                   [%{name: name, error: format_changeset_error(changeset)} | errors]}
+              end
+
+            existing_endpoint ->
+              case Endpoints.update_endpoint(org, existing_endpoint, endpoint_params) do
+                {:ok, _endpoint} ->
+                  {created, [name | updated], errors}
+
+                {:error, changeset} ->
+                  {created, updated,
+                   [%{name: name, error: format_changeset_error(changeset)} | errors]}
+              end
+          end
+        end
+      end)
+
+    deleted =
+      if delete_removed do
+        existing_endpoints
+        |> Enum.filter(fn {name, _endpoint} -> not MapSet.member?(declared_names, name) end)
+        |> Enum.reduce([], fn {name, endpoint}, deleted ->
+          case Endpoints.delete_endpoint(org, endpoint) do
+            {:ok, _} -> [name | deleted]
+            {:error, _} -> deleted
+          end
+        end)
+      else
+        []
+      end
+
+    if errors != [] do
+      Repo.rollback(%{errors: Enum.reverse(errors)})
+    else
+      %{
+        created: Enum.reverse(created),
+        updated: Enum.reverse(updated),
+        deleted: Enum.reverse(deleted),
+        created_count: length(created),
+        updated_count: length(updated),
+        deleted_count: length(deleted)
+      }
+    end
+  end
+
   defp format_changeset_error(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
       Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
@@ -266,12 +343,12 @@ defmodule PrikkeWeb.Api.SyncController do
     |> Enum.join("; ")
   end
 
-  defp format_summary_message(%{tasks: tasks, monitors: monitors}) do
+  defp format_summary_message(%{tasks: tasks, monitors: monitors, endpoints: endpoints}) do
     parts = []
 
-    total_created = tasks.created_count + monitors.created_count
-    total_updated = tasks.updated_count + monitors.updated_count
-    total_deleted = tasks.deleted_count + monitors.deleted_count
+    total_created = tasks.created_count + monitors.created_count + endpoints.created_count
+    total_updated = tasks.updated_count + monitors.updated_count + endpoints.updated_count
+    total_deleted = tasks.deleted_count + monitors.deleted_count + endpoints.deleted_count
 
     parts = if total_created > 0, do: ["#{total_created} created" | parts], else: parts
     parts = if total_updated > 0, do: ["#{total_updated} updated" | parts], else: parts

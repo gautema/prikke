@@ -235,13 +235,23 @@ defmodule PrikkeWeb.EndpointLive.Show do
                 <span class="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded font-mono shrink-0">
                   {event.method}
                 </span>
-                <span class="text-sm text-slate-700 flex-1">
+                <span class="text-sm text-slate-700 flex-1 min-w-0">
                   <.local_time id={"event-#{event.id}"} datetime={event.received_at} />
+                  <%= if event.source_ip do %>
+                    <span class="text-slate-400 text-xs ml-1">from {event.source_ip}</span>
+                  <% end %>
                 </span>
                 <%= if event.execution do %>
-                  <span class={["text-xs font-medium px-2 py-0.5 rounded", execution_status_badge(event.execution.status)]}>
+                  <span class={["text-xs font-medium px-2 py-0.5 rounded shrink-0", execution_status_badge(event.execution.status)]}>
                     {event.execution.status}
                   </span>
+                  <.link
+                    navigate={~p"/tasks/#{event.execution.task_id}"}
+                    class="text-xs text-slate-500 hover:text-slate-700 font-medium shrink-0"
+                    title="View forwarding task"
+                  >
+                    View Task
+                  </.link>
                 <% end %>
                 <button
                   type="button"

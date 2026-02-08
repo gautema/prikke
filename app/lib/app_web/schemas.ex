@@ -277,19 +277,29 @@ defmodule PrikkeWeb.Schemas do
 
     OpenApiSpex.schema(%{
       title: "SyncRequest",
-      description: "Request body for declarative sync of tasks and/or monitors",
+      description:
+        "Request body for declarative sync of tasks, monitors, and/or endpoints",
       type: :object,
       properties: %{
-        tasks: %Schema{type: :array, items: TaskRequest, description: "List of tasks to sync"},
+        tasks: %Schema{
+          type: :array,
+          items: TaskRequest,
+          description: "List of recurring (cron) tasks to sync"
+        },
         monitors: %Schema{
           type: :array,
           items: PrikkeWeb.Schemas.MonitorRequest,
           description: "List of monitors to sync"
         },
+        endpoints: %Schema{
+          type: :array,
+          items: PrikkeWeb.Schemas.EndpointRequest,
+          description: "List of inbound endpoints to sync"
+        },
         delete_removed: %Schema{
           type: :boolean,
           default: false,
-          description: "Delete tasks/monitors not in the list"
+          description: "Delete resources not in the list"
         }
       },
       example: %{
@@ -306,6 +316,12 @@ defmodule PrikkeWeb.Schemas do
             name: "Heartbeat",
             schedule_type: "interval",
             interval_seconds: 300
+          }
+        ],
+        endpoints: [
+          %{
+            name: "Stripe webhooks",
+            forward_url: "https://myapp.com/webhooks/stripe"
           }
         ],
         delete_removed: false
@@ -344,6 +360,7 @@ defmodule PrikkeWeb.Schemas do
           properties: %{
             tasks: SyncResourceResult,
             monitors: SyncResourceResult,
+            endpoints: SyncResourceResult,
             created: %Schema{
               type: :array,
               items: %Schema{type: :string},

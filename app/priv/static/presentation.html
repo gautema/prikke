@@ -261,7 +261,7 @@ p {
   <p class="section-label"></p>
   <p class="title">Building Runlater with AI</p>
   <p class="subtitle">From idea to production in 3 days</p>
-  <p style="color: #94a3b8; margin-top: 48px; font-size: 16px;">537 tests · ~28k lines · 0 lines I typed</p>
+  <p style="color: #94a3b8; margin-top: 48px; font-size: 16px;">681 tests · ~28k lines · 0 lines I typed</p>
 </div>
 
 <!-- Slide 2: The Experiment -->
@@ -313,11 +313,12 @@ p {
   <p class="title">What Runlater Does</p>
   <div class="content">
     <ul>
-      <li><b>Cron jobs</b> — Schedule recurring tasks with cron expressions. Daily reports, hourly syncs.</li>
-      <li><b>One-time jobs</b> — Run once at specific time. Scheduled notifications, delayed processing.</li>
-      <li><b>Job queues</b> — Push via API for immediate execution. Fire and forget.</li>
-      <li><b>Automatic retries</b> — Exponential backoff on failure. Your task runs even when things go wrong.</li>
-      <li><b>Cron monitoring</b> — Dead man's switch. Expect periodic pings, alert if they stop.</li>
+      <li><b>Async messaging</b> — Push a task and we run it immediately. Offload work from your request cycle.</li>
+      <li><b>Delays</b> — Schedule a task for any time in the future. Send a reminder in 24 hours, expire a trial in 14 days.</li>
+      <li><b>Crons & monitoring</b> — Recurring jobs with cron expressions and built-in dead man's switch — alerts when jobs stop running.</li>
+      <li><b>Named queues</b> — Serial execution per queue. Tasks in the same queue run one at a time. Perfect for payments and rate limits.</li>
+      <li><b>Retries & callbacks</b> — Exponential backoff on failure, up to 10 attempts. POST the result back to your endpoint on completion.</li>
+      <li><b>Inbound endpoints</b> — Receive webhooks from Stripe, GitHub, or any service. Store, forward with retries, and replay from the dashboard.</li>
     </ul>
     <p style="margin-top: 40px;"><span class="hl" style="font-weight: 600;">Hosted in Europe · GDPR native · Data never leaves the EU</span></p>
   </div>
@@ -411,7 +412,7 @@ p {
         <div class="label">lines of code</div>
       </div>
       <div class="stat">
-        <div class="number">537</div>
+        <div class="number">681</div>
         <div class="label">tests</div>
       </div>
       <div class="stat">
@@ -439,14 +440,15 @@ p {
     <div>
       <h2>Core Product</h2>
       <ul>
-        <li><b>Cron scheduling</b> — Recurring jobs with timezone support</li>
-        <li><b>One-time jobs</b> — Run once at specific time</li>
-        <li><b>Job queues</b> — Immediate execution via API</li>
+        <li><b>Cron scheduling</b> — Recurring tasks with timezone support</li>
+        <li><b>One-time tasks</b> — Run once at specific time</li>
+        <li><b>Named queues</b> — Immediate execution via API, organized by queue</li>
         <li><b>Automatic retries</b> — Exponential backoff on failure</li>
+        <li><b>Inbound endpoints</b> — Receive webhooks with retries, replay, in-order delivery</li>
+        <li><b>Cron monitoring</b> — Dead man's switch, alerts if pings stop</li>
         <li><b>Declarative sync</b> — PUT /api/sync for CI/CD pipelines</li>
         <li><b>Webhook signing</b> — HMAC-SHA256 per organization</li>
-        <li><b>Cron monitoring</b> — Dead man's switch, alerts if pings stop</li>
-        <li><b>Notification muting</b> — Silence noisy jobs/monitors individually</li>
+        <li><b>Notification muting</b> — Silence noisy tasks/monitors individually</li>
         <li><b>REST API + OpenAPI</b> — Full API with Swagger docs</li>
       </ul>
     </div>
@@ -456,10 +458,12 @@ p {
         <li><b>Auth</b> — Magic link login, API keys</li>
         <li><b>Organizations</b> — Teams, invites, roles</li>
         <li><b>Real-time dashboard</b> — LiveView with execution history</li>
+        <li><b>Task list filtering</b> — Filter by queue, type, and status</li>
         <li><b>Audit logging</b> — Every action tracked</li>
+        <li><b>Superadmin dashboard</b> — System health, CPU, memory, BEAM metrics</li>
         <li><b>SSRF protection</b> — Blocks private IPs in URLs</li>
         <li><b>Rate limiting</b> — IP-based with configurable limits</li>
-        <li><b>Auto-cleanup</b> — Tier-based retention, stale job recovery</li>
+        <li><b>Auto-cleanup</b> — Tier-based retention, stale task recovery</li>
       </ul>
     </div>
   </div>
@@ -539,7 +543,7 @@ p {
     <ul>
       <li><b>Big technical tasks shine</b> — Scheduler, worker pool, API auth. Complex features done fast and correct.</li>
       <li><b>CLAUDE.md is essential</b> — Detailed context file. Stack, architecture, conventions. AI reads and follows.</li>
-      <li><b>Tests enable velocity</b> — 371 tests catch regressions. AI writes tests too. Pre-commit hook enforces.</li>
+      <li><b>Tests enable velocity</b> — 681 tests catch regressions. AI writes tests too. Pre-commit hook enforces.</li>
       <li><b>Describe intent, not steps</b> — Tell what you want, not how. "Add rate limiting" > step-by-step instructions.</li>
     </ul>
   </div>

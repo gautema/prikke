@@ -199,7 +199,7 @@ defmodule Prikke.Endpoints do
         "enabled" => true,
         "timeout_ms" => 30_000,
         "retry_attempts" => 5,
-        "queue" => endpoint.slug
+        "queue" => slugify_name(endpoint.name)
       }
 
       {:ok, task} = Tasks.create_task(org, task_attrs)
@@ -248,6 +248,14 @@ defmodule Prikke.Endpoints do
   end
 
   ## Private
+
+  defp slugify_name(name) do
+    name
+    |> String.downcase()
+    |> String.replace(~r/[^a-z0-9\s-]/, "")
+    |> String.replace(~r/\s+/, "-")
+    |> String.trim("-")
+  end
 
   defp check_endpoint_limit(%Organization{tier: tier} = org) do
     limits = get_tier_limits(tier)

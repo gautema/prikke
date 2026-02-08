@@ -4,10 +4,12 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
   import Prikke.AccountsFixtures
   import Prikke.TasksFixtures
   import Prikke.MonitorsFixtures
+  import Prikke.EndpointsFixtures
 
   alias Prikke.Accounts
   alias Prikke.Tasks
   alias Prikke.Monitors
+  alias Prikke.Endpoints
 
   setup %{conn: conn} do
     org = organization_fixture()
@@ -390,6 +392,173 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
       assert response["data"]["tasks"]["created_count"] == 0
 
       assert length(Monitors.list_monitors(org)) == 1
+    end
+
+    test "can sync only endpoints", %{conn: conn, org: org} do
+      params = %{
+        "endpoints" => [
+          %{
+            "name" => "Stripe webhooks",
+            "forward_url" => "https://myapp.com/webhooks/stripe"
+          }
+        ]
+      }
+
+      conn = put(conn, ~p"/api/v1/sync", params)
+      response = json_response(conn, 200)
+
+      assert response["data"]["endpoints"]["created_count"] == 1
+      assert "Stripe webhooks" in response["data"]["endpoints"]["created"]
+      assert response["data"]["tasks"]["created_count"] == 0
+      assert response["data"]["monitors"]["created_count"] == 0
+
+      assert length(Endpoints.list_endpoints(org)) == 1
+    end
+
+    test "syncs tasks, monitors, and endpoints together", %{conn: conn} do
+      params = %{
+        "tasks" => [
+          %{
+            "name" => "My Task",
+            "url" => "https://example.com/task",
+            "schedule_type" => "cron",
+            "cron_expression" => "0 * * * *"
+          }
+        ],
+        "monitors" => [
+          %{
+            "name" => "My Monitor",
+            "schedule_type" => "interval",
+            "interval_seconds" => 300
+          }
+        ],
+        "endpoints" => [
+          %{
+            "name" => "My Endpoint",
+            "forward_url" => "https://myapp.com/hooks"
+          }
+        ]
+      }
+
+      conn = put(conn, ~p"/api/v1/sync", params)
+      response = json_response(conn, 200)
+
+      assert response["data"]["tasks"]["created_count"] == 1
+      assert response["data"]["monitors"]["created_count"] == 1
+      assert response["data"]["endpoints"]["created_count"] == 1
+      assert response["message"] == "Sync complete: 3 created"
+    end
+  end
+
+  describe "PUT /api/v1/sync - endpoints" do
+    test "creates new endpoints", %{conn: conn, org: org} do
+      params = %{
+        "endpoints" => [
+          %{
+            "name" => "Stripe webhooks",
+            "forward_url" => "https://myapp.com/webhooks/stripe"
+          },
+          %{
+            "name" => "GitHub webhooks",
+            "forward_url" => "https://myapp.com/webhooks/github"
+          }
+        ]
+      }
+
+      conn = put(conn, ~p"/api/v1/sync", params)
+      response = json_response(conn, 200)
+
+      assert response["data"]["endpoints"]["created_count"] == 2
+      assert "Stripe webhooks" in response["data"]["endpoints"]["created"]
+      assert "GitHub webhooks" in response["data"]["endpoints"]["created"]
+
+      endpoints = Endpoints.list_endpoints(org)
+      assert length(endpoints) == 2
+    end
+
+    test "updates existing endpoints", %{conn: conn, org: org} do
+      endpoint_fixture(org, %{name: "Existing Endpoint"})
+
+      params = %{
+        "endpoints" => [
+          %{
+            "name" => "Existing Endpoint",
+            "forward_url" => "https://new-url.com/hooks"
+          }
+        ]
+      }
+
+      conn = put(conn, ~p"/api/v1/sync", params)
+      response = json_response(conn, 200)
+
+      assert response["data"]["endpoints"]["created_count"] == 0
+      assert response["data"]["endpoints"]["updated_count"] == 1
+      assert "Existing Endpoint" in response["data"]["endpoints"]["updated"]
+
+      [endpoint] = Endpoints.list_endpoints(org)
+      assert endpoint.forward_url == "https://new-url.com/hooks"
+    end
+
+    test "deletes removed endpoints when delete_removed is true", %{conn: conn, org: org} do
+      endpoint_fixture(org, %{name: "Keep This"})
+      endpoint_fixture(org, %{name: "Delete This"})
+
+      params = %{
+        "endpoints" => [
+          %{
+            "name" => "Keep This",
+            "forward_url" => "https://example.com/hooks"
+          }
+        ],
+        "delete_removed" => true
+      }
+
+      conn = put(conn, ~p"/api/v1/sync", params)
+      response = json_response(conn, 200)
+
+      assert response["data"]["endpoints"]["deleted_count"] == 1
+      assert "Delete This" in response["data"]["endpoints"]["deleted"]
+
+      endpoints = Endpoints.list_endpoints(org)
+      assert length(endpoints) == 1
+      assert hd(endpoints).name == "Keep This"
+    end
+
+    test "does not delete removed endpoints by default", %{conn: conn, org: org} do
+      endpoint_fixture(org, %{name: "Existing Endpoint"})
+
+      params = %{
+        "endpoints" => [
+          %{
+            "name" => "New Endpoint",
+            "forward_url" => "https://example.com/hooks"
+          }
+        ]
+      }
+
+      conn = put(conn, ~p"/api/v1/sync", params)
+      response = json_response(conn, 200)
+
+      assert response["data"]["endpoints"]["deleted_count"] == 0
+
+      endpoints = Endpoints.list_endpoints(org)
+      assert length(endpoints) == 2
+    end
+
+    test "returns error for invalid endpoints", %{conn: conn} do
+      params = %{
+        "endpoints" => [
+          %{
+            "name" => "",
+            "forward_url" => "not-a-url"
+          }
+        ]
+      }
+
+      conn = put(conn, ~p"/api/v1/sync", params)
+      response = json_response(conn, 422)
+
+      assert response["error"]["code"] == "validation_error"
     end
   end
 end
