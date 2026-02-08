@@ -32,6 +32,7 @@ defmodule PrikkeWeb.Router do
     get "/docs/cron", DocsController, :cron
     get "/docs/webhooks", DocsController, :webhooks
     get "/docs/monitors", DocsController, :monitors
+    get "/docs/endpoints", DocsController, :endpoints
     get "/use-cases", DocsController, :use_cases
 
     # Public status page
@@ -58,6 +59,13 @@ defmodule PrikkeWeb.Router do
 
     get "/:token", PingController, :ping
     post "/:token", PingController, :ping
+  end
+
+  # Inbound webhook endpoint (public, slug is auth)
+  scope "/in", PrikkeWeb do
+    pipe_through :api
+
+    match :*, "/:slug", InboundController, :receive
   end
 
   # API routes - authenticated via API keys
@@ -87,6 +95,12 @@ defmodule PrikkeWeb.Router do
     # Monitors CRUD
     resources "/monitors", MonitorController, except: [:new, :edit] do
       get "/pings", MonitorController, :pings
+    end
+
+    # Endpoints CRUD
+    resources "/endpoints", EndpointController, except: [:new, :edit] do
+      get "/events", EndpointController, :events
+      post "/events/:event_id/replay", EndpointController, :replay
     end
 
     # Declarative sync
@@ -137,6 +151,11 @@ defmodule PrikkeWeb.Router do
       live "/monitors/new", MonitorLive.New, :new
       live "/monitors/:id", MonitorLive.Show, :show
       live "/monitors/:id/edit", MonitorLive.Edit, :edit
+
+      live "/endpoints", EndpointLive.Index, :index
+      live "/endpoints/new", EndpointLive.New, :new
+      live "/endpoints/:id", EndpointLive.Show, :show
+      live "/endpoints/:id/edit", EndpointLive.Edit, :edit
     end
 
     get "/users/settings", UserSettingsController, :edit

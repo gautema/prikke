@@ -1,0 +1,298 @@
+<.docs_layout current_scope={@current_scope}>
+  <h1>Inbound Endpoints</h1>
+  <p class="text-xl text-slate-600 mb-10">
+    Receive webhooks from external services, store every payload, and forward them to your app with retries and in-order delivery.
+  </p>
+
+  <h2>How It Works</h2>
+  <p>
+    Create an endpoint and you get a unique URL. Point external services (Stripe, GitHub, etc.) at that URL. When a webhook arrives, Runlater stores the raw payload and forwards it to your app — with automatic retries if your server is down.
+  </p>
+  <ol>
+    <li>Create an endpoint with a name and forward URL</li>
+    <li>Copy the inbound URL and paste it into Stripe, GitHub, or any service</li>
+    <li>Runlater receives the webhook, stores the full payload, and forwards it to your app</li>
+    <li>If forwarding fails, we retry with exponential backoff</li>
+    <li>Events in the same endpoint are delivered in order (concurrency 1)</li>
+  </ol>
+
+  <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded-r-lg my-6">
+    <strong class="text-emerald-800">Why use this?</strong>
+    <span class="text-emerald-700">
+      External services don't retry forever. If your server is down when Stripe sends a webhook, you lose it. Runlater acts as a buffer — we always accept the webhook and forward it when your server is ready.
+    </span>
+  </div>
+
+  <h2>Quick Start</h2>
+  <h3>1. Create an endpoint</h3>
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      cURL
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">https://runlater.eu/api/v1/endpoints</span> \
+  -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span> \
+  -H <span class="text-green-300">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Stripe webhooks"</span>,
+    <span class="text-sky-300">"forward_url"</span>: <span class="text-green-300">"https://myapp.com/webhooks/stripe"</span>
+  }'</pre>
+  </div>
+  <p>
+    The response includes an <code class="bg-slate-100 px-2 py-1 rounded text-sm">inbound_url</code>
+    — this is the URL you give to Stripe (or any external service).
+  </p>
+
+  <h3>2. Configure the external service</h3>
+  <p>
+    Copy the inbound URL and paste it into the webhook settings of the external service.
+    The URL looks like:
+  </p>
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <pre
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >https://runlater.eu/in/ep_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</pre>
+  </div>
+
+  <h3>3. Webhooks start flowing</h3>
+  <p>
+    Every request to the inbound URL is stored and forwarded to your
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">forward_url</code>.
+    The original HTTP method, headers, and body are preserved.
+  </p>
+
+  <h2>In-Order Delivery</h2>
+  <p>
+    Events within the same endpoint are forwarded one at a time, in the order they were received.
+    This is critical for services like Stripe, where processing a refund before the original charge would cause errors.
+  </p>
+  <p>
+    Under the hood, each endpoint uses a <a href="/docs/api" class="text-emerald-600 hover:underline">named queue</a>
+    (the endpoint slug) to guarantee serial execution.
+  </p>
+
+  <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg my-6">
+    <strong class="text-amber-800">Note:</strong>
+    <span class="text-amber-700">
+      If an event fails to forward, it blocks subsequent events in the same endpoint until it succeeds or exhausts retries. This ensures strict ordering.
+    </span>
+  </div>
+
+  <h2>Event Replay</h2>
+  <p>
+    Every inbound event is stored with the full request payload. You can replay any event
+    from the dashboard or via the API — useful for reprocessing after a bug fix.
+  </p>
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      cURL
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">https://runlater.eu/api/v1/endpoints/:id/events/:event_id/replay</span> \
+  -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span></pre>
+  </div>
+
+  <h2>Inbound URL</h2>
+  <p>
+    The inbound URL accepts any HTTP method (GET, POST, PUT, PATCH, DELETE). No authentication
+    is needed — the slug in the URL is the authentication, just like monitor ping tokens.
+  </p>
+
+  <h3>Responses</h3>
+  <div class="overflow-x-auto my-6">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-white/50">
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Status</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Body</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Meaning</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600">
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-emerald-600">200</code></td>
+          <td class="py-3 px-4" phx-no-curly-interpolation>
+            <code class="text-sm">{"id": "...", "status": "received"}</code>
+          </td>
+          <td class="py-3 px-4">Event stored and queued for forwarding</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-red-600">404</code></td>
+          <td class="py-3 px-4" phx-no-curly-interpolation>
+            <code class="text-sm">{"error": "Not found"}</code>
+          </td>
+          <td class="py-3 px-4">Invalid slug</td>
+        </tr>
+        <tr>
+          <td class="py-3 px-4"><code class="text-amber-600">410</code></td>
+          <td class="py-3 px-4" phx-no-curly-interpolation>
+            <code class="text-sm">{"error": "Endpoint disabled"}</code>
+          </td>
+          <td class="py-3 px-4">Endpoint is disabled</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Endpoints API</h2>
+  <p>
+    Manage endpoints programmatically via the REST API. All endpoints require an API key
+    passed as a Bearer token. See the
+    <a href="/docs/api" class="text-emerald-600 hover:underline">API Reference</a>
+    for authentication details.
+  </p>
+
+  <h3>List Endpoints</h3>
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      cURL
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl <span class="text-green-300">https://runlater.eu/api/v1/endpoints</span> \
+  -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span></pre>
+  </div>
+
+  <h3>Create Endpoint</h3>
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      cURL
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">https://runlater.eu/api/v1/endpoints</span> \
+  -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span> \
+  -H <span class="text-green-300">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="text-sky-300">"name"</span>: <span class="text-green-300">"GitHub webhooks"</span>,
+    <span class="text-sky-300">"forward_url"</span>: <span class="text-green-300">"https://myapp.com/webhooks/github"</span>
+  }'</pre>
+  </div>
+
+  <h3>Get Endpoint</h3>
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      cURL
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl <span class="text-green-300">https://runlater.eu/api/v1/endpoints/:id</span> \
+  -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span></pre>
+  </div>
+
+  <h3>Update Endpoint</h3>
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      cURL
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X <span class="text-purple-300">PUT</span> <span class="text-green-300">https://runlater.eu/api/v1/endpoints/:id</span> \
+  -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span> \
+  -H <span class="text-green-300">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Updated Name"</span>,
+    <span class="text-sky-300">"forward_url"</span>: <span class="text-green-300">"https://myapp.com/webhooks/new-url"</span>
+  }'</pre>
+  </div>
+
+  <h3>Delete Endpoint</h3>
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      cURL
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X <span class="text-purple-300">DELETE</span> <span class="text-green-300">https://runlater.eu/api/v1/endpoints/:id</span> \
+  -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span></pre>
+  </div>
+
+  <h3>List Events</h3>
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      cURL
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl <span class="text-green-300">https://runlater.eu/api/v1/endpoints/:id/events</span> \
+  -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span></pre>
+  </div>
+
+  <h3>Replay Event</h3>
+  <div class="glass-card rounded-2xl overflow-hidden my-6">
+    <div class="px-5 py-3 text-xs text-slate-400 bg-slate-800 border-b border-slate-700">
+      cURL
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">https://runlater.eu/api/v1/endpoints/:id/events/:event_id/replay</span> \
+  -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span></pre>
+  </div>
+
+  <p>
+    For the full API specification including request/response schemas, visit the <a
+      href="/api/v1/docs"
+      class="text-emerald-600 hover:underline"
+    >interactive API docs</a>.
+  </p>
+
+  <h2>Use Cases</h2>
+  <div class="grid gap-4 my-6">
+    <div class="glass-card rounded-2xl p-5">
+      <h3 class="text-base font-semibold mb-2 text-slate-900">Stripe webhooks</h3>
+      <p class="text-[15px] text-slate-500 m-0">
+        Never miss a payment event. Runlater buffers Stripe webhooks and forwards them to your app,
+        even during deployments or downtime.
+      </p>
+    </div>
+    <div class="glass-card rounded-2xl p-5">
+      <h3 class="text-base font-semibold mb-2 text-slate-900">GitHub / GitLab events</h3>
+      <p class="text-[15px] text-slate-500 m-0">
+        Receive push, PR, and issue events reliably. Replay events to reprocess after a bug fix.
+      </p>
+    </div>
+    <div class="glass-card rounded-2xl p-5">
+      <h3 class="text-base font-semibold mb-2 text-slate-900">Third-party integrations</h3>
+      <p class="text-[15px] text-slate-500 m-0">
+        Any service that sends webhooks — Shopify, Twilio, SendGrid, Slack — can be received and
+        forwarded with full history and retry support.
+      </p>
+    </div>
+  </div>
+
+  <h2>Tier Limits</h2>
+  <div class="overflow-x-auto my-6">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-white/50">
+          <th class="text-left py-3 px-4 font-semibold text-slate-700"></th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Free</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Pro</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600">
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4 font-medium text-slate-700">Endpoints</td>
+          <td class="py-3 px-4">3</td>
+          <td class="py-3 px-4">Unlimited</td>
+        </tr>
+        <tr>
+          <td class="py-3 px-4 font-medium text-slate-700">Event history</td>
+          <td class="py-3 px-4">7 days</td>
+          <td class="py-3 px-4">30 days</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</.docs_layout>

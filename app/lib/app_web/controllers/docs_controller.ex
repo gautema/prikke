@@ -37,4 +37,8 @@ defmodule PrikkeWeb.DocsController do
   def use_cases(conn, _params) do
     render(conn, :use_cases, page_title: "Use Cases")
   end
+
+  def endpoints(conn, _params) do
+    render(conn, :endpoints, page_title: "Inbound Endpoints")
+  end
 end

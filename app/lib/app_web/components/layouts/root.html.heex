@@ -129,6 +129,12 @@
                 >
                   Monitors
                 </.link>
+                <.link
+                  href={~p"/endpoints"}
+                  class="text-sm font-medium text-slate-600 hover:text-emerald-600 px-3 py-1.5 rounded-md hover:bg-slate-100/60 transition-colors"
+                >
+                  Endpoints
+                </.link>
                 <span class="w-px h-5 bg-slate-200 mx-1"></span>
                 <!-- Org Switcher -->
                 <%= if assigns[:organizations] && length(@organizations) > 0 do %>
@@ -265,6 +271,9 @@
               </.link>
               <.link href={~p"/monitors"} class="block py-3 text-base font-medium text-slate-700">
                 Monitors
+              </.link>
+              <.link href={~p"/endpoints"} class="block py-3 text-base font-medium text-slate-700">
+                Endpoints
               </.link>
               <%= if assigns[:organizations] && length(@organizations) > 0 do %>
                 <div class="py-2 border-t border-slate-100">

@@ -584,6 +584,135 @@ defmodule PrikkeWeb.Schemas do
     })
   end
 
+  defmodule EndpointSchema do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "Endpoint",
+      description: "An inbound webhook endpoint",
+      type: :object,
+      required: [:id, :name, :slug, :forward_url],
+      properties: %{
+        id: %Schema{type: :string, format: :uuid, description: "Endpoint ID"},
+        name: %Schema{type: :string, description: "Endpoint name"},
+        slug: %Schema{type: :string, description: "Unique slug for inbound URL"},
+        inbound_url: %Schema{type: :string, format: :uri, description: "Full inbound URL"},
+        forward_url: %Schema{type: :string, format: :uri, description: "URL to forward events to"},
+        enabled: %Schema{type: :boolean, default: true, description: "Whether the endpoint is active"},
+        inserted_at: %Schema{type: :string, format: :"date-time", description: "Creation timestamp"},
+        updated_at: %Schema{type: :string, format: :"date-time", description: "Last update timestamp"}
+      },
+      example: %{
+        id: "019c0123-4567-7890-abcd-ef1234567890",
+        name: "Stripe webhooks",
+        slug: "ep_abc123def456ghi789jkl012mno345",
+        inbound_url: "https://runlater.eu/in/ep_abc123def456ghi789jkl012mno345",
+        forward_url: "https://myapp.com/webhooks/stripe",
+        enabled: true,
+        inserted_at: "2026-01-29T10:00:00Z",
+        updated_at: "2026-01-29T10:00:00Z"
+      }
+    })
+  end
+
+  defmodule EndpointRequest do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "EndpointRequest",
+      description: "Request body for creating or updating an endpoint",
+      type: :object,
+      required: [:name, :forward_url],
+      properties: %{
+        name: %Schema{type: :string, description: "Endpoint name"},
+        forward_url: %Schema{type: :string, format: :uri, description: "URL to forward events to"},
+        enabled: %Schema{type: :boolean, default: true}
+      },
+      example: %{
+        name: "Stripe webhooks",
+        forward_url: "https://myapp.com/webhooks/stripe"
+      }
+    })
+  end
+
+  defmodule EndpointResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "EndpointResponse",
+      description: "Response containing an endpoint",
+      type: :object,
+      properties: %{
+        data: EndpointSchema
+      }
+    })
+  end
+
+  defmodule EndpointsResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "EndpointsResponse",
+      description: "Response containing a list of endpoints",
+      type: :object,
+      properties: %{
+        data: %Schema{type: :array, items: EndpointSchema}
+      }
+    })
+  end
+
+  defmodule InboundEvent do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "InboundEvent",
+      description: "An inbound webhook event received by an endpoint",
+      type: :object,
+      properties: %{
+        id: %Schema{type: :string, format: :uuid, description: "Event ID"},
+        method: %Schema{type: :string, description: "HTTP method of the incoming request"},
+        source_ip: %Schema{type: :string, description: "IP address of the sender"},
+        received_at: %Schema{type: :string, format: :"date-time", description: "When the event was received"},
+        execution_id: %Schema{type: :string, format: :uuid, nullable: true, description: "Forwarding execution ID"},
+        execution_status: %Schema{type: :string, nullable: true, description: "Forwarding execution status"}
+      }
+    })
+  end
+
+  defmodule InboundEventsResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "InboundEventsResponse",
+      description: "Response containing a list of inbound events",
+      type: :object,
+      properties: %{
+        data: %Schema{type: :array, items: InboundEvent}
+      }
+    })
+  end
+
+  defmodule ReplayResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "ReplayResponse",
+      description: "Response from replaying an inbound event",
+      type: :object,
+      properties: %{
+        data: %Schema{
+          type: :object,
+          properties: %{
+            execution_id: %Schema{type: :string, format: :uuid},
+            status: %Schema{type: :string},
+            scheduled_for: %Schema{type: :string, format: :"date-time"}
+          }
+        },
+        message: %Schema{type: :string}
+      }
+    })
+  end
+
   defmodule ErrorResponse do
     require OpenApiSpex
 
