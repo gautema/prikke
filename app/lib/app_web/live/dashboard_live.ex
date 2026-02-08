@@ -193,7 +193,7 @@ defmodule PrikkeWeb.DashboardLive do
                   <.link navigate={~p"/organizations/settings"} class="underline">
                     Upgrade to Pro
                   </.link>
-                  for 250k executions.
+                  for 1M executions.
                 <% else %>
                   <a href="mailto:support@runlater.eu" class="underline">Contact us</a>
                   for higher limits.

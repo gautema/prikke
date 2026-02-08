@@ -74,13 +74,13 @@ defmodule Prikke.Accounts.LimitNotificationTest do
       assert org_after.limit_reached_sent_at == first_timestamp
     end
 
-    test "updates warning timestamp for pro tier at 80% of 250k limit", %{user: user} do
-      # Create a pro org - pro tier has 250k limit
+    test "updates warning timestamp for pro tier at 80% of 1M limit", %{user: user} do
+      # Create a pro org - pro tier has 1M limit
       org = organization_fixture(%{user: user, tier: "pro"})
       assert org.limit_warning_sent_at == nil
 
-      # 80% of 250k = 200k
-      Accounts.maybe_send_limit_notification(org, 200_000)
+      # 80% of 1M = 800k
+      Accounts.maybe_send_limit_notification(org, 800_000)
 
       # Should update warning timestamp
       updated_org = Accounts.get_organization(org.id)

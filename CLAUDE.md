@@ -277,7 +277,7 @@ Two simple tiers to start:
 |---|------|-----|
 | **Price** | €0 | €29/mo |
 | **Jobs** | 5 | Unlimited |
-| **Requests** | 5k/mo | 250k/mo |
+| **Requests** | 5k/mo | 1M/mo |
 | **Min interval** | Hourly | 1 minute |
 | **History** | 7 days | 30 days |
 | **Team members** | 2 | Unlimited |

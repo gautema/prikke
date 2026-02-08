@@ -70,7 +70,7 @@ defmodule Prikke.Scheduler do
   execution count against their tier limit:
 
   - Free: 5,000 executions/month
-  - Pro: 250,000 executions/month
+  - Pro: 1,000,000 executions/month
 
   If the limit is reached, the task is skipped but `next_run_at` is still advanced
   to prevent infinite retry loops.
@@ -534,7 +534,7 @@ defmodule Prikke.Scheduler do
   # Checks if the organization is within their monthly execution limit.
   # Limits are defined in Tasks.get_tier_limits/1:
   # - Free: 5,000 executions/month
-  # - Pro: 250,000 executions/month
+  # - Pro: 1,000,000 executions/month
   defp within_monthly_limit?(task) do
     # Reload org to get fresh counter value
     org = Prikke.Repo.reload!(task.organization)
