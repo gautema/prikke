@@ -93,6 +93,68 @@
     </div>
   </div>
 
+  <h2>Inbound Endpoints</h2>
+  <p>
+    Receive webhooks from external services like Stripe, GitHub, or Shopify. Runlater stores every event, forwards it to your app with retries, and lets you replay failures from the dashboard.
+    No webhook handler code needed &mdash; just point the service at your Runlater inbound URL.
+  </p>
+
+  <div class="space-y-6 my-8">
+    <div class="glass-card rounded-2xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100">
+        <div class="flex gap-2 mb-2">
+          <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">Stripe</span>
+          <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">Webhooks</span>
+        </div>
+        <h3 class="text-lg font-semibold text-slate-900 m-0">Stripe Webhook Receiver</h3>
+        <p class="text-slate-600 text-sm mt-1 mb-0">
+          Point Stripe at your Runlater endpoint. Every event is stored, forwarded to your app with retries, and replayable.
+        </p>
+      </div>
+      <div class="px-5 py-4 bg-slate-50 text-sm text-slate-600 space-y-3">
+        <p class="m-0"><strong>1.</strong> Create an endpoint in the dashboard with your forward URL:</p>
+        <code class="block bg-slate-900 text-slate-100 rounded-lg p-3 text-xs font-mono">https://myapp.com/api/stripe/process</code>
+        <p class="m-0"><strong>2.</strong> Copy the inbound URL and paste it in Stripe's webhook settings:</p>
+        <code class="block bg-slate-900 text-slate-100 rounded-lg p-3 text-xs font-mono">https://runlater.eu/in/ep_abc123...</code>
+        <p class="m-0"><strong>3.</strong> That's it. Runlater handles retries, stores every event, and you can replay failures from the dashboard.</p>
+      </div>
+    </div>
+
+    <div class="glass-card rounded-2xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100">
+        <div class="flex gap-2 mb-2">
+          <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">GitHub</span>
+          <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">CI/CD</span>
+        </div>
+        <h3 class="text-lg font-semibold text-slate-900 m-0">GitHub Deploy Hooks</h3>
+        <p class="text-slate-600 text-sm mt-1 mb-0">
+          Trigger deploys or post-merge workflows from GitHub push events. Events queue in order so deploys never overlap.
+        </p>
+      </div>
+      <div class="px-5 py-4 bg-slate-50 text-sm text-slate-600 space-y-3">
+        <p class="m-0">Create an endpoint named <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">github-deploys</code>. Events from the same endpoint run in a named queue, so pushes are processed one at a time.</p>
+        <p class="m-0">Forward URL: <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">https://myapp.com/api/deploy</code></p>
+        <p class="m-0">Add the inbound URL as a GitHub webhook on your repo &rarr; Settings &rarr; Webhooks.</p>
+      </div>
+    </div>
+
+    <div class="glass-card rounded-2xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100">
+        <div class="flex gap-2 mb-2">
+          <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">Shopify</span>
+          <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">E-commerce</span>
+        </div>
+        <h3 class="text-lg font-semibold text-slate-900 m-0">Shopify Order Processing</h3>
+        <p class="text-slate-600 text-sm mt-1 mb-0">
+          Receive order webhooks reliably. Never miss an order even if your server is temporarily down.
+        </p>
+      </div>
+      <div class="px-5 py-4 bg-slate-50 text-sm text-slate-600 space-y-3">
+        <p class="m-0">Runlater stores the raw payload and retries delivery up to 5 times with exponential backoff. If your app was down during a webhook, just hit Replay in the dashboard.</p>
+      </div>
+    </div>
+  </div>
+
   <h2>Named Queues</h2>
   <p>
     Use the <code class="bg-slate-100 px-2 py-1 rounded text-sm">queue</code>
@@ -251,6 +313,17 @@
         <.icon name="hero-check" class="w-4 h-4 text-emerald-600" />
       </div>
       <div>
+        <div class="font-semibold text-slate-900">Inbound endpoints</div>
+        <p class="text-slate-600 text-sm mt-1 mb-0">
+          Receive webhooks with retries, replay, and full event history. No code needed.
+        </p>
+      </div>
+    </div>
+    <div class="flex gap-4 items-start">
+      <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+        <.icon name="hero-check" class="w-4 h-4 text-emerald-600" />
+      </div>
+      <div>
         <div class="font-semibold text-slate-900">Built-in retries</div>
         <p class="text-slate-600 text-sm mt-1 mb-0">
           Automatic exponential backoff. No retry logic to build.
@@ -296,6 +369,10 @@
         <tr class="border-b border-slate-100">
           <td class="py-3 px-4">Vercel/CloudFlare cron</td>
           <td class="py-3 px-4">No one-time tasks, no retries, platform lock-in</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4">DIY webhook handler</td>
+          <td class="py-3 px-4">You build retries, storage, replay, idempotency</td>
         </tr>
       </tbody>
     </table>
