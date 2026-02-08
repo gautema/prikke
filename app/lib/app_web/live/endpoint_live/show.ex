@@ -8,7 +8,11 @@ defmodule PrikkeWeb.EndpointLive.Show do
     org = get_organization(socket, session)
 
     if org do
-      endpoint = Endpoints.get_endpoint!(org, id)
+      endpoint = Endpoints.get_endpoint(org, id)
+
+      unless endpoint do
+        raise PrikkeWeb.NotFoundError
+      end
 
       if connected?(socket) do
         Endpoints.subscribe_endpoints(org)

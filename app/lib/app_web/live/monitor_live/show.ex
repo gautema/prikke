@@ -8,7 +8,11 @@ defmodule PrikkeWeb.MonitorLive.Show do
     org = get_organization(socket, session)
 
     if org do
-      monitor = Monitors.get_monitor!(org, id)
+      monitor = Monitors.get_monitor(org, id)
+
+      unless monitor do
+        raise PrikkeWeb.NotFoundError
+      end
 
       if connected?(socket) do
         Monitors.subscribe_monitors(org)
