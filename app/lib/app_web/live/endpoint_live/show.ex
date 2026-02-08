@@ -247,7 +247,7 @@ defmodule PrikkeWeb.EndpointLive.Show do
                   </span>
                   <.link
                     navigate={~p"/tasks/#{event.execution.task_id}"}
-                    class="text-xs text-slate-500 hover:text-slate-700 font-medium shrink-0"
+                    class="text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-100 font-medium shrink-0 px-2 py-1 rounded transition-colors"
                     title="View forwarding task"
                   >
                     View Task
@@ -257,7 +257,7 @@ defmodule PrikkeWeb.EndpointLive.Show do
                   type="button"
                   phx-click="replay"
                   phx-value-id={event.id}
-                  class="text-xs text-emerald-600 hover:text-emerald-700 font-medium shrink-0"
+                  class="text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-medium shrink-0 px-2 py-1 rounded transition-colors"
                   title="Replay this event"
                 >
                   Replay
@@ -306,8 +306,23 @@ defmodule PrikkeWeb.EndpointLive.Show do
           },
           flash() {
             const icon = this.el.querySelector("svg")
-            if (icon) icon.style.color = "#10b981"
-            setTimeout(() => { if (icon) icon.style.color = "" }, 1500)
+            if (!icon || this.el.dataset.copied) return
+            this.el.dataset.copied = "true"
+            const original = icon.innerHTML
+            const originalClass = icon.getAttribute("class")
+            icon.setAttribute("class", originalClass.replace("hero-clipboard-document", "hero-check"))
+            icon.style.color = "#10b981"
+            const tip = document.createElement("span")
+            tip.textContent = "Copied!"
+            tip.style.cssText = "position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:6px;padding:4px 10px;background:#0f172a;color:white;font-size:12px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:50"
+            this.el.style.position = "relative"
+            this.el.appendChild(tip)
+            setTimeout(() => {
+              icon.setAttribute("class", originalClass)
+              icon.style.color = ""
+              tip.remove()
+              delete this.el.dataset.copied
+            }, 1500)
           }
         }
       </script>

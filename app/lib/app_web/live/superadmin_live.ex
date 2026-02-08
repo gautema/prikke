@@ -5,6 +5,7 @@ defmodule PrikkeWeb.SuperadminLive do
   alias Prikke.Tasks
   alias Prikke.Executions
   alias Prikke.Monitors
+  alias Prikke.Endpoints
   alias Prikke.Analytics
   alias Prikke.Audit
   alias Prikke.Emails
@@ -72,6 +73,17 @@ defmodule PrikkeWeb.SuperadminLive do
       down: Monitors.count_all_down_monitors()
     }
 
+    # Endpoint stats
+    endpoint_stats = %{
+      total: Endpoints.count_all_endpoints(),
+      enabled: Endpoints.count_all_enabled_endpoints(),
+      total_events: Endpoints.count_all_inbound_events(),
+      events_this_week: Endpoints.count_inbound_events_since(seven_days_ago),
+      events_this_month: Endpoints.count_inbound_events_since(thirty_days_ago)
+    }
+
+    recent_endpoints = Endpoints.list_recent_endpoints_all(limit: 5)
+
     # Recent audit logs
     audit_logs = Audit.list_all_logs(limit: 20)
 
@@ -107,6 +119,8 @@ defmodule PrikkeWeb.SuperadminLive do
     |> assign(:pro_count, pro_count)
     |> assign(:execution_trend, execution_trend)
     |> assign(:monitor_stats, monitor_stats)
+    |> assign(:endpoint_stats, endpoint_stats)
+    |> assign(:recent_endpoints, recent_endpoints)
     |> assign(:audit_logs, audit_logs)
     |> assign(:recent_emails, recent_emails)
     |> assign(:emails_this_month, emails_this_month)
@@ -139,7 +153,7 @@ defmodule PrikkeWeb.SuperadminLive do
       </div>
       
     <!-- Platform Stats -->
-      <div class="grid grid-cols-2 md:grid-cols-7 gap-4 mb-8">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <.stat_card
           title="Total Users"
           value={@platform_stats.total_users}
@@ -154,6 +168,11 @@ defmodule PrikkeWeb.SuperadminLive do
           title="Total Tasks"
           value={@platform_stats.total_tasks}
           subtitle={"#{@platform_stats.enabled_tasks} enabled"}
+        />
+        <.stat_card
+          title="Endpoints"
+          value={@endpoint_stats.total}
+          subtitle={"#{@endpoint_stats.enabled} enabled"}
         />
         <.stat_card
           title="Monitors"
@@ -628,6 +647,60 @@ defmodule PrikkeWeb.SuperadminLive do
         </div>
       </div>
       
+    <!-- Endpoint Stats -->
+      <div class="glass-card rounded-2xl p-6 mb-8">
+        <h2 class="text-lg font-semibold text-slate-900 mb-4">Inbound Endpoints</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+          <div>
+            <div class="text-sm text-slate-500 mb-1">Total Endpoints</div>
+            <div class="text-2xl font-bold text-slate-900">{@endpoint_stats.total}</div>
+            <div class="text-xs text-slate-500 mt-1">
+              <span class="text-emerald-600">{@endpoint_stats.enabled} enabled</span>
+              <span class="mx-1">&middot;</span>
+              <span class="text-slate-400">{@endpoint_stats.total - @endpoint_stats.enabled} disabled</span>
+            </div>
+          </div>
+          <div>
+            <div class="text-sm text-slate-500 mb-1">Total Events</div>
+            <div class="text-2xl font-bold text-slate-900">{@endpoint_stats.total_events}</div>
+          </div>
+          <div>
+            <div class="text-sm text-slate-500 mb-1">Events (7d)</div>
+            <div class="text-2xl font-bold text-slate-900">{@endpoint_stats.events_this_week}</div>
+          </div>
+          <div>
+            <div class="text-sm text-slate-500 mb-1">Events (30d)</div>
+            <div class="text-2xl font-bold text-slate-900">{@endpoint_stats.events_this_month}</div>
+          </div>
+        </div>
+        <div class="border-t border-white/50 pt-4">
+          <h3 class="text-sm font-medium text-slate-700 mb-3">Recent Endpoints</h3>
+          <div class="space-y-3">
+            <%= for endpoint <- @recent_endpoints do %>
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class={[
+                    "w-2 h-2 rounded-full shrink-0",
+                    if(endpoint.enabled, do: "bg-emerald-500", else: "bg-slate-400")
+                  ]} />
+                  <span class="text-sm font-medium text-slate-900 truncate">{endpoint.name}</span>
+                  <span class="text-xs text-slate-400 font-mono">/in/{endpoint.slug}</span>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                  <span class="text-xs text-slate-400">{endpoint.organization && endpoint.organization.name}</span>
+                  <span class="text-xs text-slate-400">
+                    <.relative_time id={"ep-#{endpoint.id}"} datetime={endpoint.inserted_at} />
+                  </span>
+                </div>
+              </div>
+            <% end %>
+            <%= if @recent_endpoints == [] do %>
+              <div class="text-sm text-slate-400">No endpoints yet</div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
     <!-- Recent Executions & Audit Logs -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <!-- Recent Executions -->

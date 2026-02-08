@@ -118,6 +118,33 @@ defmodule Prikke.Endpoints do
     |> Repo.aggregate(:count)
   end
 
+  def count_all_endpoints do
+    Repo.aggregate(Endpoint, :count)
+  end
+
+  def count_all_enabled_endpoints do
+    from(e in Endpoint, where: e.enabled == true) |> Repo.aggregate(:count)
+  end
+
+  def count_all_inbound_events do
+    Repo.aggregate(InboundEvent, :count)
+  end
+
+  def count_inbound_events_since(since) do
+    from(e in InboundEvent, where: e.received_at >= ^since) |> Repo.aggregate(:count)
+  end
+
+  def list_recent_endpoints_all(opts \\ []) do
+    limit = Keyword.get(opts, :limit, 5)
+
+    from(e in Endpoint,
+      order_by: [desc: e.inserted_at],
+      limit: ^limit,
+      preload: [:organization]
+    )
+    |> Repo.all()
+  end
+
   def change_endpoint(%Endpoint{} = endpoint, attrs \\ %{}) do
     Endpoint.changeset(endpoint, attrs)
   end

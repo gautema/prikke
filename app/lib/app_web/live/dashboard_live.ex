@@ -312,6 +312,68 @@ defmodule PrikkeWeb.DashboardLive do
           <% end %>
         </div>
         
+    <!-- Endpoints Section -->
+        <div class="glass-card rounded-2xl mb-4">
+          <div class="px-4 sm:px-6 py-4 border-b border-white/50 flex justify-between items-center gap-2">
+            <div class="flex items-center gap-3">
+              <h2 class="text-lg font-semibold text-slate-900">Endpoints</h2>
+              <%= if @endpoints != [] do %>
+                <.endpoint_summary endpoints={@endpoints} />
+              <% end %>
+            </div>
+            <.link
+              navigate={~p"/endpoints/new"}
+              class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md transition-colors no-underline"
+            >
+              New Endpoint
+            </.link>
+          </div>
+          <%= if @endpoints == [] do %>
+            <div class="p-8 text-center">
+              <p class="text-slate-500 mb-2">No endpoints yet.</p>
+              <.link
+                navigate={~p"/endpoints/new"}
+                class="text-emerald-600 text-sm font-medium hover:underline"
+              >
+                Set up inbound webhooks →
+              </.link>
+            </div>
+          <% else %>
+            <div class="divide-y divide-white/30">
+              <%= for endpoint <- @endpoints do %>
+                <.link
+                  navigate={~p"/endpoints/#{endpoint.id}"}
+                  class="block px-6 py-3 hover:bg-white/50 transition-colors"
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2 min-w-0">
+                      <span class={[
+                        "w-2.5 h-2.5 rounded-full shrink-0",
+                        if(endpoint.enabled, do: "bg-emerald-500", else: "bg-slate-400")
+                      ]} />
+                      <span class="text-sm text-slate-900 truncate">{endpoint.name}</span>
+                      <span class={[
+                        "text-xs font-medium px-2 py-0.5 rounded",
+                        if(endpoint.enabled, do: "bg-emerald-100 text-emerald-700", else: "bg-slate-100 text-slate-600")
+                      ]}>
+                        {if endpoint.enabled, do: "Active", else: "Disabled"}
+                      </span>
+                    </div>
+                    <span class="text-xs text-slate-400 font-mono shrink-0 hidden sm:inline">
+                      /in/{endpoint.slug}
+                    </span>
+                  </div>
+                </.link>
+              <% end %>
+            </div>
+            <div class="px-6 py-3 border-t border-slate-200 text-center">
+              <.link navigate={~p"/endpoints"} class="text-sm text-emerald-600 hover:underline">
+                View all endpoints →
+              </.link>
+            </div>
+          <% end %>
+        </div>
+
     <!-- Monitors Section -->
         <div class="glass-card rounded-2xl mb-4">
           <div class="px-4 sm:px-6 py-4 border-b border-white/50 flex justify-between items-center gap-2">
@@ -380,68 +442,6 @@ defmodule PrikkeWeb.DashboardLive do
             <div class="px-6 py-3 border-t border-slate-200 text-center">
               <.link navigate={~p"/monitors"} class="text-sm text-emerald-600 hover:underline">
                 View all monitors →
-              </.link>
-            </div>
-          <% end %>
-        </div>
-
-    <!-- Endpoints Section -->
-        <div class="glass-card rounded-2xl mb-4">
-          <div class="px-4 sm:px-6 py-4 border-b border-white/50 flex justify-between items-center gap-2">
-            <div class="flex items-center gap-3">
-              <h2 class="text-lg font-semibold text-slate-900">Endpoints</h2>
-              <%= if @endpoints != [] do %>
-                <.endpoint_summary endpoints={@endpoints} />
-              <% end %>
-            </div>
-            <.link
-              navigate={~p"/endpoints/new"}
-              class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md transition-colors no-underline"
-            >
-              New Endpoint
-            </.link>
-          </div>
-          <%= if @endpoints == [] do %>
-            <div class="p-8 text-center">
-              <p class="text-slate-500 mb-2">No endpoints yet.</p>
-              <.link
-                navigate={~p"/endpoints/new"}
-                class="text-emerald-600 text-sm font-medium hover:underline"
-              >
-                Set up inbound webhooks →
-              </.link>
-            </div>
-          <% else %>
-            <div class="divide-y divide-white/30">
-              <%= for endpoint <- @endpoints do %>
-                <.link
-                  navigate={~p"/endpoints/#{endpoint.id}"}
-                  class="block px-6 py-3 hover:bg-white/50 transition-colors"
-                >
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2 min-w-0">
-                      <span class={[
-                        "w-2.5 h-2.5 rounded-full shrink-0",
-                        if(endpoint.enabled, do: "bg-emerald-500", else: "bg-slate-400")
-                      ]} />
-                      <span class="text-sm text-slate-900 truncate">{endpoint.name}</span>
-                      <span class={[
-                        "text-xs font-medium px-2 py-0.5 rounded",
-                        if(endpoint.enabled, do: "bg-emerald-100 text-emerald-700", else: "bg-slate-100 text-slate-600")
-                      ]}>
-                        {if endpoint.enabled, do: "Active", else: "Disabled"}
-                      </span>
-                    </div>
-                    <span class="text-xs text-slate-400 font-mono shrink-0 hidden sm:inline">
-                      /in/{endpoint.slug}
-                    </span>
-                  </div>
-                </.link>
-              <% end %>
-            </div>
-            <div class="px-6 py-3 border-t border-slate-200 text-center">
-              <.link navigate={~p"/endpoints"} class="text-sm text-emerald-600 hover:underline">
-                View all endpoints →
               </.link>
             </div>
           <% end %>
