@@ -124,16 +124,16 @@
                   Tasks
                 </.link>
                 <.link
-                  href={~p"/monitors"}
-                  class="text-sm font-medium text-slate-600 hover:text-emerald-600 px-3 py-1.5 rounded-md hover:bg-slate-100/60 transition-colors"
-                >
-                  Monitors
-                </.link>
-                <.link
                   href={~p"/endpoints"}
                   class="text-sm font-medium text-slate-600 hover:text-emerald-600 px-3 py-1.5 rounded-md hover:bg-slate-100/60 transition-colors"
                 >
                   Endpoints
+                </.link>
+                <.link
+                  href={~p"/monitors"}
+                  class="text-sm font-medium text-slate-600 hover:text-emerald-600 px-3 py-1.5 rounded-md hover:bg-slate-100/60 transition-colors"
+                >
+                  Monitors
                 </.link>
                 <span class="w-px h-5 bg-slate-200 mx-1"></span>
                 <!-- Org Switcher -->
@@ -269,11 +269,11 @@
               <.link href={~p"/tasks"} class="block py-3 text-base font-medium text-slate-700">
                 Tasks
               </.link>
-              <.link href={~p"/monitors"} class="block py-3 text-base font-medium text-slate-700">
-                Monitors
-              </.link>
               <.link href={~p"/endpoints"} class="block py-3 text-base font-medium text-slate-700">
                 Endpoints
+              </.link>
+              <.link href={~p"/monitors"} class="block py-3 text-base font-medium text-slate-700">
+                Monitors
               </.link>
               <%= if assigns[:organizations] && length(@organizations) > 0 do %>
                 <div class="py-2 border-t border-slate-100">
