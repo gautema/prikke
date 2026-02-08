@@ -500,7 +500,7 @@ The pre-commit hook automatically runs `mix compile --warnings-as-errors` and `m
 ```
 prikke/
 ├── CLAUDE.md              # This file
-├── PROGRESS.md            # Implementation progress
+├── ROADMAP.md             # Feature roadmap & strategy
 ├── README.md
 ├── brand/
 │   ├── BRAND.md           # Brand guidelines
