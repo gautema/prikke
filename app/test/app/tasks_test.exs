@@ -58,6 +58,46 @@ defmodule Prikke.TasksTest do
       tasks = Tasks.list_tasks(org, queue: nil)
       assert length(tasks) == 2
     end
+
+    test "filters by type 'cron' returns only recurring tasks" do
+      org = organization_fixture()
+      cron_task = task_fixture(org, %{name: "Cron Task"})
+      _once_task = once_task_fixture(org, %{name: "Once Task"})
+
+      tasks = Tasks.list_tasks(org, type: "cron")
+      assert length(tasks) == 1
+      assert hd(tasks).id == cron_task.id
+    end
+
+    test "filters by type 'once' returns only one-time tasks" do
+      org = organization_fixture()
+      _cron_task = task_fixture(org, %{name: "Cron Task"})
+      once_task = once_task_fixture(org, %{name: "Once Task"})
+
+      tasks = Tasks.list_tasks(org, type: "once")
+      assert length(tasks) == 1
+      assert hd(tasks).id == once_task.id
+    end
+
+    test "returns all tasks when type option is nil" do
+      org = organization_fixture()
+      task_fixture(org, %{name: "Cron Task"})
+      once_task_fixture(org, %{name: "Once Task"})
+
+      tasks = Tasks.list_tasks(org, type: nil)
+      assert length(tasks) == 2
+    end
+
+    test "combines queue and type filters" do
+      org = organization_fixture()
+      _cron_no_queue = task_fixture(org, %{name: "Cron No Queue"})
+      cron_with_queue = task_fixture(org, %{name: "Cron Payments", queue: "payments"})
+      _once_with_queue = once_task_fixture(org, %{name: "Once Payments", queue: "payments"})
+
+      tasks = Tasks.list_tasks(org, queue: "payments", type: "cron")
+      assert length(tasks) == 1
+      assert hd(tasks).id == cron_with_queue.id
+    end
   end
 
   describe "list_queues/1" do

@@ -45,7 +45,7 @@ defmodule PrikkeWeb.TaskLiveTest do
 
       {:ok, view, _html} = live(conn, ~p"/tasks")
 
-      refute has_element?(view, "#queue-filter")
+      refute has_element?(view, "#queue-filter-select")
     end
 
     test "filtering by queue shows only matching tasks", %{conn: conn, user: user} do
@@ -57,8 +57,8 @@ defmodule PrikkeWeb.TaskLiveTest do
 
       html =
         view
-        |> element("#queue-filter form")
-        |> render_change(%{queue: "payments"})
+        |> element("#task-filters form")
+        |> render_change(%{queue: "payments", type: "", status: ""})
 
       assert html =~ "Payment Task"
       refute html =~ "Email Task"
@@ -71,6 +71,133 @@ defmodule PrikkeWeb.TaskLiveTest do
       {:ok, _view, html} = live(conn, ~p"/tasks")
 
       assert html =~ "payments"
+    end
+
+    test "shows type filter dropdown", %{conn: conn, user: user} do
+      _org = organization_fixture(%{user: user})
+
+      {:ok, view, html} = live(conn, ~p"/tasks")
+
+      assert has_element?(view, "#type-filter-select")
+      assert html =~ "All types"
+      assert html =~ "Recurring"
+      assert html =~ "One-time"
+    end
+
+    test "shows status filter dropdown", %{conn: conn, user: user} do
+      _org = organization_fixture(%{user: user})
+
+      {:ok, view, html} = live(conn, ~p"/tasks")
+
+      assert has_element?(view, "#status-filter-select")
+      assert html =~ "All statuses"
+      assert html =~ "Active"
+      assert html =~ "Paused"
+    end
+
+    test "filtering by type shows only matching tasks", %{conn: conn, user: user} do
+      org = organization_fixture(%{user: user})
+      task_fixture(org, %{name: "Cron Task"})
+      once_task_fixture(org, %{name: "Once Task"})
+
+      {:ok, view, _html} = live(conn, ~p"/tasks")
+
+      html =
+        view
+        |> element("#task-filters form")
+        |> render_change(%{type: "cron", queue: "", status: ""})
+
+      assert html =~ "Cron Task"
+      refute html =~ "Once Task"
+    end
+
+    test "filtering by type once shows only one-time tasks", %{conn: conn, user: user} do
+      org = organization_fixture(%{user: user})
+      task_fixture(org, %{name: "Cron Task"})
+      once_task_fixture(org, %{name: "Once Task"})
+
+      {:ok, view, _html} = live(conn, ~p"/tasks")
+
+      html =
+        view
+        |> element("#task-filters form")
+        |> render_change(%{type: "once", queue: "", status: ""})
+
+      refute html =~ "Cron Task"
+      assert html =~ "Once Task"
+    end
+
+    test "filtering by status active shows only enabled tasks", %{conn: conn, user: user} do
+      org = organization_fixture(%{user: user})
+      task_fixture(org, %{name: "Active Task", enabled: true})
+      task_fixture(org, %{name: "Paused Task", enabled: false})
+
+      {:ok, view, _html} = live(conn, ~p"/tasks")
+
+      html =
+        view
+        |> element("#task-filters form")
+        |> render_change(%{status: "active", queue: "", type: ""})
+
+      assert html =~ "Active Task"
+      refute html =~ "Paused Task"
+    end
+
+    test "filtering by status paused shows only disabled tasks", %{conn: conn, user: user} do
+      org = organization_fixture(%{user: user})
+      task_fixture(org, %{name: "Active Task", enabled: true})
+      task_fixture(org, %{name: "Paused Task", enabled: false})
+
+      {:ok, view, _html} = live(conn, ~p"/tasks")
+
+      html =
+        view
+        |> element("#task-filters form")
+        |> render_change(%{status: "paused", queue: "", type: ""})
+
+      refute html =~ "Active Task"
+      assert html =~ "Paused Task"
+    end
+
+    test "combined type and status filters work together", %{conn: conn, user: user} do
+      org = organization_fixture(%{user: user})
+      task_fixture(org, %{name: "Active Cron", enabled: true})
+      task_fixture(org, %{name: "Paused Cron", enabled: false})
+      once_task_fixture(org, %{name: "Active Once", enabled: true})
+
+      {:ok, view, _html} = live(conn, ~p"/tasks")
+
+      html =
+        view
+        |> element("#task-filters form")
+        |> render_change(%{type: "cron", status: "active", queue: ""})
+
+      assert html =~ "Active Cron"
+      refute html =~ "Paused Cron"
+      refute html =~ "Active Once"
+    end
+
+    test "shows filter-aware empty state when filters match nothing", %{conn: conn, user: user} do
+      org = organization_fixture(%{user: user})
+      task_fixture(org, %{name: "A Cron Task"})
+
+      {:ok, view, _html} = live(conn, ~p"/tasks")
+
+      html =
+        view
+        |> element("#task-filters form")
+        |> render_change(%{type: "once", queue: "", status: ""})
+
+      assert html =~ "No matching tasks"
+      assert html =~ "No tasks match your current filters"
+    end
+
+    test "shows default empty state when no tasks and no filters", %{conn: conn, user: user} do
+      _org = organization_fixture(%{user: user})
+
+      {:ok, _view, html} = live(conn, ~p"/tasks")
+
+      assert html =~ "No tasks yet"
     end
   end
 

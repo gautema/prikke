@@ -25,8 +25,11 @@ defmodule PrikkeWeb.TaskLive.Index do
        |> assign(:organization, org)
        |> assign(:page_title, "Tasks")
        |> assign(:tasks, tasks)
+       |> assign(:filtered_tasks, tasks)
        |> assign(:queues, queues)
        |> assign(:queue_filter, nil)
+       |> assign(:type_filter, nil)
+       |> assign(:status_filter, nil)
        |> assign(:latest_statuses, latest_statuses)
        |> assign(:task_run_histories, task_run_histories)}
     else
@@ -57,41 +60,66 @@ defmodule PrikkeWeb.TaskLive.Index do
   defp refetch_tasks(socket) do
     org = socket.assigns.organization
     queue_filter = socket.assigns.queue_filter
-    opts = if queue_filter, do: [queue: queue_filter], else: []
+    type_filter = socket.assigns.type_filter
+    status_filter = socket.assigns.status_filter
+
+    opts =
+      []
+      |> then(fn opts -> if queue_filter, do: [{:queue, queue_filter} | opts], else: opts end)
+      |> then(fn opts -> if type_filter, do: [{:type, type_filter} | opts], else: opts end)
 
     queues = Tasks.list_queues(org)
     tasks = Tasks.list_tasks(org, opts)
     task_ids = Enum.map(tasks, & &1.id)
+    latest_statuses = Executions.get_latest_statuses(task_ids)
+
+    filtered_tasks = filter_by_status(tasks, status_filter, latest_statuses)
 
     socket
     |> assign(:queues, queues)
     |> assign(:tasks, tasks)
-    |> assign(:latest_statuses, Executions.get_latest_statuses(task_ids))
+    |> assign(:filtered_tasks, filtered_tasks)
+    |> assign(:latest_statuses, latest_statuses)
     |> assign(:task_run_histories, Executions.get_recent_statuses_for_tasks(task_ids, 20))
   end
 
   defp refresh_latest_statuses(socket) do
     task_ids = Enum.map(socket.assigns.tasks, & &1.id)
+    latest_statuses = Executions.get_latest_statuses(task_ids)
+    filtered_tasks = filter_by_status(socket.assigns.tasks, socket.assigns.status_filter, latest_statuses)
 
     socket
-    |> assign(:latest_statuses, Executions.get_latest_statuses(task_ids))
+    |> assign(:latest_statuses, latest_statuses)
+    |> assign(:filtered_tasks, filtered_tasks)
     |> assign(:task_run_histories, Executions.get_recent_statuses_for_tasks(task_ids, 20))
   end
 
   @impl true
-  def handle_event("filter", %{"queue" => queue}, socket) do
-    queue_filter = if queue == "", do: nil, else: queue
+  def handle_event("filter", params, socket) do
+    queue_filter = normalize_filter(params["queue"])
+    type_filter = normalize_filter(params["type"])
+    status_filter = normalize_filter(params["status"])
     org = socket.assigns.organization
-    opts = if queue_filter, do: [queue: queue_filter], else: []
+
+    opts =
+      []
+      |> then(fn opts -> if queue_filter, do: [{:queue, queue_filter} | opts], else: opts end)
+      |> then(fn opts -> if type_filter, do: [{:type, type_filter} | opts], else: opts end)
 
     tasks = Tasks.list_tasks(org, opts)
     task_ids = Enum.map(tasks, & &1.id)
+    latest_statuses = Executions.get_latest_statuses(task_ids)
+
+    filtered_tasks = filter_by_status(tasks, status_filter, latest_statuses)
 
     {:noreply,
      socket
      |> assign(:queue_filter, queue_filter)
+     |> assign(:type_filter, type_filter)
+     |> assign(:status_filter, status_filter)
      |> assign(:tasks, tasks)
-     |> assign(:latest_statuses, Executions.get_latest_statuses(task_ids))
+     |> assign(:filtered_tasks, filtered_tasks)
+     |> assign(:latest_statuses, latest_statuses)
      |> assign(:task_run_histories, Executions.get_recent_statuses_for_tasks(task_ids, 20))}
   end
 
@@ -125,6 +153,34 @@ defmodule PrikkeWeb.TaskLive.Index do
         [] -> nil
       end
     end
+  end
+
+  defp normalize_filter(""), do: nil
+  defp normalize_filter(nil), do: nil
+  defp normalize_filter(value), do: value
+
+  defp filter_by_status(tasks, nil, _latest_statuses), do: tasks
+
+  defp filter_by_status(tasks, status_filter, latest_statuses) do
+    Enum.filter(tasks, fn task ->
+      latest_info = Map.get(latest_statuses, task.id)
+      latest_status = get_status(latest_info)
+
+      case status_filter do
+        "active" -> task.enabled
+        "paused" -> !task.enabled
+        "succeeded" -> latest_status == "success"
+        "failed" -> latest_status == "failed"
+        "timeout" -> latest_status == "timeout"
+        _ -> true
+      end
+    end)
+  end
+
+  defp any_filters_active?(assigns) do
+    assigns.queue_filter != nil or
+      assigns.type_filter != nil or
+      assigns.status_filter != nil
   end
 
   defp get_status(nil), do: nil
@@ -267,9 +323,9 @@ defmodule PrikkeWeb.TaskLive.Index do
         </.link>
       </div>
 
-      <%= if @queues != [] do %>
-        <div class="mb-4" id="queue-filter">
-          <form phx-change="filter">
+      <div class="mb-4" id="task-filters">
+        <form phx-change="filter" class="flex flex-wrap gap-2">
+          <%= if @queues != [] do %>
             <select
               name="queue"
               id="queue-filter-select"
@@ -281,18 +337,39 @@ defmodule PrikkeWeb.TaskLive.Index do
                 <option value={queue} selected={@queue_filter == queue}>{queue}</option>
               <% end %>
             </select>
-          </form>
-        </div>
-      <% end %>
+          <% end %>
+          <select
+            name="type"
+            id="type-filter-select"
+            class="text-sm border-slate-200 rounded-lg px-3 py-1.5 text-slate-700 focus:ring-emerald-500 focus:border-emerald-500"
+          >
+            <option value="" selected={@type_filter == nil}>All types</option>
+            <option value="cron" selected={@type_filter == "cron"}>Recurring</option>
+            <option value="once" selected={@type_filter == "once"}>One-time</option>
+          </select>
+          <select
+            name="status"
+            id="status-filter-select"
+            class="text-sm border-slate-200 rounded-lg px-3 py-1.5 text-slate-700 focus:ring-emerald-500 focus:border-emerald-500"
+          >
+            <option value="" selected={@status_filter == nil}>All statuses</option>
+            <option value="active" selected={@status_filter == "active"}>Active</option>
+            <option value="paused" selected={@status_filter == "paused"}>Paused</option>
+            <option value="succeeded" selected={@status_filter == "succeeded"}>Succeeded</option>
+            <option value="failed" selected={@status_filter == "failed"}>Failed</option>
+            <option value="timeout" selected={@status_filter == "timeout"}>Timed out</option>
+          </select>
+        </form>
+      </div>
 
-      <%= if @tasks == [] do %>
+      <%= if @filtered_tasks == [] do %>
         <div class="glass-card rounded-2xl p-8 sm:p-12 text-center">
           <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <.icon name="hero-clock" class="w-6 h-6 text-slate-400" />
           </div>
-          <%= if @queue_filter do %>
-            <h3 class="text-lg font-medium text-slate-900 mb-2">No tasks in this queue</h3>
-            <p class="text-slate-500 mb-6">No tasks match the selected queue filter.</p>
+          <%= if any_filters_active?(assigns) do %>
+            <h3 class="text-lg font-medium text-slate-900 mb-2">No matching tasks</h3>
+            <p class="text-slate-500 mb-6">No tasks match your current filters.</p>
           <% else %>
             <h3 class="text-lg font-medium text-slate-900 mb-2">No tasks yet</h3>
             <p class="text-slate-500 mb-6">Create your first scheduled task to get started.</p>
@@ -303,7 +380,7 @@ defmodule PrikkeWeb.TaskLive.Index do
         </div>
       <% else %>
         <div class="glass-card rounded-2xl divide-y divide-slate-200/60">
-          <%= for task <- @tasks do %>
+          <%= for task <- @filtered_tasks do %>
             <div class="px-4 sm:px-6 py-5">
               <div class="flex items-start sm:items-center justify-between gap-3">
                 <div class="flex-1 min-w-0">

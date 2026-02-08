@@ -16,7 +16,6 @@
 
 - [ ] **Scheduled email reports** — Weekly digest email with execution stats. Keeps users engaged.
 - [ ] **Usage alerts** — Email when approaching 80%/100% of monthly execution limit, before jobs silently stop.
-- [ ] **Organization default timezone** — So users don't have to set timezone on every job.
 
 ## Priority 2 — Growth & Engagement
 

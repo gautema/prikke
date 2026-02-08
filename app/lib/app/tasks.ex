@@ -72,9 +72,11 @@ defmodule Prikke.Tasks do
   ## Options
 
     * `:queue` - filter by queue name. Use `"none"` to match tasks with no queue.
+    * `:type` - filter by schedule type. `"cron"` for recurring, `"once"` for one-time.
   """
   def list_tasks(%Organization{} = org, opts \\ []) do
     queue = Keyword.get(opts, :queue)
+    type = Keyword.get(opts, :type)
 
     # Subquery to get the latest execution time per task
     latest_exec_subquery =
@@ -97,6 +99,12 @@ defmodule Prikke.Tasks do
         nil -> query
         "none" -> from(t in query, where: is_nil(t.queue))
         name -> from(t in query, where: t.queue == ^name)
+      end
+
+    query =
+      case type do
+        nil -> query
+        schedule_type -> from(t in query, where: t.schedule_type == ^schedule_type)
       end
 
     Repo.all(query)

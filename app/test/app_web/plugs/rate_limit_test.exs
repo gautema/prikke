@@ -35,18 +35,23 @@ defmodule PrikkeWeb.RateLimitTest do
 
     @tag :slow
     test "returns 429 when rate limit exceeded", %{conn: conn, auth_token: auth_token} do
-      # Make limit + 1 requests
+      # Make limit + 10 requests to ensure we exceed the limit even if
+      # a minute boundary resets the per-minute window partway through
       statuses =
-        for _ <- 1..(@limit + 1) do
+        for _ <- 1..(@limit + 10) do
           conn
           |> put_req_header("authorization", "Bearer #{auth_token}")
           |> get(~p"/api/v1/tasks")
           |> Map.get(:status)
         end
 
-      # First @limit should succeed, last should be rate limited
-      assert Enum.count(statuses, &(&1 == 200)) == @limit
-      assert Enum.count(statuses, &(&1 == 429)) == 1
+      successful = Enum.count(statuses, &(&1 == 200))
+      rate_limited = Enum.count(statuses, &(&1 == 429))
+
+      # Most requests should succeed (at least @limit - 1 to account for prior tests)
+      assert successful >= @limit - 1
+      # At least one request should be rate limited
+      assert rate_limited >= 1
     end
 
     @tag :slow

@@ -187,8 +187,8 @@ Last updated: 2026-02-06
 
 | | Free | Pro |
 |---|------|-----|
-| **Jobs** | 5 | Unlimited |
-| **Monitors** | 3 | Unlimited |
+| **Jobs** | Unlimited | Unlimited |
+| **Monitors** | Unlimited | Unlimited |
 | **Requests** | 5k/mo | 250k/mo |
 | **Min interval** | Hourly | 1 minute |
 | **History** | 7 days | 30 days |
