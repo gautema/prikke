@@ -415,21 +415,24 @@ defmodule PrikkeWeb.MonitorLive.Show do
             })
           },
           flash() {
-            const icon = this.el.querySelector("svg")
-            if (!icon || this.el.dataset.copied) return
+            if (this.el.dataset.copied) return
             this.el.dataset.copied = "true"
-            const original = icon.innerHTML
-            const originalClass = icon.getAttribute("class")
-            icon.setAttribute("class", originalClass.replace("hero-clipboard-document", "hero-check"))
-            icon.style.color = "#10b981"
+            const icon = this.el.querySelector("span")
+            const originalClass = icon ? icon.getAttribute("class") : null
+            if (icon) {
+              icon.setAttribute("class", originalClass.replace("hero-clipboard-document", "hero-check"))
+              icon.style.color = "#10b981"
+            }
             const tip = document.createElement("span")
             tip.textContent = "Copied!"
             tip.style.cssText = "position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:6px;padding:4px 10px;background:#0f172a;color:white;font-size:12px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:50"
             this.el.style.position = "relative"
             this.el.appendChild(tip)
             setTimeout(() => {
-              icon.setAttribute("class", originalClass)
-              icon.style.color = ""
+              if (icon && originalClass) {
+                icon.setAttribute("class", originalClass)
+                icon.style.color = ""
+              }
               tip.remove()
               delete this.el.dataset.copied
             }, 1500)
