@@ -120,11 +120,16 @@ defmodule Prikke.Executions do
               NOT EXISTS (
                 SELECT 1 FROM executions e2
                 JOIN tasks t2 ON e2.task_id = t2.id
-                WHERE t2.organization_id = ? AND t2.queue = ? AND e2.status = 'running'
+                WHERE t2.organization_id = ? AND t2.queue = ?
+                  AND e2.id != ?
+                  AND (e2.status = 'running' OR (e2.status = 'pending' AND (e2.inserted_at, e2.id) < (?, ?)))
               )
               """,
               t.organization_id,
-              t.queue
+              t.queue,
+              e.id,
+              e.inserted_at,
+              e.id
             ),
         order_by: [
           desc: o.tier,

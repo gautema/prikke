@@ -298,6 +298,100 @@ defmodule Prikke.ExecutionsTest do
       assert org.monthly_execution_count == 0
     end
 
+    test "claim_next_execution/0 blocks queue when earlier pending execution exists", %{
+      organization: org
+    } do
+      # Create two tasks in the same queue
+      {:ok, task1} =
+        Tasks.create_task(org, %{
+          name: "Queue Task 1",
+          url: "https://example.com/1",
+          schedule_type: "once",
+          scheduled_at: DateTime.utc_now(),
+          queue: "payments"
+        })
+
+      {:ok, task2} =
+        Tasks.create_task(org, %{
+          name: "Queue Task 2",
+          url: "https://example.com/2",
+          schedule_type: "once",
+          scheduled_at: DateTime.utc_now(),
+          queue: "payments"
+        })
+
+      past = DateTime.add(DateTime.utc_now(), -60, :second)
+      future = DateTime.add(DateTime.utc_now(), 30, :second)
+
+      # Create execution for task1 scheduled in the future (simulates a retry)
+      {:ok, _retry_exec} = Executions.create_execution_for_task(task1, future)
+
+      # Create execution for task2 scheduled in the past (ready to run)
+      {:ok, _exec2} = Executions.create_execution_for_task(task2, past)
+
+      # Even though task2's execution is ready, it should be blocked
+      # because task1 has an earlier-created pending execution in the same queue
+      assert {:ok, nil} = Executions.claim_next_execution()
+    end
+
+    test "claim_next_execution/0 allows queue execution when no earlier pending exists", %{
+      organization: org
+    } do
+      {:ok, task1} =
+        Tasks.create_task(org, %{
+          name: "Queue Task 1",
+          url: "https://example.com/1",
+          schedule_type: "once",
+          scheduled_at: DateTime.utc_now(),
+          queue: "payments"
+        })
+
+      past = DateTime.add(DateTime.utc_now(), -60, :second)
+      {:ok, _exec} = Executions.create_execution_for_task(task1, past)
+
+      # Single execution in queue, should be claimable
+      assert {:ok, claimed} = Executions.claim_next_execution()
+      assert claimed.task_id == task1.id
+    end
+
+    test "claim_next_execution/0 blocks queue when execution is running", %{
+      organization: org
+    } do
+      {:ok, task1} =
+        Tasks.create_task(org, %{
+          name: "Queue Task 1",
+          url: "https://example.com/1",
+          schedule_type: "once",
+          scheduled_at: DateTime.utc_now(),
+          queue: "payments"
+        })
+
+      {:ok, task2} =
+        Tasks.create_task(org, %{
+          name: "Queue Task 2",
+          url: "https://example.com/2",
+          schedule_type: "once",
+          scheduled_at: DateTime.utc_now(),
+          queue: "payments"
+        })
+
+      past = DateTime.add(DateTime.utc_now(), -60, :second)
+      {:ok, _exec1} = Executions.create_execution_for_task(task1, past)
+      {:ok, _exec2} = Executions.create_execution_for_task(task2, past)
+
+      # Claim first execution (now running)
+      assert {:ok, running} = Executions.claim_next_execution()
+      assert running.task_id == task1.id
+
+      # Second should be blocked because first is running
+      assert {:ok, nil} = Executions.claim_next_execution()
+
+      # Complete first, then second should be claimable
+      {:ok, _completed} = Executions.complete_execution(running, %{status_code: 200})
+      assert {:ok, claimed} = Executions.claim_next_execution()
+      assert claimed.task_id == task2.id
+    end
+
     test "reset_monthly_execution_counts/0 resets all counters" do
       user = user_fixture()
       {:ok, org} = Accounts.create_organization(user, %{name: "Counter Reset Org"})
