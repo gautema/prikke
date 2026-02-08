@@ -160,6 +160,17 @@ defmodule Prikke.Audit do
   defp format_value(val), do: val
 
   @doc """
+  Deletes audit logs older than the given number of days.
+  Returns `{count, nil}`.
+  """
+  def cleanup_old_audit_logs(days) do
+    cutoff = DateTime.add(DateTime.utc_now(), -days * 86400, :second)
+
+    from(a in AuditLog, where: a.inserted_at < ^cutoff)
+    |> Repo.delete_all()
+  end
+
+  @doc """
   Formats an audit log action for display.
   """
   def format_action("created"), do: "Created"
@@ -187,5 +198,6 @@ defmodule Prikke.Audit do
   def format_resource_type("membership"), do: "Member"
   def format_resource_type("invite"), do: "Invite"
   def format_resource_type("api_key"), do: "API Key"
+  def format_resource_type("endpoint"), do: "Endpoint"
   def format_resource_type(type), do: String.capitalize(type)
 end

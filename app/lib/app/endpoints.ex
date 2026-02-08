@@ -11,6 +11,7 @@ defmodule Prikke.Endpoints do
 
   alias Prikke.Endpoints.{Endpoint, InboundEvent}
   alias Prikke.Accounts.Organization
+  alias Prikke.Audit
   alias Prikke.Tasks
   alias Prikke.Executions
 
@@ -59,12 +60,13 @@ defmodule Prikke.Endpoints do
     Repo.one(from e in Endpoint, where: e.slug == ^slug, preload: [:organization])
   end
 
-  def create_endpoint(%Organization{} = org, attrs, _opts \\ []) do
+  def create_endpoint(%Organization{} = org, attrs, opts \\ []) do
     changeset = Endpoint.create_changeset(%Endpoint{}, attrs, org.id)
 
     with :ok <- check_endpoint_limit(org),
          {:ok, endpoint} <- Repo.insert(changeset) do
       broadcast(org, {:endpoint_created, endpoint})
+      audit_log(opts, :created, :endpoint, endpoint.id, org.id, metadata: %{"endpoint_name" => endpoint.name})
       {:ok, endpoint}
     else
       {:error, :endpoint_limit_reached} ->
@@ -80,16 +82,25 @@ defmodule Prikke.Endpoints do
     end
   end
 
-  def update_endpoint(%Organization{} = org, %Endpoint{} = endpoint, attrs, _opts \\ []) do
+  def update_endpoint(%Organization{} = org, %Endpoint{} = endpoint, attrs, opts \\ []) do
     if endpoint.organization_id != org.id do
       raise ArgumentError, "endpoint does not belong to organization"
     end
 
+    old_endpoint = Map.from_struct(endpoint)
     changeset = Endpoint.changeset(endpoint, attrs)
 
     case Repo.update(changeset) do
       {:ok, updated} ->
         broadcast(org, {:endpoint_updated, updated})
+
+        changes = Audit.compute_changes(old_endpoint, Map.from_struct(updated), [:name, :forward_url, :enabled])
+
+        audit_log(opts, :updated, :endpoint, updated.id, org.id,
+          changes: changes,
+          metadata: %{"endpoint_name" => updated.name}
+        )
+
         {:ok, updated}
 
       error ->
@@ -97,7 +108,7 @@ defmodule Prikke.Endpoints do
     end
   end
 
-  def delete_endpoint(%Organization{} = org, %Endpoint{} = endpoint, _opts \\ []) do
+  def delete_endpoint(%Organization{} = org, %Endpoint{} = endpoint, opts \\ []) do
     if endpoint.organization_id != org.id do
       raise ArgumentError, "endpoint does not belong to organization"
     end
@@ -105,6 +116,7 @@ defmodule Prikke.Endpoints do
     case Repo.delete(endpoint) do
       {:ok, endpoint} ->
         broadcast(org, {:endpoint_deleted, endpoint})
+        audit_log(opts, :deleted, :endpoint, endpoint.id, org.id, metadata: %{"endpoint_name" => endpoint.name})
         {:ok, endpoint}
 
       error ->
@@ -305,5 +317,33 @@ defmodule Prikke.Endpoints do
       String.downcase(to_string(key)) in @hop_by_hop_headers
     end)
     |> Map.new()
+  end
+
+  ## Private: Audit Logging
+
+  defp audit_log(opts, action, resource_type, resource_id, org_id, extra_opts) do
+    scope = Keyword.get(opts, :scope)
+    api_key_name = Keyword.get(opts, :api_key_name)
+    changes = Keyword.get(extra_opts, :changes, %{})
+    metadata = Keyword.get(extra_opts, :metadata, %{})
+
+    cond do
+      scope != nil ->
+        Audit.log(scope, action, resource_type, resource_id,
+          organization_id: org_id,
+          changes: changes,
+          metadata: metadata
+        )
+
+      api_key_name != nil ->
+        Audit.log_api(api_key_name, action, resource_type, resource_id,
+          organization_id: org_id,
+          changes: changes,
+          metadata: metadata
+        )
+
+      true ->
+        :ok
+    end
   end
 end

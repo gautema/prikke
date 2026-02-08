@@ -35,7 +35,7 @@ defmodule PrikkeWeb.EndpointLive.New do
   end
 
   def handle_event("save", %{"endpoint" => params}, socket) do
-    case Endpoints.create_endpoint(socket.assigns.organization, params) do
+    case Endpoints.create_endpoint(socket.assigns.organization, params, scope: socket.assigns.current_scope) do
       {:ok, endpoint} ->
         {:noreply,
          socket

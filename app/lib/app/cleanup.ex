@@ -20,6 +20,7 @@ defmodule Prikke.Cleanup do
   alias Prikke.Repo
   alias Prikke.Accounts
   alias Prikke.Accounts.UserNotifier
+  alias Prikke.Audit
   alias Prikke.Executions
   alias Prikke.Emails
   alias Prikke.Idempotency
@@ -163,15 +164,18 @@ defmodule Prikke.Cleanup do
     # Clean old email logs (30 days)
     {emails_deleted, _} = Emails.cleanup_old_email_logs(30)
 
+    # Clean old audit logs (90 days)
+    {audit_deleted, _} = Audit.cleanup_old_audit_logs(90)
+
     # Reset monthly execution counters if new month
     Executions.reset_monthly_execution_counts()
 
     pings_deleted = total_pings
 
     if total_executions > 0 or total_tasks > 0 or idempotency_deleted > 0 or pings_deleted > 0 or
-         emails_deleted > 0 do
+         emails_deleted > 0 or audit_deleted > 0 do
       Logger.info(
-        "[Cleanup] Deleted #{total_executions} executions, #{total_tasks} completed one-time tasks, #{idempotency_deleted} idempotency keys, #{pings_deleted} monitor pings, #{emails_deleted} email logs"
+        "[Cleanup] Deleted #{total_executions} executions, #{total_tasks} completed one-time tasks, #{idempotency_deleted} idempotency keys, #{pings_deleted} monitor pings, #{emails_deleted} email logs, #{audit_deleted} audit logs"
       )
     else
       Logger.info("[Cleanup] Nothing to clean up")
@@ -183,7 +187,8 @@ defmodule Prikke.Cleanup do
        tasks: total_tasks,
        idempotency_keys: idempotency_deleted,
        monitor_pings: pings_deleted,
-       email_logs: emails_deleted
+       email_logs: emails_deleted,
+       audit_logs: audit_deleted
      }}
   end
 

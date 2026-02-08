@@ -61,7 +61,9 @@ defmodule PrikkeWeb.Api.EndpointController do
     endpoint_params = params["endpoint"] || params
     org = conn.assigns.current_organization
 
-    case Endpoints.create_endpoint(org, endpoint_params) do
+    api_key_name = conn.assigns[:api_key_name]
+
+    case Endpoints.create_endpoint(org, endpoint_params, api_key_name: api_key_name) do
       {:ok, endpoint} ->
         conn
         |> put_status(:created)
@@ -89,13 +91,14 @@ defmodule PrikkeWeb.Api.EndpointController do
   def update(conn, %{"id" => id} = params) do
     endpoint_params = params["endpoint"] || Map.drop(params, ["id"])
     org = conn.assigns.current_organization
+    api_key_name = conn.assigns[:api_key_name]
 
     case Endpoints.get_endpoint(org, id) do
       nil ->
         {:error, :not_found}
 
       endpoint ->
-        case Endpoints.update_endpoint(org, endpoint, endpoint_params) do
+        case Endpoints.update_endpoint(org, endpoint, endpoint_params, api_key_name: api_key_name) do
           {:ok, endpoint} -> json(conn, %{data: endpoint_json(conn, endpoint)})
           {:error, changeset} -> {:error, changeset}
         end
@@ -116,13 +119,14 @@ defmodule PrikkeWeb.Api.EndpointController do
 
   def delete(conn, %{"id" => id}) do
     org = conn.assigns.current_organization
+    api_key_name = conn.assigns[:api_key_name]
 
     case Endpoints.get_endpoint(org, id) do
       nil ->
         {:error, :not_found}
 
       endpoint ->
-        case Endpoints.delete_endpoint(org, endpoint) do
+        case Endpoints.delete_endpoint(org, endpoint, api_key_name: api_key_name) do
           {:ok, _endpoint} -> send_resp(conn, :no_content, "")
           {:error, changeset} -> {:error, changeset}
         end

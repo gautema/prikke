@@ -52,14 +52,14 @@ defmodule PrikkeWeb.EndpointLive.Index do
   @impl true
   def handle_event("delete", %{"id" => id}, socket) do
     endpoint = Endpoints.get_endpoint!(socket.assigns.organization, id)
-    {:ok, _} = Endpoints.delete_endpoint(socket.assigns.organization, endpoint)
+    {:ok, _} = Endpoints.delete_endpoint(socket.assigns.organization, endpoint, scope: socket.assigns.current_scope)
     {:noreply, put_flash(socket, :info, "Endpoint deleted")}
   end
 
   def handle_event("toggle", %{"id" => id}, socket) do
     org = socket.assigns.organization
     endpoint = Endpoints.get_endpoint!(org, id)
-    {:ok, _} = Endpoints.update_endpoint(org, endpoint, %{enabled: !endpoint.enabled})
+    {:ok, _} = Endpoints.update_endpoint(org, endpoint, %{enabled: !endpoint.enabled}, scope: socket.assigns.current_scope)
     {:noreply, socket}
   end
 

@@ -39,7 +39,7 @@ defmodule PrikkeWeb.EndpointLive.Edit do
     org = socket.assigns.organization
     endpoint = socket.assigns.endpoint
 
-    case Endpoints.update_endpoint(org, endpoint, params) do
+    case Endpoints.update_endpoint(org, endpoint, params, scope: socket.assigns.current_scope) do
       {:ok, updated} ->
         {:noreply,
          socket

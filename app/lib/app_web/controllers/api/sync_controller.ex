@@ -104,7 +104,7 @@ defmodule PrikkeWeb.Api.SyncController do
 
           endpoints_summary =
             if has_endpoints do
-              sync_endpoints(org, endpoints_params, delete_removed)
+              sync_endpoints(org, endpoints_params, delete_removed, api_key_name)
             else
               empty_summary()
             end
@@ -270,7 +270,7 @@ defmodule PrikkeWeb.Api.SyncController do
     end
   end
 
-  defp sync_endpoints(org, endpoints_params, delete_removed) do
+  defp sync_endpoints(org, endpoints_params, delete_removed, api_key_name) do
     existing_endpoints = Endpoints.list_endpoints(org) |> Map.new(&{&1.name, &1})
     declared_names = MapSet.new(endpoints_params, & &1["name"])
 
@@ -283,7 +283,7 @@ defmodule PrikkeWeb.Api.SyncController do
         else
           case Map.get(existing_endpoints, name) do
             nil ->
-              case Endpoints.create_endpoint(org, endpoint_params) do
+              case Endpoints.create_endpoint(org, endpoint_params, api_key_name: api_key_name) do
                 {:ok, endpoint} ->
                   {[endpoint.name | created], updated, errors}
 
@@ -293,7 +293,7 @@ defmodule PrikkeWeb.Api.SyncController do
               end
 
             existing_endpoint ->
-              case Endpoints.update_endpoint(org, existing_endpoint, endpoint_params) do
+              case Endpoints.update_endpoint(org, existing_endpoint, endpoint_params, api_key_name: api_key_name) do
                 {:ok, _endpoint} ->
                   {created, [name | updated], errors}
 
@@ -310,7 +310,7 @@ defmodule PrikkeWeb.Api.SyncController do
         existing_endpoints
         |> Enum.filter(fn {name, _endpoint} -> not MapSet.member?(declared_names, name) end)
         |> Enum.reduce([], fn {name, endpoint}, deleted ->
-          case Endpoints.delete_endpoint(org, endpoint) do
+          case Endpoints.delete_endpoint(org, endpoint, api_key_name: api_key_name) do
             {:ok, _} -> [name | deleted]
             {:error, _} -> deleted
           end

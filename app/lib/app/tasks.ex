@@ -197,7 +197,11 @@ defmodule Prikke.Tasks do
     with :ok <- check_interval_limit(org, changeset),
          {:ok, task} <- Repo.insert(changeset) do
       broadcast(org, {:created, task})
-      audit_log(opts, :created, :task, task.id, org.id, metadata: %{"task_name" => task.name})
+
+      if task.schedule_type == "cron" do
+        audit_log(opts, :created, :task, task.id, org.id, metadata: %{"task_name" => task.name})
+      end
+
       {:ok, task}
     else
       {:error, :interval_too_frequent} ->
@@ -270,10 +274,12 @@ defmodule Prikke.Tasks do
           :retry_attempts
         ])
 
-      audit_log(opts, :updated, :task, updated_task.id, org.id,
-        changes: changes,
-        metadata: %{"task_name" => updated_task.name}
-      )
+      if updated_task.schedule_type == "cron" do
+        audit_log(opts, :updated, :task, updated_task.id, org.id,
+          changes: changes,
+          metadata: %{"task_name" => updated_task.name}
+        )
+      end
 
       {:ok, updated_task}
     else
@@ -312,7 +318,11 @@ defmodule Prikke.Tasks do
 
     with {:ok, task} <- Repo.delete(task) do
       broadcast(org, {:deleted, task})
-      audit_log(opts, :deleted, :task, task.id, org.id, metadata: %{"task_name" => task.name})
+
+      if task.schedule_type == "cron" do
+        audit_log(opts, :deleted, :task, task.id, org.id, metadata: %{"task_name" => task.name})
+      end
+
       {:ok, task}
     end
   end
@@ -346,9 +356,11 @@ defmodule Prikke.Tasks do
           notify_scheduler()
         end
 
-        audit_log(opts, action, :task, updated_task.id, org.id,
-          metadata: %{"task_name" => updated_task.name}
-        )
+        if updated_task.schedule_type == "cron" do
+          audit_log(opts, action, :task, updated_task.id, org.id,
+            metadata: %{"task_name" => updated_task.name}
+          )
+        end
 
         {:ok, updated_task}
 

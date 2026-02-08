@@ -72,14 +72,14 @@ defmodule PrikkeWeb.EndpointLive.Show do
   def handle_event("toggle", _, socket) do
     org = socket.assigns.organization
     endpoint = socket.assigns.endpoint
-    {:ok, updated} = Endpoints.update_endpoint(org, endpoint, %{enabled: !endpoint.enabled})
+    {:ok, updated} = Endpoints.update_endpoint(org, endpoint, %{enabled: !endpoint.enabled}, scope: socket.assigns.current_scope)
     {:noreply, assign(socket, :endpoint, updated)}
   end
 
   def handle_event("delete", _, socket) do
     org = socket.assigns.organization
     endpoint = socket.assigns.endpoint
-    {:ok, _} = Endpoints.delete_endpoint(org, endpoint)
+    {:ok, _} = Endpoints.delete_endpoint(org, endpoint, scope: socket.assigns.current_scope)
 
     {:noreply,
      socket
