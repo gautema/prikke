@@ -211,6 +211,11 @@ defmodule PrikkeWeb.MonitorLive.Show do
 
   defp format_schedule(_), do: "Unknown"
 
+  defp format_period_duration(from, to) do
+    minutes = div(DateTime.diff(to, from, :second), 60)
+    format_gap_duration(max(minutes, 1))
+  end
+
   defp format_gap_duration(minutes) when minutes < 60, do: "#{minutes} min"
 
   defp format_gap_duration(minutes) when minutes < 1440 do
@@ -384,25 +389,27 @@ defmodule PrikkeWeb.MonitorLive.Show do
         <% else %>
           <div class="divide-y divide-slate-100">
             <%= for {event, idx} <- Enum.with_index(@timeline) do %>
-              <%= if event.type == :ping do %>
-                <div class="py-2.5 flex items-center gap-3">
+              <%= if event.type == :up do %>
+                <div class="py-3 flex items-center gap-3">
                   <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                  <span class="text-sm text-slate-700 flex-1">Ping received</span>
+                  <div class="flex-1 min-w-0">
+                    <span class="text-sm font-medium text-slate-900">Up</span>
+                    <span class="text-xs text-slate-400 ml-2">{format_period_duration(event.from, event.to)}</span>
+                    <span class="text-xs text-slate-400 ml-1">· {event.ping_count} pings</span>
+                  </div>
                   <span class="text-xs text-slate-400 shrink-0">
-                    <.local_time id={"event-#{idx}"} datetime={event.at} />
+                    <.local_time id={"event-from-#{idx}"} datetime={event.from} />
                   </span>
                 </div>
               <% else %>
-                <div class="py-2.5 flex items-center gap-3 bg-red-50/50 -mx-6 px-6">
+                <div class="py-3 flex items-center gap-3 bg-red-50/50 -mx-6 px-6">
                   <span class="w-2 h-2 rounded-full bg-red-500 shrink-0" />
-                  <span class="text-sm text-red-700 flex-1">
-                    Missed pings
-                    <span class="text-red-500 text-xs font-medium ml-1">
-                      {format_gap_duration(event.duration_minutes)}
-                    </span>
-                  </span>
+                  <div class="flex-1 min-w-0">
+                    <span class="text-sm font-medium text-red-700">Down</span>
+                    <span class="text-xs text-red-500 ml-2">{format_gap_duration(event.duration_minutes)}</span>
+                  </div>
                   <span class="text-xs text-red-400 shrink-0">
-                    <.local_time id={"event-#{idx}"} datetime={event.from} />
+                    <.local_time id={"event-from-#{idx}"} datetime={event.from} />
                   </span>
                 </div>
               <% end %>

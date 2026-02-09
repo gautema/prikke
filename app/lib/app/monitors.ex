@@ -255,88 +255,85 @@ defmodule Prikke.Monitors do
   end
 
   @doc """
-  Builds a timeline of events for a monitor, interleaving pings with detected
-  gaps where pings were expected but not received.
+  Builds a timeline of up/down periods for a monitor by collapsing consecutive
+  pings into ranges and detecting gaps where pings were missed.
 
   Returns a list of maps sorted newest-first:
-    - `%{type: :ping, at: datetime}` — a received ping
-    - `%{type: :gap, from: datetime, to: datetime, duration_minutes: integer}` — a missed period
+    - `%{type: :up, from: datetime, to: datetime, ping_count: integer}` — period with pings
+    - `%{type: :down, from: datetime, to: datetime, duration_minutes: integer}` — missed period
   """
-  def build_event_timeline(%Monitor{} = monitor, opts \\ []) do
-    limit = Keyword.get(opts, :limit, 30)
-
+  def build_event_timeline(%Monitor{} = monitor, _opts \\ []) do
     pings =
       from(p in MonitorPing,
         where: p.monitor_id == ^monitor.id,
-        order_by: [desc: p.received_at],
-        limit: ^limit
+        order_by: [asc: p.received_at],
+        limit: 500
       )
       |> Repo.all()
 
     expected_interval = get_expected_interval_seconds(monitor)
 
     if expected_interval == 0 or pings == [] do
-      Enum.map(pings, fn p -> %{type: :ping, at: p.received_at} end)
+      []
     else
-      # Threshold: expected interval + grace period (or 2x interval, whichever is smaller)
       threshold = expected_interval + min(monitor.grace_period_seconds, expected_interval)
+      periods = build_periods(pings, threshold)
 
-      events = build_gaps(Enum.reverse(pings), threshold, [])
-
-      # If monitor is currently down, add a gap from last ping to now
-      events =
+      # If monitor is currently down, add a down period from last ping to now
+      periods =
         if monitor.status == "down" and pings != [] do
-          last_ping = hd(pings)
+          last_ping = List.last(pings)
           gap_seconds = DateTime.diff(DateTime.utc_now(), last_ping.received_at, :second)
 
           if gap_seconds > threshold do
-            [
-              %{
-                type: :gap,
-                from: last_ping.received_at,
-                to: DateTime.utc_now(),
-                duration_minutes: div(gap_seconds, 60)
-              }
-              | events
-            ]
+            periods ++
+              [
+                %{
+                  type: :down,
+                  from: last_ping.received_at,
+                  to: DateTime.utc_now(),
+                  duration_minutes: div(gap_seconds, 60)
+                }
+              ]
           else
-            events
+            periods
           end
         else
-          events
+          periods
         end
 
-      Enum.sort_by(events, fn
-        %{type: :ping, at: at} -> at
-        %{type: :gap, to: to} -> to
-      end, {:desc, DateTime})
+      Enum.reverse(periods)
     end
   end
 
-  defp build_gaps([], _threshold, acc), do: acc
+  defp build_periods([], _threshold), do: []
 
-  defp build_gaps([ping], _threshold, acc) do
-    [%{type: :ping, at: ping.received_at} | acc]
+  defp build_periods([first | rest], threshold) do
+    initial = %{type: :up, from: first.received_at, to: first.received_at, ping_count: 1}
+    do_build_periods(rest, threshold, initial, [])
   end
 
-  defp build_gaps([prev, next | rest], threshold, acc) do
-    gap_seconds = DateTime.diff(next.received_at, prev.received_at, :second)
+  defp do_build_periods([], _threshold, current, acc), do: [current | acc]
 
-    acc =
-      if gap_seconds > threshold do
-        gap = %{
-          type: :gap,
-          from: prev.received_at,
-          to: next.received_at,
-          duration_minutes: div(gap_seconds, 60)
-        }
+  defp do_build_periods([ping | rest], threshold, current, acc) do
+    gap_seconds = DateTime.diff(ping.received_at, current.to, :second)
 
-        [gap, %{type: :ping, at: prev.received_at} | acc]
-      else
-        [%{type: :ping, at: prev.received_at} | acc]
-      end
+    if gap_seconds > threshold do
+      # Gap detected: close current up period, add down period, start new up period
+      down = %{
+        type: :down,
+        from: current.to,
+        to: ping.received_at,
+        duration_minutes: div(gap_seconds, 60)
+      }
 
-    build_gaps([next | rest], threshold, acc)
+      new_up = %{type: :up, from: ping.received_at, to: ping.received_at, ping_count: 1}
+      do_build_periods(rest, threshold, new_up, [down, current | acc])
+    else
+      # No gap: extend current up period
+      updated = %{current | to: ping.received_at, ping_count: current.ping_count + 1}
+      do_build_periods(rest, threshold, updated, acc)
+    end
   end
 
   defp get_expected_interval_seconds(%Monitor{schedule_type: "interval", interval_seconds: s})
