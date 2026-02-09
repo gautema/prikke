@@ -398,6 +398,8 @@ defmodule PrikkeWeb.MonitorLive.Show do
                   </div>
                   <span class="text-xs text-slate-400 shrink-0">
                     <.local_time id={"event-from-#{idx}"} datetime={event.from} />
+                    <span class="mx-1">&ndash;</span>
+                    <.local_time id={"event-to-#{idx}"} datetime={event.to} />
                   </span>
                 </div>
               <% else %>
@@ -409,6 +411,8 @@ defmodule PrikkeWeb.MonitorLive.Show do
                   </div>
                   <span class="text-xs text-red-400 shrink-0">
                     <.local_time id={"event-from-#{idx}"} datetime={event.from} />
+                    <span class="mx-1">&ndash;</span>
+                    <.local_time id={"event-to-#{idx}"} datetime={event.to} />
                   </span>
                 </div>
               <% end %>
