@@ -51,4 +51,4 @@ accessories:
         - POSTGRES_USER
         - POSTGRES_PASSWORD
     directories:
-      - data:/var/lib/postgresql
+      - /mnt/secure/postgresql-data:/var/lib/postgresql

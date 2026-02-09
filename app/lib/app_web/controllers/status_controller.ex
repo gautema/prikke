@@ -18,13 +18,15 @@ defmodule PrikkeWeb.StatusController do
     incidents = Status.list_recent_incidents(10)
     open_incidents = Status.list_open_incidents()
     daily_uptime = Status.get_daily_uptime(90)
+    all_incidents = Status.list_all_incidents(90)
 
     render(conn, :index,
       status: status,
       overall: overall,
       incidents: incidents,
       open_incidents: open_incidents,
-      daily_uptime: daily_uptime
+      daily_uptime: daily_uptime,
+      all_incidents: all_incidents
     )
   end
 end

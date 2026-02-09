@@ -201,6 +201,20 @@ defmodule Prikke.Status do
   end
 
   @doc """
+  Lists all incidents (resolved and open) within the last N days.
+  Used for minute-level uptime percentage calculation.
+  """
+  def list_all_incidents(days \\ 90) do
+    cutoff = DateTime.add(DateTime.utc_now(), -days, :day)
+
+    from(i in Incident,
+      where: i.started_at >= ^cutoff,
+      order_by: [desc: i.started_at]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Returns daily uptime status for the last N days.
   Returns a list of {date, status} tuples where status is:
   - :up - no incidents that day

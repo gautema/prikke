@@ -27,7 +27,7 @@
     <div class="glass-card rounded-2xl mb-8">
       <div class="px-4 py-3 border-b border-white/50 flex justify-between items-center">
         <h2 class="text-lg font-semibold text-slate-900">Uptime</h2>
-        <span class="text-sm font-semibold text-emerald-600">{uptime_percentage(@daily_uptime)}</span>
+        <span class="text-sm font-semibold text-emerald-600">{uptime_percentage(@daily_uptime, @all_incidents)}</span>
       </div>
       <div class="px-4 py-4">
         <div class="flex gap-0.5" title="90-day uptime history">

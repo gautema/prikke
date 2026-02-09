@@ -27,16 +27,26 @@ defmodule PrikkeWeb.StatusHTML do
   def component_label("api"), do: "API & Dashboard"
   def component_label(component), do: String.capitalize(component)
 
-  def uptime_percentage(daily_uptime) do
+  def uptime_percentage(daily_uptime, incidents) do
     monitored = Enum.reject(daily_uptime, fn {_date, status} -> status == :unknown end)
 
     case length(monitored) do
       0 ->
         "N/A"
 
-      total ->
-        up = Enum.count(monitored, fn {_date, status} -> status == :up end)
-        percent = Float.round(up / total * 100, 2)
+      total_days ->
+        total_minutes = total_days * 24 * 60
+
+        down_minutes =
+          incidents
+          |> Enum.map(fn incident ->
+            ended = incident.resolved_at || DateTime.utc_now()
+            DateTime.diff(ended, incident.started_at, :minute)
+          end)
+          |> Enum.sum()
+
+        up_minutes = max(total_minutes - down_minutes, 0)
+        percent = Float.round(up_minutes / total_minutes * 100, 2)
         "#{percent}%"
     end
   end
