@@ -1,34 +1,32 @@
-# Cronly Brand Guidelines
+# Runlater Brand Guidelines
 
 ## Name
 
-**Cronly** - External brand name for the cron scheduling service
+**Runlater** - Async task infrastructure for Europe
 
 Internal project name: "Prikke" (from Norwegian "til punkt og prikke" - meaning precisely)
 
 ## Tagline
 
-> Cronly - Cron jobs, simply.
+> Async Task Infrastructure for Europe
 
 Alternative taglines:
-- "Offload your background jobs"
-- "Cron for Europe"
-- "Jobs done, simply"
+- "Queue delayed tasks, schedule recurring jobs, and monitor everything"
+- "One API, zero infrastructure, fully GDPR-native"
 
 ## Logo
 
 The logo consists of:
-1. A green pulsating dot (●) - represents precision and uptime
-2. The wordmark "cronly" in Inter SemiBold
+1. A green dot (●) - represents precision and uptime
+2. The wordmark "runlater" in lowercase
 
-### Usage
-- `logo.svg` - For light backgrounds
-- `logo-dark.svg` - For dark backgrounds
+### Files
+- `logo.png` - 512x512 PNG (green dot, transparent background)
 - `favicon.svg` - The dot only, for favicons
+- `favicon.ico` - ICO format favicon
 
-### Spacing
-- Minimum clear space: 1x the height of the dot on all sides
-- Dot and text spacing: 0.5em
+### The Dot
+Always use Emerald 600 (`#059669`) for the dot. This is the brand's signature element.
 
 ## Colors
 
@@ -37,10 +35,16 @@ The logo consists of:
 |------|-----|-------|
 | Slate 900 | `#0f172a` | Primary text, headings |
 | Slate 500 | `#64748b` | Secondary text |
-| Emerald 500 | `#10b981` | Accent, the dot, CTAs |
+| Emerald 600 | `#059669` | Primary accent, buttons, links, CTAs |
+| Emerald 700 | `#047857` | Hover state for accent |
+| Emerald 500 | `#10b981` | The dot, success states |
 
-### The Dot
-Always use Emerald 500 (`#10b981`) for the dot. This is the brand's signature element.
+### Store Colors (Creem)
+| Role | Hex |
+|------|-----|
+| Accent | `#059669` |
+| Accent hover | `#047857` |
+| Text | `#0f172a` |
 
 ## Typography
 
@@ -59,20 +63,28 @@ JetBrains Mono: https://fonts.google.com/specimen/JetBrains+Mono
 - **Friendly** - Approachable, not corporate
 - **Confident** - We do one thing well
 - **European** - EU-hosted, GDPR-native
+- **No AI hype** - Just reliable job execution
 
 ## Domain
 
-- Primary: cronly.eu
+- Primary: runlater.eu
+
+## Legal Entity
+
+- **Whitenoise AS**
+- Org.nr: 821 244 722
+- Oslo, Norway
 
 ## Contact
 
-- Support: support@cronly.eu
-- Sales: sales@cronly.eu
+- Support: support@runlater.eu
+- Sales: sales@runlater.eu
 
 ## About Text
 
-> Cronly is a European background jobs service. Cron scheduling and webhook
-> delivery, hosted in the EU. Simple, reliable, always on time.
+> Runlater is European-hosted async task infrastructure. Queue delayed tasks,
+> schedule recurring cron jobs, and monitor everything from a single dashboard.
+> One API, zero infrastructure, fully GDPR-native.
 >
-> Built on Elixir and the BEAM VM - the same technology that powers WhatsApp
-> and Discord. EU-hosted, GDPR-native, no US cloud in the chain.
+> Built on Elixir and the BEAM VM. EU-hosted (Nuremberg, Germany),
+> GDPR-native, no US cloud in the chain.
