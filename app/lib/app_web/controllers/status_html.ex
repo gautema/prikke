@@ -27,6 +27,20 @@ defmodule PrikkeWeb.StatusHTML do
   def component_label("api"), do: "API & Dashboard"
   def component_label(component), do: String.capitalize(component)
 
+  def uptime_percentage(daily_uptime) do
+    monitored = Enum.reject(daily_uptime, fn {_date, status} -> status == :unknown end)
+
+    case length(monitored) do
+      0 ->
+        "N/A"
+
+      total ->
+        up = Enum.count(monitored, fn {_date, status} -> status == :up end)
+        percent = Float.round(up / total * 100, 2)
+        "#{percent}%"
+    end
+  end
+
   def uptime_status_label(:up), do: "Operational"
   def uptime_status_label(:down), do: "Incident"
   def uptime_status_label(:unknown), do: "No data"

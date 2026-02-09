@@ -14,8 +14,8 @@ defmodule PrikkeWeb.StatusControllerTest do
 
       assert html_response(conn, 200) =~ "System Status"
       assert html_response(conn, 200) =~ "All Systems Operational"
-      assert html_response(conn, 200) =~ "Job Scheduler"
-      assert html_response(conn, 200) =~ "Job Workers"
+      assert html_response(conn, 200) =~ "Task Scheduler"
+      assert html_response(conn, 200) =~ "Task Workers"
       assert html_response(conn, 200) =~ "API &amp; Dashboard"
     end
 
