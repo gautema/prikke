@@ -10,30 +10,33 @@ defmodule PrikkeWeb.MonitorLive.Show do
     if org do
       monitor = Monitors.get_monitor(org, id)
 
-      unless monitor do
-        raise PrikkeWeb.NotFoundError
+      if is_nil(monitor) do
+        {:ok,
+         socket
+         |> put_flash(:error, "Monitor not found")
+         |> redirect(to: ~p"/monitors")}
+      else
+        if connected?(socket) do
+          Monitors.subscribe_monitors(org)
+        end
+
+        pings = Monitors.list_recent_pings(monitor, limit: 20)
+        host = Application.get_env(:app, PrikkeWeb.Endpoint)[:url][:host] || "runlater.eu"
+        ping_url = "https://#{host}/ping/#{monitor.ping_token}"
+        status_days = if org.tier == "pro", do: 30, else: 7
+        daily_status = Monitors.get_daily_status([monitor], status_days)
+
+        {:ok,
+         socket
+         |> assign(:organization, org)
+         |> assign(:monitor, monitor)
+         |> assign(:pings, pings)
+         |> assign(:ping_url, ping_url)
+         |> assign(:page_title, monitor.name)
+         |> assign(:menu_open, false)
+         |> assign(:status_days, status_days)
+         |> assign(:daily_status, daily_status)}
       end
-
-      if connected?(socket) do
-        Monitors.subscribe_monitors(org)
-      end
-
-      pings = Monitors.list_recent_pings(monitor, limit: 20)
-      host = Application.get_env(:app, PrikkeWeb.Endpoint)[:url][:host] || "runlater.eu"
-      ping_url = "https://#{host}/ping/#{monitor.ping_token}"
-      status_days = if org.tier == "pro", do: 30, else: 7
-      daily_status = Monitors.get_daily_status([monitor], status_days)
-
-      {:ok,
-       socket
-       |> assign(:organization, org)
-       |> assign(:monitor, monitor)
-       |> assign(:pings, pings)
-       |> assign(:ping_url, ping_url)
-       |> assign(:page_title, monitor.name)
-       |> assign(:menu_open, false)
-       |> assign(:status_days, status_days)
-       |> assign(:daily_status, daily_status)}
     else
       {:ok,
        socket

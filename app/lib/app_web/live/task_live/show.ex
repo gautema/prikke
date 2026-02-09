@@ -13,7 +13,10 @@ defmodule PrikkeWeb.TaskLive.Show do
     if org do
       case Tasks.get_task(org, id) do
         nil ->
-          raise PrikkeWeb.NotFoundError
+          {:ok,
+           socket
+           |> put_flash(:error, "Task not found")
+           |> redirect(to: ~p"/tasks")}
 
         task ->
           status_filter = nil

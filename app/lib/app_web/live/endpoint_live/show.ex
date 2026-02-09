@@ -10,26 +10,29 @@ defmodule PrikkeWeb.EndpointLive.Show do
     if org do
       endpoint = Endpoints.get_endpoint(org, id)
 
-      unless endpoint do
-        raise PrikkeWeb.NotFoundError
+      if is_nil(endpoint) do
+        {:ok,
+         socket
+         |> put_flash(:error, "Endpoint not found")
+         |> redirect(to: ~p"/endpoints")}
+      else
+        if connected?(socket) do
+          Endpoints.subscribe_endpoints(org)
+        end
+
+        events = Endpoints.list_inbound_events(endpoint, limit: 20)
+        host = Application.get_env(:app, PrikkeWeb.Endpoint)[:url][:host] || "runlater.eu"
+        inbound_url = "https://#{host}/in/#{endpoint.slug}"
+
+        {:ok,
+         socket
+         |> assign(:organization, org)
+         |> assign(:endpoint, endpoint)
+         |> assign(:events, events)
+         |> assign(:inbound_url, inbound_url)
+         |> assign(:page_title, endpoint.name)
+         |> assign(:menu_open, false)}
       end
-
-      if connected?(socket) do
-        Endpoints.subscribe_endpoints(org)
-      end
-
-      events = Endpoints.list_inbound_events(endpoint, limit: 20)
-      host = Application.get_env(:app, PrikkeWeb.Endpoint)[:url][:host] || "runlater.eu"
-      inbound_url = "https://#{host}/in/#{endpoint.slug}"
-
-      {:ok,
-       socket
-       |> assign(:organization, org)
-       |> assign(:endpoint, endpoint)
-       |> assign(:events, events)
-       |> assign(:inbound_url, inbound_url)
-       |> assign(:page_title, endpoint.name)
-       |> assign(:menu_open, false)}
     else
       {:ok,
        socket
