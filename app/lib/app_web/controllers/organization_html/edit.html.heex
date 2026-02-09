@@ -104,14 +104,99 @@
         <% end %>
       </div>
 
-      <%= if @organization.tier == "free" do %>
-        <.form for={%{}} action={~p"/organizations/upgrade"} method="post" id="upgrade-form">
-          <button type="submit" class="text-emerald-600 font-medium hover:underline">
-            Upgrade to Pro →
-          </button>
-        </.form>
-      <% else %>
-        <p class="text-sm text-slate-500">You have access to all Pro features.</p>
+      <%= cond do %>
+        <% @organization.tier == "free" -> %>
+          <.form for={%{}} action={~p"/organizations/upgrade"} method="post" id="upgrade-form">
+            <button
+              type="submit"
+              class="inline-flex items-center gap-2 py-2.5 px-5 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-700 transition-colors"
+            >
+              Upgrade to Pro
+              <span class="text-emerald-200">&rarr;</span>
+            </button>
+          </.form>
+        <% @organization.subscription_status == "scheduled_cancel" -> %>
+          <div class="rounded-lg bg-amber-50 border border-amber-200 p-4 mb-3">
+            <p class="text-sm text-amber-800 font-medium">
+              Your subscription is set to cancel at the end of the current billing period.
+            </p>
+            <p class="text-sm text-amber-600 mt-1">
+              You'll keep Pro features until then.
+            </p>
+          </div>
+          <%= if @organization.creem_customer_id do %>
+            <.form
+              for={%{}}
+              action={~p"/organizations/billing-portal"}
+              method="post"
+              id="billing-portal-form"
+            >
+              <button
+                type="submit"
+                class="text-emerald-600 font-medium hover:underline text-sm"
+              >
+                Manage Billing &rarr;
+              </button>
+            </.form>
+          <% end %>
+        <% @organization.subscription_status == "past_due" -> %>
+          <div class="rounded-lg bg-red-50 border border-red-200 p-4 mb-3">
+            <p class="text-sm text-red-800 font-medium">
+              Your payment is past due. Please update your payment method to keep Pro features.
+            </p>
+          </div>
+          <%= if @organization.creem_customer_id do %>
+            <.form
+              for={%{}}
+              action={~p"/organizations/billing-portal"}
+              method="post"
+              id="billing-portal-form"
+            >
+              <button
+                type="submit"
+                class="inline-flex items-center gap-2 py-2 px-4 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 transition-colors text-sm"
+              >
+                Update Payment Method &rarr;
+              </button>
+            </.form>
+          <% end %>
+        <% @organization.tier == "pro" -> %>
+          <p class="text-sm text-slate-500 mb-3">You have access to all Pro features.</p>
+          <div class="flex gap-3">
+            <%= if @organization.creem_customer_id do %>
+              <.form
+                for={%{}}
+                action={~p"/organizations/billing-portal"}
+                method="post"
+                id="billing-portal-form"
+              >
+                <button
+                  type="submit"
+                  class="text-emerald-600 font-medium hover:underline text-sm"
+                >
+                  Manage Billing &rarr;
+                </button>
+              </.form>
+            <% end %>
+            <%= if @organization.creem_subscription_id && @organization.subscription_status == "active" do %>
+              <.form
+                for={%{}}
+                action={~p"/organizations/cancel-subscription"}
+                method="post"
+                id="cancel-subscription-form"
+                data-confirm="Are you sure? Your subscription will cancel at the end of the billing period."
+              >
+                <button
+                  type="submit"
+                  class="text-red-600 font-medium hover:underline text-sm"
+                >
+                  Cancel Subscription
+                </button>
+              </.form>
+            <% end %>
+          </div>
+        <% true -> %>
+          <p class="text-sm text-slate-500">You have access to all Pro features.</p>
       <% end %>
     </div>
   </div>

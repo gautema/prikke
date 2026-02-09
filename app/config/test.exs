@@ -56,3 +56,10 @@ config :phoenix_live_view,
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,
   sort_verified_routes_query_params: true
+
+# Configure Creem payments (test mode - Bypass will mock HTTP)
+config :app, Prikke.Billing.Creem,
+  api_key: "test_api_key",
+  webhook_secret: "test_webhook_secret",
+  product_id: "prod_test_123",
+  base_url: "http://localhost:0"

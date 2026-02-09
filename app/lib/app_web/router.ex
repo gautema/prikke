@@ -64,6 +64,13 @@ defmodule PrikkeWeb.Router do
     post "/:token", PingController, :ping
   end
 
+  # Creem payment webhook (public, signature verified in controller)
+  scope "/webhooks", PrikkeWeb do
+    pipe_through :api
+
+    post "/creem", CreemWebhookController, :handle
+  end
+
   # Inbound webhook endpoint (public, slug is auth)
   scope "/in", PrikkeWeb do
     pipe_through :api
@@ -177,6 +184,8 @@ defmodule PrikkeWeb.Router do
     get "/organizations/notifications", OrganizationController, :notifications
     put "/organizations/notifications", OrganizationController, :update_notifications
     post "/organizations/upgrade", OrganizationController, :upgrade
+    post "/organizations/billing-portal", OrganizationController, :billing_portal
+    post "/organizations/cancel-subscription", OrganizationController, :cancel_subscription
     get "/organizations/api-keys", OrganizationController, :api_keys
     post "/organizations/api-keys", OrganizationController, :create_api_key
     delete "/organizations/api-keys/:id", OrganizationController, :delete_api_key

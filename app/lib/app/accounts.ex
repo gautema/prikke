@@ -625,6 +625,91 @@ defmodule Prikke.Accounts do
     |> Repo.one()
   end
 
+  ## Billing
+
+  @doc """
+  Creates a Creem checkout session for upgrading an organization.
+  Returns `{:ok, checkout_url}` or `{:error, reason}`.
+  """
+  def create_checkout_session(organization, user_email, success_url) do
+    Prikke.Billing.Creem.create_checkout(organization.id, user_email, success_url)
+  end
+
+  @doc """
+  Activates a subscription after checkout completion.
+  Sets the organization to pro tier and stores Creem IDs.
+  """
+  def activate_subscription(org_id, customer_id, subscription_id) do
+    case get_organization(org_id) do
+      nil ->
+        {:error, :not_found}
+
+      org ->
+        org
+        |> Ecto.Changeset.change(
+          tier: "pro",
+          creem_customer_id: customer_id,
+          creem_subscription_id: subscription_id,
+          subscription_status: "active"
+        )
+        |> Repo.update()
+    end
+  end
+
+  @doc """
+  Updates subscription status based on Creem webhook events.
+  Keeps pro tier for active/past_due/scheduled_cancel/paused.
+  Downgrades to free for canceled/expired.
+  """
+  def update_subscription_status(subscription_id, status) do
+    case get_organization_by_subscription(subscription_id) do
+      nil ->
+        {:error, :not_found}
+
+      org ->
+        tier = subscription_status_to_tier(status)
+
+        org
+        |> Ecto.Changeset.change(subscription_status: status, tier: tier)
+        |> Repo.update()
+    end
+  end
+
+  @doc """
+  Looks up an organization by its Creem subscription ID.
+  """
+  def get_organization_by_subscription(subscription_id) do
+    Repo.get_by(Organization, creem_subscription_id: subscription_id)
+  end
+
+  @doc """
+  Cancels a subscription via the Creem API (scheduled at end of period).
+  """
+  def cancel_subscription(organization) do
+    case Prikke.Billing.Creem.cancel_subscription(organization.creem_subscription_id) do
+      {:ok, _response} ->
+        organization
+        |> Ecto.Changeset.change(subscription_status: "scheduled_cancel")
+        |> Repo.update()
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
+  Gets the Creem billing portal URL for an organization.
+  """
+  def get_billing_portal_url(organization) do
+    Prikke.Billing.Creem.get_billing_portal_url(organization.creem_customer_id)
+  end
+
+  defp subscription_status_to_tier(status)
+       when status in ["active", "past_due", "scheduled_cancel", "paused"],
+       do: "pro"
+
+  defp subscription_status_to_tier(_status), do: "free"
+
   ## Limit Notifications
 
   @doc """

@@ -54,5 +54,7 @@ defmodule PrikkeWeb.OrganizationHTML do
   def action_badge_class("role_changed"), do: "bg-amber-100 text-amber-700"
   def action_badge_class("api_key_created"), do: "bg-emerald-100 text-emerald-700"
   def action_badge_class("api_key_deleted"), do: "bg-red-100 text-red-700"
+  def action_badge_class("subscription_activated"), do: "bg-emerald-100 text-emerald-700"
+  def action_badge_class("subscription_status_changed"), do: "bg-amber-100 text-amber-700"
   def action_badge_class(_), do: "bg-slate-100 text-slate-600"
 end

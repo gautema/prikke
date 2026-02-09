@@ -51,7 +51,7 @@ defmodule PrikkeWeb.OrganizationController do
     end
   end
 
-  def edit(conn, _params) do
+  def edit(conn, params) do
     organization = conn.assigns.current_organization
 
     if organization do
@@ -59,6 +59,13 @@ defmodule PrikkeWeb.OrganizationController do
       changeset = Accounts.change_organization(organization)
       tier_limits = Tasks.get_tier_limits(organization.tier)
       monthly_executions = Executions.count_current_month_executions(organization)
+
+      conn =
+        if params["upgraded"] == "true" do
+          put_flash(conn, :info, "Welcome to Pro! Your subscription is now active.")
+        else
+          conn
+        end
 
       render(conn, :edit,
         organization: organization,
@@ -170,25 +177,65 @@ defmodule PrikkeWeb.OrganizationController do
 
   def upgrade(conn, _params) do
     organization = conn.assigns.current_organization
+    user = conn.assigns.current_scope.user
 
     if organization.tier == "free" do
-      case Accounts.upgrade_organization_to_pro(organization) do
-        {:ok, _organization} ->
-          conn
-          |> put_flash(
-            :info,
-            "You've been upgraded to Pro! Our team will reach out to set up billing."
-          )
-          |> redirect(to: ~p"/organizations/settings")
+      success_url = url(~p"/organizations/settings?upgraded=true")
 
-        {:error, _} ->
+      case Accounts.create_checkout_session(organization, user.email, success_url) do
+        {:ok, checkout_url} ->
+          redirect(conn, external: checkout_url)
+
+        {:error, _reason} ->
           conn
-          |> put_flash(:error, "Could not upgrade. Please try again.")
+          |> put_flash(:error, "Could not start checkout. Please try again.")
           |> redirect(to: ~p"/organizations/settings")
       end
     else
       conn
       |> put_flash(:info, "You're already on the Pro plan.")
+      |> redirect(to: ~p"/organizations/settings")
+    end
+  end
+
+  def billing_portal(conn, _params) do
+    organization = conn.assigns.current_organization
+
+    if organization.creem_customer_id do
+      case Accounts.get_billing_portal_url(organization) do
+        {:ok, portal_url} ->
+          redirect(conn, external: portal_url)
+
+        {:error, _reason} ->
+          conn
+          |> put_flash(:error, "Could not open billing portal. Please try again.")
+          |> redirect(to: ~p"/organizations/settings")
+      end
+    else
+      conn
+      |> put_flash(:error, "No billing account found.")
+      |> redirect(to: ~p"/organizations/settings")
+    end
+  end
+
+  def cancel_subscription(conn, _params) do
+    organization = conn.assigns.current_organization
+
+    if organization.creem_subscription_id && organization.subscription_status == "active" do
+      case Accounts.cancel_subscription(organization) do
+        {:ok, _org} ->
+          conn
+          |> put_flash(:info, "Your subscription will cancel at the end of the billing period.")
+          |> redirect(to: ~p"/organizations/settings")
+
+        {:error, _reason} ->
+          conn
+          |> put_flash(:error, "Could not cancel subscription. Please try again.")
+          |> redirect(to: ~p"/organizations/settings")
+      end
+    else
+      conn
+      |> put_flash(:error, "No active subscription to cancel.")
       |> redirect(to: ~p"/organizations/settings")
     end
   end

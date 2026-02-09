@@ -23,6 +23,11 @@ defmodule Prikke.Accounts.Organization do
     field :monthly_execution_count, :integer, default: 0
     field :monthly_execution_reset_at, :utc_datetime
 
+    # Billing (set programmatically via webhooks, not user-editable)
+    field :creem_customer_id, :string
+    field :creem_subscription_id, :string
+    field :subscription_status, :string
+
     has_many :memberships, Prikke.Accounts.Membership
     has_many :users, through: [:memberships, :user]
     has_many :api_keys, Prikke.Accounts.ApiKey

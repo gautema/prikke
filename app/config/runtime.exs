@@ -100,6 +100,13 @@ if config_env() == :prod do
   #
   # Check `Plug.SSL` for all available options in `force_ssl`.
 
+  # Configure Creem payments
+  config :app, Prikke.Billing.Creem,
+    api_key: System.get_env("CREEM_API_KEY"),
+    webhook_secret: System.get_env("CREEM_WEBHOOK_SECRET"),
+    product_id: System.get_env("CREEM_PRODUCT_ID"),
+    base_url: "https://api.creem.io"
+
   # Configure Mailjet mailer
   config :app, Prikke.Mailer,
     adapter: Swoosh.Adapters.Mailjet,

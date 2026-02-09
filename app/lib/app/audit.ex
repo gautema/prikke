@@ -187,6 +187,8 @@ defmodule Prikke.Audit do
   def format_action("role_changed"), do: "Changed role"
   def format_action("api_key_created"), do: "Created API key"
   def format_action("api_key_deleted"), do: "Deleted API key"
+  def format_action("subscription_activated"), do: "Subscription activated"
+  def format_action("subscription_status_changed"), do: "Subscription status changed"
   def format_action(action), do: String.capitalize(action)
 
   @doc """

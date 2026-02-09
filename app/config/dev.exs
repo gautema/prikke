@@ -91,5 +91,12 @@ config :phoenix_live_view,
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
 
+# Configure Creem payments (test mode)
+config :app, Prikke.Billing.Creem,
+  api_key: "creem_test_3yFYkgysFIbYEEePuWQr01",
+  webhook_secret: "whsec_6oUmL6W809aB4MJMYjNkAO",
+  product_id: "prod_3aElOsHRHvXOcyQeOds8CV",
+  base_url: "https://test-api.creem.io"
+
 # Configure mailer for development (admin notifications go to Swoosh mailbox)
 config :app, Prikke.Mailer, admin_email: "admin@localhost"
