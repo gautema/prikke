@@ -1,14 +1,12 @@
-# Prikke (Runlater)
+# Runlater
 
 > Async task infrastructure for Europe. Queue delayed tasks, schedule recurring jobs, receive inbound webhooks, and monitor everything.
 
 **Live:** [runlater.eu](https://runlater.eu)
 
-## What is Prikke?
+## What is Runlater?
 
-Prikke is a European background jobs service. Task queues, cron scheduling, inbound webhook forwarding, and heartbeat monitoring — hosted entirely in the EU.
-
-The name comes from the Norwegian expression "til punkt og prikke" — meaning to do something precisely, to the letter.
+Runlater is a European background jobs service. Task queues, cron scheduling, inbound webhook forwarding, and heartbeat monitoring — hosted entirely in the EU.
 
 ## Features
 

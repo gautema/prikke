@@ -1,13 +1,13 @@
-# CLAUDE.md - Prikke Project Guide
+# CLAUDE.md - Runlater Project Guide
 
 ## Product Overview
 
-**Prikke** is a European-hosted background jobs and cron scheduling service. The name comes from the Norwegian expression "til punkt og prikke" (to the letter, precisely).
+**Runlater** is async task infrastructure for Europe. Queue delayed tasks, schedule recurring jobs, receive inbound webhooks, and monitor everything. The domain is runlater.eu.
 
 ### Value Proposition
-- Simple cron scheduling and webhook delivery
+- One API for task queues, cron scheduling, inbound webhooks, and monitoring
 - EU-hosted (GDPR-native, data never leaves Europe)
-- No AI hype - just reliable job execution
+- No AI hype - just reliable task execution
 - Competitor gap: Inngest and Trigger.dev pivoted to AI, leaving simple use cases underserved
 
 ### Target Customers
@@ -148,7 +148,7 @@ Simple, no dependencies, full control.
 - [x] Custom headers and request body for webhooks
 - [x] Execution history with status, duration, response
 - [x] Project-level notifications (email + webhook URL, Slack/Discord auto-detection)
-- [x] Public status page for Prikke itself
+- [x] Public status page for Runlater itself
 - [x] Basic dashboard
 
 ### v2
@@ -423,12 +423,11 @@ Using Lemon Squeezy (Merchant of Record):
 
 ## Brand
 
-- **Name:** Prikke
-- **Meaning:** Norwegian for "dot", from "til punkt og prikke" (precisely)
-- **Tagline:** "Jobs done, til punkt og prikke"
+- **Name:** Runlater
+- **Tagline:** "Schedule tasks, simply."
 - **Colors:** Slate 900 (#0f172a) + Emerald 500 (#10b981)
 - **Font:** Inter
-- **Logo:** Green dot + "prikke" wordmark
+- **Logo:** Green dot + "runlater" wordmark
 - **Domain:** runlater.eu
 
 See `/brand/BRAND.md` for full guidelines.
@@ -558,7 +557,7 @@ lib/app/
 10. **Retries: one-time only** - One-time jobs retry (5x exponential backoff), cron jobs don't (next scheduled run is the retry)
 11. **Notifications: webhook-first** - Email (default) + webhook URL; auto-detect Slack/Discord URLs and format payloads accordingly
 12. **Project-level notifications** - Not per-job (simpler, covers 90% of use cases)
-13. **Status page** - Public status page for Prikke itself (builds trust); execution history IS user monitoring
+13. **Status page** - Public status page for Runlater itself (builds trust); execution history IS user monitoring
 14. **Job priority** - Pro tier before Free; minute-interval crons before hourly/daily; one-time jobs lowest priority
 15. **Monthly limit counting** - Currently uses COUNT query (fine for MVP). Future: cache in ETS with 5-minute TTL, invalidate on execution completion
 
