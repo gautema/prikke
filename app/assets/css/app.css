@@ -174,6 +174,35 @@ body:has(#mobile-menu-toggle:checked) {
 .docs-content td { @apply p-3 border-b border-slate-100 text-slate-700; }
 .docs-content strong { @apply font-semibold text-slate-900; }
 
+@media (max-width: 639px) {
+  .docs-content table thead,
+  .docs-content table th {
+    display: none;
+  }
+  .docs-content table,
+  .docs-content table tbody {
+    display: block;
+    width: 100%;
+  }
+  .docs-content table tr {
+    display: block;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .docs-content table tr:last-child {
+    border-bottom: none;
+  }
+  .docs-content table td {
+    display: block;
+    padding: 0.125rem 0;
+    border: none;
+  }
+  .docs-content table td:first-child {
+    font-weight: 600;
+    padding-top: 0.25rem;
+  }
+}
+
 /* Pulsing dot logo animation */
 @keyframes pulse-ring {
   0% {
