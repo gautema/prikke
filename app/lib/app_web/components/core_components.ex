@@ -945,6 +945,7 @@ defmodule PrikkeWeb.CoreComponents do
             API Reference
           </a>
           <a href="/status" class="text-slate-600 no-underline hover:text-emerald-600">Status</a>
+          <a href="/legal/slo" class="text-slate-600 no-underline hover:text-emerald-600">SLO</a>
           <a
             href="mailto:support@runlater.eu"
             class="text-slate-600 no-underline hover:text-emerald-600"
@@ -955,8 +956,9 @@ defmodule PrikkeWeb.CoreComponents do
         <div class="flex flex-wrap justify-center gap-4 mb-3">
           <a href="/terms" class="text-slate-400 no-underline hover:text-emerald-600">Terms</a>
           <a href="/privacy" class="text-slate-400 no-underline hover:text-emerald-600">Privacy</a>
+          <a href="/legal/dpa" class="text-slate-400 no-underline hover:text-emerald-600">DPA</a>
         </div>
-        <p class="text-slate-400">Runlater · Made in Norway</p>
+        <p class="text-slate-400">Whitenoise AS · Org.nr 821 244 722 · Oslo, Norway</p>
       </footer>
     <% else %>
       <footer class="mt-16">
@@ -966,8 +968,10 @@ defmodule PrikkeWeb.CoreComponents do
               <a href="/docs" class="hover:text-slate-700">Docs</a>
               <a href="/docs/api" class="hover:text-slate-700">API Reference</a>
               <a href="/status" class="hover:text-slate-700">Status</a>
+              <a href="/legal/slo" class="hover:text-slate-700">SLO</a>
               <a href="/terms" class="hover:text-slate-700">Terms</a>
               <a href="/privacy" class="hover:text-slate-700">Privacy</a>
+              <a href="/legal/dpa" class="hover:text-slate-700">DPA</a>
             </div>
             <div>
               <a href="mailto:support@runlater.eu" class="hover:text-slate-700">Contact</a>

@@ -1,0 +1,125 @@
+<div class="max-w-3xl mx-auto py-12 px-4">
+  <h1 class="text-3xl font-bold text-slate-900 mb-2">Service Level Objectives</h1>
+  <p class="text-sm text-slate-500 mb-8">Last updated: February 8, 2026</p>
+
+  <div class="prose prose-slate max-w-none">
+    <p class="text-slate-600 mb-6">
+      This page describes our Service Level Objectives (SLOs) for the Runlater service. These are targets we aim to meet, not contractual guarantees. For a binding SLA, please
+      <a href="mailto:support@runlater.eu" class="text-emerald-600 hover:text-emerald-700">
+        contact us</a>.
+    </p>
+
+    <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">Uptime</h2>
+    <div class="bg-slate-50 rounded-lg p-6 mb-6">
+      <div class="flex items-baseline gap-2 mb-2">
+        <span class="text-3xl font-bold text-emerald-600">99.9%</span>
+        <span class="text-slate-500">monthly uptime target</span>
+      </div>
+      <p class="text-slate-500 text-sm">
+        Equivalent to less than 44 minutes of downtime per month.
+      </p>
+    </div>
+    <p class="text-slate-600 mb-4">
+      Uptime is measured as the availability of the Runlater API and scheduler. Planned maintenance windows are excluded and announced at least 24 hours in advance.
+    </p>
+    <p class="text-slate-600 mb-4">
+      Current service status is available at
+      <a href="/status" class="text-emerald-600 hover:text-emerald-700">runlater.eu/status</a>.
+    </p>
+
+    <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">Job Execution Timing</h2>
+    <div class="bg-slate-50 rounded-lg p-6 mb-6">
+      <div class="flex items-baseline gap-2 mb-2">
+        <span class="text-3xl font-bold text-emerald-600">&lt; 30s</span>
+        <span class="text-slate-500">scheduling precision target</span>
+      </div>
+      <p class="text-slate-500 text-sm">
+        Jobs execute within 30 seconds of their scheduled time under normal load.
+      </p>
+    </div>
+    <p class="text-slate-600 mb-4">
+      The scheduler ticks every 10 seconds with a 30-second lookahead window. Under normal conditions, jobs are claimed and started within seconds of their scheduled time. Higher latency may occur during traffic spikes.
+    </p>
+
+    <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">Webhook Delivery</h2>
+    <ul class="list-disc pl-6 text-slate-600 mb-4 space-y-2">
+      <li>
+        <strong>Timeout:</strong>
+        Configurable per job (1 second to 5 minutes, default 30 seconds)
+      </li>
+      <li>
+        <strong>Retries:</strong>
+        One-time jobs retry up to 10 times with exponential backoff. Cron jobs do not retry (next scheduled run serves as the retry).
+      </li>
+      <li>
+        <strong>Payload size:</strong>
+        Request bodies up to 256KB. Response bodies stored up to 256KB.
+      </li>
+    </ul>
+
+    <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">API Response Time</h2>
+    <div class="bg-slate-50 rounded-lg p-6 mb-6">
+      <div class="flex items-baseline gap-2 mb-2">
+        <span class="text-3xl font-bold text-emerald-600">&lt; 200ms</span>
+        <span class="text-slate-500">p95 API response time target</span>
+      </div>
+      <p class="text-slate-500 text-sm">
+        95th percentile response time for API requests under normal load.
+      </p>
+    </div>
+
+    <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">Data Durability</h2>
+    <ul class="list-disc pl-6 text-slate-600 mb-4 space-y-2">
+      <li>
+        <strong>Database:</strong>
+        PostgreSQL with regular automated backups
+      </li>
+      <li>
+        <strong>Retention:</strong>
+        Execution history retained for 7 days (Free) or 30 days (Pro)
+      </li>
+      <li>
+        <strong>Location:</strong>
+        All data stored in Hetzner, Nuremberg, Germany (EU)
+      </li>
+    </ul>
+
+    <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">Notifications</h2>
+    <ul class="list-disc pl-6 text-slate-600 mb-4 space-y-2">
+      <li>
+        <strong>Failure alerts:</strong>
+        Email and/or webhook notification sent within 1 minute of a job failure
+      </li>
+      <li>
+        <strong>Recovery alerts:</strong>
+        Notification sent when a previously failing job succeeds
+      </li>
+      <li>
+        <strong>Limit warnings:</strong>
+        Email sent when approaching monthly execution limits
+      </li>
+    </ul>
+
+    <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">Maintenance</h2>
+    <p class="text-slate-600 mb-4">
+      We deploy updates with zero-downtime deployments. In rare cases where maintenance requires brief interruption:
+    </p>
+    <ul class="list-disc pl-6 text-slate-600 mb-4 space-y-1">
+      <li>Planned maintenance is announced at least 24 hours in advance</li>
+      <li>Maintenance windows are scheduled outside peak hours (typically 02:00-05:00 UTC)</li>
+      <li>Queued jobs are not lost during maintenance; they execute once the service resumes</li>
+    </ul>
+
+    <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">Support</h2>
+    <ul class="list-disc pl-6 text-slate-600 mb-4 space-y-2">
+      <li>
+        <strong>Email support:</strong>
+        <a href="mailto:support@runlater.eu" class="text-emerald-600 hover:text-emerald-700">
+          support@runlater.eu
+        </a>
+      </li>
+      <li><strong>Response time target:</strong> Within 1 business day</li>
+      <li><strong>Critical issues:</strong> Best-effort same-day response</li>
+    </ul>
+  </div>
+</div>

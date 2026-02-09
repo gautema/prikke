@@ -41,6 +41,9 @@ defmodule PrikkeWeb.Router do
     # Legal pages
     get "/terms", PageController, :terms
     get "/privacy", PageController, :privacy
+    get "/legal/dpa", PageController, :dpa
+    get "/legal/slo", PageController, :slo
+    get "/legal/subprocessors", PageController, :subprocessors
 
     # Presentation
     get "/presentation", PageController, :presentation

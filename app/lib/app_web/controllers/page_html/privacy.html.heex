@@ -1,21 +1,26 @@
 <div class="max-w-3xl mx-auto py-12 px-4">
   <h1 class="text-3xl font-bold text-slate-900 mb-2">Privacy Policy</h1>
-  <p class="text-sm text-slate-500 mb-8">Last updated: February 3, 2026</p>
+  <p class="text-sm text-slate-500 mb-8">Last updated: February 8, 2026</p>
 
   <div class="prose prose-slate max-w-none">
     <p class="text-slate-600 mb-6">
-      This Privacy Policy explains how Runlater ("we", "us", or "our") collects, uses, and protects your personal data when you use our service. We are committed to GDPR compliance and protecting your privacy.
+      This Privacy Policy explains how Whitenoise AS ("we", "us", or "our"), operating the Runlater service, collects, uses, and protects your personal data. We are committed to GDPR compliance and protecting your privacy.
     </p>
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">1. Data Controller</h2>
-    <p class="text-slate-600 mb-4">
-      Runlater is the data controller for your personal data. Contact us at:
+    <p class="text-slate-600 mb-2">
+      The data controller for your personal data is:
     </p>
-    <p class="text-slate-600 mb-4">
-      <a href="mailto:support@runlater.eu" class="text-emerald-600 hover:text-emerald-700">
-        support@runlater.eu
-      </a>
-    </p>
+    <ul class="list-none pl-0 text-slate-600 mb-4 space-y-1">
+      <li><strong>Whitenoise AS</strong></li>
+      <li>Org.nr: 821 244 722</li>
+      <li>Oslo, Norway</li>
+      <li>
+        <a href="mailto:support@runlater.eu" class="text-emerald-600 hover:text-emerald-700">
+          support@runlater.eu
+        </a>
+      </li>
+    </ul>
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">2. Data We Collect</h2>
 
@@ -46,7 +51,7 @@
     <ul class="list-disc pl-6 text-slate-600 mb-4 space-y-1">
       <li>Pages visited within the application</li>
       <li>API requests and timestamps</li>
-      <li>IP addresses (hashed for analytics, not stored in plain text)</li>
+      <li>IP addresses (for security and abuse prevention)</li>
       <li>Browser user agent (for debugging)</li>
     </ul>
 
@@ -73,9 +78,12 @@
       We process your data based on:
     </p>
     <ul class="list-disc pl-6 text-slate-600 mb-4 space-y-1">
-      <li><strong>Contract:</strong> To provide the Service you signed up for</li>
-      <li><strong>Legitimate interest:</strong> To improve the Service and prevent abuse</li>
-      <li><strong>Legal obligation:</strong> To comply with applicable laws</li>
+      <li><strong>Contract:</strong> To provide the Service you signed up for (Art. 6(1)(b))</li>
+      <li>
+        <strong>Legitimate interest:</strong>
+        To improve the Service and prevent abuse (Art. 6(1)(f))
+      </li>
+      <li><strong>Legal obligation:</strong> To comply with applicable laws (Art. 6(1)(c))</li>
     </ul>
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">5. Data Storage and Security</h2>
@@ -84,9 +92,10 @@
     </p>
     <ul class="list-disc pl-6 text-slate-600 mb-4 space-y-1">
       <li><strong>Location:</strong> Nuremberg, Germany (Hetzner data center)</li>
-      <li><strong>Encryption:</strong> Data encrypted in transit (TLS) and at rest</li>
+      <li><strong>Encryption:</strong> Data encrypted in transit (TLS 1.2+) and at rest</li>
       <li><strong>Access:</strong> Limited to authorized personnel only</li>
       <li><strong>Backups:</strong> Regular encrypted backups with limited retention</li>
+      <li><strong>API keys:</strong> Stored as irreversible hashes (never in plain text)</li>
     </ul>
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">6. Data Retention</h2>
@@ -96,14 +105,18 @@
         <strong>Execution history:</strong>
         7 days (Free) or 30 days (Pro), then automatically deleted
       </li>
-      <li><strong>Response bodies:</strong> Deleted after 7 days</li>
+      <li><strong>Audit logs:</strong> 90 days</li>
       <li><strong>Analytics:</strong> Aggregated, anonymized, retained for 90 days</li>
       <li><strong>After account deletion:</strong> All data deleted within 30 days</li>
     </ul>
 
-    <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">7. Data Sharing</h2>
+    <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">7. Sub-processors</h2>
     <p class="text-slate-600 mb-4">
-      We only share data with:
+      We use a limited number of sub-processors to operate the Service. See our
+      <a href="/legal/subprocessors" class="text-emerald-600 hover:text-emerald-700">
+        Sub-processor list
+      </a>
+      for details. We only share data with:
     </p>
     <ul class="list-disc pl-6 text-slate-600 mb-4 space-y-1">
       <li>
@@ -113,32 +126,38 @@
         <strong>Email provider:</strong>
         Mailjet (France) for sending authentication and notification emails
       </li>
-      <li><strong>Infrastructure providers:</strong> Hetzner (Germany) for hosting</li>
+      <li><strong>Infrastructure provider:</strong> Hetzner (Germany) for hosting</li>
     </ul>
     <p class="text-slate-600 mb-4">
       We do not share data with analytics services, advertising networks, or data brokers.
     </p>
 
-    <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">8. Your Rights (GDPR)</h2>
+    <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">8. International Transfers</h2>
+    <p class="text-slate-600 mb-4">
+      Your data is processed and stored within the European Union. We do not transfer personal data to countries outside the EU/EEA. All sub-processors are EU-based, with the exception of GitHub (container registry), which is covered by the EU-US Data Privacy Framework.
+    </p>
+
+    <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">9. Your Rights (GDPR)</h2>
     <p class="text-slate-600 mb-4">
       Under GDPR, you have the right to:
     </p>
     <ul class="list-disc pl-6 text-slate-600 mb-4 space-y-1">
-      <li><strong>Access:</strong> Request a copy of your personal data</li>
-      <li><strong>Rectification:</strong> Correct inaccurate data</li>
-      <li><strong>Erasure:</strong> Request deletion of your data ("right to be forgotten")</li>
-      <li><strong>Portability:</strong> Export your data in a machine-readable format</li>
-      <li><strong>Restriction:</strong> Limit how we process your data</li>
-      <li><strong>Objection:</strong> Object to processing based on legitimate interest</li>
+      <li><strong>Access:</strong> Request a copy of your personal data (Art. 15)</li>
+      <li><strong>Rectification:</strong> Correct inaccurate data (Art. 16)</li>
+      <li>
+        <strong>Erasure:</strong> Request deletion of your data ("right to be forgotten") (Art. 17)
+      </li>
+      <li><strong>Portability:</strong> Export your data in a machine-readable format (Art. 20)</li>
+      <li><strong>Restriction:</strong> Limit how we process your data (Art. 18)</li>
+      <li><strong>Objection:</strong> Object to processing based on legitimate interest (Art. 21)</li>
     </ul>
     <p class="text-slate-600 mb-4">
-      To exercise these rights, contact us at <a
-        href="mailto:support@runlater.eu"
-        class="text-emerald-600 hover:text-emerald-700"
-      >support@runlater.eu</a>. We will respond within 30 days.
+      To exercise these rights, contact us at
+      <a href="mailto:support@runlater.eu" class="text-emerald-600 hover:text-emerald-700">
+        support@runlater.eu</a>. We will respond within 30 days.
     </p>
 
-    <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">9. Cookies</h2>
+    <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">10. Cookies</h2>
     <p class="text-slate-600 mb-4">
       We use minimal, essential cookies only:
     </p>
@@ -147,12 +166,7 @@
       <li><strong>CSRF token:</strong> Required for security (HttpOnly, Secure)</li>
     </ul>
     <p class="text-slate-600 mb-4">
-      We do not use tracking cookies, analytics cookies, or third-party cookies.
-    </p>
-
-    <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">10. International Transfers</h2>
-    <p class="text-slate-600 mb-4">
-      Your data stays within the European Union. We do not transfer data to countries outside the EU/EEA.
+      We do not use tracking cookies, analytics cookies, or third-party cookies. No cookie consent banner is required as we only use strictly necessary cookies (GDPR Art. 5(3) ePrivacy Directive exemption).
     </p>
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">11. Children's Privacy</h2>
@@ -167,7 +181,8 @@
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">13. Complaints</h2>
     <p class="text-slate-600 mb-4">
-      If you believe we have not handled your data correctly, you have the right to lodge a complaint with your local data protection authority. In Norway, this is <a
+      If you believe we have not handled your data correctly, you have the right to lodge a complaint with your local data protection authority. In Norway, this is
+      <a
         href="https://www.datatilsynet.no"
         class="text-emerald-600 hover:text-emerald-700"
         target="_blank"
@@ -176,13 +191,17 @@
     </p>
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">14. Contact</h2>
-    <p class="text-slate-600 mb-4">
+    <p class="text-slate-600 mb-2">
       For privacy-related questions or requests:
     </p>
-    <p class="text-slate-600">
-      <a href="mailto:support@runlater.eu" class="text-emerald-600 hover:text-emerald-700">
-        support@runlater.eu
-      </a>
-    </p>
+    <ul class="list-none pl-0 text-slate-600 mb-4 space-y-1">
+      <li><strong>Whitenoise AS</strong></li>
+      <li>Org.nr: 821 244 722</li>
+      <li>
+        <a href="mailto:support@runlater.eu" class="text-emerald-600 hover:text-emerald-700">
+          support@runlater.eu
+        </a>
+      </li>
+    </ul>
   </div>
 </div>

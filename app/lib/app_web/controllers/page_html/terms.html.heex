@@ -1,21 +1,23 @@
 <div class="max-w-3xl mx-auto py-12 px-4">
   <h1 class="text-3xl font-bold text-slate-900 mb-2">Terms of Service</h1>
-  <p class="text-sm text-slate-500 mb-8">Last updated: February 3, 2026</p>
+  <p class="text-sm text-slate-500 mb-8">Last updated: February 8, 2026</p>
 
   <div class="prose prose-slate max-w-none">
     <p class="text-slate-600 mb-6">
-      These Terms of Service ("Terms") govern your use of Runlater ("Service"), operated by Runlater ("we", "us", or "our"). By using the Service, you agree to these Terms.
+      These Terms of Service ("Terms") govern your use of the Runlater service ("Service"), operated by Whitenoise AS, org.nr 821 244 722, Oslo, Norway ("we", "us", or "our"). By using the Service, you agree to these Terms.
     </p>
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">1. Service Description</h2>
     <p class="text-slate-600 mb-4">
-      Runlater is a background job scheduling service that allows you to:
+      Runlater is a background job scheduling and webhook delivery service that allows you to:
     </p>
     <ul class="list-disc pl-6 text-slate-600 mb-4 space-y-1">
       <li>Schedule recurring jobs using cron expressions</li>
       <li>Schedule one-time jobs to run at a specific time</li>
       <li>Queue jobs for immediate execution via API</li>
-      <li>Receive webhook notifications when jobs complete</li>
+      <li>Receive inbound webhooks and forward them to your endpoints</li>
+      <li>Monitor uptime of your HTTP endpoints</li>
+      <li>Receive notifications when jobs fail or recover</li>
     </ul>
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">2. Account Registration</h2>
@@ -39,6 +41,7 @@
       <li>Store or transmit illegal content</li>
       <li>Violate any applicable laws or regulations</li>
       <li>Circumvent usage limits or rate limiting</li>
+      <li>Impersonate other users or organizations</li>
     </ul>
     <p class="text-slate-600 mb-4">
       We reserve the right to suspend or terminate accounts that violate these terms without notice.
@@ -49,14 +52,18 @@
       The Service is offered in multiple tiers with different limits:
     </p>
     <ul class="list-disc pl-6 text-slate-600 mb-4 space-y-1">
-      <li><strong>Free:</strong> Unlimited tasks, 5,000 executions/month, hourly minimum interval</li>
       <li>
-        <strong>Pro:</strong> Unlimited jobs, 1,000,000 executions/month, per-minute intervals
+        <strong>Free:</strong>
+        5 tasks, 5,000 executions/month, hourly minimum interval, 7 days history
       </li>
-      <li><strong>Enterprise:</strong> Custom limits, contact us for details</li>
+      <li>
+        <strong>Pro (&#8364;29/month):</strong>
+        Unlimited tasks, 1,000,000 executions/month, per-minute intervals, 30 days history
+      </li>
     </ul>
     <p class="text-slate-600 mb-4">
-      We reserve the right to modify limits with 30 days notice to existing customers.
+      We reserve the right to modify limits with 30 days notice to existing customers. Current limits are always displayed on our
+      <a href="/" class="text-emerald-600 hover:text-emerald-700">pricing page</a>.
     </p>
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">5. Payment and Billing</h2>
@@ -73,7 +80,9 @@
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">6. Service Availability</h2>
     <p class="text-slate-600 mb-4">
-      We strive for high availability but do not guarantee uninterrupted service. The Service is provided "as is" without warranty of any kind. We are not liable for:
+      We target high availability as described in our
+      <a href="/legal/slo" class="text-emerald-600 hover:text-emerald-700">
+        Service Level Objectives</a>, but do not guarantee uninterrupted service. The Service is provided "as is" without warranty of any kind. We are not liable for:
     </p>
     <ul class="list-disc pl-6 text-slate-600 mb-4 space-y-1">
       <li>Service interruptions or downtime</li>
@@ -81,16 +90,14 @@
       <li>Data loss or corruption</li>
       <li>Third-party service failures</li>
     </ul>
-    <p class="text-slate-600 mb-4">
-      For Enterprise customers, custom SLAs may be negotiated separately.
-    </p>
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">7. Data and Privacy</h2>
     <p class="text-slate-600 mb-4">
-      Your use of the Service is also governed by our <a
-        href="/privacy"
-        class="text-emerald-600 hover:text-emerald-700"
-      >Privacy Policy</a>. Key points:
+      Your use of the Service is also governed by our
+      <a href="/privacy" class="text-emerald-600 hover:text-emerald-700">Privacy Policy</a>
+      and, where applicable, our
+      <a href="/legal/dpa" class="text-emerald-600 hover:text-emerald-700">
+        Data Processing Agreement</a>. Key points:
     </p>
     <ul class="list-disc pl-6 text-slate-600 mb-4 space-y-1">
       <li>Your data is stored in the European Union (Nuremberg, Germany)</li>
@@ -101,12 +108,12 @@
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">8. Intellectual Property</h2>
     <p class="text-slate-600 mb-4">
-      The Service, including its design, code, and documentation, is owned by Runlater. You retain all rights to the data and content you provide to the Service.
+      The Service, including its design, code, and documentation, is owned by Whitenoise AS. You retain all rights to the data and content you provide to the Service.
     </p>
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">9. Limitation of Liability</h2>
     <p class="text-slate-600 mb-4">
-      To the maximum extent permitted by law:
+      To the maximum extent permitted by applicable law:
     </p>
     <ul class="list-disc pl-6 text-slate-600 mb-4 space-y-1">
       <li>
@@ -115,6 +122,9 @@
       <li>We are not liable for indirect, incidental, or consequential damages</li>
       <li>We are not liable for lost profits, data, or business opportunities</li>
     </ul>
+    <p class="text-slate-600 mb-4">
+      Nothing in these Terms limits liability for fraud, gross negligence, or any liability that cannot be excluded under Norwegian law.
+    </p>
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">10. Termination</h2>
     <p class="text-slate-600 mb-4">
@@ -128,22 +138,26 @@
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">11. Changes to Terms</h2>
     <p class="text-slate-600 mb-4">
-      We may update these Terms from time to time. We will notify you of material changes via email or through the Service. Continued use after changes constitutes acceptance.
+      We may update these Terms from time to time. We will notify you of material changes via email at least 30 days in advance. Continued use after changes constitutes acceptance.
     </p>
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">12. Governing Law</h2>
     <p class="text-slate-600 mb-4">
-      These Terms are governed by the laws of Norway. Any disputes will be resolved in the courts of Norway.
+      These Terms are governed by the laws of Norway. Any disputes will be resolved in the courts of Oslo, Norway.
     </p>
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">13. Contact</h2>
-    <p class="text-slate-600 mb-4">
-      For questions about these Terms, contact us at:
+    <p class="text-slate-600 mb-2">
+      For questions about these Terms:
     </p>
-    <p class="text-slate-600">
-      <a href="mailto:support@runlater.eu" class="text-emerald-600 hover:text-emerald-700">
-        support@runlater.eu
-      </a>
-    </p>
+    <ul class="list-none pl-0 text-slate-600 mb-4 space-y-1">
+      <li><strong>Whitenoise AS</strong></li>
+      <li>Org.nr: 821 244 722</li>
+      <li>
+        <a href="mailto:support@runlater.eu" class="text-emerald-600 hover:text-emerald-700">
+          support@runlater.eu
+        </a>
+      </li>
+    </ul>
   </div>
 </div>
