@@ -333,11 +333,12 @@ defmodule Prikke.Monitors do
     # Convert gaps to down periods (already sorted newest-first)
     down_periods =
       Enum.map(gaps, fn g ->
+        seconds = if is_struct(g.gap_seconds, Decimal), do: Decimal.to_float(g.gap_seconds), else: g.gap_seconds
         %{
           type: :down,
-          from: g.gap_start,
-          to: g.gap_end,
-          duration_minutes: round(g.gap_seconds / 60)
+          from: to_utc_datetime(g.gap_start),
+          to: to_utc_datetime(g.gap_end),
+          duration_minutes: round(seconds / 60)
         }
       end)
 
@@ -419,6 +420,9 @@ defmodule Prikke.Monitors do
           before ++ middle ++ after_last
     end
   end
+
+  defp to_utc_datetime(%DateTime{} = dt), do: dt
+  defp to_utc_datetime(%NaiveDateTime{} = ndt), do: DateTime.from_naive!(ndt, "Etc/UTC")
 
   defp get_expected_interval_seconds(%Monitor{schedule_type: "interval", interval_seconds: s})
        when is_integer(s) and s > 0,
