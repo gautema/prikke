@@ -20,7 +20,7 @@ defmodule PrikkeWeb.MonitorLive.Show do
           Monitors.subscribe_monitors(org)
         end
 
-        pings = Monitors.list_recent_pings(monitor, limit: 20)
+        timeline = Monitors.build_event_timeline(monitor, limit: 30)
         host = Application.get_env(:app, PrikkeWeb.Endpoint)[:url][:host] || "runlater.eu"
         ping_url = "https://#{host}/ping/#{monitor.ping_token}"
         status_days = if org.tier == "pro", do: 30, else: 7
@@ -30,7 +30,7 @@ defmodule PrikkeWeb.MonitorLive.Show do
          socket
          |> assign(:organization, org)
          |> assign(:monitor, monitor)
-         |> assign(:pings, pings)
+         |> assign(:timeline, timeline)
          |> assign(:ping_url, ping_url)
          |> assign(:page_title, monitor.name)
          |> assign(:menu_open, false)
@@ -48,13 +48,13 @@ defmodule PrikkeWeb.MonitorLive.Show do
   @impl true
   def handle_info({:monitor_updated, monitor}, socket) do
     if monitor.id == socket.assigns.monitor.id do
-      pings = Monitors.list_recent_pings(monitor, limit: 20)
+      timeline = Monitors.build_event_timeline(monitor, limit: 30)
       daily_status = Monitors.get_daily_status([monitor], socket.assigns.status_days)
 
       {:noreply,
        socket
        |> assign(:monitor, monitor)
-       |> assign(:pings, pings)
+       |> assign(:timeline, timeline)
        |> assign(:daily_status, daily_status)}
     else
       {:noreply, socket}
@@ -211,6 +211,20 @@ defmodule PrikkeWeb.MonitorLive.Show do
 
   defp format_schedule(_), do: "Unknown"
 
+  defp format_gap_duration(minutes) when minutes < 60, do: "#{minutes} min"
+
+  defp format_gap_duration(minutes) when minutes < 1440 do
+    hours = div(minutes, 60)
+    mins = rem(minutes, 60)
+    if mins > 0, do: "#{hours}h #{mins}m", else: "#{hours}h"
+  end
+
+  defp format_gap_duration(minutes) do
+    days = div(minutes, 1440)
+    hours = div(rem(minutes, 1440), 60)
+    if hours > 0, do: "#{days}d #{hours}h", else: "#{days}d"
+  end
+
   defp format_grace(%{grace_period_seconds: 0}), do: "None"
   defp format_grace(%{grace_period_seconds: s}) when s < 120, do: "#{s} seconds"
   defp format_grace(%{grace_period_seconds: s}) when s < 7200, do: "#{div(s, 60)} minutes"
@@ -362,20 +376,36 @@ defmodule PrikkeWeb.MonitorLive.Show do
         </dl>
       </div>
 
-      <%!-- Recent Pings --%>
+      <%!-- Event Log --%>
       <div class="glass-card rounded-2xl p-6">
-        <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Recent Pings</h2>
-        <%= if @pings == [] do %>
-          <p class="text-sm text-slate-400 text-center py-4">No pings received yet</p>
+        <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Event Log</h2>
+        <%= if @timeline == [] do %>
+          <p class="text-sm text-slate-400 text-center py-4">No events yet</p>
         <% else %>
           <div class="divide-y divide-slate-100">
-            <%= for ping <- @pings do %>
-              <div class="py-2 flex items-center gap-3">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                <span class="text-sm text-slate-700">
-                  <.local_time id={"ping-#{ping.id}"} datetime={ping.received_at} />
-                </span>
-              </div>
+            <%= for {event, idx} <- Enum.with_index(@timeline) do %>
+              <%= if event.type == :ping do %>
+                <div class="py-2.5 flex items-center gap-3">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                  <span class="text-sm text-slate-700 flex-1">Ping received</span>
+                  <span class="text-xs text-slate-400 shrink-0">
+                    <.local_time id={"event-#{idx}"} datetime={event.at} />
+                  </span>
+                </div>
+              <% else %>
+                <div class="py-2.5 flex items-center gap-3 bg-red-50/50 -mx-6 px-6">
+                  <span class="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+                  <span class="text-sm text-red-700 flex-1">
+                    Missed pings
+                    <span class="text-red-500 text-xs font-medium ml-1">
+                      {format_gap_duration(event.duration_minutes)}
+                    </span>
+                  </span>
+                  <span class="text-xs text-red-400 shrink-0">
+                    <.local_time id={"event-#{idx}"} datetime={event.from} />
+                  </span>
+                </div>
+              <% end %>
             <% end %>
           </div>
         <% end %>

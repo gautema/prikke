@@ -254,6 +254,102 @@ defmodule Prikke.Monitors do
     |> Repo.all()
   end
 
+  @doc """
+  Builds a timeline of events for a monitor, interleaving pings with detected
+  gaps where pings were expected but not received.
+
+  Returns a list of maps sorted newest-first:
+    - `%{type: :ping, at: datetime}` — a received ping
+    - `%{type: :gap, from: datetime, to: datetime, duration_minutes: integer}` — a missed period
+  """
+  def build_event_timeline(%Monitor{} = monitor, opts \\ []) do
+    limit = Keyword.get(opts, :limit, 30)
+
+    pings =
+      from(p in MonitorPing,
+        where: p.monitor_id == ^monitor.id,
+        order_by: [desc: p.received_at],
+        limit: ^limit
+      )
+      |> Repo.all()
+
+    expected_interval = get_expected_interval_seconds(monitor)
+
+    if expected_interval == 0 or pings == [] do
+      Enum.map(pings, fn p -> %{type: :ping, at: p.received_at} end)
+    else
+      # Threshold: expected interval + grace period (or 2x interval, whichever is smaller)
+      threshold = expected_interval + min(monitor.grace_period_seconds, expected_interval)
+
+      events = build_gaps(Enum.reverse(pings), threshold, [])
+
+      # If monitor is currently down, add a gap from last ping to now
+      events =
+        if monitor.status == "down" and pings != [] do
+          last_ping = hd(pings)
+          gap_seconds = DateTime.diff(DateTime.utc_now(), last_ping.received_at, :second)
+
+          if gap_seconds > threshold do
+            [
+              %{
+                type: :gap,
+                from: last_ping.received_at,
+                to: DateTime.utc_now(),
+                duration_minutes: div(gap_seconds, 60)
+              }
+              | events
+            ]
+          else
+            events
+          end
+        else
+          events
+        end
+
+      Enum.sort_by(events, fn
+        %{type: :ping, at: at} -> at
+        %{type: :gap, to: to} -> to
+      end, {:desc, DateTime})
+    end
+  end
+
+  defp build_gaps([], _threshold, acc), do: acc
+
+  defp build_gaps([ping], _threshold, acc) do
+    [%{type: :ping, at: ping.received_at} | acc]
+  end
+
+  defp build_gaps([prev, next | rest], threshold, acc) do
+    gap_seconds = DateTime.diff(next.received_at, prev.received_at, :second)
+
+    acc =
+      if gap_seconds > threshold do
+        gap = %{
+          type: :gap,
+          from: prev.received_at,
+          to: next.received_at,
+          duration_minutes: div(gap_seconds, 60)
+        }
+
+        [gap, %{type: :ping, at: prev.received_at} | acc]
+      else
+        [%{type: :ping, at: prev.received_at} | acc]
+      end
+
+    build_gaps([next | rest], threshold, acc)
+  end
+
+  defp get_expected_interval_seconds(%Monitor{schedule_type: "interval", interval_seconds: s})
+       when is_integer(s) and s > 0,
+       do: s
+
+  defp get_expected_interval_seconds(%Monitor{schedule_type: "cron"} = monitor) do
+    daily = expected_daily_pings(monitor)
+    if daily > 0, do: div(86400, daily), else: 0
+  end
+
+  defp get_expected_interval_seconds(_), do: 0
+
   ## Daily Status
 
   @doc """
