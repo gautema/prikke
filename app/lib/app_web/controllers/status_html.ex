@@ -1,7 +1,7 @@
 defmodule PrikkeWeb.StatusHTML do
   use PrikkeWeb, :html
 
-  embed_templates "status_html/*"
+  embed_templates("status_html/*")
 
   def status_color("up"), do: "bg-emerald-600"
   def status_color("operational"), do: "bg-emerald-600"
@@ -22,8 +22,8 @@ defmodule PrikkeWeb.StatusHTML do
   def status_label("unknown"), do: "Unknown"
   def status_label(status), do: String.capitalize(status)
 
-  def component_label("scheduler"), do: "Job Scheduler"
-  def component_label("workers"), do: "Job Workers"
+  def component_label("scheduler"), do: "Task Scheduler"
+  def component_label("workers"), do: "Task Workers"
   def component_label("api"), do: "API & Dashboard"
   def component_label(component), do: String.capitalize(component)
 

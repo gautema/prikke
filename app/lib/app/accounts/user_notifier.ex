@@ -78,7 +78,7 @@ defmodule Prikke.Accounts.UserNotifier do
               <tr>
                 <td style="padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
                   <p style="margin: 0; font-size: 12px; color: #94a3b8;">
-                    Runlater - Schedule jobs, simply.
+                    Runlater - Async task infrastructure for Europe.
                   </p>
                 </td>
               </tr>
@@ -426,7 +426,7 @@ defmodule Prikke.Accounts.UserNotifier do
 
     Limit: #{format_number(limit)} executions/month
 
-    Jobs will be skipped until the limit resets next month.#{upgrade_text}
+    Tasks will be skipped until the limit resets next month.#{upgrade_text}
 
     View your dashboard: https://runlater.eu/dashboard
 
@@ -456,7 +456,7 @@ defmodule Prikke.Accounts.UserNotifier do
     <div style="margin: 16px 0; padding: 16px; background-color: #fee2e2; border-radius: 6px;">
       <p style="margin: 0; font-size: 14px; color: #991b1b;">
         <strong>#{format_number(limit)}</strong> executions/month limit reached.<br>
-        Jobs will be skipped until next month.
+        Tasks will be skipped until next month.
       </p>
     </div>
     #{upgrade_html}

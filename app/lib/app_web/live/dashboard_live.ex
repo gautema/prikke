@@ -132,6 +132,12 @@ defmodule PrikkeWeb.DashboardLive do
               <span class="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
                 {String.capitalize(@current_organization.tier)}
               </span>
+              <%= if @current_organization.tier == "free" do %>
+                <span class="text-slate-300">·</span>
+                <.link navigate={~p"/organizations/settings"} class="text-sm text-emerald-600 hover:underline">
+                  Upgrade to Pro
+                </.link>
+              <% end %>
               <%= if length(@organizations) > 1 do %>
                 <span class="text-slate-300">·</span>
                 <a href={~p"/organizations"} class="text-sm text-emerald-600 hover:underline">

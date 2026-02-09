@@ -27,29 +27,29 @@
       <a href="/status" class="text-emerald-600 hover:text-emerald-700">runlater.eu/status</a>.
     </p>
 
-    <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">Job Execution Timing</h2>
+    <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">Task Execution Timing</h2>
     <div class="bg-slate-50 rounded-lg p-6 mb-6">
       <div class="flex items-baseline gap-2 mb-2">
         <span class="text-3xl font-bold text-emerald-600">&lt; 30s</span>
         <span class="text-slate-500">scheduling precision target</span>
       </div>
       <p class="text-slate-500 text-sm">
-        Jobs execute within 30 seconds of their scheduled time under normal load.
+        Tasks execute within 30 seconds of their scheduled time under normal load.
       </p>
     </div>
     <p class="text-slate-600 mb-4">
-      The scheduler ticks every 10 seconds with a 30-second lookahead window. Under normal conditions, jobs are claimed and started within seconds of their scheduled time. Higher latency may occur during traffic spikes.
+      The scheduler ticks every 10 seconds with a 30-second lookahead window. Under normal conditions, tasks are claimed and started within seconds of their scheduled time. Higher latency may occur during traffic spikes.
     </p>
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">Webhook Delivery</h2>
     <ul class="list-disc pl-6 text-slate-600 mb-4 space-y-2">
       <li>
         <strong>Timeout:</strong>
-        Configurable per job (1 second to 5 minutes, default 30 seconds)
+        Configurable per task (1 second to 5 minutes, default 30 seconds)
       </li>
       <li>
         <strong>Retries:</strong>
-        One-time jobs retry up to 10 times with exponential backoff. Cron jobs do not retry (next scheduled run serves as the retry).
+        One-time tasks retry up to 10 times with exponential backoff. Cron jobs do not retry (next scheduled run serves as the retry).
       </li>
       <li>
         <strong>Payload size:</strong>
@@ -88,11 +88,11 @@
     <ul class="list-disc pl-6 text-slate-600 mb-4 space-y-2">
       <li>
         <strong>Failure alerts:</strong>
-        Email and/or webhook notification sent within 1 minute of a job failure
+        Email and/or webhook notification sent within 1 minute of a task failure
       </li>
       <li>
         <strong>Recovery alerts:</strong>
-        Notification sent when a previously failing job succeeds
+        Notification sent when a previously failing task succeeds
       </li>
       <li>
         <strong>Limit warnings:</strong>
@@ -107,7 +107,7 @@
     <ul class="list-disc pl-6 text-slate-600 mb-4 space-y-1">
       <li>Planned maintenance is announced at least 24 hours in advance</li>
       <li>Maintenance windows are scheduled outside peak hours (typically 02:00-05:00 UTC)</li>
-      <li>Queued jobs are not lost during maintenance; they execute once the service resumes</li>
+      <li>Queued tasks are not lost during maintenance; they execute once the service resumes</li>
     </ul>
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">Support</h2>

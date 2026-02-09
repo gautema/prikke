@@ -69,7 +69,7 @@
     <strong class="text-emerald-800">Tip:</strong>
     <span class="text-emerald-700">
       Place the ping <strong>after</strong>
-      your main command using <code>&&</code>. This way, the ping only fires if the job succeeded.
+      your main command using <code>&&</code>. This way, the ping only fires if the task succeeded.
     </span>
   </div>
 
@@ -94,7 +94,7 @@
   <h2>Grace Period</h2>
   <p>
     The grace period is extra time allowed after the expected ping time before
-    an alert is triggered. This accounts for jobs that take varying amounts of
+    an alert is triggered. This accounts for tasks that take varying amounts of
     time to complete.
   </p>
   <p>Available options: no grace period, 1 min, 5 min, 15 min, 30 min, 1 hour.</p>
@@ -102,7 +102,7 @@
   <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg my-6">
     <strong class="text-amber-800">Example:</strong>
     <span class="text-amber-700">
-      A backup job runs at 2:00 AM and usually takes 5-20 minutes. Set interval to "24 hours" and grace period to "30 minutes". If the ping doesn't arrive by 2:30 AM, you get an alert.
+      A backup task runs at 2:00 AM and usually takes 5-20 minutes. Set interval to "24 hours" and grace period to "30 minutes". If the ping doesn't arrive by 2:30 AM, you get an alert.
     </span>
   </div>
 
