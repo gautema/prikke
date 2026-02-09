@@ -255,84 +255,168 @@ defmodule Prikke.Monitors do
   end
 
   @doc """
-  Builds a timeline of up/down periods for a monitor by collapsing consecutive
-  pings into ranges and detecting gaps where pings were missed.
+  Builds a timeline of up/down periods for a monitor using a SQL window function
+  to efficiently find gaps where pings were missed, then constructs up periods
+  between those gaps.
 
   Returns a list of maps sorted newest-first:
-    - `%{type: :up, from: datetime, to: datetime, ping_count: integer}` — period with pings
+    - `%{type: :up, from: datetime, to: datetime}` — period with pings
     - `%{type: :down, from: datetime, to: datetime, duration_minutes: integer}` — missed period
   """
   def build_event_timeline(%Monitor{} = monitor, _opts \\ []) do
-    pings =
+    expected_interval = get_expected_interval_seconds(monitor)
+    if expected_interval == 0, do: throw(:no_interval)
+
+    threshold = expected_interval + min(monitor.grace_period_seconds, expected_interval)
+
+    {:ok, monitor_id_binary} = Ecto.UUID.dump(monitor.id)
+
+    # Use SQL window function to find gaps efficiently
+    gaps =
+      Repo.all(
+        from(
+          g in fragment(
+            """
+            SELECT gap_start, gap_end, gap_seconds
+            FROM (
+              SELECT
+                lag(received_at) OVER (ORDER BY received_at) AS gap_start,
+                received_at AS gap_end,
+                EXTRACT(EPOCH FROM (received_at - lag(received_at) OVER (ORDER BY received_at))) AS gap_seconds
+              FROM monitor_pings
+              WHERE monitor_id = ?
+            ) sub
+            WHERE gap_seconds > ?
+            ORDER BY gap_end DESC
+            """,
+            ^monitor_id_binary,
+            ^threshold
+          ),
+          select: %{
+            gap_start: g.gap_start,
+            gap_end: g.gap_end,
+            gap_seconds: g.gap_seconds
+          }
+        )
+      )
+
+    # Get first and last ping for the full range
+    first_ping =
       from(p in MonitorPing,
         where: p.monitor_id == ^monitor.id,
         order_by: [asc: p.received_at],
-        limit: 500
+        limit: 1,
+        select: p.received_at
       )
-      |> Repo.all()
+      |> Repo.one()
 
-    expected_interval = get_expected_interval_seconds(monitor)
+    last_ping =
+      from(p in MonitorPing,
+        where: p.monitor_id == ^monitor.id,
+        order_by: [desc: p.received_at],
+        limit: 1,
+        select: p.received_at
+      )
+      |> Repo.one()
 
-    if expected_interval == 0 or pings == [] do
+    if is_nil(first_ping) do
       []
     else
-      threshold = expected_interval + min(monitor.grace_period_seconds, expected_interval)
-      periods = build_periods(pings, threshold)
-
-      # If monitor is currently down, add a down period from last ping to now
-      periods =
-        if monitor.status == "down" and pings != [] do
-          last_ping = List.last(pings)
-          gap_seconds = DateTime.diff(DateTime.utc_now(), last_ping.received_at, :second)
-
-          if gap_seconds > threshold do
-            periods ++
-              [
-                %{
-                  type: :down,
-                  from: last_ping.received_at,
-                  to: DateTime.utc_now(),
-                  duration_minutes: div(gap_seconds, 60)
-                }
-              ]
-          else
-            periods
-          end
-        else
-          periods
-        end
-
-      Enum.reverse(periods)
+      # Build timeline: interleave up periods between down gaps
+      build_timeline_from_gaps(gaps, first_ping, last_ping, monitor, threshold)
     end
+  catch
+    :no_interval -> []
   end
 
-  defp build_periods([], _threshold), do: []
+  defp build_timeline_from_gaps(gaps, first_ping, last_ping, monitor, threshold) do
+    # Convert gaps to down periods (already sorted newest-first)
+    down_periods =
+      Enum.map(gaps, fn g ->
+        %{
+          type: :down,
+          from: g.gap_start,
+          to: g.gap_end,
+          duration_minutes: round(g.gap_seconds / 60)
+        }
+      end)
 
-  defp build_periods([first | rest], threshold) do
-    initial = %{type: :up, from: first.received_at, to: first.received_at, ping_count: 1}
-    do_build_periods(rest, threshold, initial, [])
+    # If monitor is currently down, add ongoing down period
+    down_periods =
+      if monitor.status == "down" do
+        gap_seconds = DateTime.diff(DateTime.utc_now(), last_ping, :second)
+
+        if gap_seconds > threshold do
+          [
+            %{
+              type: :down,
+              from: last_ping,
+              to: DateTime.utc_now(),
+              duration_minutes: div(gap_seconds, 60)
+            }
+            | down_periods
+          ]
+        else
+          down_periods
+        end
+      else
+        down_periods
+      end
+
+    # Sort down periods oldest-first to build up periods between them
+    downs_asc = Enum.sort_by(down_periods, & &1.from, DateTime)
+
+    # Build up periods in the gaps between down periods
+    periods = build_up_between_downs(first_ping, last_ping, downs_asc, monitor)
+
+    # Sort newest-first for display
+    Enum.sort_by(periods, fn p -> p.from end, {:desc, DateTime})
   end
 
-  defp do_build_periods([], _threshold, current, acc), do: [current | acc]
+  defp build_up_between_downs(first_ping, last_ping, downs, monitor) do
+    now = DateTime.utc_now()
 
-  defp do_build_periods([ping | rest], threshold, current, acc) do
-    gap_seconds = DateTime.diff(ping.received_at, current.to, :second)
+    # End of timeline: now if up, last ping if down
+    timeline_end = if monitor.status == "down", do: last_ping, else: now
 
-    if gap_seconds > threshold do
-      # Gap detected: close current up period, add down period, start new up period
-      down = %{
-        type: :down,
-        from: current.to,
-        to: ping.received_at,
-        duration_minutes: div(gap_seconds, 60)
-      }
+    case downs do
+      [] ->
+        [%{type: :up, from: first_ping, to: timeline_end}]
 
-      new_up = %{type: :up, from: ping.received_at, to: ping.received_at, ping_count: 1}
-      do_build_periods(rest, threshold, new_up, [down, current | acc])
-    else
-      # No gap: extend current up period
-      updated = %{current | to: ping.received_at, ping_count: current.ping_count + 1}
-      do_build_periods(rest, threshold, updated, acc)
+      _ ->
+        # Up period before first down (if any)
+          first_down = hd(downs)
+
+          before =
+            if DateTime.compare(first_ping, first_down.from) == :lt do
+              [%{type: :up, from: first_ping, to: first_down.from}]
+            else
+              []
+            end
+
+          # Interleave: down, then up until next down
+          middle =
+            downs
+            |> Enum.chunk_every(2, 1)
+            |> Enum.flat_map(fn
+              [down, next_down] ->
+                [down, %{type: :up, from: down.to, to: next_down.from}]
+
+              [down] ->
+                [down]
+            end)
+
+          # Up period after last down (if monitor is up)
+          last_down = List.last(downs)
+
+          after_last =
+            if monitor.status != "down" and DateTime.compare(last_down.to, timeline_end) == :lt do
+              [%{type: :up, from: last_down.to, to: timeline_end}]
+            else
+              []
+            end
+
+          before ++ middle ++ after_last
     end
   end
 

@@ -383,7 +383,7 @@ defmodule PrikkeWeb.MonitorLive.Show do
 
       <%!-- Event Log --%>
       <div class="glass-card rounded-2xl p-6">
-        <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Event Log</h2>
+        <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Availability</h2>
         <%= if @timeline == [] do %>
           <p class="text-sm text-slate-400 text-center py-4">No events yet</p>
         <% else %>
