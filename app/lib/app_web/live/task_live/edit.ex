@@ -300,8 +300,12 @@ defmodule PrikkeWeb.TaskLive.Edit do
   end
 
   defp update_cron_expression(socket, expr) do
+    current_params = socket.assigns.form.source.params || %{}
+
     changeset =
-      Task.changeset(socket.assigns.task, %{"cron_expression" => expr, "schedule_type" => "cron"},
+      Task.changeset(
+        socket.assigns.task,
+        Map.merge(current_params, %{"cron_expression" => expr, "schedule_type" => "cron"}),
         skip_ssrf: true
       )
       |> Map.put(:action, :validate)
