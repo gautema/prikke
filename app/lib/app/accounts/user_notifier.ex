@@ -363,7 +363,9 @@ defmodule Prikke.Accounts.UserNotifier do
     percent = round(current / limit * 100)
 
     upgrade_text =
-      if organization.tier == "free", do: " Upgrade to Pro for 1M executions/month.", else: ""
+      if organization.tier == "free",
+        do: " Upgrade to Pro for 1M executions/month — €29/mo or €290/year.",
+        else: ""
 
     text = """
     Hi,
@@ -383,7 +385,7 @@ defmodule Prikke.Accounts.UserNotifier do
       if organization.tier == "free" do
         """
         <p style="margin: 16px 0 0 0; font-size: 14px; color: #475569;">
-          <a href="https://runlater.eu/organizations/settings" style="color: #10b981; font-weight: 500;">Upgrade to Pro</a> for 1M executions/month.
+          <a href="https://runlater.eu/organizations/settings" style="color: #10b981; font-weight: 500;">Upgrade to Pro</a> for 1M executions/month — €29/mo or €290/year.
         </p>
         """
       else
@@ -416,7 +418,7 @@ defmodule Prikke.Accounts.UserNotifier do
   def deliver_limit_reached(email, organization, limit) do
     upgrade_text =
       if organization.tier == "free",
-        do: " Upgrade to Pro for 1M executions/month.",
+        do: " Upgrade to Pro for 1M executions/month — €29/mo or €290/year.",
         else: " Contact us for higher limits."
 
     text = """
@@ -437,7 +439,7 @@ defmodule Prikke.Accounts.UserNotifier do
       if organization.tier == "free" do
         """
         <p style="margin: 16px 0 0 0; font-size: 14px; color: #475569;">
-          <a href="https://runlater.eu/organizations/settings" style="color: #10b981; font-weight: 500;">Upgrade to Pro</a> for 1M executions/month.
+          <a href="https://runlater.eu/organizations/settings" style="color: #10b981; font-weight: 500;">Upgrade to Pro</a> for 1M executions/month — €29/mo or €290/year.
         </p>
         """
       else

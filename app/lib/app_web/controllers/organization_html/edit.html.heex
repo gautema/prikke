@@ -76,7 +76,13 @@
     <div class="glass-card rounded-2xl p-6">
       <h2 class="text-lg font-semibold text-slate-900 mb-2">Plan</h2>
       <p class="text-slate-600 mb-4">
-        Current plan: <span class="font-medium">{String.capitalize(@organization.tier)}</span>
+        Current plan: <span class="font-medium">
+          <%= if @organization.tier == "pro" && @organization.billing_period do %>
+            Pro ({String.capitalize(@organization.billing_period)})
+          <% else %>
+            {String.capitalize(@organization.tier)}
+          <% end %>
+        </span>
       </p>
       
 <!-- Usage -->
@@ -107,9 +113,36 @@
       <%= cond do %>
         <% @organization.tier == "free" -> %>
           <.form for={%{}} action={~p"/organizations/upgrade"} method="post" id="upgrade-form">
+            <div class="flex gap-3 mb-4">
+              <label class="flex-1 relative cursor-pointer">
+                <input
+                  type="radio"
+                  name="billing_period"
+                  value="monthly"
+                  checked
+                  class="peer sr-only"
+                />
+                <div class="rounded-lg border-2 border-slate-200 p-3 text-center transition-colors peer-checked:border-emerald-600 peer-checked:bg-emerald-50">
+                  <div class="text-lg font-bold text-slate-900">€29<span class="text-sm font-normal text-slate-500">/mo</span></div>
+                  <div class="text-xs text-slate-500">Monthly</div>
+                </div>
+              </label>
+              <label class="flex-1 relative cursor-pointer">
+                <input
+                  type="radio"
+                  name="billing_period"
+                  value="yearly"
+                  class="peer sr-only"
+                />
+                <div class="rounded-lg border-2 border-slate-200 p-3 text-center transition-colors peer-checked:border-emerald-600 peer-checked:bg-emerald-50">
+                  <div class="text-lg font-bold text-slate-900">€290<span class="text-sm font-normal text-slate-500">/yr</span></div>
+                  <div class="text-xs text-emerald-600 font-medium">Save €58</div>
+                </div>
+              </label>
+            </div>
             <button
               type="submit"
-              class="inline-flex items-center gap-2 py-2.5 px-5 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-700 transition-colors"
+              class="inline-flex items-center gap-2 py-2.5 px-5 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-700 transition-colors cursor-pointer"
             >
               Upgrade to Pro
               <span class="text-emerald-200">&rarr;</span>
@@ -161,7 +194,33 @@
             </.form>
           <% end %>
         <% @organization.tier == "pro" -> %>
-          <p class="text-sm text-slate-500 mb-3">You have access to all Pro features.</p>
+          <p class="text-sm text-slate-500 mb-3">
+            You have access to all Pro features.
+            <%= if @organization.current_period_end do %>
+              <br />Next billing: {Calendar.strftime(@organization.current_period_end, "%B %d, %Y")}
+            <% end %>
+          </p>
+          <%= if @organization.billing_period == "monthly" && @organization.creem_subscription_id && @organization.subscription_status == "active" do %>
+            <div class="rounded-lg bg-emerald-50 border border-emerald-200 p-4 mb-3">
+              <p class="text-sm text-emerald-800">
+                <span class="font-medium">Save €58/year</span> by switching to yearly billing (€290/year instead of €348).
+              </p>
+              <.form
+                for={%{}}
+                action={~p"/organizations/switch-to-yearly"}
+                method="post"
+                id="switch-yearly-form"
+                data-confirm="Switch to yearly billing at €290/year? You'll be charged a prorated amount now."
+              >
+                <button
+                  type="submit"
+                  class="mt-2 inline-flex items-center gap-1 py-1.5 px-3 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 transition-colors cursor-pointer"
+                >
+                  Switch to yearly
+                </button>
+              </.form>
+            </div>
+          <% end %>
           <div class="flex gap-3">
             <%= if @organization.creem_customer_id do %>
               <.form

@@ -61,5 +61,6 @@ config :phoenix,
 config :app, Prikke.Billing.Creem,
   api_key: "test_api_key",
   webhook_secret: "test_webhook_secret",
-  product_id: "prod_test_123",
+  monthly_product_id: "prod_test_monthly",
+  yearly_product_id: "prod_test_yearly",
   base_url: "http://localhost:0"

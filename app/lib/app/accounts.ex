@@ -631,27 +631,35 @@ defmodule Prikke.Accounts do
   Creates a Creem checkout session for upgrading an organization.
   Returns `{:ok, checkout_url}` or `{:error, reason}`.
   """
-  def create_checkout_session(organization, user_email, success_url) do
-    Prikke.Billing.Creem.create_checkout(organization.id, user_email, success_url)
+  def create_checkout_session(organization, user_email, success_url, billing_period \\ "monthly") do
+    Prikke.Billing.Creem.create_checkout(organization.id, user_email, success_url, billing_period)
   end
 
   @doc """
   Activates a subscription after checkout completion.
   Sets the organization to pro tier and stores Creem IDs.
   """
-  def activate_subscription(org_id, customer_id, subscription_id) do
+  def activate_subscription(org_id, customer_id, subscription_id, opts \\ []) do
+    billing_period = Keyword.get(opts, :billing_period, "monthly")
+    current_period_end = Keyword.get(opts, :current_period_end)
+
     case get_organization(org_id) do
       nil ->
         {:error, :not_found}
 
       org ->
+        changes =
+          %{
+            tier: "pro",
+            creem_customer_id: customer_id,
+            creem_subscription_id: subscription_id,
+            subscription_status: "active",
+            billing_period: billing_period
+          }
+          |> maybe_put(:current_period_end, current_period_end)
+
         org
-        |> Ecto.Changeset.change(
-          tier: "pro",
-          creem_customer_id: customer_id,
-          creem_subscription_id: subscription_id,
-          subscription_status: "active"
-        )
+        |> Ecto.Changeset.change(changes)
         |> Repo.update()
     end
   end
@@ -661,7 +669,9 @@ defmodule Prikke.Accounts do
   Keeps pro tier for active/past_due/scheduled_cancel/paused.
   Downgrades to free for canceled/expired.
   """
-  def update_subscription_status(subscription_id, status) do
+  def update_subscription_status(subscription_id, status, opts \\ []) do
+    current_period_end = Keyword.get(opts, :current_period_end)
+
     case get_organization_by_subscription(subscription_id) do
       nil ->
         {:error, :not_found}
@@ -669,8 +679,12 @@ defmodule Prikke.Accounts do
       org ->
         tier = subscription_status_to_tier(status)
 
+        changes =
+          %{subscription_status: status, tier: tier}
+          |> maybe_put(:current_period_end, current_period_end)
+
         org
-        |> Ecto.Changeset.change(subscription_status: status, tier: tier)
+        |> Ecto.Changeset.change(changes)
         |> Repo.update()
     end
   end
@@ -698,11 +712,34 @@ defmodule Prikke.Accounts do
   end
 
   @doc """
+  Switches a monthly Pro subscription to yearly via the Creem upgrade API.
+  """
+  def switch_to_yearly(organization) do
+    yearly_product_id = Application.get_env(:app, Prikke.Billing.Creem)[:yearly_product_id]
+
+    case Prikke.Billing.Creem.upgrade_subscription(
+           organization.creem_subscription_id,
+           yearly_product_id
+         ) do
+      {:ok, _response} ->
+        organization
+        |> Ecto.Changeset.change(billing_period: "yearly")
+        |> Repo.update()
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
   Gets the Creem billing portal URL for an organization.
   """
   def get_billing_portal_url(organization) do
     Prikke.Billing.Creem.get_billing_portal_url(organization.creem_customer_id)
   end
+
+  defp maybe_put(map, _key, nil), do: map
+  defp maybe_put(map, key, value), do: Map.put(map, key, value)
 
   defp subscription_status_to_tier(status)
        when status in ["active", "past_due", "scheduled_cancel", "paused"],

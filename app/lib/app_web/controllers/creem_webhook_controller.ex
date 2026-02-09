@@ -29,9 +29,14 @@ defmodule PrikkeWeb.CreemWebhookController do
     org_id = get_in(object, ["metadata", "organization_id"])
     customer_id = get_in(object, ["customer", "id"])
     subscription_id = get_in(object, ["subscription", "id"])
+    billing_period = get_in(object, ["metadata", "billing_period"]) || "monthly"
+    period_end = parse_period_end(get_in(object, ["subscription", "current_period_end_date"]))
 
     if org_id && customer_id && subscription_id do
-      case Accounts.activate_subscription(org_id, customer_id, subscription_id) do
+      case Accounts.activate_subscription(org_id, customer_id, subscription_id,
+             billing_period: billing_period,
+             current_period_end: period_end
+           ) do
         {:ok, org} ->
           Audit.log_system(:subscription_activated, :organization, org.id,
             organization_id: org.id,
@@ -60,15 +65,19 @@ defmodule PrikkeWeb.CreemWebhookController do
             ] do
     subscription_id = get_in(payload, ["object", "id"])
     status = event_type_to_status(event_type)
+    period_end = parse_period_end(get_in(payload, ["object", "current_period_end_date"]))
 
     # Also extract org_id from metadata as fallback — subscription events
     # can arrive before checkout.completed, so the subscription may not
     # be stored yet. In that case, activate via metadata.
     org_id = get_in(payload, ["object", "metadata", "organization_id"])
     customer_id = get_in(payload, ["object", "customer", "id"])
+    billing_period = get_in(payload, ["object", "metadata", "billing_period"]) || "monthly"
 
     if subscription_id do
-      case Accounts.update_subscription_status(subscription_id, status) do
+      case Accounts.update_subscription_status(subscription_id, status,
+             current_period_end: period_end
+           ) do
         {:ok, org} ->
           Audit.log_system(:subscription_status_changed, :organization, org.id,
             organization_id: org.id,
@@ -79,7 +88,10 @@ defmodule PrikkeWeb.CreemWebhookController do
           # Race condition: subscription event arrived before checkout.completed
           Logger.info("Subscription not found, activating via metadata: org=#{org_id}")
 
-          case Accounts.activate_subscription(org_id, customer_id, subscription_id) do
+          case Accounts.activate_subscription(org_id, customer_id, subscription_id,
+                 billing_period: billing_period,
+                 current_period_end: period_end
+               ) do
             {:ok, org} ->
               Audit.log_system(:subscription_activated, :organization, org.id,
                 organization_id: org.id,
@@ -114,6 +126,17 @@ defmodule PrikkeWeb.CreemWebhookController do
   defp event_type_to_status("subscription.expired"), do: "expired"
   defp event_type_to_status("subscription.past_due"), do: "past_due"
   defp event_type_to_status("subscription.paused"), do: "paused"
+
+  defp parse_period_end(nil), do: nil
+
+  defp parse_period_end(date_string) when is_binary(date_string) do
+    case DateTime.from_iso8601(date_string) do
+      {:ok, dt, _offset} -> DateTime.truncate(dt, :second)
+      _ -> nil
+    end
+  end
+
+  defp parse_period_end(_), do: nil
 
   defp get_signature(conn) do
     conn

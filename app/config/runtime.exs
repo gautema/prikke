@@ -104,7 +104,8 @@ if config_env() == :prod do
   config :app, Prikke.Billing.Creem,
     api_key: System.get_env("CREEM_API_KEY"),
     webhook_secret: System.get_env("CREEM_WEBHOOK_SECRET"),
-    product_id: System.get_env("CREEM_PRODUCT_ID"),
+    monthly_product_id: System.get_env("CREEM_MONTHLY_PRODUCT_ID"),
+    yearly_product_id: System.get_env("CREEM_YEARLY_PRODUCT_ID"),
     base_url: "https://api.creem.io"
 
   # Configure Mailjet mailer

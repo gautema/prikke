@@ -175,14 +175,19 @@ defmodule PrikkeWeb.OrganizationController do
     end
   end
 
-  def upgrade(conn, _params) do
+  def upgrade(conn, params) do
     organization = conn.assigns.current_organization
     user = conn.assigns.current_scope.user
+
+    billing_period =
+      if params["billing_period"] in ["monthly", "yearly"],
+        do: params["billing_period"],
+        else: "monthly"
 
     if organization.tier == "free" do
       success_url = url(~p"/organizations/settings?upgraded=true")
 
-      case Accounts.create_checkout_session(organization, user.email, success_url) do
+      case Accounts.create_checkout_session(organization, user.email, success_url, billing_period) do
         {:ok, checkout_url} ->
           redirect(conn, external: checkout_url)
 
@@ -194,6 +199,29 @@ defmodule PrikkeWeb.OrganizationController do
     else
       conn
       |> put_flash(:info, "You're already on the Pro plan.")
+      |> redirect(to: ~p"/organizations/settings")
+    end
+  end
+
+  def switch_to_yearly(conn, _params) do
+    organization = conn.assigns.current_organization
+
+    if organization.tier == "pro" && organization.billing_period == "monthly" &&
+         organization.creem_subscription_id do
+      case Accounts.switch_to_yearly(organization) do
+        {:ok, _org} ->
+          conn
+          |> put_flash(:info, "Switched to yearly billing. You saved €58!")
+          |> redirect(to: ~p"/organizations/settings")
+
+        {:error, _reason} ->
+          conn
+          |> put_flash(:error, "Could not switch plan. Please try again.")
+          |> redirect(to: ~p"/organizations/settings")
+      end
+    else
+      conn
+      |> put_flash(:error, "Plan switch is not available.")
       |> redirect(to: ~p"/organizations/settings")
     end
   end

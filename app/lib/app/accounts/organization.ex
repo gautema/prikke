@@ -27,6 +27,8 @@ defmodule Prikke.Accounts.Organization do
     field :creem_customer_id, :string
     field :creem_subscription_id, :string
     field :subscription_status, :string
+    field :billing_period, :string
+    field :current_period_end, :utc_datetime
 
     has_many :memberships, Prikke.Accounts.Membership
     has_many :users, through: [:memberships, :user]

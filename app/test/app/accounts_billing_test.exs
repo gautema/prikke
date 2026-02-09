@@ -5,8 +5,8 @@ defmodule Prikke.AccountsBillingTest do
 
   import Prikke.AccountsFixtures
 
-  describe "activate_subscription/3" do
-    test "sets org to pro with creem fields" do
+  describe "activate_subscription/4" do
+    test "sets org to pro with creem fields and defaults to monthly" do
       org = organization_fixture()
       assert org.tier == "free"
 
@@ -17,6 +17,39 @@ defmodule Prikke.AccountsBillingTest do
       assert updated.creem_customer_id == "cus_123"
       assert updated.creem_subscription_id == "sub_456"
       assert updated.subscription_status == "active"
+      assert updated.billing_period == "monthly"
+    end
+
+    test "sets billing_period to yearly when specified" do
+      org = organization_fixture()
+
+      {:ok, updated} =
+        Accounts.activate_subscription(org.id, "cus_123", "sub_456", billing_period: "yearly")
+
+      assert updated.tier == "pro"
+      assert updated.billing_period == "yearly"
+    end
+
+    test "sets billing_period to monthly when specified" do
+      org = organization_fixture()
+
+      {:ok, updated} =
+        Accounts.activate_subscription(org.id, "cus_123", "sub_456", billing_period: "monthly")
+
+      assert updated.billing_period == "monthly"
+    end
+
+    test "stores current_period_end when provided" do
+      org = organization_fixture()
+      period_end = ~U[2026-03-12 11:58:38Z]
+
+      {:ok, updated} =
+        Accounts.activate_subscription(org.id, "cus_123", "sub_456",
+          billing_period: "monthly",
+          current_period_end: period_end
+        )
+
+      assert updated.current_period_end == period_end
     end
 
     test "returns error for non-existent org" do
@@ -88,6 +121,17 @@ defmodule Prikke.AccountsBillingTest do
       {:ok, updated} = Accounts.update_subscription_status("sub_789", "expired")
       assert updated.tier == "free"
       assert updated.subscription_status == "expired"
+    end
+
+    test "updates current_period_end when provided" do
+      org = organization_fixture()
+      {:ok, _} = Accounts.activate_subscription(org.id, "cus_123", "sub_789")
+      period_end = ~U[2026-04-12 11:58:38Z]
+
+      {:ok, updated} =
+        Accounts.update_subscription_status("sub_789", "active", current_period_end: period_end)
+
+      assert updated.current_period_end == period_end
     end
 
     test "returns error for unknown subscription" do

@@ -184,6 +184,7 @@ defmodule PrikkeWeb.Router do
     get "/organizations/notifications", OrganizationController, :notifications
     put "/organizations/notifications", OrganizationController, :update_notifications
     post "/organizations/upgrade", OrganizationController, :upgrade
+    post "/organizations/switch-to-yearly", OrganizationController, :switch_to_yearly
     post "/organizations/billing-portal", OrganizationController, :billing_portal
     post "/organizations/cancel-subscription", OrganizationController, :cancel_subscription
     get "/organizations/api-keys", OrganizationController, :api_keys

@@ -95,7 +95,8 @@ config :swoosh, :api_client, false
 config :app, Prikke.Billing.Creem,
   api_key: "creem_test_3yFYkgysFIbYEEePuWQr01",
   webhook_secret: "whsec_6oUmL6W809aB4MJMYjNkAO",
-  product_id: "prod_3aElOsHRHvXOcyQeOds8CV",
+  monthly_product_id: "prod_3aElOsHRHvXOcyQeOds8CV",
+  yearly_product_id: "prod_70gtUrKthYHlXYlwa2l8mq",
   base_url: "https://test-api.creem.io"
 
 # Configure mailer for development (admin notifications go to Swoosh mailbox)

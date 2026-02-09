@@ -48,6 +48,53 @@ defmodule PrikkeWeb.CreemWebhookControllerTest do
       assert updated.subscription_status == "active"
     end
 
+    test "stores billing_period and current_period_end from webhook", %{conn: conn} do
+      org = organization_fixture()
+
+      body =
+        Jason.encode!(%{
+          eventType: "checkout.completed",
+          object: %{
+            id: "ch_test_yearly",
+            customer: %{id: "cus_test_yearly", email: "test@example.com"},
+            subscription: %{
+              id: "sub_test_yearly",
+              current_period_end_date: "2027-02-09T12:00:00.000Z"
+            },
+            metadata: %{organization_id: org.id, billing_period: "yearly"}
+          }
+        })
+
+      conn = post_webhook(conn, body)
+      assert json_response(conn, 200)["received"] == true
+
+      updated = Accounts.get_organization(org.id)
+      assert updated.tier == "pro"
+      assert updated.billing_period == "yearly"
+      assert updated.current_period_end == ~U[2027-02-09 12:00:00Z]
+    end
+
+    test "defaults billing_period to monthly when not in metadata", %{conn: conn} do
+      org = organization_fixture()
+
+      body =
+        Jason.encode!(%{
+          eventType: "checkout.completed",
+          object: %{
+            id: "ch_test_default",
+            customer: %{id: "cus_test_default", email: "test@example.com"},
+            subscription: %{id: "sub_test_default"},
+            metadata: %{organization_id: org.id}
+          }
+        })
+
+      conn = post_webhook(conn, body)
+      assert json_response(conn, 200)["received"] == true
+
+      updated = Accounts.get_organization(org.id)
+      assert updated.billing_period == "monthly"
+    end
+
     test "handles missing metadata gracefully", %{conn: conn} do
       body =
         Jason.encode!(%{
