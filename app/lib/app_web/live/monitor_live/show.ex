@@ -395,7 +395,6 @@ defmodule PrikkeWeb.MonitorLive.Show do
                   <div class="flex-1 min-w-0">
                     <span class="text-sm font-medium text-slate-900">Up</span>
                     <span class="text-xs text-slate-400 ml-2">{format_period_duration(event.from, event.to)}</span>
-                    <span class="text-xs text-slate-400 ml-1">· {event.ping_count} pings</span>
                   </div>
                   <span class="text-xs text-slate-400 shrink-0">
                     <.local_time id={"event-from-#{idx}"} datetime={event.from} />
