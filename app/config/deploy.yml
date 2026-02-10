@@ -51,6 +51,8 @@ accessories:
       secret:
         - POSTGRES_USER
         - POSTGRES_PASSWORD
+    options:
+      shm-size: 256m
     cmd: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all
     directories:
       - /mnt/secure/postgresql-data:/var/lib/postgresql

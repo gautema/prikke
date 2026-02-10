@@ -2,7 +2,7 @@
 
 ## Summary
 
-Load testing at 50-500 req/s revealed and eliminated several bottlenecks. Through iterative profiling with `pg_stat_statements` and targeted fixes, the API now handles **300 req/s with p95=762ms and 0% errors** on a single 4-core VPS. The hard ceiling is ~400-500 req/s due to CPU saturation.
+Load testing at 50-1000 req/s revealed and eliminated several bottlenecks. Through iterative profiling with `pg_stat_statements` and targeted fixes, the API now handles **500 req/s with p95=432ms and 0% errors** on a single 4-core VPS. The hard ceiling is ~500-750 req/s due to CPU saturation.
 
 ## Server
 
@@ -10,6 +10,7 @@ Load testing at 50-500 req/s revealed and eliminated several bottlenecks. Throug
 - App + Postgres on the same VPS
 - DB pool: 40 connections
 - Postgres max_connections: 100
+- Postgres shared memory: 256MB
 
 ## Results Timeline
 
@@ -22,9 +23,10 @@ Load testing at 50-500 req/s revealed and eliminated several bottlenecks. Throug
 | + Denormalized last_execution_at | 50 req/s | 808ms | 0% |
 | + Fixed index sort order (DESC NULLS LAST) | 100 req/s | 520ms | 0% |
 | + Preload in claim + ETS buffered timestamps | 250 req/s | 1,880ms | 0% |
-| + Pool 20→40, removed count(*) from API | 300 req/s | **762ms** | **0%** |
-| + Missing PK index on tasks partition | 300 req/s | **762ms** | **0%** |
-| 500 req/s stress test (all optimizations) | 500 req/s | 6,120ms | 24.4% |
+| + Pool 20→40, removed count(*) from API | 300 req/s | 762ms | 0% |
+| + Missing PK index on tasks partition | 300 req/s | 762ms | 0% |
+| + Finch connection pool (TLS reuse) | **500 req/s** | **432ms** | **0%** |
+| 1000 req/s stress test (all optimizations) | 1000 req/s | 8,240ms | 37% |
 
 ## Load Test Profile
 
@@ -93,10 +95,16 @@ The `tasks` table is partitioned but the `tasks_default` partition had no primar
 
 Pool exhaustion returned 500. Added `Plug.Exception` impl for `DBConnection.ConnectionError` to return 503.
 
+### 12. Finch connection pool for HTTP workers
+**Files:** `lib/app/application.ex`, `lib/app/worker.ex`
+
+Workers made ephemeral HTTP connections — every request did a fresh TLS handshake, which is CPU-intensive. Added a named Finch pool (`Prikke.Finch`) with 25 connections that reuses TLS connections to the same hosts. This eliminated the CPU bottleneck that caused 20 workers to saturate all 4 cores. Result: 500 req/s at p95=432ms (was failing at 500 req/s before).
+
 ## Infrastructure Changes
 
 - Enabled `pg_stat_statements` in docker-compose.yml and deploy.yml
 - DB pool increased from 20 to 40
+- Postgres shared memory increased from 64MB to 256MB (Docker `--shm-size`)
 - Superadmin dashboard: replaced disk usage with peak throughput metric
 
 ## Profiling Commands
@@ -130,14 +138,14 @@ ssh root@46.225.66.205 'docker exec runlater-db psql -U cronly -d cronly_prod -c
 ssh root@46.225.66.205 'nproc && free -h | head -2'
 
 # Check app logs
-ssh root@46.225.66.205 'docker logs <container> 2>&1 | grep -c "connection not available"'
+ssh root@46.225.66.205 'docker logs $(docker ps --filter label=service=runlater --filter label=role=web -q) 2>&1 | grep -c "connection not available"'
 ```
 
 ## Current Ceiling
 
-At **300 req/s**: p95=762ms, 0% errors — all queries sub-millisecond.
+At **500 req/s**: p95=432ms, 0% errors — all queries sub-millisecond.
 
-At **500 req/s**: p95=6.1s, 24% errors — DB is still fast (all sub-ms), bottleneck is CPU saturation on the 4-core VPS (app + Postgres share cores). No DB pool exhaustion errors.
+At **1000 req/s**: p95=8.2s, 37% errors — DB is still fast (all sub-ms), bottleneck is CPU saturation on the 4-core VPS (app + Postgres share cores). No DB pool exhaustion errors.
 
 ## Scaling Beyond 500 req/s
 
