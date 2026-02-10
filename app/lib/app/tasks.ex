@@ -460,6 +460,29 @@ defmodule Prikke.Tasks do
   end
 
   @doc """
+  Returns both total and active task counts in a single query.
+  Returns `{total, active}`.
+  """
+  def count_tasks_summary(%Organization{} = org) do
+    from(t in Task,
+      where: t.organization_id == ^org.id,
+      select: %{
+        total: count(t.id),
+        active:
+          count(
+            fragment(
+              "CASE WHEN ? = true AND (? = 'cron' OR ? IS NOT NULL) THEN 1 END",
+              t.enabled,
+              t.schedule_type,
+              t.next_run_at
+            )
+          )
+      }
+    )
+    |> Repo.one()
+  end
+
+  @doc """
   Deletes completed one-time tasks older than retention_days.
 
   A one-time task is "completed" when next_run_at is nil (already executed).

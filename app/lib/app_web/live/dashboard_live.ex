@@ -497,21 +497,22 @@ defmodule PrikkeWeb.DashboardLive do
     }
 
   defp load_stats(organization) do
-    organization = Prikke.Repo.reload!(organization)
-    exec_stats = Executions.get_today_stats(organization)
     tier_limits = Tasks.get_tier_limits(organization.tier)
     monthly_executions = Executions.count_current_month_executions(organization)
     trend_days = if organization.tier == "pro", do: 30, else: 7
 
-    seven_days_ago = DateTime.add(DateTime.utc_now(), -7, :day)
-    stats_7d = Executions.get_organization_stats(organization, since: seven_days_ago)
+    # Single query for today + 7d stats (was 2 separate queries)
+    {exec_stats, stats_7d} = Executions.get_dashboard_stats(organization)
+
+    # Single query for both counts (was 2 separate queries)
+    task_counts = Tasks.count_tasks_summary(organization)
 
     success_rate = calculate_success_rate(exec_stats)
     success_rate_7d = calculate_success_rate(stats_7d)
 
     %{
-      active_tasks: Tasks.count_enabled_tasks(organization),
-      total_tasks: Tasks.count_tasks(organization),
+      active_tasks: task_counts.active,
+      total_tasks: task_counts.total,
       executions_today: exec_stats.total,
       today_failed: exec_stats.failed,
       success_rate: success_rate,

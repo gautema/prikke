@@ -490,6 +490,80 @@ defmodule Prikke.Executions do
     get_organization_stats(organization, since: since)
   end
 
+  @doc """
+  Combined dashboard stats: today + 7d in a single query.
+  Returns `{today_stats, stats_7d}`.
+  """
+  def get_dashboard_stats(organization) do
+    today = DateTime.new!(Date.utc_today(), ~T[00:00:00], "Etc/UTC")
+    seven_days_ago = DateTime.add(DateTime.utc_now(), -7, :day)
+
+    result =
+      from(e in Execution,
+        where: e.organization_id == ^organization.id and e.scheduled_for >= ^seven_days_ago,
+        select: %{
+          today_total:
+            count(fragment("CASE WHEN ? >= ? THEN 1 END", e.scheduled_for, ^today)),
+          today_success:
+            count(
+              fragment(
+                "CASE WHEN ? >= ? AND ? = 'success' THEN 1 END",
+                e.scheduled_for,
+                ^today,
+                e.status
+              )
+            ),
+          today_failed:
+            count(
+              fragment(
+                "CASE WHEN ? >= ? AND ? = 'failed' THEN 1 END",
+                e.scheduled_for,
+                ^today,
+                e.status
+              )
+            ),
+          today_timeout:
+            count(
+              fragment(
+                "CASE WHEN ? >= ? AND ? = 'timeout' THEN 1 END",
+                e.scheduled_for,
+                ^today,
+                e.status
+              )
+            ),
+          today_avg_duration:
+            fragment(
+              "avg(CASE WHEN ? >= ? THEN ? END)",
+              e.scheduled_for,
+              ^today,
+              e.duration_ms
+            ),
+          week_total: count(e.id),
+          week_success:
+            count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status)),
+          week_failed:
+            count(fragment("CASE WHEN ? = 'failed' THEN 1 END", e.status))
+        }
+      )
+      |> Repo.one()
+
+    today_stats = %{
+      total: result.today_total,
+      success: result.today_success,
+      failed: result.today_failed,
+      timeout: result.today_timeout,
+      avg_duration_ms: result.today_avg_duration
+    }
+
+    stats_7d = %{
+      total: result.week_total,
+      success: result.week_success,
+      failed: result.week_failed
+    }
+
+    {today_stats, stats_7d}
+  end
+
   def cleanup_old_executions(organization, retention_days) do
     cutoff = DateTime.add(DateTime.utc_now(), -retention_days, :day)
 
