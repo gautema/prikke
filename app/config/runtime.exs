@@ -35,7 +35,7 @@ if config_env() == :prod do
   config :app, Prikke.Repo,
     ssl: [verify: :verify_none],
     url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "20"),
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "40"),
     queue_target: 500,
     queue_interval: 5000,
     socket_options: maybe_ipv6
