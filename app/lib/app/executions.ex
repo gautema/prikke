@@ -103,26 +103,24 @@ defmodule Prikke.Executions do
     |> Repo.one()
   end
 
-  def claim_next_execution do
+  @doc """
+  Cheap check using partial index - use before expensive claim query when idle.
+  """
+  def has_pending_executions? do
     now = DateTime.utc_now()
 
-    # Fast path: cheap check using partial index before running expensive claim query
-    has_pending =
-      from(e in Execution,
-        where: e.status == "pending" and e.scheduled_for <= ^now,
-        limit: 1,
-        select: true
-      )
-      |> Repo.one()
-
-    if is_nil(has_pending) do
-      {:ok, nil}
-    else
-      claim_next_execution_full(now)
-    end
+    from(e in Execution,
+      where: e.status == "pending" and e.scheduled_for <= ^now,
+      limit: 1,
+      select: true
+    )
+    |> Repo.one()
+    |> is_nil()
+    |> Kernel.not()
   end
 
-  defp claim_next_execution_full(now) do
+  def claim_next_execution do
+    now = DateTime.utc_now()
     query =
       from(e in Execution,
         join: t in Task,

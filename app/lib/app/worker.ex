@@ -48,8 +48,8 @@ defmodule Prikke.Worker do
   # How long to wait between polls when no work is found (ms)
   # Uses exponential backoff: starts at base, doubles up to max
   # PubSub :wake ensures instant response to new work regardless of backoff
-  @poll_interval_base 5_000
-  @poll_interval_max 30_000
+  @poll_interval_base 2_000
+  @poll_interval_max 10_000
 
   # Exit after this duration of no work (5 minutes)
   @max_idle_ms 300_000
@@ -86,24 +86,26 @@ defmodule Prikke.Worker do
   end
 
   def handle_info(:work, state) do
+    # When idle, do a cheap pending check to avoid the expensive claim query
+    should_claim =
+      if state.idle_since do
+        Executions.has_pending_executions?()
+      else
+        true
+      end
+
+    if should_claim do
+      do_claim(state)
+    else
+      # No pending work - continue backoff without running expensive claim query
+      handle_no_work(state)
+    end
+  end
+
+  defp do_claim(state) do
     case Executions.claim_next_execution() do
       {:ok, nil} ->
-        # No work available - track idle time and use exponential backoff
-        now = System.monotonic_time(:millisecond)
-        idle_since = state.idle_since || now
-        idle_duration = now - idle_since
-
-        if idle_duration >= @max_idle_ms do
-          # Exit normally after being idle too long
-          {:stop, :normal, state}
-        else
-          # Exponential backoff: double interval each time, up to max
-          next_interval = min(state.poll_interval * 2, @poll_interval_max)
-          Process.send_after(self(), :work, state.poll_interval)
-
-          {:noreply,
-           %{state | idle_since: idle_since, poll_interval: next_interval, working: false}}
-        end
+        handle_no_work(state)
 
       {:ok, execution} ->
         # Got work - execute it
@@ -118,6 +120,22 @@ defmodule Prikke.Worker do
         Logger.error("[Worker] Failed to claim execution: #{inspect(reason)}")
         Process.send_after(self(), :work, state.poll_interval)
         {:noreply, %{state | working: false}}
+    end
+  end
+
+  defp handle_no_work(state) do
+    now = System.monotonic_time(:millisecond)
+    idle_since = state.idle_since || now
+    idle_duration = now - idle_since
+
+    if idle_duration >= @max_idle_ms do
+      {:stop, :normal, state}
+    else
+      next_interval = min(state.poll_interval * 2, @poll_interval_max)
+      Process.send_after(self(), :work, state.poll_interval)
+
+      {:noreply,
+       %{state | idle_since: idle_since, poll_interval: next_interval, working: false}}
     end
   end
 
