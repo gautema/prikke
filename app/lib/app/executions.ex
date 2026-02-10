@@ -106,6 +106,23 @@ defmodule Prikke.Executions do
   def claim_next_execution do
     now = DateTime.utc_now()
 
+    # Fast path: cheap check using partial index before running expensive claim query
+    has_pending =
+      from(e in Execution,
+        where: e.status == "pending" and e.scheduled_for <= ^now,
+        limit: 1,
+        select: true
+      )
+      |> Repo.one()
+
+    if is_nil(has_pending) do
+      {:ok, nil}
+    else
+      claim_next_execution_full(now)
+    end
+  end
+
+  defp claim_next_execution_full(now) do
     query =
       from(e in Execution,
         join: t in Task,
@@ -351,6 +368,20 @@ defmodule Prikke.Executions do
   def count_pending_executions do
     from(e in Execution, where: e.status == "pending")
     |> Repo.aggregate(:count)
+  end
+
+  @doc """
+  Bounded count of pending executions - stops counting at `limit`.
+  Much cheaper than a full COUNT on large tables.
+  """
+  def count_pending_executions_bounded(limit) do
+    from(e in Execution,
+      where: e.status == "pending",
+      limit: ^limit,
+      select: e.id
+    )
+    |> Repo.all()
+    |> length()
   end
 
   def get_task_stats(task, opts \\ []) do

@@ -45,8 +45,8 @@ defmodule Prikke.WorkerPool do
   alias Prikke.Executions
   alias Prikke.WorkerSupervisor
 
-  # Check queue depth every 5 seconds
-  @check_interval 5_000
+  # Check queue depth every 10 seconds
+  @check_interval 10_000
 
   # Worker pool bounds
   @min_workers 1
@@ -126,7 +126,8 @@ defmodule Prikke.WorkerPool do
   ## Private Functions
 
   defp do_scale do
-    queue_depth = Executions.count_pending_executions()
+    # Bounded count: only need to know up to max_workers for scaling decisions
+    queue_depth = Executions.count_pending_executions_bounded(@max_workers)
     current_workers = WorkerSupervisor.worker_count()
 
     # Target: at least min_workers, at most max_workers, scale with queue

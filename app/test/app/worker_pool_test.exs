@@ -55,7 +55,8 @@ defmodule Prikke.WorkerPoolTest do
 
       {:ok, result} = WorkerPool.scale()
 
-      assert result.queue == 40
+      # Bounded count caps at max_workers (30), so queue reports 30
+      assert result.queue == 30
       # Should cap at max_workers (30)
       assert result.spawned == 30
       assert WorkerSupervisor.worker_count() == 30
