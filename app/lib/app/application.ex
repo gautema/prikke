@@ -14,6 +14,10 @@ defmodule Prikke.Application do
         {Phoenix.PubSub, name: Prikke.PubSub},
         # Rate limiting storage
         {PlugAttack.Storage.Ets, name: PrikkeWeb.RateLimit.Storage, clean_period: 60_000},
+        # HTTP connection pool for workers (reuses TLS connections)
+        {Finch,
+         name: Prikke.Finch,
+         pools: %{default: [size: 25, count: 1, conn_opts: [transport_opts: [timeout: 10_000]]]}},
         # Buffered execution counter (flushes to DB every 5s)
         Prikke.ExecutionCounter,
         # Task supervisor for async notifications

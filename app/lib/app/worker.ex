@@ -210,7 +210,8 @@ defmodule Prikke.Worker do
       url: task.url,
       headers: headers,
       receive_timeout: task.timeout_ms,
-      connect_options: [timeout: 10_000],
+      # Reuse TLS connections via named Finch pool (connect timeout configured at pool level)
+      finch: Prikke.Finch,
       # We handle retries ourselves
       retry: false
     ]

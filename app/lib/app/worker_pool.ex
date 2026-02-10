@@ -50,7 +50,7 @@ defmodule Prikke.WorkerPool do
 
   # Worker pool bounds
   @min_workers 1
-  @max_workers 20
+  @default_max_workers System.schedulers_online() * 2
 
   ## Client API
 
@@ -117,7 +117,7 @@ defmodule Prikke.WorkerPool do
       queue_depth: Executions.count_pending_executions(),
       active_workers: WorkerSupervisor.worker_count(),
       min_workers: @min_workers,
-      max_workers: @max_workers
+      max_workers: max_workers()
     }
 
     {:reply, stats, state}
@@ -125,16 +125,24 @@ defmodule Prikke.WorkerPool do
 
   ## Private Functions
 
+  defp max_workers do
+    case System.get_env("MAX_WORKERS") do
+      nil -> @default_max_workers
+      val -> String.to_integer(val)
+    end
+  end
+
   defp do_scale do
+    max = max_workers()
     # Bounded count: only need to know up to max_workers for scaling decisions
-    queue_depth = Executions.count_pending_executions_bounded(@max_workers)
+    queue_depth = Executions.count_pending_executions_bounded(max)
     current_workers = WorkerSupervisor.worker_count()
 
     # Target: at least min_workers, at most max_workers, scale with queue
     target =
       queue_depth
       |> max(@min_workers)
-      |> min(@max_workers)
+      |> min(max)
 
     spawned =
       if current_workers < target do
