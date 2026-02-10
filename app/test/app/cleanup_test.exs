@@ -55,6 +55,7 @@ defmodule Prikke.CleanupTest do
       {:ok, old_exec} =
         Executions.create_execution(%{
           task_id: task.id,
+          organization_id: task.organization_id,
           scheduled_for: old_time
         })
 
@@ -74,6 +75,7 @@ defmodule Prikke.CleanupTest do
       {:ok, recent_exec} =
         Executions.create_execution(%{
           task_id: task.id,
+          organization_id: task.organization_id,
           scheduled_for: recent_time
         })
 
@@ -146,6 +148,7 @@ defmodule Prikke.CleanupTest do
       {:ok, exec} =
         Executions.create_execution(%{
           task_id: task.id,
+          organization_id: task.organization_id,
           scheduled_for: old_time
         })
 

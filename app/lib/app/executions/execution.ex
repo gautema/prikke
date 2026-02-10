@@ -15,6 +15,7 @@ defmodule Prikke.Executions.Execution do
     field :error_message, :string
     field :attempt, :integer, default: 1
     field :callback_url, :string
+    field :organization_id, :binary_id
 
     belongs_to :task, Prikke.Tasks.Task, foreign_key: :task_id
 
@@ -48,8 +49,8 @@ defmodule Prikke.Executions.Execution do
   """
   def create_changeset(execution, attrs) do
     execution
-    |> cast(attrs, [:task_id, :scheduled_for, :attempt, :callback_url])
-    |> validate_required([:task_id, :scheduled_for])
+    |> cast(attrs, [:task_id, :organization_id, :scheduled_for, :attempt, :callback_url])
+    |> validate_required([:task_id, :organization_id, :scheduled_for])
     |> put_change(:status, "pending")
     |> foreign_key_constraint(:task_id)
   end
@@ -115,8 +116,8 @@ defmodule Prikke.Executions.Execution do
     now = DateTime.utc_now(:second)
 
     execution
-    |> cast(attrs, [:task_id, :scheduled_for])
-    |> validate_required([:task_id, :scheduled_for])
+    |> cast(attrs, [:task_id, :organization_id, :scheduled_for])
+    |> validate_required([:task_id, :organization_id, :scheduled_for])
     |> put_change(:status, "missed")
     |> put_change(:finished_at, now)
     |> put_change(:error_message, "Scheduler was unavailable at scheduled time")

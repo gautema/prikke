@@ -25,7 +25,7 @@ defmodule Prikke.Executions do
       {:execution_updated, execution}
     )
 
-    # Use preloaded task if available, otherwise fetch
+    # Use preloaded task if available, otherwise fetch for the org broadcast
     execution_with_task =
       if Ecto.assoc_loaded?(execution.task) do
         execution
@@ -33,10 +33,10 @@ defmodule Prikke.Executions do
         get_execution_with_task(execution.id)
       end
 
-    if execution_with_task && execution_with_task.task do
+    if execution_with_task do
       Phoenix.PubSub.broadcast(
         Prikke.PubSub,
-        "org:#{execution_with_task.task.organization_id}:executions",
+        "org:#{execution_with_task.organization_id}:executions",
         {:execution_updated, execution_with_task}
       )
     end
@@ -61,6 +61,7 @@ defmodule Prikke.Executions do
 
     attrs = %{
       task_id: task.id,
+      organization_id: task.organization_id,
       scheduled_for: scheduled_for,
       attempt: attempt
     }
@@ -79,6 +80,7 @@ defmodule Prikke.Executions do
     %Execution{}
     |> Execution.missed_changeset(%{
       task_id: task.id,
+      organization_id: task.organization_id,
       scheduled_for: scheduled_for
     })
     |> Repo.insert()
@@ -94,10 +96,8 @@ defmodule Prikke.Executions do
 
   def get_execution_for_org(organization, execution_id) do
     from(e in Execution,
-      join: t in Task,
-      on: e.task_id == t.id,
-      where: t.organization_id == ^organization.id and e.id == ^execution_id,
-      preload: [task: t]
+      where: e.organization_id == ^organization.id and e.id == ^execution_id,
+      preload: [:task]
     )
     |> Repo.one()
   end
@@ -181,12 +181,13 @@ defmodule Prikke.Executions do
       false
     else
       # Check if another execution in the same org+queue is running
-      # or has a pending retry scheduled for later
+      # or has a pending retry scheduled for later.
+      # Keep join on tasks since we need to filter by t.queue.
       from(e in Execution,
         join: t in Task,
         on: e.task_id == t.id,
         where:
-          t.organization_id == ^task.organization_id and
+          e.organization_id == ^task.organization_id and
             t.queue == ^task.queue and
             e.id != ^execution.id and
             (e.status == "running" or
@@ -383,9 +384,7 @@ defmodule Prikke.Executions do
     limit = Keyword.get(opts, :limit, 50)
 
     from(e in Execution,
-      join: t in Task,
-      on: e.task_id == t.id,
-      where: t.organization_id == ^organization.id,
+      where: e.organization_id == ^organization.id,
       order_by: [desc: e.scheduled_for],
       limit: ^limit,
       preload: [:task]
@@ -435,9 +434,7 @@ defmodule Prikke.Executions do
     since = Keyword.get(opts, :since, DateTime.add(DateTime.utc_now(), -24, :hour))
 
     from(e in Execution,
-      join: t in Task,
-      on: e.task_id == t.id,
-      where: t.organization_id == ^organization.id and e.scheduled_for >= ^since,
+      where: e.organization_id == ^organization.id and e.scheduled_for >= ^since,
       select: %{
         total: count(e.id),
         success: count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status)),
@@ -482,15 +479,7 @@ defmodule Prikke.Executions do
   end
 
   defp maybe_increment_monthly_count(%Execution{attempt: 1} = execution) do
-    # Use preloaded task if available, otherwise fetch
-    execution =
-      if Ecto.assoc_loaded?(execution.task) do
-        execution
-      else
-        Repo.preload(execution, :task)
-      end
-
-    Prikke.ExecutionCounter.increment(execution.task.organization_id)
+    Prikke.ExecutionCounter.increment(execution.organization_id)
   end
 
   defp maybe_increment_monthly_count(_execution), do: :ok
@@ -505,9 +494,7 @@ defmodule Prikke.Executions do
     cutoff = DateTime.add(DateTime.utc_now(), -retention_days, :day)
 
     from(e in Execution,
-      join: t in Task,
-      on: e.task_id == t.id,
-      where: t.organization_id == ^organization.id,
+      where: e.organization_id == ^organization.id,
       where: e.finished_at < ^cutoff
     )
     |> Repo.delete_all()
@@ -622,9 +609,7 @@ defmodule Prikke.Executions do
 
     data =
       from(e in Execution,
-        join: t in Task,
-        on: e.task_id == t.id,
-        where: t.organization_id == ^organization.id and e.scheduled_for >= ^since,
+        where: e.organization_id == ^organization.id and e.scheduled_for >= ^since,
         group_by: fragment("DATE(?)", e.scheduled_for),
         select: {
           fragment("DATE(?)", e.scheduled_for),

@@ -29,6 +29,7 @@ defmodule Prikke.ExecutionsTest do
       assert {:ok, execution} =
                Executions.create_execution(%{
                  task_id: task.id,
+                 organization_id: task.organization_id,
                  scheduled_for: scheduled_for
                })
 

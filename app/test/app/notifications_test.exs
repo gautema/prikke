@@ -27,6 +27,7 @@ defmodule Prikke.NotificationsTest do
       {:ok, execution} =
         Executions.create_execution(%{
           task_id: task.id,
+          organization_id: task.organization_id,
           scheduled_for: DateTime.utc_now()
         })
 
@@ -79,6 +80,7 @@ defmodule Prikke.NotificationsTest do
       {:ok, execution} =
         Executions.create_execution(%{
           task_id: task.id,
+          organization_id: task.organization_id,
           scheduled_for: DateTime.utc_now()
         })
 
@@ -152,6 +154,7 @@ defmodule Prikke.NotificationsTest do
       {:ok, execution} =
         Executions.create_execution(%{
           task_id: task.id,
+          organization_id: task.organization_id,
           scheduled_for: DateTime.utc_now()
         })
 
@@ -195,6 +198,7 @@ defmodule Prikke.NotificationsTest do
       {:ok, execution} =
         Executions.create_execution(%{
           task_id: once_task.id,
+          organization_id: once_task.organization_id,
           scheduled_for: DateTime.utc_now(),
           attempt: 1
         })
@@ -235,6 +239,7 @@ defmodule Prikke.NotificationsTest do
       {:ok, execution} =
         Executions.create_execution(%{
           task_id: once_task.id,
+          organization_id: once_task.organization_id,
           scheduled_for: DateTime.utc_now(),
           attempt: 3
         })
@@ -271,6 +276,7 @@ defmodule Prikke.NotificationsTest do
       {:ok, execution} =
         Executions.create_execution(%{
           task_id: task.id,
+          organization_id: task.organization_id,
           scheduled_for: DateTime.utc_now()
         })
 
@@ -316,6 +322,7 @@ defmodule Prikke.NotificationsTest do
       {:ok, failed_execution} =
         Executions.create_execution(%{
           task_id: task.id,
+          organization_id: task.organization_id,
           scheduled_for: DateTime.add(DateTime.utc_now(), -120, :second)
         })
 
@@ -329,6 +336,7 @@ defmodule Prikke.NotificationsTest do
       {:ok, success_execution} =
         Executions.create_execution(%{
           task_id: task.id,
+          organization_id: task.organization_id,
           scheduled_for: DateTime.utc_now()
         })
 
@@ -380,6 +388,7 @@ defmodule Prikke.NotificationsTest do
       {:ok, success_execution} =
         Executions.create_execution(%{
           task_id: task.id,
+          organization_id: task.organization_id,
           scheduled_for: DateTime.utc_now()
         })
 
@@ -449,6 +458,7 @@ defmodule Prikke.NotificationsTest do
       {:ok, failed_exec} =
         Executions.create_execution(%{
           task_id: task.id,
+          organization_id: task.organization_id,
           scheduled_for: DateTime.add(DateTime.utc_now(), -120, :second)
         })
 
@@ -462,6 +472,7 @@ defmodule Prikke.NotificationsTest do
       {:ok, success_exec} =
         Executions.create_execution(%{
           task_id: task.id,
+          organization_id: task.organization_id,
           scheduled_for: DateTime.utc_now()
         })
 
@@ -495,6 +506,7 @@ defmodule Prikke.NotificationsTest do
       {:ok, success_exec} =
         Executions.create_execution(%{
           task_id: task.id,
+          organization_id: task.organization_id,
           scheduled_for: DateTime.utc_now()
         })
 
@@ -532,6 +544,7 @@ defmodule Prikke.NotificationsTest do
       {:ok, failed_exec} =
         Executions.create_execution(%{
           task_id: task.id,
+          organization_id: task.organization_id,
           scheduled_for: DateTime.add(DateTime.utc_now(), -120, :second)
         })
 
@@ -544,6 +557,7 @@ defmodule Prikke.NotificationsTest do
       {:ok, success_exec} =
         Executions.create_execution(%{
           task_id: task.id,
+          organization_id: task.organization_id,
           scheduled_for: DateTime.utc_now()
         })
 
@@ -606,6 +620,7 @@ defmodule Prikke.NotificationsTest do
       {:ok, execution} =
         Executions.create_execution(%{
           task_id: task.id,
+          organization_id: task.organization_id,
           scheduled_for: DateTime.utc_now()
         })
 
@@ -636,6 +651,7 @@ defmodule Prikke.NotificationsTest do
       {:ok, failed_exec} =
         Executions.create_execution(%{
           task_id: task.id,
+          organization_id: task.organization_id,
           scheduled_for: DateTime.add(DateTime.utc_now(), -120, :second)
         })
 
@@ -649,6 +665,7 @@ defmodule Prikke.NotificationsTest do
       {:ok, success_exec} =
         Executions.create_execution(%{
           task_id: task.id,
+          organization_id: task.organization_id,
           scheduled_for: DateTime.utc_now()
         })
 
@@ -688,6 +705,7 @@ defmodule Prikke.NotificationsTest do
       {:ok, execution} =
         Executions.create_execution(%{
           task_id: unmuted_task.id,
+          organization_id: unmuted_task.organization_id,
           scheduled_for: DateTime.utc_now()
         })
 
