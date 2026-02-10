@@ -1,5 +1,5 @@
 defmodule PrikkeWeb.Api.EndpointController do
-  use PrikkeWeb, :controller
+  use PrikkeWeb.Api.ApiController
   use OpenApiSpex.ControllerSpecs
 
   alias Prikke.Endpoints

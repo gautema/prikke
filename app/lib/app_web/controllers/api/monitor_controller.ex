@@ -1,5 +1,5 @@
 defmodule PrikkeWeb.Api.MonitorController do
-  use PrikkeWeb, :controller
+  use PrikkeWeb.Api.ApiController
   use OpenApiSpex.ControllerSpecs
 
   alias Prikke.Monitors

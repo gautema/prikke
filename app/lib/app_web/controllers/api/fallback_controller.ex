@@ -4,6 +4,13 @@ defmodule PrikkeWeb.Api.FallbackController do
   """
   use PrikkeWeb, :controller
 
+  def call(conn, {:error, :service_unavailable}) do
+    conn
+    |> put_status(:service_unavailable)
+    |> put_resp_header("retry-after", "5")
+    |> json(%{error: %{code: "service_unavailable", message: "Server is busy, please retry"}})
+  end
+
   def call(conn, {:error, :not_found}) do
     conn
     |> put_status(:not_found)

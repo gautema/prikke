@@ -9,7 +9,7 @@ defmodule PrikkeWeb.Api.TaskController do
   - `run_at` param → scheduled one-time execution
   - No timing param → immediate execution
   """
-  use PrikkeWeb, :controller
+  use PrikkeWeb.Api.ApiController
   use OpenApiSpex.ControllerSpecs
 
   alias Prikke.Tasks

@@ -29,7 +29,7 @@ defmodule PrikkeWeb.Api.SyncController do
   - At least one of `tasks`, `monitors`, or `endpoints` must be provided
   - Only recurring (cron) tasks are synced; one-time and queued tasks are skipped
   """
-  use PrikkeWeb, :controller
+  use PrikkeWeb.Api.ApiController
   use OpenApiSpex.ControllerSpecs
 
   alias Prikke.Tasks
