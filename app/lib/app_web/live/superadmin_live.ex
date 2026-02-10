@@ -267,7 +267,7 @@ defmodule PrikkeWeb.SuperadminLive do
                 true -> "text-slate-900"
               end
             ]}>
-              {Map.get(@metrics, :queue_depth, 0)}
+              {if Map.get(@metrics, :queue_depth, 0) >= 200, do: ">200", else: Map.get(@metrics, :queue_depth, 0)}
             </div>
             <.sparkline data={Enum.map(@metrics_history, &Map.get(&1, :queue_depth, 0))} />
           </div>

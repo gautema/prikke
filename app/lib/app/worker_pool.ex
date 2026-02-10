@@ -50,7 +50,7 @@ defmodule Prikke.WorkerPool do
 
   # Worker pool bounds
   @min_workers 1
-  @max_workers 30
+  @max_workers 20
 
   ## Client API
 
