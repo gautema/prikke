@@ -410,7 +410,7 @@ defmodule PrikkeWeb.SuperadminLive do
                     {if alert.level == :critical, do: "CRITICAL", else: "WARNING"}
                   </span>
                   <span>
-                    {alert.metric} at {alert.value}{alert.unit} (threshold: {alert.threshold}{alert.unit})
+                    {alert.metric}: {alert.value}
                   </span>
                 </div>
               <% end %>
