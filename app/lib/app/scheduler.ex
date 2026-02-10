@@ -546,7 +546,8 @@ defmodule Prikke.Scheduler do
 
       max when is_integer(max) ->
         current = Executions.count_current_month_executions(org)
-        current < max
+        # Pro users are warned but never blocked
+        current < max or org.tier == "pro"
     end
   end
 end
