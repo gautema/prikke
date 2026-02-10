@@ -478,10 +478,7 @@ defmodule Prikke.Executions do
   end
 
   defp touch_task_last_execution(%Execution{} = execution) do
-    now = DateTime.utc_now(:second)
-
-    from(t in Task, where: t.id == ^execution.task_id)
-    |> Repo.update_all(set: [last_execution_at: now])
+    Prikke.ExecutionCounter.touch_task(execution.task_id)
   end
 
   defp maybe_increment_monthly_count(%Execution{attempt: 1} = execution) do

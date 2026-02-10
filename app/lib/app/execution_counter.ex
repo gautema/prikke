@@ -1,17 +1,21 @@
 defmodule Prikke.ExecutionCounter do
   @moduledoc """
-  Buffers monthly execution count increments in ETS and flushes to DB periodically.
+  Buffers hot-path DB writes in ETS and flushes to DB periodically.
 
-  Instead of doing an UPDATE on the organizations row for every single execution,
-  we accumulate counts in an ETS table and flush them every few seconds. This
-  eliminates row-level lock contention on the organizations table under load.
+  Buffers two things:
+  1. Monthly execution count increments (organizations table)
+  2. Last execution timestamps (tasks table)
+
+  This eliminates row-level lock contention under load by batching
+  many per-execution UPDATEs into periodic bulk writes.
   """
 
   use GenServer
 
   import Ecto.Query, warn: false
 
-  @table :execution_counters
+  @counter_table :execution_counters
+  @timestamp_table :execution_timestamps
   @flush_interval 5_000
 
   def start_link(_opts) do
@@ -22,11 +26,19 @@ defmodule Prikke.ExecutionCounter do
   Increment the execution count for an organization. Lock-free (ETS atomic update).
   """
   def increment(org_id) do
-    :ets.update_counter(@table, org_id, {2, 1}, {org_id, 0})
+    :ets.update_counter(@counter_table, org_id, {2, 1}, {org_id, 0})
   end
 
   @doc """
-  Force an immediate flush of all buffered counts to DB. Used in tests.
+  Record a task execution timestamp. Only the latest timestamp per task is kept.
+  """
+  def touch_task(task_id) do
+    now = DateTime.utc_now(:second)
+    :ets.insert(@timestamp_table, {task_id, now})
+  end
+
+  @doc """
+  Force an immediate flush of all buffered data to DB. Used in tests.
   """
   def flush_sync do
     GenServer.call(__MODULE__, :flush)
@@ -34,7 +46,8 @@ defmodule Prikke.ExecutionCounter do
 
   @impl true
   def init(_) do
-    :ets.new(@table, [:set, :public, :named_table])
+    :ets.new(@counter_table, [:set, :public, :named_table])
+    :ets.new(@timestamp_table, [:set, :public, :named_table])
     schedule_flush()
     {:ok, %{}}
   end
@@ -57,16 +70,34 @@ defmodule Prikke.ExecutionCounter do
   end
 
   defp flush do
-    :ets.tab2list(@table)
+    flush_counters()
+    flush_timestamps()
+  end
+
+  defp flush_counters do
+    :ets.tab2list(@counter_table)
     |> Enum.each(fn {org_id, count} ->
       if count > 0 do
-        :ets.update_counter(@table, org_id, {2, -count}, {org_id, 0})
+        :ets.update_counter(@counter_table, org_id, {2, -count}, {org_id, 0})
 
         Prikke.Repo.update_all(
           from(o in Prikke.Accounts.Organization, where: o.id == ^org_id),
           inc: [monthly_execution_count: count]
         )
       end
+    end)
+  end
+
+  defp flush_timestamps do
+    entries = :ets.tab2list(@timestamp_table)
+
+    Enum.each(entries, fn {task_id, timestamp} ->
+      :ets.delete(@timestamp_table, task_id)
+
+      Prikke.Repo.update_all(
+        from(t in Prikke.Tasks.Task, where: t.id == ^task_id),
+        set: [last_execution_at: timestamp]
+      )
     end)
   end
 end
