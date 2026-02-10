@@ -53,6 +53,6 @@ accessories:
         - POSTGRES_PASSWORD
     options:
       shm-size: 256m
-    cmd: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c shared_buffers=2GB -c effective_cache_size=4GB -c work_mem=64MB
+    cmd: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c shared_buffers=2GB -c effective_cache_size=4GB -c work_mem=4MB -c max_parallel_workers_per_gather=2
     directories:
       - /mnt/secure/postgresql-data:/var/lib/postgresql

@@ -13,8 +13,8 @@ defmodule PrikkeWeb.SuperadminLive do
   @impl true
   def mount(_params, _session, socket) do
     if connected?(socket) do
-      # Auto-refresh every 30 seconds
-      :timer.send_interval(30_000, :refresh)
+      # Auto-refresh every 2 minutes (heavy DB queries)
+      :timer.send_interval(120_000, :refresh)
     end
 
     socket =
@@ -267,7 +267,9 @@ defmodule PrikkeWeb.SuperadminLive do
                 true -> "text-slate-900"
               end
             ]}>
-              {if Map.get(@metrics, :queue_depth, 0) >= 200, do: ">200", else: Map.get(@metrics, :queue_depth, 0)}
+              {if Map.get(@metrics, :queue_depth, 0) >= 200,
+                do: ">200",
+                else: Map.get(@metrics, :queue_depth, 0)}
             </div>
             <.sparkline data={Enum.map(@metrics_history, &Map.get(&1, :queue_depth, 0))} />
           </div>
@@ -650,7 +652,9 @@ defmodule PrikkeWeb.SuperadminLive do
             <div class="text-xs text-slate-500 mt-1">
               <span class="text-emerald-600">{@endpoint_stats.enabled} enabled</span>
               <span class="mx-1">&middot;</span>
-              <span class="text-slate-400">{@endpoint_stats.total - @endpoint_stats.enabled} disabled</span>
+              <span class="text-slate-400">
+                {@endpoint_stats.total - @endpoint_stats.enabled} disabled
+              </span>
             </div>
           </div>
           <div>
@@ -680,7 +684,9 @@ defmodule PrikkeWeb.SuperadminLive do
                   <span class="text-xs text-slate-400 font-mono">/in/{endpoint.slug}</span>
                 </div>
                 <div class="flex items-center gap-3 shrink-0">
-                  <span class="text-xs text-slate-400">{endpoint.organization && endpoint.organization.name}</span>
+                  <span class="text-xs text-slate-400">
+                    {endpoint.organization && endpoint.organization.name}
+                  </span>
                   <span class="text-xs text-slate-400">
                     <.relative_time id={"ep-#{endpoint.id}"} datetime={endpoint.inserted_at} />
                   </span>
@@ -693,7 +699,7 @@ defmodule PrikkeWeb.SuperadminLive do
           </div>
         </div>
       </div>
-
+      
     <!-- Recent Executions & Audit Logs -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <!-- Recent Executions -->
