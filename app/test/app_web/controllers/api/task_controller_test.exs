@@ -31,7 +31,7 @@ defmodule PrikkeWeb.Api.TaskControllerTest do
       names = Enum.map(response["data"], & &1["name"])
       assert "Task 1" in names
       assert "Task 2" in names
-      assert response["total"] == 2
+      assert response["has_more"] == false
       assert response["limit"] == 50
       assert response["offset"] == 0
     end
@@ -40,7 +40,7 @@ defmodule PrikkeWeb.Api.TaskControllerTest do
       conn = get(conn, ~p"/api/v1/tasks")
       response = json_response(conn, 200)
       assert response["data"] == []
-      assert response["total"] == 0
+      assert response["has_more"] == false
     end
 
     test "respects custom limit and offset", %{conn: conn, org: org} do
@@ -50,7 +50,7 @@ defmodule PrikkeWeb.Api.TaskControllerTest do
       response = json_response(conn, 200)
 
       assert length(response["data"]) == 2
-      assert response["total"] == 5
+      assert response["has_more"] == true
       assert response["limit"] == 2
       assert response["offset"] == 1
     end
@@ -74,7 +74,7 @@ defmodule PrikkeWeb.Api.TaskControllerTest do
 
       assert length(response["data"]) == 1
       assert hd(response["data"])["name"] == "Payment Task"
-      assert response["total"] == 1
+      assert response["has_more"] == false
     end
 
     test "filters tasks with no queue using 'none'", %{conn: conn, org: org} do
@@ -86,7 +86,7 @@ defmodule PrikkeWeb.Api.TaskControllerTest do
 
       assert length(response["data"]) == 1
       assert hd(response["data"])["name"] == "No Queue Task"
-      assert response["total"] == 1
+      assert response["has_more"] == false
     end
 
     test "returns 401 without auth", %{org: _org} do

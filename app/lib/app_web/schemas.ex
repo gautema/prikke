@@ -210,7 +210,7 @@ defmodule PrikkeWeb.Schemas do
       type: :object,
       properties: %{
         data: %Schema{type: :array, items: Task},
-        total: %Schema{type: :integer, description: "Total number of matching tasks"},
+        has_more: %Schema{type: :boolean, description: "Whether more results exist beyond this page"},
         limit: %Schema{type: :integer, description: "Maximum results per page"},
         offset: %Schema{type: :integer, description: "Number of results skipped"}
       }

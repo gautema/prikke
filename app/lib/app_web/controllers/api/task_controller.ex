@@ -60,12 +60,14 @@ defmodule PrikkeWeb.Api.TaskController do
     filter_opts = if params["queue"], do: [queue: params["queue"]], else: []
     opts = filter_opts ++ [limit: limit, offset: offset]
 
-    tasks = Tasks.list_tasks(org, opts)
-    total = Tasks.count_tasks(org, filter_opts)
+    # Fetch one extra to determine has_more without expensive count(*)
+    tasks = Tasks.list_tasks(org, Keyword.put(opts, :limit, limit + 1))
+    has_more = length(tasks) > limit
+    tasks = Enum.take(tasks, limit)
 
     json(conn, %{
       data: Enum.map(tasks, &task_json/1),
-      total: total,
+      has_more: has_more,
       limit: limit,
       offset: offset
     })
