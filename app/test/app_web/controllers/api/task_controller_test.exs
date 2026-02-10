@@ -20,7 +20,7 @@ defmodule PrikkeWeb.Api.TaskControllerTest do
   end
 
   describe "GET /api/v1/tasks" do
-    test "lists all tasks for the organization", %{conn: conn, org: org} do
+    test "lists all tasks for the organization with pagination metadata", %{conn: conn, org: org} do
       _task1 = task_fixture(org, %{name: "Task 1"})
       _task2 = task_fixture(org, %{name: "Task 2"})
 
@@ -31,11 +31,37 @@ defmodule PrikkeWeb.Api.TaskControllerTest do
       names = Enum.map(response["data"], & &1["name"])
       assert "Task 1" in names
       assert "Task 2" in names
+      assert response["total"] == 2
+      assert response["limit"] == 50
+      assert response["offset"] == 0
     end
 
     test "returns empty list when no tasks", %{conn: conn} do
       conn = get(conn, ~p"/api/v1/tasks")
-      assert json_response(conn, 200)["data"] == []
+      response = json_response(conn, 200)
+      assert response["data"] == []
+      assert response["total"] == 0
+    end
+
+    test "respects custom limit and offset", %{conn: conn, org: org} do
+      for i <- 1..5, do: task_fixture(org, %{name: "Task #{i}"})
+
+      conn = get(conn, ~p"/api/v1/tasks?limit=2&offset=1")
+      response = json_response(conn, 200)
+
+      assert length(response["data"]) == 2
+      assert response["total"] == 5
+      assert response["limit"] == 2
+      assert response["offset"] == 1
+    end
+
+    test "caps limit at 100", %{conn: conn, org: org} do
+      _task = task_fixture(org, %{name: "Task 1"})
+
+      conn = get(conn, ~p"/api/v1/tasks?limit=200")
+      response = json_response(conn, 200)
+
+      assert response["limit"] == 100
     end
 
     test "filters tasks by queue parameter", %{conn: conn, org: org} do
@@ -48,6 +74,7 @@ defmodule PrikkeWeb.Api.TaskControllerTest do
 
       assert length(response["data"]) == 1
       assert hd(response["data"])["name"] == "Payment Task"
+      assert response["total"] == 1
     end
 
     test "filters tasks with no queue using 'none'", %{conn: conn, org: org} do
@@ -59,6 +86,7 @@ defmodule PrikkeWeb.Api.TaskControllerTest do
 
       assert length(response["data"]) == 1
       assert hd(response["data"])["name"] == "No Queue Task"
+      assert response["total"] == 1
     end
 
     test "returns 401 without auth", %{org: _org} do

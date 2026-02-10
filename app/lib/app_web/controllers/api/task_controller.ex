@@ -25,12 +25,24 @@ defmodule PrikkeWeb.Api.TaskController do
   operation(:index,
     summary: "List all tasks",
     description:
-      "Returns all tasks for the authenticated organization. Optionally filter by queue name.",
+      "Returns tasks for the authenticated organization with pagination. Optionally filter by queue name.",
     parameters: [
       queue: [
         in: :query,
         type: :string,
         description: "Filter by queue name. Use \"none\" to get tasks without a queue.",
+        required: false
+      ],
+      limit: [
+        in: :query,
+        type: :integer,
+        description: "Maximum results (1-100, default 50)",
+        required: false
+      ],
+      offset: [
+        in: :query,
+        type: :integer,
+        description: "Number of results to skip (default 0)",
         required: false
       ]
     ],
@@ -42,9 +54,21 @@ defmodule PrikkeWeb.Api.TaskController do
 
   def index(conn, params) do
     org = conn.assigns.current_organization
-    opts = if params["queue"], do: [queue: params["queue"]], else: []
+    limit = parse_limit(params["limit"], 50)
+    offset = parse_offset(params["offset"])
+
+    filter_opts = if params["queue"], do: [queue: params["queue"]], else: []
+    opts = filter_opts ++ [limit: limit, offset: offset]
+
     tasks = Tasks.list_tasks(org, opts)
-    json(conn, %{data: Enum.map(tasks, &task_json/1)})
+    total = Tasks.count_tasks(org, filter_opts)
+
+    json(conn, %{
+      data: Enum.map(tasks, &task_json/1),
+      total: total,
+      limit: limit,
+      offset: offset
+    })
   end
 
   operation(:show,
@@ -418,12 +442,24 @@ defmodule PrikkeWeb.Api.TaskController do
 
   defp parse_limit(val, default) when is_binary(val) do
     case Integer.parse(val) do
-      {n, _} when n > 0 and n <= 100 -> n
+      {n, _} when n > 100 -> 100
+      {n, _} when n > 0 -> n
       _ -> default
     end
   end
 
   defp parse_limit(_, default), do: default
+
+  defp parse_offset(nil), do: 0
+
+  defp parse_offset(val) when is_binary(val) do
+    case Integer.parse(val) do
+      {n, _} when n >= 0 -> n
+      _ -> 0
+    end
+  end
+
+  defp parse_offset(_), do: 0
 
   defp parse_delay(nil), do: {:error, "delay is required"}
   defp parse_delay(""), do: {:error, "delay is required"}

@@ -81,26 +81,33 @@ defmodule Prikke.Notifications do
     task = execution.task
     org = task.organization
 
-    # Check if notifications are enabled and task is not muted
-    if org.notify_on_failure and not task.muted do
-      # Only notify on status change (first failure in a sequence)
-      previous_status = Prikke.Executions.get_previous_status(task, execution.id)
+    # Skip notification if this one-time task still has retries remaining
+    if task.schedule_type == "once" and execution.attempt < task.retry_attempts do
+      Logger.debug(
+        "[Notifications] Skipping notification - retry #{execution.attempt}/#{task.retry_attempts} pending"
+      )
+    else
+      # Check if notifications are enabled and task is not muted
+      if org.notify_on_failure and not task.muted do
+        # Only notify on status change (first failure in a sequence)
+        previous_status = Prikke.Executions.get_previous_status(task, execution.id)
 
-      if should_notify?(previous_status) do
-        # Send email notification
-        if email = notification_email(org) do
-          send_failure_email(execution, email)
-        end
+        if should_notify?(previous_status) do
+          # Send email notification
+          if email = notification_email(org) do
+            send_failure_email(execution, email)
+          end
 
-        # Send webhook notification
-        if webhook_url = org.notification_webhook_url do
-          send_failure_webhook(execution, webhook_url)
+          # Send webhook notification
+          if webhook_url = org.notification_webhook_url do
+            send_failure_webhook(execution, webhook_url)
+          end
+        else
+          Logger.debug("[Notifications] Skipping notification - previous execution also failed")
         end
       else
-        Logger.debug("[Notifications] Skipping notification - previous execution also failed")
+        Logger.debug("[Notifications] Notifications disabled for org #{org.id}")
       end
-    else
-      Logger.debug("[Notifications] Notifications disabled for org #{org.id}")
     end
   end
 

@@ -206,10 +206,13 @@ defmodule PrikkeWeb.Schemas do
 
     OpenApiSpex.schema(%{
       title: "TasksResponse",
-      description: "Response containing a list of tasks",
+      description: "Response containing a paginated list of tasks",
       type: :object,
       properties: %{
-        data: %Schema{type: :array, items: Task}
+        data: %Schema{type: :array, items: Task},
+        total: %Schema{type: :integer, description: "Total number of matching tasks"},
+        limit: %Schema{type: :integer, description: "Maximum results per page"},
+        offset: %Schema{type: :integer, description: "Number of results skipped"}
       }
     })
   end

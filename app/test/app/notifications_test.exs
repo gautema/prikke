@@ -182,6 +182,86 @@ defmodule Prikke.NotificationsTest do
       assert failure_email.subject =~ "Notified Task"
     end
 
+    test "does not send notification for one-time task with retries remaining", %{org: org} do
+      {:ok, once_task} =
+        Tasks.create_task(org, %{
+          name: "Retryable Task",
+          url: "https://example.com/webhook",
+          schedule_type: "once",
+          scheduled_at: DateTime.add(DateTime.utc_now(), 3600, :second),
+          retry_attempts: 5
+        })
+
+      {:ok, execution} =
+        Executions.create_execution(%{
+          task_id: once_task.id,
+          scheduled_for: DateTime.utc_now(),
+          attempt: 1
+        })
+
+      {:ok, execution} =
+        Executions.fail_execution(execution, %{
+          status_code: 500,
+          error_message: "Server Error"
+        })
+
+      execution = Executions.get_execution_with_task(execution.id)
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_failure(execution)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      failure_emails =
+        Enum.filter(emails, fn email ->
+          String.contains?(email.subject, "Task failed")
+        end)
+
+      assert failure_emails == [],
+             "Expected no failure emails when retries remain (attempt 1/5)"
+    end
+
+    test "sends notification for one-time task on final attempt", %{org: org} do
+      {:ok, once_task} =
+        Tasks.create_task(org, %{
+          name: "Final Retry Task",
+          url: "https://example.com/webhook",
+          schedule_type: "once",
+          scheduled_at: DateTime.add(DateTime.utc_now(), 3600, :second),
+          retry_attempts: 3
+        })
+
+      {:ok, execution} =
+        Executions.create_execution(%{
+          task_id: once_task.id,
+          scheduled_for: DateTime.utc_now(),
+          attempt: 3
+        })
+
+      {:ok, execution} =
+        Executions.fail_execution(execution, %{
+          status_code: 500,
+          error_message: "Server Error"
+        })
+
+      execution = Executions.get_execution_with_task(execution.id)
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_failure(execution)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      failure_email =
+        Enum.find(emails, fn email ->
+          String.contains?(email.subject, "Task failed")
+        end)
+
+      assert failure_email != nil,
+             "Expected failure email on final attempt (attempt 3/3)"
+    end
+
     test "does not send notification when disabled", %{org: org, task: task} do
       {:ok, _org} =
         Accounts.update_notification_settings(org, %{

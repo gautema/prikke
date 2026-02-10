@@ -73,10 +73,14 @@ defmodule Prikke.Tasks do
 
     * `:queue` - filter by queue name. Use `"none"` to match tasks with no queue.
     * `:type` - filter by schedule type. `"cron"` for recurring, `"once"` for one-time.
+    * `:limit` - maximum number of tasks to return (default 50, max 100).
+    * `:offset` - number of tasks to skip (default 0).
   """
   def list_tasks(%Organization{} = org, opts \\ []) do
     queue = Keyword.get(opts, :queue)
     type = Keyword.get(opts, :type)
+    limit = opts |> Keyword.get(:limit, 50) |> min(100) |> max(1)
+    offset = opts |> Keyword.get(:offset, 0) |> max(0)
 
     # Subquery to get the latest execution time per task
     latest_exec_subquery =
@@ -107,7 +111,40 @@ defmodule Prikke.Tasks do
         schedule_type -> from(t in query, where: t.schedule_type == ^schedule_type)
       end
 
-    Repo.all(query)
+    query
+    |> limit(^limit)
+    |> offset(^offset)
+    |> Repo.all()
+  end
+
+  @doc """
+  Counts tasks for an organization with optional filters.
+
+  ## Options
+
+    * `:queue` - filter by queue name. Use `"none"` to match tasks with no queue.
+    * `:type` - filter by schedule type. `"cron"` for recurring, `"once"` for one-time.
+  """
+  def count_tasks(%Organization{} = org, opts) when is_list(opts) do
+    queue = Keyword.get(opts, :queue)
+    type = Keyword.get(opts, :type)
+
+    query = from(t in Task, where: t.organization_id == ^org.id)
+
+    query =
+      case queue do
+        nil -> query
+        "none" -> from(t in query, where: is_nil(t.queue))
+        name -> from(t in query, where: t.queue == ^name)
+      end
+
+    query =
+      case type do
+        nil -> query
+        schedule_type -> from(t in query, where: t.schedule_type == ^schedule_type)
+      end
+
+    Repo.aggregate(query, :count)
   end
 
   @doc """
