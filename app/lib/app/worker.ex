@@ -102,6 +102,35 @@ defmodule Prikke.Worker do
     end
   end
 
+  def handle_info({:EXIT, _pid, reason}, state) do
+    # Parent supervisor is shutting down
+    Logger.info("[Worker] Received exit signal: #{inspect(reason)}, shutting down gracefully")
+
+    if state.working do
+      # Currently working, mark as shutting down and let current work finish
+      {:noreply, Map.put(state, :shutting_down, true)}
+    else
+      # Not working, can exit immediately
+      {:stop, :normal, state}
+    end
+  end
+
+  # Wake signal from PubSub - check for work immediately
+  def handle_info(:wake, state) do
+    unless state.working do
+      send(self(), :work)
+    end
+
+    {:noreply, state}
+  end
+
+  # Ignore unexpected messages (e.g., from test mailer sending :email messages)
+  def handle_info(_msg, state) do
+    {:noreply, state}
+  end
+
+  ## Private Functions
+
   defp do_claim(state) do
     case Executions.claim_next_execution() do
       {:ok, nil} ->
@@ -138,36 +167,6 @@ defmodule Prikke.Worker do
        %{state | idle_since: idle_since, poll_interval: next_interval, working: false}}
     end
   end
-
-  @impl true
-  def handle_info({:EXIT, _pid, reason}, state) do
-    # Parent supervisor is shutting down
-    Logger.info("[Worker] Received exit signal: #{inspect(reason)}, shutting down gracefully")
-
-    if state.working do
-      # Currently working, mark as shutting down and let current work finish
-      {:noreply, Map.put(state, :shutting_down, true)}
-    else
-      # Not working, can exit immediately
-      {:stop, :normal, state}
-    end
-  end
-
-  # Wake signal from PubSub - check for work immediately
-  def handle_info(:wake, state) do
-    unless state.working do
-      send(self(), :work)
-    end
-
-    {:noreply, state}
-  end
-
-  # Ignore unexpected messages (e.g., from test mailer sending :email messages)
-  def handle_info(_msg, state) do
-    {:noreply, state}
-  end
-
-  ## Private Functions
 
   defp execute(execution) do
     # Load the task with organization for context
