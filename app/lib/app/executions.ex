@@ -121,35 +121,14 @@ defmodule Prikke.Executions do
 
   def claim_next_execution do
     now = DateTime.utc_now()
+
+    # Simple claim: uses partial index (scheduled_for WHERE status='pending')
+    # for both filter and sort — single table scan, no JOINs.
+    # Queue deduplication is checked post-claim for tasks that use queues.
     query =
       from(e in Execution,
-        join: t in Task,
-        on: e.task_id == t.id,
-        join: o in Prikke.Accounts.Organization,
-        on: t.organization_id == o.id,
         where: e.status == "pending" and e.scheduled_for <= ^now,
-        where:
-          is_nil(t.queue) or
-            fragment(
-              """
-              NOT EXISTS (
-                SELECT 1 FROM executions e2
-                JOIN tasks t2 ON e2.task_id = t2.id
-                WHERE t2.organization_id = ? AND t2.queue = ?
-                  AND e2.id != ?
-                  AND (e2.status = 'running' OR (e2.status = 'pending' AND e2.scheduled_for > ?))
-              )
-              """,
-              t.organization_id,
-              t.queue,
-              e.id,
-              ^now
-            ),
-        order_by: [
-          desc: o.tier,
-          asc: t.interval_minutes,
-          asc: e.scheduled_for
-        ],
+        order_by: [asc: e.scheduled_for],
         limit: 1,
         lock: "FOR UPDATE SKIP LOCKED"
       )
@@ -160,9 +139,16 @@ defmodule Prikke.Executions do
           nil
 
         execution ->
-          case execution |> Execution.start_changeset() |> Repo.update() do
-            {:ok, updated} -> updated
-            {:error, _} -> Repo.rollback(:update_failed)
+          # Check queue constraint: if task uses a named queue, ensure no
+          # other execution in that queue is already running
+          if queue_blocked?(execution, now) do
+            # Skip this execution, another in the same queue is running
+            nil
+          else
+            case execution |> Execution.start_changeset() |> Repo.update() do
+              {:ok, updated} -> updated
+              {:error, _} -> Repo.rollback(:update_failed)
+            end
           end
       end
     end)
@@ -170,6 +156,32 @@ defmodule Prikke.Executions do
       {:ok, nil} -> {:ok, nil}
       {:ok, execution} -> {:ok, execution}
       {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp queue_blocked?(execution, now) do
+    task = Repo.get(Task, execution.task_id)
+
+    if is_nil(task) or is_nil(task.queue) do
+      false
+    else
+      # Check if another execution in the same org+queue is running
+      # or has a pending retry scheduled for later
+      from(e in Execution,
+        join: t in Task,
+        on: e.task_id == t.id,
+        where:
+          t.organization_id == ^task.organization_id and
+            t.queue == ^task.queue and
+            e.id != ^execution.id and
+            (e.status == "running" or
+               (e.status == "pending" and e.scheduled_for > ^now)),
+        limit: 1,
+        select: true
+      )
+      |> Repo.one()
+      |> is_nil()
+      |> Kernel.not()
     end
   end
 
