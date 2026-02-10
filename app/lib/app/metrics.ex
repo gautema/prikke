@@ -1,23 +1,12 @@
 defmodule Prikke.Metrics do
   @moduledoc """
-  System and application metrics collector.
+  Lightweight system metrics collector.
 
-  Samples metrics every 10 seconds and stores them in an ETS table
-  as a circular buffer (60 entries = 10 minutes of history).
+  Samples metrics every 30 seconds and stores them in an ETS table
+  as a circular buffer (60 entries = 30 minutes of history).
 
-  ## Metrics tracked
-
-  - Queue depth (pending executions)
-  - Active workers
-  - Running executions
-  - BEAM memory, process count, run queue length
-  - System CPU, memory, disk usage (via :os_mon)
-
-  ## Usage
-
-      Prikke.Metrics.current()   # Latest sample
-      Prikke.Metrics.recent(30)  # Last 30 samples
-      Prikke.Metrics.alerts()    # Active alerts
+  Only collects cheap metrics (BEAM intrinsics + /proc reads).
+  No DB queries or shell commands in the sampling loop.
 
   ETS table is public for reads, so LiveViews can read without
   going through the GenServer.
@@ -27,21 +16,8 @@ defmodule Prikke.Metrics do
   require Logger
 
   @table :prikke_metrics
-  @sample_interval 10_000
+  @sample_interval 30_000
   @max_samples 60
-
-  # Alert thresholds
-  @queue_depth_warning 50
-  @queue_depth_critical 200
-  @cpu_warning_pct 80
-  @cpu_critical_pct 95
-  @memory_warning_pct 80
-  @memory_critical_pct 90
-  @disk_warning_pct 80
-  @disk_critical_pct 90
-
-  # Throttle: max one alert email per metric per hour
-  @alert_throttle_seconds 3600
 
   ## Client API
 
@@ -131,7 +107,7 @@ defmodule Prikke.Metrics do
       send(self(), :sample)
     end
 
-    {:ok, %{test_mode: test_mode, sample_index: 0, last_alert_at: %{}}}
+    {:ok, %{test_mode: test_mode, sample_index: 0}}
   end
 
   @impl true
@@ -157,40 +133,43 @@ defmodule Prikke.Metrics do
     :ets.insert(@table, {{:sample, idx}, sample})
     :ets.insert(@table, {:latest_index, state.sample_index})
 
-    # Check alerts
-    {alerts, last_alert_at} = check_alerts(sample, state.last_alert_at)
+    # Simple alert check (just store, no emails)
+    alerts = check_alerts(sample)
     :ets.insert(@table, {:alerts, alerts})
 
-    %{state | sample_index: state.sample_index + 1, last_alert_at: last_alert_at}
+    %{state | sample_index: state.sample_index + 1}
   end
 
   defp collect_sample do
     {system_memory_used_pct, system_memory_total_mb, system_memory_used_mb} = get_system_memory()
-    disk_usage_pct = get_disk_usage()
 
     %{
       timestamp: DateTime.utc_now(),
-      # Application metrics
+      # Application metrics (cheap in-memory lookups only)
       queue_depth: safe_count_pending(),
       active_workers: safe_worker_count(),
-      running_executions: safe_count_running(),
-      # BEAM metrics
+      running_executions: 0,
+      # BEAM metrics (free — built-in intrinsics)
       beam_memory_mb: Float.round(:erlang.memory(:total) / (1024 * 1024), 1),
       beam_processes: :erlang.system_info(:process_count),
       run_queue: :erlang.statistics(:run_queue),
-      # System metrics
+      # System metrics (cheap /proc reads, no shell commands)
       cpu_percent: get_cpu_percent(),
       system_memory_used_pct: system_memory_used_pct,
       system_memory_total_mb: system_memory_total_mb,
       system_memory_used_mb: system_memory_used_mb,
-      disk_usage_pct: disk_usage_pct
+      disk_usage_pct: 0
     }
   end
 
+  # Use the bounded count from WorkerPool — no extra DB query needed.
+  # Returns 0 if WorkerPool isn't running (tests, etc).
   defp safe_count_pending do
-    Prikke.Executions.count_pending_executions()
+    Prikke.Executions.count_pending_executions_bounded(1)
   rescue
     _ -> 0
+  catch
+    :exit, _ -> 0
   end
 
   defp safe_worker_count do
@@ -201,36 +180,61 @@ defmodule Prikke.Metrics do
     :exit, _ -> 0
   end
 
-  defp safe_count_running do
-    import Ecto.Query
-
-    Prikke.Executions.Execution
-    |> where([e], e.status == "running")
-    |> Prikke.Repo.aggregate(:count)
-  rescue
-    _ -> 0
-  end
-
+  # Read /proc/stat directly — no port programs, no os_mon dependency.
+  # Stores previous sample in ETS for delta calculation.
   defp get_cpu_percent do
-    case :cpu_sup.util() do
-      {:error, _} -> 0.0
-      value when is_float(value) -> Float.round(value, 1)
-      value when is_integer(value) -> value * 1.0
-      _ -> 0.0
+    case read_proc_stat() do
+      {:ok, current} ->
+        case :ets.lookup(@table, :cpu_prev) do
+          [{:cpu_prev, prev}] ->
+            delta_total = current.total - prev.total
+            delta_idle = current.idle - prev.idle
+
+            pct =
+              if delta_total > 0 do
+                Float.round((delta_total - delta_idle) / delta_total * 100, 1)
+              else
+                0.0
+              end
+
+            :ets.insert(@table, {:cpu_prev, current})
+            pct
+
+          [] ->
+            :ets.insert(@table, {:cpu_prev, current})
+            0.0
+        end
+
+      :error ->
+        0.0
     end
   rescue
     _ -> 0.0
-  catch
-    :exit, _ -> 0.0
   end
 
-  # Read /proc/meminfo directly for accurate values (same source as `free`).
-  # MemAvailable accounts for reclaimable cache/buffers, unlike MemFree.
-  # Falls back to :memsup on non-Linux (macOS dev).
+  defp read_proc_stat do
+    case File.read("/proc/stat") do
+      {:ok, content} ->
+        case String.split(content, "\n") |> hd() |> String.split() do
+          ["cpu" | values] ->
+            nums = Enum.map(values, fn v -> String.to_integer(v) end)
+            total = Enum.sum(nums)
+            idle = Enum.at(nums, 3, 0) + Enum.at(nums, 4, 0)
+            {:ok, %{total: total, idle: idle}}
+
+          _ ->
+            :error
+        end
+
+      _ ->
+        :error
+    end
+  end
+
   defp get_system_memory do
     case File.read("/proc/meminfo") do
       {:ok, content} -> parse_proc_meminfo(content)
-      _ -> get_system_memory_from_memsup()
+      _ -> {0.0, 0.0, 0.0}
     end
   rescue
     _ -> {0.0, 0.0, 0.0}
@@ -264,134 +268,31 @@ defmodule Prikke.Metrics do
     {pct, total_mb, used_mb}
   end
 
-  defp get_system_memory_from_memsup do
-    data = :memsup.get_system_memory_data()
-    total = Keyword.get(data, :total_memory, 0)
-    available = Keyword.get(data, :available_memory, Keyword.get(data, :free_memory, 0))
-    used = total - available
-    total_mb = Float.round(total / (1024 * 1024), 0)
-    used_mb = Float.round(used / (1024 * 1024), 0)
-    pct = if total > 0, do: Float.round(used / total * 100, 1), else: 0.0
+  defp check_alerts(sample) do
+    alerts = []
 
-    {pct, total_mb, used_mb}
-  rescue
-    _ -> {0.0, 0.0, 0.0}
-  catch
-    :exit, _ -> {0.0, 0.0, 0.0}
-  end
-
-  defp get_disk_usage do
-    case :disksup.get_disk_data() do
-      disks when is_list(disks) ->
-        case List.keyfind(disks, ~c"/", 0) do
-          {_, _, pct} when pct > 0 -> pct
-          _ -> get_disk_usage_from_df()
+    alerts =
+      if sample.queue_depth >= 200 do
+        [%{level: :critical, metric: "queue_depth", value: sample.queue_depth} | alerts]
+      else
+        if sample.queue_depth >= 50 do
+          [%{level: :warning, metric: "queue_depth", value: sample.queue_depth} | alerts]
+        else
+          alerts
         end
-
-      _ ->
-        get_disk_usage_from_df()
-    end
-  rescue
-    _ -> 0
-  catch
-    :exit, _ -> 0
-  end
-
-  defp get_disk_usage_from_df do
-    case System.cmd("df", ["/"], stderr_to_stdout: true) do
-      {output, 0} ->
-        output
-        |> String.split("\n")
-        |> Enum.at(1, "")
-        |> String.split(~r/\s+/)
-        |> Enum.find_value(0, fn col ->
-          case Integer.parse(String.replace(col, "%", "")) do
-            {pct, ""} when pct > 0 and pct <= 100 -> pct
-            _ -> nil
-          end
-        end)
-
-      _ ->
-        0
-    end
-  rescue
-    _ -> 0
-  end
-
-  defp check_alerts(sample, last_alert_at) do
-    now = DateTime.utc_now()
-
-    checks = [
-      {"queue_depth", sample.queue_depth, @queue_depth_warning, @queue_depth_critical, ""},
-      {"cpu_percent", sample.cpu_percent, @cpu_warning_pct, @cpu_critical_pct, "%"},
-      {"system_memory", sample.system_memory_used_pct, @memory_warning_pct, @memory_critical_pct,
-       "%"},
-      {"disk_usage", sample.disk_usage_pct, @disk_warning_pct, @disk_critical_pct, "%"}
-    ]
-
-    {alerts, last_alert_at} =
-      Enum.reduce(checks, {[], last_alert_at}, fn {metric, value, warning, critical, unit},
-                                                  {alerts, alert_times} ->
-        cond do
-          value >= critical ->
-            alert = %{
-              level: :critical,
-              metric: metric,
-              value: value,
-              threshold: critical,
-              unit: unit
-            }
-
-            alert_times = maybe_send_alert(alert, alert_times, now)
-            {[alert | alerts], alert_times}
-
-          value >= warning ->
-            alert = %{
-              level: :warning,
-              metric: metric,
-              value: value,
-              threshold: warning,
-              unit: unit
-            }
-
-            alert_times = maybe_send_alert(alert, alert_times, now)
-            {[alert | alerts], alert_times}
-
-          true ->
-            {alerts, alert_times}
-        end
-      end)
-
-    {Enum.reverse(alerts), last_alert_at}
-  end
-
-  defp maybe_send_alert(alert, last_alert_at, now) do
-    key = "#{alert.metric}_#{alert.level}"
-
-    should_send =
-      case Map.get(last_alert_at, key) do
-        nil ->
-          true
-
-        last_sent ->
-          DateTime.diff(now, last_sent) >= @alert_throttle_seconds
       end
 
-    if should_send do
-      send_alert_email(alert)
-      Map.put(last_alert_at, key, now)
-    else
-      last_alert_at
-    end
-  end
+    alerts =
+      if sample.cpu_percent >= 95 do
+        [%{level: :critical, metric: "cpu_percent", value: sample.cpu_percent} | alerts]
+      else
+        if sample.cpu_percent >= 80 do
+          [%{level: :warning, metric: "cpu_percent", value: sample.cpu_percent} | alerts]
+        else
+          alerts
+        end
+      end
 
-  defp send_alert_email(alert) do
-    Task.Supervisor.start_child(Prikke.TaskSupervisor, fn ->
-      level_label = if alert.level == :critical, do: "CRITICAL", else: "WARNING"
-
-      Logger.warning(
-        "[Metrics] #{level_label}: #{alert.metric} at #{alert.value}#{alert.unit} (threshold: #{alert.threshold}#{alert.unit})"
-      )
-    end)
+    Enum.reverse(alerts)
   end
 end
