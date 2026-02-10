@@ -51,8 +51,8 @@ defmodule Prikke.Worker do
   @poll_interval_base 2_000
   @poll_interval_max 10_000
 
-  # Exit after this duration of no work (5 minutes)
-  @max_idle_ms 300_000
+  # Exit after this duration of no work (30 seconds)
+  @max_idle_ms 30_000
 
   # Retry backoff: (attempt + 1)² × base_delay
   # With 30s base: 2m, 4.5m, 8m, 12.5m, 18m = ~45m total for 5 retries
@@ -141,8 +141,8 @@ defmodule Prikke.Worker do
         state = %{state | working: true}
         execute(execution)
 
-        # Reset idle tracking and look for more work immediately
-        send(self(), :work)
+        # Reset idle tracking and look for more work soon
+        Process.send_after(self(), :work, 50)
         {:noreply, %{state | idle_since: nil, poll_interval: @poll_interval_base, working: false}}
 
       {:error, reason} ->
