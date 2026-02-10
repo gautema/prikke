@@ -23,6 +23,7 @@ defmodule Prikke.Tasks.Task do
     field :expected_status_codes, :string
     field :expected_body_pattern, :string
     field :queue, :string
+    field :last_execution_at, :utc_datetime
 
     # Virtual field for form editing
     field :headers_json, :string, virtual: true

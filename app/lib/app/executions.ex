@@ -194,6 +194,7 @@ defmodule Prikke.Executions do
     case result do
       {:ok, updated} ->
         maybe_increment_monthly_count(updated)
+        touch_task_last_execution(updated)
         broadcast_execution_update(updated)
 
       _ ->
@@ -212,6 +213,7 @@ defmodule Prikke.Executions do
     case result do
       {:ok, updated} ->
         maybe_increment_monthly_count(updated)
+        touch_task_last_execution(updated)
         broadcast_execution_update(updated)
 
       _ ->
@@ -230,6 +232,7 @@ defmodule Prikke.Executions do
     case result do
       {:ok, updated} ->
         maybe_increment_monthly_count(updated)
+        touch_task_last_execution(updated)
         broadcast_execution_update(updated)
 
       _ ->
@@ -457,6 +460,13 @@ defmodule Prikke.Executions do
   defp start_of_current_month do
     now = DateTime.utc_now()
     Date.new!(now.year, now.month, 1) |> DateTime.new!(~T[00:00:00], "Etc/UTC")
+  end
+
+  defp touch_task_last_execution(%Execution{} = execution) do
+    now = DateTime.utc_now(:second)
+
+    from(t in Task, where: t.id == ^execution.task_id)
+    |> Repo.update_all(set: [last_execution_at: now])
   end
 
   defp maybe_increment_monthly_count(%Execution{attempt: 1} = execution) do
