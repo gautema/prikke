@@ -100,6 +100,11 @@ if config_env() == :prod do
   #
   # Check `Plug.SSL` for all available options in `force_ssl`.
 
+  # Rate limiting (defaults: 300/min, 5000/hr)
+  config :app, PrikkeWeb.RateLimit,
+    limit_per_minute: 50_000,
+    limit_per_hour: 5_000_000
+
   # Configure Creem payments
   config :app, Prikke.Billing.Creem,
     api_key: System.get_env("CREEM_API_KEY"),
