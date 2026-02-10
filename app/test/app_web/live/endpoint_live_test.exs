@@ -56,10 +56,12 @@ defmodule PrikkeWeb.EndpointLiveTest do
       assert has_element?(view, "#endpoint-form")
 
       view
-      |> form("#endpoint-form", endpoint: %{
-        name: "GitHub webhooks",
-        forward_url: "https://myapp.com/webhooks/github"
-      })
+      |> form("#endpoint-form",
+        endpoint: %{
+          name: "GitHub webhooks",
+          forward_url: "https://myapp.com/webhooks/github"
+        }
+      )
       |> render_submit()
 
       assert_redirect(view)

@@ -163,8 +163,7 @@ defmodule Prikke.Worker do
       next_interval = min(state.poll_interval * 2, @poll_interval_max)
       Process.send_after(self(), :work, state.poll_interval)
 
-      {:noreply,
-       %{state | idle_since: idle_since, poll_interval: next_interval, working: false}}
+      {:noreply, %{state | idle_since: idle_since, poll_interval: next_interval, working: false}}
     end
   end
 

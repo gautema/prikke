@@ -52,14 +52,24 @@ defmodule PrikkeWeb.EndpointLive.Index do
   @impl true
   def handle_event("delete", %{"id" => id}, socket) do
     endpoint = Endpoints.get_endpoint!(socket.assigns.organization, id)
-    {:ok, _} = Endpoints.delete_endpoint(socket.assigns.organization, endpoint, scope: socket.assigns.current_scope)
+
+    {:ok, _} =
+      Endpoints.delete_endpoint(socket.assigns.organization, endpoint,
+        scope: socket.assigns.current_scope
+      )
+
     {:noreply, put_flash(socket, :info, "Endpoint deleted")}
   end
 
   def handle_event("toggle", %{"id" => id}, socket) do
     org = socket.assigns.organization
     endpoint = Endpoints.get_endpoint!(org, id)
-    {:ok, _} = Endpoints.update_endpoint(org, endpoint, %{enabled: !endpoint.enabled}, scope: socket.assigns.current_scope)
+
+    {:ok, _} =
+      Endpoints.update_endpoint(org, endpoint, %{enabled: !endpoint.enabled},
+        scope: socket.assigns.current_scope
+      )
+
     {:noreply, socket}
   end
 
@@ -135,7 +145,10 @@ defmodule PrikkeWeb.EndpointLive.Index do
                     </.link>
                     <span class={[
                       "text-xs font-medium px-2 py-0.5 rounded",
-                      if(endpoint.enabled, do: "bg-emerald-100 text-emerald-700", else: "bg-slate-100 text-slate-600")
+                      if(endpoint.enabled,
+                        do: "bg-emerald-100 text-emerald-700",
+                        else: "bg-slate-100 text-slate-600"
+                      )
                     ]}>
                       {if endpoint.enabled, do: "Active", else: "Disabled"}
                     </span>

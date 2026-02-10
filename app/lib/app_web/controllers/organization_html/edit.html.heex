@@ -76,7 +76,8 @@
     <div class="glass-card rounded-2xl p-6">
       <h2 class="text-lg font-semibold text-slate-900 mb-2">Plan</h2>
       <p class="text-slate-600 mb-4">
-        Current plan: <span class="font-medium">
+        Current plan:
+        <span class="font-medium">
           <%= if @organization.tier == "pro" && @organization.billing_period do %>
             Pro ({String.capitalize(@organization.billing_period)})
           <% else %>
@@ -123,7 +124,9 @@
                   class="peer sr-only"
                 />
                 <div class="rounded-lg border-2 border-slate-200 p-3 text-center transition-colors peer-checked:border-emerald-600 peer-checked:bg-emerald-50">
-                  <div class="text-lg font-bold text-slate-900">€29<span class="text-sm font-normal text-slate-500">/mo</span></div>
+                  <div class="text-lg font-bold text-slate-900">
+                    €29<span class="text-sm font-normal text-slate-500">/mo</span>
+                  </div>
                   <div class="text-xs text-slate-500">Monthly</div>
                 </div>
               </label>
@@ -135,7 +138,9 @@
                   class="peer sr-only"
                 />
                 <div class="rounded-lg border-2 border-slate-200 p-3 text-center transition-colors peer-checked:border-emerald-600 peer-checked:bg-emerald-50">
-                  <div class="text-lg font-bold text-slate-900">€290<span class="text-sm font-normal text-slate-500">/yr</span></div>
+                  <div class="text-lg font-bold text-slate-900">
+                    €290<span class="text-sm font-normal text-slate-500">/yr</span>
+                  </div>
                   <div class="text-xs text-emerald-600 font-medium">Save €58</div>
                 </div>
               </label>
@@ -144,8 +149,7 @@
               type="submit"
               class="inline-flex items-center gap-2 py-2.5 px-5 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-700 transition-colors cursor-pointer"
             >
-              Upgrade to Pro
-              <span class="text-emerald-200">&rarr;</span>
+              Upgrade to Pro <span class="text-emerald-200">&rarr;</span>
             </button>
           </.form>
         <% @organization.subscription_status == "scheduled_cancel" -> %>
@@ -197,13 +201,17 @@
           <p class="text-sm text-slate-500 mb-3">
             You have access to all Pro features.
             <%= if @organization.current_period_end do %>
-              <br />Next billing: {Calendar.strftime(@organization.current_period_end, "%B %d, %Y")}
+              <br />Next billing: {Calendar.strftime(
+                @organization.current_period_end,
+                "%B %d, %Y"
+              )}
             <% end %>
           </p>
           <%= if @organization.billing_period == "monthly" && @organization.creem_subscription_id && @organization.subscription_status == "active" do %>
             <div class="rounded-lg bg-emerald-50 border border-emerald-200 p-4 mb-3">
               <p class="text-sm text-emerald-800">
-                <span class="font-medium">Save €58/year</span> by switching to yearly billing (€290/year instead of €348).
+                <span class="font-medium">Save €58/year</span>
+                by switching to yearly billing (€290/year instead of €348).
               </p>
               <.form
                 for={%{}}

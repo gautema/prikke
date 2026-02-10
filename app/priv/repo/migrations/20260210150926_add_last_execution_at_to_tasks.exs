@@ -19,14 +19,14 @@ defmodule Prikke.Repo.Migrations.AddLastExecutionAtToTasks do
 
     # Composite index for the list_tasks sort: org filter + sort by last_execution_at
     create index(:tasks, [:organization_id, :last_execution_at],
-      name: :tasks_org_last_execution_idx
-    )
+             name: :tasks_org_last_execution_idx
+           )
   end
 
   def down do
     drop index(:tasks, [:organization_id, :last_execution_at],
-      name: :tasks_org_last_execution_idx
-    )
+           name: :tasks_org_last_execution_idx
+         )
 
     alter table(:tasks) do
       remove :last_execution_at

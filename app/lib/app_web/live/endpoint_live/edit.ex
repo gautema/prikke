@@ -88,7 +88,13 @@ defmodule PrikkeWeb.EndpointLive.Edit do
       <h1 class="text-xl sm:text-2xl font-bold text-slate-900 mb-6">Edit Endpoint</h1>
 
       <div class="glass-card rounded-2xl p-6">
-        <.form for={@form} id="endpoint-form" phx-change="validate" phx-submit="save" class="space-y-6">
+        <.form
+          for={@form}
+          id="endpoint-form"
+          phx-change="validate"
+          phx-submit="save"
+          class="space-y-6"
+        >
           <.input field={@form[:name]} type="text" label="Name" />
           <.input field={@form[:forward_url]} type="text" label="Forward URL" />
 

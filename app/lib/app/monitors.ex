@@ -333,7 +333,11 @@ defmodule Prikke.Monitors do
     # Convert gaps to down periods (already sorted newest-first)
     down_periods =
       Enum.map(gaps, fn g ->
-        seconds = if is_struct(g.gap_seconds, Decimal), do: Decimal.to_float(g.gap_seconds), else: g.gap_seconds
+        seconds =
+          if is_struct(g.gap_seconds, Decimal),
+            do: Decimal.to_float(g.gap_seconds),
+            else: g.gap_seconds
+
         %{
           type: :down,
           from: to_utc_datetime(g.gap_start),
@@ -386,38 +390,38 @@ defmodule Prikke.Monitors do
 
       _ ->
         # Up period before first down (if any)
-          first_down = hd(downs)
+        first_down = hd(downs)
 
-          before =
-            if DateTime.compare(first_ping, first_down.from) == :lt do
-              [%{type: :up, from: first_ping, to: first_down.from}]
-            else
-              []
-            end
+        before =
+          if DateTime.compare(first_ping, first_down.from) == :lt do
+            [%{type: :up, from: first_ping, to: first_down.from}]
+          else
+            []
+          end
 
-          # Interleave: down, then up until next down
-          middle =
-            downs
-            |> Enum.chunk_every(2, 1)
-            |> Enum.flat_map(fn
-              [down, next_down] ->
-                [down, %{type: :up, from: down.to, to: next_down.from}]
+        # Interleave: down, then up until next down
+        middle =
+          downs
+          |> Enum.chunk_every(2, 1)
+          |> Enum.flat_map(fn
+            [down, next_down] ->
+              [down, %{type: :up, from: down.to, to: next_down.from}]
 
-              [down] ->
-                [down]
-            end)
+            [down] ->
+              [down]
+          end)
 
-          # Up period after last down (if monitor is up)
-          last_down = List.last(downs)
+        # Up period after last down (if monitor is up)
+        last_down = List.last(downs)
 
-          after_last =
-            if monitor.status != "down" and DateTime.compare(last_down.to, timeline_end) == :lt do
-              [%{type: :up, from: last_down.to, to: timeline_end}]
-            else
-              []
-            end
+        after_last =
+          if monitor.status != "down" and DateTime.compare(last_down.to, timeline_end) == :lt do
+            [%{type: :up, from: last_down.to, to: timeline_end}]
+          else
+            []
+          end
 
-          before ++ middle ++ after_last
+        before ++ middle ++ after_last
     end
   end
 

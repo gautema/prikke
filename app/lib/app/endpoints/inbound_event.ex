@@ -19,7 +19,15 @@ defmodule Prikke.Endpoints.InboundEvent do
 
   def create_changeset(event, attrs) do
     event
-    |> cast(attrs, [:endpoint_id, :method, :headers, :body, :source_ip, :received_at, :execution_id])
+    |> cast(attrs, [
+      :endpoint_id,
+      :method,
+      :headers,
+      :body,
+      :source_ip,
+      :received_at,
+      :execution_id
+    ])
     |> validate_required([:endpoint_id, :method, :received_at])
   end
 end

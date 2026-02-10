@@ -75,7 +75,12 @@ defmodule PrikkeWeb.EndpointLive.Show do
   def handle_event("toggle", _, socket) do
     org = socket.assigns.organization
     endpoint = socket.assigns.endpoint
-    {:ok, updated} = Endpoints.update_endpoint(org, endpoint, %{enabled: !endpoint.enabled}, scope: socket.assigns.current_scope)
+
+    {:ok, updated} =
+      Endpoints.update_endpoint(org, endpoint, %{enabled: !endpoint.enabled},
+        scope: socket.assigns.current_scope
+      )
+
     {:noreply, assign(socket, :endpoint, updated)}
   end
 
@@ -147,7 +152,10 @@ defmodule PrikkeWeb.EndpointLive.Show do
           <h1 class="text-xl sm:text-2xl font-bold text-slate-900">{@endpoint.name}</h1>
           <span class={[
             "text-xs font-medium px-2 py-0.5 rounded",
-            if(@endpoint.enabled, do: "bg-emerald-100 text-emerald-700", else: "bg-slate-100 text-slate-600")
+            if(@endpoint.enabled,
+              do: "bg-emerald-100 text-emerald-700",
+              else: "bg-slate-100 text-slate-600"
+            )
           ]}>
             {if @endpoint.enabled, do: "Active", else: "Disabled"}
           </span>
@@ -208,8 +216,7 @@ defmodule PrikkeWeb.EndpointLive.Show do
           </button>
         </div>
         <p class="mt-3 text-sm text-slate-500">
-          Point your external service (Stripe, GitHub, etc.) to this URL. All incoming requests will be forwarded to
-          <code class="text-slate-700 bg-slate-100 px-1 py-0.5 rounded text-xs">{@endpoint.forward_url}</code>.
+          Point your external service (Stripe, GitHub, etc.) to this URL. All incoming requests will be forwarded to <code class="text-slate-700 bg-slate-100 px-1 py-0.5 rounded text-xs">{@endpoint.forward_url}</code>.
         </p>
       </div>
 
@@ -219,7 +226,9 @@ defmodule PrikkeWeb.EndpointLive.Show do
         <dl class="grid grid-cols-2 gap-4">
           <div>
             <dt class="text-sm text-slate-500">Forward URL</dt>
-            <dd class="text-sm font-medium text-slate-900 mt-0.5 break-all">{@endpoint.forward_url}</dd>
+            <dd class="text-sm font-medium text-slate-900 mt-0.5 break-all">
+              {@endpoint.forward_url}
+            </dd>
           </div>
           <div>
             <dt class="text-sm text-slate-500">Created</dt>
@@ -232,7 +241,9 @@ defmodule PrikkeWeb.EndpointLive.Show do
 
       <%!-- Recent Events --%>
       <div class="glass-card rounded-2xl p-6">
-        <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Recent Events</h2>
+        <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">
+          Recent Events
+        </h2>
         <%= if @events == [] do %>
           <p class="text-sm text-slate-400 text-center py-4">No events received yet</p>
         <% else %>
@@ -249,7 +260,10 @@ defmodule PrikkeWeb.EndpointLive.Show do
                   <% end %>
                 </span>
                 <%= if event.execution do %>
-                  <span class={["text-xs font-medium px-2 py-0.5 rounded shrink-0", execution_status_badge(event.execution.status)]}>
+                  <span class={[
+                    "text-xs font-medium px-2 py-0.5 rounded shrink-0",
+                    execution_status_badge(event.execution.status)
+                  ]}>
                     {event.execution.status}
                   </span>
                   <.link

@@ -210,7 +210,10 @@ defmodule PrikkeWeb.Schemas do
       type: :object,
       properties: %{
         data: %Schema{type: :array, items: Task},
-        has_more: %Schema{type: :boolean, description: "Whether more results exist beyond this page"},
+        has_more: %Schema{
+          type: :boolean,
+          description: "Whether more results exist beyond this page"
+        },
         limit: %Schema{type: :integer, description: "Maximum results per page"},
         offset: %Schema{type: :integer, description: "Number of results skipped"}
       }
@@ -280,8 +283,7 @@ defmodule PrikkeWeb.Schemas do
 
     OpenApiSpex.schema(%{
       title: "SyncRequest",
-      description:
-        "Request body for declarative sync of tasks, monitors, and/or endpoints",
+      description: "Request body for declarative sync of tasks, monitors, and/or endpoints",
       type: :object,
       properties: %{
         tasks: %Schema{
@@ -618,9 +620,21 @@ defmodule PrikkeWeb.Schemas do
         slug: %Schema{type: :string, description: "Unique slug for inbound URL"},
         inbound_url: %Schema{type: :string, format: :uri, description: "Full inbound URL"},
         forward_url: %Schema{type: :string, format: :uri, description: "URL to forward events to"},
-        enabled: %Schema{type: :boolean, default: true, description: "Whether the endpoint is active"},
-        inserted_at: %Schema{type: :string, format: :"date-time", description: "Creation timestamp"},
-        updated_at: %Schema{type: :string, format: :"date-time", description: "Last update timestamp"}
+        enabled: %Schema{
+          type: :boolean,
+          default: true,
+          description: "Whether the endpoint is active"
+        },
+        inserted_at: %Schema{
+          type: :string,
+          format: :"date-time",
+          description: "Creation timestamp"
+        },
+        updated_at: %Schema{
+          type: :string,
+          format: :"date-time",
+          description: "Last update timestamp"
+        }
       },
       example: %{
         id: "019c0123-4567-7890-abcd-ef1234567890",
@@ -692,9 +706,22 @@ defmodule PrikkeWeb.Schemas do
         id: %Schema{type: :string, format: :uuid, description: "Event ID"},
         method: %Schema{type: :string, description: "HTTP method of the incoming request"},
         source_ip: %Schema{type: :string, description: "IP address of the sender"},
-        received_at: %Schema{type: :string, format: :"date-time", description: "When the event was received"},
-        execution_id: %Schema{type: :string, format: :uuid, nullable: true, description: "Forwarding execution ID"},
-        execution_status: %Schema{type: :string, nullable: true, description: "Forwarding execution status"}
+        received_at: %Schema{
+          type: :string,
+          format: :"date-time",
+          description: "When the event was received"
+        },
+        execution_id: %Schema{
+          type: :string,
+          format: :uuid,
+          nullable: true,
+          description: "Forwarding execution ID"
+        },
+        execution_status: %Schema{
+          type: :string,
+          nullable: true,
+          description: "Forwarding execution status"
+        }
       }
     })
   end

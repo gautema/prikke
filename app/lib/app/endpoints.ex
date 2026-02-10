@@ -66,7 +66,11 @@ defmodule Prikke.Endpoints do
     with :ok <- check_endpoint_limit(org),
          {:ok, endpoint} <- Repo.insert(changeset) do
       broadcast(org, {:endpoint_created, endpoint})
-      audit_log(opts, :created, :endpoint, endpoint.id, org.id, metadata: %{"endpoint_name" => endpoint.name})
+
+      audit_log(opts, :created, :endpoint, endpoint.id, org.id,
+        metadata: %{"endpoint_name" => endpoint.name}
+      )
+
       {:ok, endpoint}
     else
       {:error, :endpoint_limit_reached} ->
@@ -94,7 +98,12 @@ defmodule Prikke.Endpoints do
       {:ok, updated} ->
         broadcast(org, {:endpoint_updated, updated})
 
-        changes = Audit.compute_changes(old_endpoint, Map.from_struct(updated), [:name, :forward_url, :enabled])
+        changes =
+          Audit.compute_changes(old_endpoint, Map.from_struct(updated), [
+            :name,
+            :forward_url,
+            :enabled
+          ])
 
         audit_log(opts, :updated, :endpoint, updated.id, org.id,
           changes: changes,
@@ -116,7 +125,11 @@ defmodule Prikke.Endpoints do
     case Repo.delete(endpoint) do
       {:ok, endpoint} ->
         broadcast(org, {:endpoint_deleted, endpoint})
-        audit_log(opts, :deleted, :endpoint, endpoint.id, org.id, metadata: %{"endpoint_name" => endpoint.name})
+
+        audit_log(opts, :deleted, :endpoint, endpoint.id, org.id,
+          metadata: %{"endpoint_name" => endpoint.name}
+        )
+
         {:ok, endpoint}
 
       error ->
@@ -211,46 +224,47 @@ defmodule Prikke.Endpoints do
     # Build forwarding headers: pass through original headers but drop hop-by-hop headers
     forward_headers = filter_forward_headers(attrs.headers || %{})
 
-    result = Repo.transaction(fn ->
-      # 1. Create inbound event
-      {:ok, event} =
-        %InboundEvent{}
-        |> InboundEvent.create_changeset(%{
-          endpoint_id: endpoint.id,
-          method: to_string(attrs.method),
-          headers: attrs.headers || %{},
-          body: attrs.body,
-          source_ip: attrs.source_ip,
-          received_at: now
-        })
-        |> Repo.insert()
+    result =
+      Repo.transaction(fn ->
+        # 1. Create inbound event
+        {:ok, event} =
+          %InboundEvent{}
+          |> InboundEvent.create_changeset(%{
+            endpoint_id: endpoint.id,
+            method: to_string(attrs.method),
+            headers: attrs.headers || %{},
+            body: attrs.body,
+            source_ip: attrs.source_ip,
+            received_at: now
+          })
+          |> Repo.insert()
 
-      # 2. Create a task for forwarding
-      task_attrs = %{
-        "name" => "#{endpoint.name} · event #{String.slice(event.id, 0..7)}",
-        "url" => endpoint.forward_url,
-        "method" => to_string(attrs.method),
-        "headers" => forward_headers,
-        "body" => attrs.body || "",
-        "schedule_type" => "once",
-        "scheduled_at" => now,
-        "enabled" => true,
-        "timeout_ms" => 30_000,
-        "retry_attempts" => 5,
-        "queue" => slugify_name(endpoint.name)
-      }
+        # 2. Create a task for forwarding
+        task_attrs = %{
+          "name" => "#{endpoint.name} · event #{String.slice(event.id, 0..7)}",
+          "url" => endpoint.forward_url,
+          "method" => to_string(attrs.method),
+          "headers" => forward_headers,
+          "body" => attrs.body || "",
+          "schedule_type" => "once",
+          "scheduled_at" => now,
+          "enabled" => true,
+          "timeout_ms" => 30_000,
+          "retry_attempts" => 5,
+          "queue" => slugify_name(endpoint.name)
+        }
 
-      # skip_next_run: task is created with next_run_at=nil, no UPDATE needed
-      {:ok, task} = Tasks.create_task(org, task_attrs, skip_next_run: true)
+        # skip_next_run: task is created with next_run_at=nil, no UPDATE needed
+        {:ok, task} = Tasks.create_task(org, task_attrs, skip_next_run: true)
 
-      # 3. Create execution
-      {:ok, execution} = Executions.create_execution_for_task(task, now)
+        # 3. Create execution
+        {:ok, execution} = Executions.create_execution_for_task(task, now)
 
-      # 4. Update event with execution_id
-      event
-      |> Ecto.Changeset.change(execution_id: execution.id)
-      |> Repo.update!()
-    end)
+        # 4. Update event with execution_id
+        event
+        |> Ecto.Changeset.change(execution_id: execution.id)
+        |> Repo.update!()
+      end)
 
     # Notify workers after transaction commits
     Tasks.notify_workers()

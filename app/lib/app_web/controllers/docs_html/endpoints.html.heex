@@ -41,7 +41,8 @@
   }'</pre>
   </div>
   <p>
-    The response includes an <code class="bg-slate-100 px-2 py-1 rounded text-sm">inbound_url</code>
+    The response includes an
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">inbound_url</code>
     — this is the URL you give to Stripe (or any external service).
   </p>
 
@@ -51,15 +52,12 @@
     The URL looks like:
   </p>
   <div class="glass-card rounded-2xl overflow-hidden my-6">
-    <pre
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
-    >https://runlater.eu/in/ep_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</pre>
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">https://runlater.eu/in/ep_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</pre>
   </div>
 
   <h3>3. Webhooks start flowing</h3>
   <p>
-    Every request to the inbound URL is stored and forwarded to your
-    <code class="bg-slate-100 px-2 py-1 rounded text-sm">forward_url</code>.
+    Every request to the inbound URL is stored and forwarded to your <code class="bg-slate-100 px-2 py-1 rounded text-sm">forward_url</code>.
     The original HTTP method, headers, and body are preserved.
   </p>
 
@@ -69,7 +67,8 @@
     This is critical for services like Stripe, where processing a refund before the original charge would cause errors.
   </p>
   <p>
-    Under the hood, each endpoint uses a <a href="/docs/api" class="text-emerald-600 hover:underline">named queue</a>
+    Under the hood, each endpoint uses a
+    <a href="/docs/api" class="text-emerald-600 hover:underline">named queue</a>
     (the endpoint slug) to guarantee serial execution.
   </p>
 

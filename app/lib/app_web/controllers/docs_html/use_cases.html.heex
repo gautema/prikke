@@ -112,11 +112,22 @@
         </p>
       </div>
       <div class="px-5 py-4 bg-slate-50 text-sm text-slate-600 space-y-3">
-        <p class="m-0"><strong>1.</strong> Create an endpoint in the dashboard with your forward URL:</p>
-        <code class="block bg-slate-900 text-slate-100 rounded-lg p-3 text-xs font-mono">https://myapp.com/api/stripe/process</code>
-        <p class="m-0"><strong>2.</strong> Copy the inbound URL and paste it in Stripe's webhook settings:</p>
-        <code class="block bg-slate-900 text-slate-100 rounded-lg p-3 text-xs font-mono">https://runlater.eu/in/ep_abc123...</code>
-        <p class="m-0"><strong>3.</strong> That's it. Runlater handles retries, stores every event, and you can replay failures from the dashboard.</p>
+        <p class="m-0">
+          <strong>1.</strong> Create an endpoint in the dashboard with your forward URL:
+        </p>
+        <code class="block bg-slate-900 text-slate-100 rounded-lg p-3 text-xs font-mono">
+          https://myapp.com/api/stripe/process
+        </code>
+        <p class="m-0">
+          <strong>2.</strong> Copy the inbound URL and paste it in Stripe's webhook settings:
+        </p>
+        <code class="block bg-slate-900 text-slate-100 rounded-lg p-3 text-xs font-mono">
+          https://runlater.eu/in/ep_abc123...
+        </code>
+        <p class="m-0">
+          <strong>3.</strong>
+          That's it. Runlater handles retries, stores every event, and you can replay failures from the dashboard.
+        </p>
       </div>
     </div>
 
@@ -132,9 +143,18 @@
         </p>
       </div>
       <div class="px-5 py-4 bg-slate-50 text-sm text-slate-600 space-y-3">
-        <p class="m-0">Create an endpoint named <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">github-deploys</code>. Events from the same endpoint run in a named queue, so pushes are processed one at a time.</p>
-        <p class="m-0">Forward URL: <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">https://myapp.com/api/deploy</code></p>
-        <p class="m-0">Add the inbound URL as a GitHub webhook on your repo &rarr; Settings &rarr; Webhooks.</p>
+        <p class="m-0">
+          Create an endpoint named <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">github-deploys</code>. Events from the same endpoint run in a named queue, so pushes are processed one at a time.
+        </p>
+        <p class="m-0">
+          Forward URL:
+          <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">
+            https://myapp.com/api/deploy
+          </code>
+        </p>
+        <p class="m-0">
+          Add the inbound URL as a GitHub webhook on your repo &rarr; Settings &rarr; Webhooks.
+        </p>
       </div>
     </div>
 
@@ -150,7 +170,9 @@
         </p>
       </div>
       <div class="px-5 py-4 bg-slate-50 text-sm text-slate-600 space-y-3">
-        <p class="m-0">Runlater stores the raw payload and retries delivery up to 5 times with exponential backoff. If your app was down during a webhook, just hit Replay in the dashboard.</p>
+        <p class="m-0">
+          Runlater stores the raw payload and retries delivery up to 5 times with exponential backoff. If your app was down during a webhook, just hit Replay in the dashboard.
+        </p>
       </div>
     </div>
   </div>

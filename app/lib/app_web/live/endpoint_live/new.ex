@@ -35,7 +35,9 @@ defmodule PrikkeWeb.EndpointLive.New do
   end
 
   def handle_event("save", %{"endpoint" => params}, socket) do
-    case Endpoints.create_endpoint(socket.assigns.organization, params, scope: socket.assigns.current_scope) do
+    case Endpoints.create_endpoint(socket.assigns.organization, params,
+           scope: socket.assigns.current_scope
+         ) do
       {:ok, endpoint} ->
         {:noreply,
          socket
@@ -84,7 +86,13 @@ defmodule PrikkeWeb.EndpointLive.New do
       <h1 class="text-xl sm:text-2xl font-bold text-slate-900 mb-6">Create New Endpoint</h1>
 
       <div class="glass-card rounded-2xl p-6">
-        <.form for={@form} id="endpoint-form" phx-change="validate" phx-submit="save" class="space-y-6">
+        <.form
+          for={@form}
+          id="endpoint-form"
+          phx-change="validate"
+          phx-submit="save"
+          class="space-y-6"
+        >
           <.input
             field={@form[:name]}
             type="text"

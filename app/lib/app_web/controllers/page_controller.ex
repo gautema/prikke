@@ -45,21 +45,30 @@ defmodule PrikkeWeb.PageController do
   def dpa(conn, _params) do
     conn
     |> assign(:page_title, "Data Processing Agreement")
-    |> assign(:page_description, "DPA for Runlater. GDPR Article 28 compliant data processing terms.")
+    |> assign(
+      :page_description,
+      "DPA for Runlater. GDPR Article 28 compliant data processing terms."
+    )
     |> render(:dpa)
   end
 
   def slo(conn, _params) do
     conn
     |> assign(:page_title, "Service Level Objectives")
-    |> assign(:page_description, "Runlater uptime targets, execution timing, and support response times.")
+    |> assign(
+      :page_description,
+      "Runlater uptime targets, execution timing, and support response times."
+    )
     |> render(:slo)
   end
 
   def subprocessors(conn, _params) do
     conn
     |> assign(:page_title, "Sub-processors")
-    |> assign(:page_description, "List of sub-processors used by Runlater to operate the service.")
+    |> assign(
+      :page_description,
+      "List of sub-processors used by Runlater to operate the service."
+    )
     |> render(:subprocessors)
   end
 

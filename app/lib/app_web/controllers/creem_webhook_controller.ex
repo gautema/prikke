@@ -47,7 +47,9 @@ defmodule PrikkeWeb.CreemWebhookController do
           Logger.error("Failed to activate subscription: #{inspect(reason)}")
       end
     else
-      Logger.error("checkout.completed missing fields: org=#{inspect(org_id)} cust=#{inspect(customer_id)} sub=#{inspect(subscription_id)}")
+      Logger.error(
+        "checkout.completed missing fields: org=#{inspect(org_id)} cust=#{inspect(customer_id)} sub=#{inspect(subscription_id)}"
+      )
     end
 
     json(conn, %{received: true})

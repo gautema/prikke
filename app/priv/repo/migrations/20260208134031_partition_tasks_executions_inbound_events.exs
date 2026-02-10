@@ -105,7 +105,9 @@ defmodule Prikke.Repo.Migrations.PartitionTasksExecutionsInboundEvents do
     execute "CREATE TABLE executions_default PARTITION OF executions DEFAULT"
 
     execute "CREATE INDEX executions_task_id_idx ON executions (task_id)"
+
     execute "CREATE INDEX executions_task_id_scheduled_for_idx ON executions (task_id, scheduled_for)"
+
     execute "CREATE INDEX executions_status_scheduled_for_idx ON executions (status, scheduled_for)"
 
     execute """
@@ -207,9 +209,9 @@ defmodule Prikke.Repo.Migrations.PartitionTasksExecutionsInboundEvents do
     create index(:executions, [:status, :scheduled_for])
 
     create index(:executions, [:status],
-      where: "status = 'pending'",
-      name: :executions_pending_status_idx
-    )
+             where: "status = 'pending'",
+             name: :executions_pending_status_idx
+           )
 
     create table(:inbound_events, primary_key: false) do
       add :id, :binary_id, primary_key: true

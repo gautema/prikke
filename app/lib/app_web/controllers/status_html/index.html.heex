@@ -9,7 +9,11 @@
     <div class="text-center mb-8">
       <h1 class="text-3xl font-bold text-slate-900">System Status</h1>
       <p class="text-sm text-slate-500 mt-2">
-        See our <a href="/legal/slo" class="text-emerald-600 hover:text-emerald-700">Service Level Objectives</a> for uptime targets and commitments.
+        See our
+        <a href="/legal/slo" class="text-emerald-600 hover:text-emerald-700">
+          Service Level Objectives
+        </a>
+        for uptime targets and commitments.
       </p>
     </div>
     
@@ -27,7 +31,9 @@
     <div class="glass-card rounded-2xl mb-8">
       <div class="px-4 py-3 border-b border-white/50 flex justify-between items-center">
         <h2 class="text-lg font-semibold text-slate-900">Uptime</h2>
-        <span class="text-sm font-semibold text-emerald-600">{uptime_percentage(@daily_uptime, @all_incidents)}</span>
+        <span class="text-sm font-semibold text-emerald-600">
+          {uptime_percentage(@daily_uptime, @all_incidents)}
+        </span>
       </div>
       <div class="px-4 py-4">
         <div class="flex gap-0.5" title="90-day uptime history">

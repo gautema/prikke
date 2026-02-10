@@ -86,7 +86,9 @@ defmodule PrikkeWeb.TaskLive.Index do
   defp refresh_latest_statuses(socket) do
     task_ids = Enum.map(socket.assigns.tasks, & &1.id)
     latest_statuses = Executions.get_latest_statuses(task_ids)
-    filtered_tasks = filter_by_status(socket.assigns.tasks, socket.assigns.status_filter, latest_statuses)
+
+    filtered_tasks =
+      filter_by_status(socket.assigns.tasks, socket.assigns.status_filter, latest_statuses)
 
     socket
     |> assign(:latest_statuses, latest_statuses)

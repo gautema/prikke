@@ -134,7 +134,10 @@ defmodule PrikkeWeb.DashboardLive do
               </span>
               <%= if @current_organization.tier == "free" do %>
                 <span class="text-slate-300">·</span>
-                <.link navigate={~p"/organizations/settings"} class="text-sm text-emerald-600 hover:underline">
+                <.link
+                  navigate={~p"/organizations/settings"}
+                  class="text-sm text-emerald-600 hover:underline"
+                >
                   Upgrade to Pro
                 </.link>
               <% end %>
@@ -360,7 +363,10 @@ defmodule PrikkeWeb.DashboardLive do
                       <span class="text-sm text-slate-900 truncate">{endpoint.name}</span>
                       <span class={[
                         "text-xs font-medium px-2 py-0.5 rounded",
-                        if(endpoint.enabled, do: "bg-emerald-100 text-emerald-700", else: "bg-slate-100 text-slate-600")
+                        if(endpoint.enabled,
+                          do: "bg-emerald-100 text-emerald-700",
+                          else: "bg-slate-100 text-slate-600"
+                        )
                       ]}>
                         {if endpoint.enabled, do: "Active", else: "Disabled"}
                       </span>
@@ -379,7 +385,7 @@ defmodule PrikkeWeb.DashboardLive do
             </div>
           <% end %>
         </div>
-
+        
     <!-- Monitors Section -->
         <div class="glass-card rounded-2xl mb-4">
           <div class="px-4 sm:px-6 py-4 border-b border-white/50 flex justify-between items-center gap-2">

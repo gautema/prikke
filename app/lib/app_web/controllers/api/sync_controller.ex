@@ -275,7 +275,8 @@ defmodule PrikkeWeb.Api.SyncController do
     declared_names = MapSet.new(endpoints_params, & &1["name"])
 
     {created, updated, errors} =
-      Enum.reduce(endpoints_params, {[], [], []}, fn endpoint_params, {created, updated, errors} ->
+      Enum.reduce(endpoints_params, {[], [], []}, fn endpoint_params,
+                                                     {created, updated, errors} ->
         name = endpoint_params["name"]
 
         if is_nil(name) or name == "" do
@@ -293,7 +294,9 @@ defmodule PrikkeWeb.Api.SyncController do
               end
 
             existing_endpoint ->
-              case Endpoints.update_endpoint(org, existing_endpoint, endpoint_params, api_key_name: api_key_name) do
+              case Endpoints.update_endpoint(org, existing_endpoint, endpoint_params,
+                     api_key_name: api_key_name
+                   ) do
                 {:ok, _endpoint} ->
                   {created, [name | updated], errors}
 

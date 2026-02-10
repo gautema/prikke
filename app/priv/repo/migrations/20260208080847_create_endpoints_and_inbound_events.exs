@@ -4,8 +4,10 @@ defmodule Prikke.Repo.Migrations.CreateEndpointsAndInboundEvents do
   def change do
     create table(:endpoints, primary_key: false) do
       add :id, :binary_id, primary_key: true
+
       add :organization_id, references(:organizations, type: :binary_id, on_delete: :delete_all),
         null: false
+
       add :name, :string, null: false
       add :slug, :string, null: false
       add :forward_url, :string, null: false
@@ -19,8 +21,10 @@ defmodule Prikke.Repo.Migrations.CreateEndpointsAndInboundEvents do
 
     create table(:inbound_events, primary_key: false) do
       add :id, :binary_id, primary_key: true
+
       add :endpoint_id, references(:endpoints, type: :binary_id, on_delete: :delete_all),
         null: false
+
       add :method, :string, null: false
       add :headers, :map, default: %{}
       add :body, :text

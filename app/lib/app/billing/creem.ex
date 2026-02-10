@@ -105,7 +105,8 @@ defmodule Prikke.Billing.Creem do
   Verifies a Creem webhook signature.
   Returns `:ok` if valid, `:error` if invalid.
   """
-  def verify_webhook_signature(raw_body, signature) when is_binary(raw_body) and is_binary(signature) do
+  def verify_webhook_signature(raw_body, signature)
+      when is_binary(raw_body) and is_binary(signature) do
     secret = config(:webhook_secret)
 
     expected =

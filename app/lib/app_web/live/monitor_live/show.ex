@@ -394,7 +394,9 @@ defmodule PrikkeWeb.MonitorLive.Show do
                   <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                   <div class="flex-1 min-w-0">
                     <span class="text-sm font-medium text-slate-900">Up</span>
-                    <span class="text-xs text-slate-400 ml-2">{format_period_duration(event.from, event.to)}</span>
+                    <span class="text-xs text-slate-400 ml-2">
+                      {format_period_duration(event.from, event.to)}
+                    </span>
                   </div>
                   <span class="text-xs text-slate-400 shrink-0">
                     <.local_time id={"event-from-#{idx}"} datetime={event.from} />
@@ -407,7 +409,9 @@ defmodule PrikkeWeb.MonitorLive.Show do
                   <span class="w-2 h-2 rounded-full bg-red-500 shrink-0" />
                   <div class="flex-1 min-w-0">
                     <span class="text-sm font-medium text-red-700">Down</span>
-                    <span class="text-xs text-red-500 ml-2">{format_gap_duration(event.duration_minutes)}</span>
+                    <span class="text-xs text-red-500 ml-2">
+                      {format_gap_duration(event.duration_minutes)}
+                    </span>
                   </div>
                   <span class="text-xs text-red-400 shrink-0">
                     <.local_time id={"event-from-#{idx}"} datetime={event.from} />

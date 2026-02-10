@@ -200,7 +200,9 @@ defmodule PrikkeWeb.Api.EndpointController do
           {:error, :no_execution} ->
             conn
             |> put_status(:unprocessable_entity)
-            |> json(%{error: %{code: "no_execution", message: "Event has no linked execution to replay"}})
+            |> json(%{
+              error: %{code: "no_execution", message: "Event has no linked execution to replay"}
+            })
         end
     end
   end
