@@ -367,16 +367,9 @@ defmodule PrikkeWeb.SuperadminLive do
             </div>
           </div>
           <div>
-            <div class="text-xs text-slate-500">Disk Usage</div>
-            <div class={[
-              "text-base font-semibold",
-              cond do
-                Map.get(@metrics, :disk_usage_pct, 0) >= 90 -> "text-red-600"
-                Map.get(@metrics, :disk_usage_pct, 0) >= 80 -> "text-amber-600"
-                true -> "text-slate-900"
-              end
-            ]}>
-              {Map.get(@metrics, :disk_usage_pct, 0)}%
+            <div class="text-xs text-slate-500">Peak Throughput</div>
+            <div class="text-base font-semibold text-slate-900">
+              {peak_throughput(@throughput)}/min
             </div>
           </div>
           <div>
@@ -966,6 +959,15 @@ defmodule PrikkeWeb.SuperadminLive do
     total = Enum.reduce(throughput, 0, fn {_ts, count}, acc -> acc + count end)
     minutes = max(length(throughput), 1)
     Float.round(total / minutes, 1) |> to_string()
+  end
+
+  defp peak_throughput([]), do: "0"
+
+  defp peak_throughput(throughput) do
+    throughput
+    |> Enum.map(fn {_ts, count} -> count end)
+    |> Enum.max()
+    |> to_string()
   end
 
   defp action_badge_class("created"), do: "bg-emerald-100 text-emerald-700"
