@@ -108,29 +108,60 @@ defmodule PrikkeWeb.TaskLive.New do
           Map.put(task_params, "schedule_type", "cron")
       end
 
-    case Tasks.create_task(socket.assigns.organization, task_params,
-           scope: socket.assigns.current_scope
-         ) do
-      {:ok, task} ->
-        if socket.assigns.timing_mode in ["immediate", "delay"] do
-          scheduled_at = task.scheduled_at || DateTime.utc_now()
-          {:ok, _exec} = Executions.create_execution_for_task(task, scheduled_at)
-          Tasks.clear_next_run(task)
+    if socket.assigns.timing_mode in ["immediate", "delay"] do
+      # Wrap in transaction so scheduler never sees task with next_run_at set
+      result =
+        Prikke.Repo.transaction(fn ->
+          case Tasks.create_task(socket.assigns.organization, task_params,
+                 scope: socket.assigns.current_scope
+               ) do
+            {:ok, task} ->
+              scheduled_at = task.scheduled_at || DateTime.utc_now()
+              {:ok, _exec} = Executions.create_execution_for_task(task, scheduled_at)
+              Tasks.clear_next_run(task)
+              task
+
+            {:error, changeset} ->
+              Prikke.Repo.rollback(changeset)
+          end
+        end)
+
+      case result do
+        {:ok, task} ->
           Tasks.notify_workers()
-        end
 
-        {:noreply,
-         socket
-         |> put_flash(:info, "Task created successfully")
-         |> redirect(to: ~p"/tasks/#{task.id}")}
+          {:noreply,
+           socket
+           |> put_flash(:info, "Task created successfully")
+           |> redirect(to: ~p"/tasks/#{task.id}")}
 
-      {:error, %Ecto.Changeset{} = changeset} ->
-        changeset = Map.put(changeset, :action, :validate)
+        {:error, %Ecto.Changeset{} = changeset} ->
+          changeset = Map.put(changeset, :action, :validate)
 
-        {:noreply,
-         socket
-         |> put_flash(:error, "Could not create task. Please check the errors below.")
-         |> assign_form(changeset)}
+          {:noreply,
+           socket
+           |> put_flash(:error, "Could not create task. Please check the errors below.")
+           |> assign_form(changeset)}
+      end
+    else
+      # Cron/scheduled tasks — scheduler handles execution creation
+      case Tasks.create_task(socket.assigns.organization, task_params,
+             scope: socket.assigns.current_scope
+           ) do
+        {:ok, task} ->
+          {:noreply,
+           socket
+           |> put_flash(:info, "Task created successfully")
+           |> redirect(to: ~p"/tasks/#{task.id}")}
+
+        {:error, %Ecto.Changeset{} = changeset} ->
+          changeset = Map.put(changeset, :action, :validate)
+
+          {:noreply,
+           socket
+           |> put_flash(:error, "Could not create task. Please check the errors below.")
+           |> assign_form(changeset)}
+      end
     end
   end
 

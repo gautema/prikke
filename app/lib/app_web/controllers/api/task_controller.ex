@@ -378,23 +378,39 @@ defmodule PrikkeWeb.Api.TaskController do
         []
       end
 
-    with {:ok, task} <- Tasks.create_task(org, task_params, api_key_name: api_key_name),
-         {:ok, execution} <-
-           Executions.create_execution_for_task(task, scheduled_at, execution_opts),
-         {:ok, _task} <- Tasks.clear_next_run(task) do
-      Tasks.notify_workers()
+    # Wrap in transaction so the scheduler never sees the task with next_run_at set.
+    # Without this, the scheduler can tick between create_task and clear_next_run,
+    # creating a duplicate execution.
+    result =
+      Prikke.Repo.transaction(fn ->
+        with {:ok, task} <- Tasks.create_task(org, task_params, api_key_name: api_key_name),
+             {:ok, execution} <-
+               Executions.create_execution_for_task(task, scheduled_at, execution_opts),
+             {:ok, _task} <- Tasks.clear_next_run(task) do
+          {task, execution}
+        else
+          {:error, reason} -> Prikke.Repo.rollback(reason)
+        end
+      end)
 
-      conn
-      |> put_status(:accepted)
-      |> json(%{
-        data: %{
-          task_id: task.id,
-          execution_id: execution.id,
-          status: "pending",
-          scheduled_for: execution.scheduled_for
-        },
-        message: "Task queued for execution"
-      })
+    case result do
+      {:ok, {task, execution}} ->
+        Tasks.notify_workers()
+
+        conn
+        |> put_status(:accepted)
+        |> json(%{
+          data: %{
+            task_id: task.id,
+            execution_id: execution.id,
+            status: "pending",
+            scheduled_for: execution.scheduled_for
+          },
+          message: "Task queued for execution"
+        })
+
+      {:error, changeset} ->
+        {:error, changeset}
     end
   end
 

@@ -212,7 +212,7 @@ defmodule Prikke.Endpoints do
     # Build forwarding headers: pass through original headers but drop hop-by-hop headers
     forward_headers = filter_forward_headers(attrs.headers || %{})
 
-    Repo.transaction(fn ->
+    result = Repo.transaction(fn ->
       # 1. Create inbound event
       {:ok, event} =
         %InboundEvent{}
@@ -249,14 +249,16 @@ defmodule Prikke.Endpoints do
       # 4. Clear next_run_at so scheduler ignores it
       {:ok, _task} = Tasks.clear_next_run(task)
 
-      # 5. Notify workers
-      Tasks.notify_workers()
-
-      # 6. Update event with execution_id
+      # 5. Update event with execution_id
       event
       |> Ecto.Changeset.change(execution_id: execution.id)
       |> Repo.update!()
     end)
+
+    # Notify workers after transaction commits
+    Tasks.notify_workers()
+
+    result
   end
 
   @doc """
