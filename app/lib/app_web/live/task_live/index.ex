@@ -167,7 +167,7 @@ defmodule PrikkeWeb.TaskLive.Index do
       latest_status = get_status(latest_info)
 
       case status_filter do
-        "active" -> task.enabled
+        "active" -> task.enabled and not task_completed?(task, latest_info)
         "paused" -> !task.enabled
         "succeeded" -> latest_status == "success"
         "failed" -> latest_status == "failed"
