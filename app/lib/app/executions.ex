@@ -417,7 +417,7 @@ defmodule Prikke.Executions do
     from(e in Execution,
       where: e.task_id == ^task.id and e.scheduled_for >= ^since,
       select: %{
-        total: count(e.id),
+        total: count(),
         success: count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status)),
         failed: count(fragment("CASE WHEN ? = 'failed' THEN 1 END", e.status)),
         timeout: count(fragment("CASE WHEN ? = 'timeout' THEN 1 END", e.status)),
@@ -436,7 +436,7 @@ defmodule Prikke.Executions do
     from(e in Execution,
       where: e.organization_id == ^organization.id and e.scheduled_for >= ^since,
       select: %{
-        total: count(e.id),
+        total: count(),
         success: count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status)),
         failed: count(fragment("CASE WHEN ? = 'failed' THEN 1 END", e.status)),
         timeout: count(fragment("CASE WHEN ? = 'timeout' THEN 1 END", e.status)),
@@ -665,7 +665,7 @@ defmodule Prikke.Executions do
     from(e in Execution,
       where: e.scheduled_for >= ^since,
       select: %{
-        total: count(e.id),
+        total: count(),
         success: count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status)),
         failed: count(fragment("CASE WHEN ? = 'failed' THEN 1 END", e.status)),
         timeout: count(fragment("CASE WHEN ? = 'timeout' THEN 1 END", e.status)),
@@ -715,7 +715,7 @@ defmodule Prikke.Executions do
         select: {
           fragment("DATE(?)", e.scheduled_for),
           %{
-            total: count(e.id),
+            total: count(),
             success: count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status)),
             failed: count(fragment("CASE WHEN ? = 'failed' THEN 1 END", e.status))
           }
