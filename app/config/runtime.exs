@@ -36,6 +36,8 @@ if config_env() == :prod do
     ssl: [verify: :verify_none],
     url: database_url,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "80"),
+    queue_target: 500,
+    queue_interval: 5000,
     socket_options: maybe_ipv6
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
