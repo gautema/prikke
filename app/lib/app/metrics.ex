@@ -162,10 +162,8 @@ defmodule Prikke.Metrics do
     }
   end
 
-  # Use the bounded count from WorkerPool — no extra DB query needed.
-  # Returns 0 if WorkerPool isn't running (tests, etc).
   defp safe_count_pending do
-    Prikke.Executions.count_pending_executions_bounded(1)
+    Prikke.Executions.count_pending_executions_bounded(200)
   rescue
     _ -> 0
   catch
