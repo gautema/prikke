@@ -467,7 +467,7 @@ defmodule Prikke.Tasks do
     from(t in Task,
       where: t.organization_id == ^org.id,
       select: %{
-        total: count(t.id),
+        total: count(),
         active:
           count(
             fragment(

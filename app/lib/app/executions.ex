@@ -538,7 +538,7 @@ defmodule Prikke.Executions do
               ^today,
               e.duration_ms
             ),
-          week_total: count(e.id),
+          week_total: count(),
           week_success:
             count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status)),
           week_failed:
@@ -688,7 +688,7 @@ defmodule Prikke.Executions do
         select: {
           fragment("DATE(?)", e.scheduled_for),
           %{
-            total: count(e.id),
+            total: count(),
             success: count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status)),
             failed: count(fragment("CASE WHEN ? = 'failed' THEN 1 END", e.status))
           }
