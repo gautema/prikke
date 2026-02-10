@@ -270,6 +270,21 @@ defmodule Prikke.Executions do
     |> Repo.one()
   end
 
+  @doc """
+  Returns the previous execution's {status, attempt} for a task.
+  Used to determine if a failure notification was actually sent
+  (only sent when all retries are exhausted).
+  """
+  def get_previous_execution_info(task, current_execution_id) do
+    from(e in Execution,
+      where: e.task_id == ^task.id and e.id != ^current_execution_id,
+      order_by: [desc: e.scheduled_for],
+      limit: 1,
+      select: {e.status, e.attempt}
+    )
+    |> Repo.one()
+  end
+
   def get_latest_statuses([]), do: %{}
 
   def get_latest_statuses(task_ids) when is_list(task_ids) do

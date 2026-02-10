@@ -50,9 +50,9 @@ defmodule Prikke.Notifications do
     org = task.organization
 
     if org.notify_on_recovery and not task.muted do
-      previous_status = Prikke.Executions.get_previous_status(task, execution.id)
+      previous = Prikke.Executions.get_previous_execution_info(task, execution.id)
 
-      if should_notify_recovery?(previous_status) do
+      if should_notify_recovery?(task, previous) do
         if email = notification_email(org) do
           send_recovery_email(execution, email)
         end
@@ -62,7 +62,7 @@ defmodule Prikke.Notifications do
         end
       else
         Logger.debug(
-          "[Notifications] Skipping recovery notification - previous execution was not failed"
+          "[Notifications] Skipping recovery notification - no failure notification was sent"
         )
       end
     else
@@ -70,12 +70,24 @@ defmodule Prikke.Notifications do
     end
   end
 
-  # Notify recovery only if previous execution was a failure
-  defp should_notify_recovery?(nil), do: false
-  defp should_notify_recovery?("success"), do: false
-  defp should_notify_recovery?("pending"), do: false
-  defp should_notify_recovery?("running"), do: false
-  defp should_notify_recovery?(_failed_status), do: true
+  # Notify recovery only if the previous failure actually triggered a notification.
+  # For one-time tasks with retries, failure notifications are only sent on the
+  # final attempt, so recovery should only fire if the previous failure was final.
+  defp should_notify_recovery?(_task, nil), do: false
+  defp should_notify_recovery?(_task, {"success", _attempt}), do: false
+  defp should_notify_recovery?(_task, {"pending", _attempt}), do: false
+  defp should_notify_recovery?(_task, {"running", _attempt}), do: false
+  defp should_notify_recovery?(_task, {"missed", _attempt}), do: false
+
+  defp should_notify_recovery?(task, {_failed_status, attempt}) do
+    # For one-time tasks, failure notification is only sent when retries are
+    # exhausted (attempt >= retry_attempts). Only send recovery if that happened.
+    if task.schedule_type == "once" and task.retry_attempts > 0 do
+      attempt >= task.retry_attempts
+    else
+      true
+    end
+  end
 
   defp send_failure_notifications(execution) do
     task = execution.task
