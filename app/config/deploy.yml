@@ -30,6 +30,7 @@ env:
     PORT: 4000
     MIX_ENV: prod
     ADMIN_EMAIL: support@runlater.eu
+    POOL_SIZE: 40
   secret:
     - SECRET_KEY_BASE
     - DATABASE_URL
