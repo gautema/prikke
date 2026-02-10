@@ -1142,18 +1142,11 @@ defmodule Prikke.Accounts do
   """
   def list_active_organizations(opts \\ []) do
     limit = Keyword.get(opts, :limit, 10)
-    now = DateTime.utc_now()
-    start_of_month = Date.new!(now.year, now.month, 1) |> DateTime.new!(~T[00:00:00], "Etc/UTC")
 
     from(o in Organization,
-      join: t in Prikke.Tasks.Task,
-      on: t.organization_id == o.id,
-      join: e in Prikke.Executions.Execution,
-      on: e.task_id == t.id,
-      where: e.scheduled_for >= ^start_of_month,
-      group_by: o.id,
-      order_by: [desc: count(e.id)],
-      select: {o, count(e.id)},
+      where: o.monthly_execution_count > 0,
+      order_by: [desc: o.monthly_execution_count],
+      select: {o, o.monthly_execution_count},
       limit: ^limit
     )
     |> Repo.all()
