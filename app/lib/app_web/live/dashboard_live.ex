@@ -498,20 +498,31 @@ defmodule PrikkeWeb.DashboardLive do
 
   defp load_stats(organization) do
     organization = Prikke.Repo.reload!(organization)
-    exec_stats = Executions.get_today_stats(organization)
     tier_limits = Tasks.get_tier_limits(organization.tier)
     monthly_executions = Executions.count_current_month_executions(organization)
     trend_days = if organization.tier == "pro", do: 30, else: 7
 
-    seven_days_ago = DateTime.add(DateTime.utc_now(), -7, :day)
-    stats_7d = Executions.get_organization_stats(organization, since: seven_days_ago)
+    # Run independent DB queries concurrently
+    tasks = [
+      Task.async(fn -> Executions.get_today_stats(organization) end),
+      Task.async(fn ->
+        seven_days_ago = DateTime.add(DateTime.utc_now(), -7, :day)
+        Executions.get_organization_stats(organization, since: seven_days_ago)
+      end),
+      Task.async(fn -> Tasks.count_enabled_tasks(organization) end),
+      Task.async(fn -> Tasks.count_tasks(organization) end),
+      Task.async(fn -> Executions.executions_by_day_for_org(organization, trend_days) end)
+    ]
+
+    [exec_stats, stats_7d, active_tasks, total_tasks, execution_trend] =
+      Task.await_many(tasks, 10_000)
 
     success_rate = calculate_success_rate(exec_stats)
     success_rate_7d = calculate_success_rate(stats_7d)
 
     %{
-      active_tasks: Tasks.count_enabled_tasks(organization),
-      total_tasks: Tasks.count_tasks(organization),
+      active_tasks: active_tasks,
+      total_tasks: total_tasks,
       executions_today: exec_stats.total,
       today_failed: exec_stats.failed,
       success_rate: success_rate,
@@ -520,7 +531,7 @@ defmodule PrikkeWeb.DashboardLive do
       monthly_executions: monthly_executions,
       monthly_limit: tier_limits.max_monthly_executions,
       trend_days: trend_days,
-      execution_trend: Executions.executions_by_day_for_org(organization, trend_days)
+      execution_trend: execution_trend
     }
   end
 
