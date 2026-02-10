@@ -82,22 +82,19 @@ defmodule Prikke.Tasks do
     limit = opts |> Keyword.get(:limit, 50) |> min(100) |> max(1)
     offset = opts |> Keyword.get(:offset, 0) |> max(0)
 
-    # Subquery to get the latest execution time per task, scoped to this org
-    task_ids_subquery =
-      from(t in Task, where: t.organization_id == ^org.id, select: t.id)
-
-    latest_exec_subquery =
-      from(e in Prikke.Executions.Execution,
-        where: e.task_id in subquery(task_ids_subquery),
-        group_by: e.task_id,
-        select: %{task_id: e.task_id, last_exec: max(e.scheduled_for)}
-      )
-
+    # LATERAL join: one index lookup per task instead of scanning all executions.
+    # For each task, Postgres does a backward index scan on (task_id, scheduled_for)
+    # and returns just the top row. With 1000 tasks this is ~1000 index probes
+    # vs scanning 60k+ execution rows with the old GROUP BY subquery.
     query =
       from(t in Task,
         where: t.organization_id == ^org.id,
-        left_join: le in subquery(latest_exec_subquery),
-        on: le.task_id == t.id,
+        left_lateral_join:
+          le in fragment(
+            "(SELECT e.scheduled_for AS last_exec FROM executions e WHERE e.task_id = ? ORDER BY e.scheduled_for DESC LIMIT 1)",
+            t.id
+          ),
+        on: true,
         order_by: [desc_nulls_last: le.last_exec, desc: t.inserted_at],
         select: t
       )
