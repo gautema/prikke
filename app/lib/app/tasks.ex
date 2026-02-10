@@ -455,6 +455,7 @@ defmodule Prikke.Tasks do
     Task
     |> where(organization_id: ^org.id)
     |> where(enabled: true)
+    |> where([t], t.schedule_type == "cron" or not is_nil(t.next_run_at))
     |> Repo.aggregate(:count)
   end
 
