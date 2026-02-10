@@ -217,6 +217,10 @@ defmodule Prikke.Scheduler do
   # A task is "due" when: enabled = true AND next_run_at <= now + lookahead
   # Tasks within the lookahead window get executions created early, but workers
   # only claim them when scheduled_for <= now, giving precise timing.
+  #
+  # Tracks in-tick execution counts per org to avoid per-task DB reloads.
+  # Limit notifications are batched: one Repo.reload! per org at end of tick.
+  #
   # Returns {:ok, count} where count is tasks successfully scheduled.
   defp schedule_due_tasks do
     now = DateTime.utc_now()
@@ -229,12 +233,15 @@ defmodule Prikke.Scheduler do
       )
       |> Repo.all()
 
-    scheduled_count =
-      Enum.reduce(due_tasks, 0, fn task, count ->
-        case schedule_task(task) do
-          :ok -> count + 1
-          :skipped -> count
-          :error -> count
+    # Track how many executions created per org this tick
+    initial_org_counts = %{}
+
+    {scheduled_count, org_counts} =
+      Enum.reduce(due_tasks, {0, initial_org_counts}, fn task, {count, org_counts} ->
+        case schedule_task(task, org_counts) do
+          {:ok, updated_org_counts} -> {count + 1, updated_org_counts}
+          {:skipped, updated_org_counts} -> {count, updated_org_counts}
+          {:error, updated_org_counts} -> {count, updated_org_counts}
         end
       end)
 
@@ -244,7 +251,21 @@ defmodule Prikke.Scheduler do
       Prikke.Tasks.notify_workers()
     end
 
+    # Batch limit notifications: one Repo.reload! per org that had work
+    batch_check_limit_notifications(org_counts)
+
     {:ok, scheduled_count}
+  end
+
+  # Checks limit notifications for all orgs that had tasks scheduled this tick.
+  # Single Repo.reload! per org instead of per task.
+  defp batch_check_limit_notifications(org_counts) do
+    Enum.each(org_counts, fn {org_id, _count} ->
+      case Repo.get(Prikke.Accounts.Organization, org_id) do
+        nil -> :ok
+        org -> check_limit_notification(org)
+      end
+    end)
   end
 
   # Schedules a single task, handling both upcoming and overdue tasks.
@@ -259,39 +280,40 @@ defmodule Prikke.Scheduler do
   # - Grace period: 50% of interval (min 30s, max 1 hour)
   #
   # Returns:
-  # - :ok - execution created
-  # - :skipped - monthly limit reached or no executions created
-  # - :error - failed to create execution
-  defp schedule_task(task) do
+  # - {:ok, org_counts} - execution created
+  # - {:skipped, org_counts} - monthly limit reached or no executions created
+  # - {:error, org_counts} - failed to create execution
+  defp schedule_task(task, org_counts) do
     now = DateTime.utc_now()
 
     if DateTime.compare(task.next_run_at, now) == :gt do
       # Upcoming task (within lookahead window) - pre-schedule for precise timing
-      schedule_upcoming_task(task)
+      schedule_upcoming_task(task, org_counts)
     else
       # Overdue task - use catch-up logic
-      schedule_overdue_task(task, now)
+      schedule_overdue_task(task, now, org_counts)
     end
   end
 
   # Schedules an upcoming task by creating an execution in advance.
   # The execution has scheduled_for set to the task's next_run_at,
   # so workers will only claim it at the right time.
-  defp schedule_upcoming_task(task) do
-    if within_monthly_limit?(task) do
+  defp schedule_upcoming_task(task, org_counts) do
+    extra_count = Map.get(org_counts, task.organization_id, 0)
+
+    if within_monthly_limit?(task, extra_count) do
       case Executions.create_execution_for_task(task, task.next_run_at) do
         {:ok, _} ->
           advance_next_run_at(task)
-          # Check if we should notify about approaching/reaching limit
-          check_limit_notification(task.organization)
-          :ok
+          org_counts = Map.update(org_counts, task.organization_id, 1, &(&1 + 1))
+          {:ok, org_counts}
 
         {:error, reason} ->
           Logger.error(
             "[Scheduler] Failed to create execution for task #{task.id}: #{inspect(reason)}"
           )
 
-          :error
+          {:error, org_counts}
       end
     else
       Logger.warning(
@@ -300,34 +322,32 @@ defmodule Prikke.Scheduler do
 
       # Still advance to prevent infinite retries
       advance_next_run_at(task)
-      # Notify that limit was reached
-      check_limit_notification(task.organization)
-      :skipped
+      {:skipped, org_counts}
     end
   end
 
-  # Checks if we should send a limit notification (80% warning or 100% reached)
+  # Checks if we should send a limit notification (80% warning or 100% reached).
+  # Called once per org at end of tick with a freshly-fetched org.
   defp check_limit_notification(organization) do
-    org = Prikke.Repo.reload!(organization)
-    current_count = Executions.count_current_month_executions(org)
-    Prikke.Accounts.maybe_send_limit_notification(org, current_count)
+    current_count = Executions.count_current_month_executions(organization)
+    Prikke.Accounts.maybe_send_limit_notification(organization, current_count)
   end
 
   # Schedules an overdue task, handling any missed runs if the scheduler was down.
-  defp schedule_overdue_task(task, now) do
+  defp schedule_overdue_task(task, now, org_counts) do
     # Compute all missed run times
     missed_times = compute_missed_run_times(task, now)
 
     if Enum.empty?(missed_times) do
-      :skipped
+      {:skipped, org_counts}
     else
       # Create executions for each missed time
-      result = create_catchup_executions(task, missed_times, now)
+      {result, org_counts} = create_catchup_executions(task, missed_times, now, org_counts)
 
       # Advance next_run_at past all missed times
       advance_task_past_missed(task, missed_times)
 
-      result
+      {result, org_counts}
     end
   end
 
@@ -403,7 +423,7 @@ defmodule Prikke.Scheduler do
   # - All times except the last: "missed" status (for visibility)
   # - Last time within grace period: "pending" status (can still run)
   # - Last time past grace period: "missed" status
-  defp create_catchup_executions(task, missed_times, now) do
+  defp create_catchup_executions(task, missed_times, now, org_counts) do
     {all_but_last, last} = split_last(missed_times)
 
     # Create missed executions for all but the last
@@ -411,34 +431,38 @@ defmodule Prikke.Scheduler do
       Executions.create_missed_execution(task, scheduled_for)
     end)
 
+    extra_count = Map.get(org_counts, task.organization_id, 0)
+
     # For the last one, check grace period and monthly limit
     case last do
       nil ->
-        :skipped
+        {:skipped, org_counts}
 
       scheduled_for ->
-        if within_grace_period?(task, scheduled_for, now) and within_monthly_limit?(task) do
+        if within_grace_period?(task, scheduled_for, now) and
+             within_monthly_limit?(task, extra_count) do
           case Executions.create_execution_for_task(task, scheduled_for) do
             {:ok, _} ->
-              :ok
+              org_counts = Map.update(org_counts, task.organization_id, 1, &(&1 + 1))
+              {:ok, org_counts}
 
             {:error, reason} ->
               Logger.error(
                 "[Scheduler] Failed to create execution for task #{task.id}: #{inspect(reason)}"
               )
 
-              :error
+              {:error, org_counts}
           end
         else
           # Past grace period or over monthly limit - mark as missed
-          if not within_monthly_limit?(task) do
+          if not within_monthly_limit?(task, extra_count) do
             Logger.warning(
               "[Scheduler] Task #{task.id} skipped - monthly limit reached for org #{task.organization_id}"
             )
           end
 
           Executions.create_missed_execution(task, scheduled_for)
-          :skipped
+          {:skipped, org_counts}
         end
     end
   end
@@ -532,12 +556,14 @@ defmodule Prikke.Scheduler do
   end
 
   # Checks if the organization is within their monthly execution limit.
+  # Uses the preloaded org (no DB reload) plus extra_count for executions
+  # already created for this org during the current scheduler tick.
+  #
   # Limits are defined in Tasks.get_tier_limits/1:
   # - Free: 5,000 executions/month
   # - Pro: 1,000,000 executions/month
-  defp within_monthly_limit?(task) do
-    # Reload org to get fresh counter value
-    org = Prikke.Repo.reload!(task.organization)
+  defp within_monthly_limit?(task, extra_count) do
+    org = task.organization
     tier_limits = Prikke.Tasks.get_tier_limits(org.tier)
 
     case tier_limits.max_monthly_executions do
@@ -545,7 +571,7 @@ defmodule Prikke.Scheduler do
         true
 
       max when is_integer(max) ->
-        current = Executions.count_current_month_executions(org)
+        current = Executions.count_current_month_executions(org) + extra_count
         # Pro users are warned but never blocked
         current < max or org.tier == "pro"
     end
