@@ -82,9 +82,13 @@ defmodule Prikke.Tasks do
     limit = opts |> Keyword.get(:limit, 50) |> min(100) |> max(1)
     offset = opts |> Keyword.get(:offset, 0) |> max(0)
 
-    # Subquery to get the latest execution time per task
+    # Subquery to get the latest execution time per task, scoped to this org
+    task_ids_subquery =
+      from(t in Task, where: t.organization_id == ^org.id, select: t.id)
+
     latest_exec_subquery =
       from(e in Prikke.Executions.Execution,
+        where: e.task_id in subquery(task_ids_subquery),
         group_by: e.task_id,
         select: %{task_id: e.task_id, last_exec: max(e.scheduled_for)}
       )
