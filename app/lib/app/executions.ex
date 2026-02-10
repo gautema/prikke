@@ -460,8 +460,8 @@ defmodule Prikke.Executions do
   end
 
   defp maybe_increment_monthly_count(%Execution{attempt: 1} = execution) do
-    execution = Repo.preload(execution, task: :organization)
-    increment_monthly_execution_count(execution.task.organization_id)
+    execution = Repo.preload(execution, :task)
+    Prikke.ExecutionCounter.increment(execution.task.organization_id)
   end
 
   defp maybe_increment_monthly_count(_execution), do: :ok

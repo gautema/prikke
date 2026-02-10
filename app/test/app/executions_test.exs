@@ -236,7 +236,8 @@ defmodule Prikke.ExecutionsTest do
       {:ok, running} = Executions.claim_next_execution()
       {:ok, _completed} = Executions.complete_execution(running, %{status_code: 200})
 
-      # Reload org to get updated counter
+      # Flush buffered counter to DB before asserting
+      Prikke.ExecutionCounter.flush_sync()
       org = Prikke.Repo.reload!(org)
       assert org.monthly_execution_count == 1
       assert Executions.count_current_month_executions(org) == 1
@@ -249,7 +250,8 @@ defmodule Prikke.ExecutionsTest do
       {:ok, running} = Executions.claim_next_execution()
       {:ok, _completed} = Executions.complete_execution(running, %{status_code: 200})
 
-      # Must reload to get fresh counter
+      # Flush buffered counter to DB before asserting
+      Prikke.ExecutionCounter.flush_sync()
       org = Prikke.Repo.reload!(org)
       count = Executions.count_current_month_executions(org)
       assert count == 1
@@ -262,6 +264,7 @@ defmodule Prikke.ExecutionsTest do
       {:ok, running} = Executions.claim_next_execution()
       {:ok, _failed} = Executions.fail_execution(running, %{error_message: "fail"})
 
+      Prikke.ExecutionCounter.flush_sync()
       org = Prikke.Repo.reload!(org)
       assert org.monthly_execution_count == 1
     end
@@ -273,6 +276,7 @@ defmodule Prikke.ExecutionsTest do
       {:ok, running} = Executions.claim_next_execution()
       {:ok, _timed_out} = Executions.timeout_execution(running, 30_000)
 
+      Prikke.ExecutionCounter.flush_sync()
       org = Prikke.Repo.reload!(org)
       assert org.monthly_execution_count == 1
     end

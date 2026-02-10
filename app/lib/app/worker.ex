@@ -254,11 +254,14 @@ defmodule Prikke.Worker do
             duration_ms: duration_ms
           })
 
+        # Reuse preloaded task to avoid redundant DB fetches
+        full_execution = %{updated_execution | task: execution.task}
+
         # Send recovery notification if previous execution failed (async)
-        notify_recovery(updated_execution)
+        Notifications.notify_recovery(full_execution)
 
         # Send callback notification (async)
-        send_callback(updated_execution)
+        Callbacks.send_callback(full_execution)
 
       {:error, error_message} ->
         Logger.warning(
@@ -273,9 +276,12 @@ defmodule Prikke.Worker do
             duration_ms: duration_ms
           })
 
+        # Reuse preloaded task to avoid redundant DB fetches
+        full_execution = %{updated_execution | task: execution.task}
+
         # Send failure notification and callback (async)
-        notify_failure(updated_execution)
-        send_callback(updated_execution)
+        Notifications.notify_failure(full_execution)
+        Callbacks.send_callback(full_execution)
 
         # Respect Retry-After header on 429 responses
         retry_after_ms =
@@ -330,9 +336,12 @@ defmodule Prikke.Worker do
 
     {:ok, updated_execution} = Executions.timeout_execution(execution, duration_ms)
 
+    # Reuse preloaded task to avoid redundant DB fetches
+    full_execution = %{updated_execution | task: execution.task}
+
     # Send failure notification and callback (async)
-    notify_failure(updated_execution)
-    send_callback(updated_execution)
+    Notifications.notify_failure(full_execution)
+    Callbacks.send_callback(full_execution)
 
     maybe_retry(execution, nil)
   end
@@ -347,30 +356,14 @@ defmodule Prikke.Worker do
         duration_ms: duration_ms
       })
 
+    # Reuse preloaded task to avoid redundant DB fetches
+    full_execution = %{updated_execution | task: execution.task}
+
     # Send failure notification and callback (async)
-    notify_failure(updated_execution)
-    send_callback(updated_execution)
+    Notifications.notify_failure(full_execution)
+    Callbacks.send_callback(full_execution)
 
     maybe_retry(execution, nil)
-  end
-
-  # Send notification for failed execution (preserves task/org from original execution)
-  defp notify_failure(updated_execution) do
-    # The updated execution loses preloads, so we need to re-fetch with associations
-    execution_with_task = Executions.get_execution_with_task(updated_execution.id)
-    Notifications.notify_failure(execution_with_task)
-  end
-
-  # Send recovery notification when execution succeeds after a failure
-  defp notify_recovery(updated_execution) do
-    execution_with_task = Executions.get_execution_with_task(updated_execution.id)
-    Notifications.notify_recovery(execution_with_task)
-  end
-
-  # Send callback notification if callback_url is configured
-  defp send_callback(updated_execution) do
-    execution_with_task = Executions.get_execution_with_task(updated_execution.id)
-    Callbacks.send_callback(execution_with_task)
   end
 
   defp return_error(nil), do: :ok

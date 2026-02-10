@@ -882,10 +882,15 @@ defmodule Prikke.Accounts do
 
           api_key ->
             if ApiKey.verify_secret(secret, api_key.key_hash) do
-              # Update last_used_at
-              api_key
-              |> Ecto.Changeset.change(last_used_at: DateTime.utc_now(:second))
-              |> Repo.update()
+              # Update last_used_at (debounced: only write if stale by 5+ minutes)
+              now = DateTime.utc_now(:second)
+
+              if is_nil(api_key.last_used_at) or
+                   DateTime.diff(now, api_key.last_used_at) > 300 do
+                api_key
+                |> Ecto.Changeset.change(last_used_at: now)
+                |> Repo.update()
+              end
 
               {:ok, api_key.organization, api_key.name || api_key.key_id}
             else

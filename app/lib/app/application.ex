@@ -14,6 +14,8 @@ defmodule Prikke.Application do
         {Phoenix.PubSub, name: Prikke.PubSub},
         # Rate limiting storage
         {PlugAttack.Storage.Ets, name: PrikkeWeb.RateLimit.Storage, clean_period: 60_000},
+        # Buffered execution counter (flushes to DB every 5s)
+        Prikke.ExecutionCounter,
         # Task supervisor for async notifications
         {Task.Supervisor, name: Prikke.TaskSupervisor},
         # Start to serve requests, typically the last entry
