@@ -378,15 +378,18 @@ defmodule PrikkeWeb.Api.TaskController do
         []
       end
 
-    # Wrap in transaction so the scheduler never sees the task with next_run_at set.
-    # Without this, the scheduler can tick between create_task and clear_next_run,
-    # creating a duplicate execution.
+    # skip_next_run: task is created with next_run_at=nil, no UPDATE needed.
+    # skip_ssrf: API callers authenticate with API keys and choose their own target URLs.
     result =
       Prikke.Repo.transaction(fn ->
-        with {:ok, task} <- Tasks.create_task(org, task_params, api_key_name: api_key_name),
+        with {:ok, task} <-
+               Tasks.create_task(org, task_params,
+                 api_key_name: api_key_name,
+                 skip_ssrf: true,
+                 skip_next_run: true
+               ),
              {:ok, execution} <-
-               Executions.create_execution_for_task(task, scheduled_at, execution_opts),
-             {:ok, _task} <- Tasks.clear_next_run(task) do
+               Executions.create_execution_for_task(task, scheduled_at, execution_opts) do
           {task, execution}
         else
           {:error, reason} -> Prikke.Repo.rollback(reason)

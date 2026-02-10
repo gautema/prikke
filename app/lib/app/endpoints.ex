@@ -198,11 +198,10 @@ defmodule Prikke.Endpoints do
   Receives an inbound webhook event.
 
   1. Insert inbound_event record
-  2. Create a task (schedule_type: "once", url: endpoint.forward_url)
+  2. Create a task (schedule_type: "once", url: endpoint.forward_url, skip_next_run: true)
   3. Create execution for that task (scheduled_for: now)
-  4. Clear next_run_at on task (so scheduler ignores it)
-  5. Notify workers
-  6. Update inbound_event with execution_id
+  4. Notify workers
+  5. Update inbound_event with execution_id
   """
   def receive_event(%Endpoint{} = endpoint, attrs) do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
@@ -241,15 +240,13 @@ defmodule Prikke.Endpoints do
         "queue" => slugify_name(endpoint.name)
       }
 
-      {:ok, task} = Tasks.create_task(org, task_attrs)
+      # skip_next_run: task is created with next_run_at=nil, no UPDATE needed
+      {:ok, task} = Tasks.create_task(org, task_attrs, skip_next_run: true)
 
       # 3. Create execution
       {:ok, execution} = Executions.create_execution_for_task(task, now)
 
-      # 4. Clear next_run_at so scheduler ignores it
-      {:ok, _task} = Tasks.clear_next_run(task)
-
-      # 5. Update event with execution_id
+      # 4. Update event with execution_id
       event
       |> Ecto.Changeset.change(execution_id: execution.id)
       |> Repo.update!()

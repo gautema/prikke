@@ -229,7 +229,8 @@ defmodule Prikke.Tasks do
   Enforces tier limits on cron intervals.
   """
   def create_task(%Organization{} = org, attrs, opts \\ []) do
-    changeset = Task.create_changeset(%Task{}, attrs, org.id)
+    changeset_opts = Keyword.take(opts, [:skip_ssrf, :skip_next_run])
+    changeset = Task.create_changeset(%Task{}, attrs, org.id, changeset_opts)
 
     with :ok <- check_interval_limit(org, changeset),
          {:ok, task} <- Repo.insert(changeset) do

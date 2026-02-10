@@ -39,6 +39,7 @@ defmodule Prikke.Tasks.Task do
   @doc false
   def changeset(task, attrs, opts \\ []) do
     skip_ssrf = Keyword.get(opts, :skip_ssrf, false)
+    skip_next_run = Keyword.get(opts, :skip_next_run, false)
 
     cs =
       task
@@ -81,7 +82,7 @@ defmodule Prikke.Tasks.Task do
     |> validate_expected_status_codes()
     |> validate_schedule()
     |> compute_interval_minutes()
-    |> compute_next_run_at()
+    |> then(fn cs -> if skip_next_run, do: cs, else: compute_next_run_at(cs) end)
   end
 
   @doc """

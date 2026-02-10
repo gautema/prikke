@@ -109,16 +109,16 @@ defmodule PrikkeWeb.TaskLive.New do
       end
 
     if socket.assigns.timing_mode in ["immediate", "delay"] do
-      # Wrap in transaction so scheduler never sees task with next_run_at set
+      # skip_next_run: task is created with next_run_at=nil, no UPDATE needed
       result =
         Prikke.Repo.transaction(fn ->
           case Tasks.create_task(socket.assigns.organization, task_params,
-                 scope: socket.assigns.current_scope
+                 scope: socket.assigns.current_scope,
+                 skip_next_run: true
                ) do
             {:ok, task} ->
               scheduled_at = task.scheduled_at || DateTime.utc_now()
               {:ok, _exec} = Executions.create_execution_for_task(task, scheduled_at)
-              Tasks.clear_next_run(task)
               task
 
             {:error, changeset} ->
