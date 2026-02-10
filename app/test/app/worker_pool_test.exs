@@ -48,17 +48,17 @@ defmodule Prikke.WorkerPoolTest do
       org = organization_fixture()
       task = task_fixture(org)
 
-      # Create 30 pending executions (more than max_workers of 20)
-      for _ <- 1..30 do
+      # Create 60 pending executions (more than max_workers of 50)
+      for _ <- 1..60 do
         {:ok, _} = Executions.create_execution_for_task(task, DateTime.utc_now())
       end
 
       {:ok, result} = WorkerPool.scale()
 
-      assert result.queue == 30
-      # Should cap at max_workers (20)
-      assert result.spawned == 20
-      assert WorkerSupervisor.worker_count() == 20
+      assert result.queue == 60
+      # Should cap at max_workers (50)
+      assert result.spawned == 50
+      assert WorkerSupervisor.worker_count() == 50
     end
 
     test "stats returns current pool state" do
@@ -67,7 +67,7 @@ defmodule Prikke.WorkerPoolTest do
       assert is_integer(stats.queue_depth)
       assert is_integer(stats.active_workers)
       assert stats.min_workers == 1
-      assert stats.max_workers == 20
+      assert stats.max_workers == 50
     end
   end
 

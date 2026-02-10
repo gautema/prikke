@@ -31,7 +31,7 @@ defmodule Prikke.WorkerPool do
 
   - `@check_interval` - How often to check queue depth (5 seconds)
   - `@min_workers` - Minimum workers to keep ready (1)
-  - `@max_workers` - Maximum concurrent workers (20)
+  - `@max_workers` - Maximum concurrent workers (50)
 
   ## Testing
 
@@ -50,7 +50,7 @@ defmodule Prikke.WorkerPool do
 
   # Worker pool bounds
   @min_workers 1
-  @max_workers 20
+  @max_workers 50
 
   ## Client API
 
