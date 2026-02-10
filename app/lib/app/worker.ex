@@ -169,10 +169,8 @@ defmodule Prikke.Worker do
   end
 
   defp execute(execution) do
-    # Load the task with organization for context
-    execution = Executions.get_execution_with_task(execution.id)
-
-    if is_nil(execution) or is_nil(execution.task) do
+    # Task+org are already preloaded from claim_next_execution
+    if is_nil(execution) or not Ecto.assoc_loaded?(execution.task) or is_nil(execution.task) do
       Logger.error("[Worker] Execution or task not found: #{inspect(execution)}")
       return_error(execution)
     else

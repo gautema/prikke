@@ -25,7 +25,13 @@ defmodule Prikke.Executions do
       {:execution_updated, execution}
     )
 
-    execution_with_task = get_execution_with_task(execution.id)
+    # Use preloaded task if available, otherwise fetch
+    execution_with_task =
+      if Ecto.assoc_loaded?(execution.task) do
+        execution
+      else
+        get_execution_with_task(execution.id)
+      end
 
     if execution_with_task && execution_with_task.task do
       Phoenix.PubSub.broadcast(
@@ -139,6 +145,10 @@ defmodule Prikke.Executions do
           nil
 
         execution ->
+          # Preload task+org inside the transaction so we don't need
+          # separate fetches in queue_blocked?, execute(), and broadcast
+          execution = Repo.preload(execution, task: :organization)
+
           # Check queue constraint: if task uses a named queue, ensure no
           # other execution in that queue is already running
           if queue_blocked?(execution, now) do
@@ -146,8 +156,12 @@ defmodule Prikke.Executions do
             nil
           else
             case execution |> Execution.start_changeset() |> Repo.update() do
-              {:ok, updated} -> updated
-              {:error, _} -> Repo.rollback(:update_failed)
+              {:ok, updated} ->
+                # Carry over preloaded associations to the updated execution
+                %{updated | task: execution.task}
+
+              {:error, _} ->
+                Repo.rollback(:update_failed)
             end
           end
       end
@@ -160,7 +174,8 @@ defmodule Prikke.Executions do
   end
 
   defp queue_blocked?(execution, now) do
-    task = Repo.get(Task, execution.task_id)
+    # Use preloaded task from claim transaction (avoids extra Repo.get)
+    task = execution.task
 
     if is_nil(task) or is_nil(task.queue) do
       false
@@ -470,7 +485,14 @@ defmodule Prikke.Executions do
   end
 
   defp maybe_increment_monthly_count(%Execution{attempt: 1} = execution) do
-    execution = Repo.preload(execution, :task)
+    # Use preloaded task if available, otherwise fetch
+    execution =
+      if Ecto.assoc_loaded?(execution.task) do
+        execution
+      else
+        Repo.preload(execution, :task)
+      end
+
     Prikke.ExecutionCounter.increment(execution.task.organization_id)
   end
 
