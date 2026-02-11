@@ -3,6 +3,8 @@ defmodule PrikkeWeb.EndpointLive.Show do
 
   alias Prikke.Endpoints
 
+  @per_page 20
+
   @impl true
   def mount(%{"id" => id}, session, socket) do
     org = get_organization(socket, session)
@@ -20,7 +22,8 @@ defmodule PrikkeWeb.EndpointLive.Show do
           Endpoints.subscribe_endpoints(org)
         end
 
-        events = Endpoints.list_inbound_events(endpoint, limit: 20)
+        events = Endpoints.list_inbound_events(endpoint, limit: @per_page)
+        total_events = Endpoints.count_inbound_events(endpoint)
         host = Application.get_env(:app, PrikkeWeb.Endpoint)[:url][:host] || "runlater.eu"
         inbound_url = "https://#{host}/in/#{endpoint.slug}"
 
@@ -29,6 +32,7 @@ defmodule PrikkeWeb.EndpointLive.Show do
          |> assign(:organization, org)
          |> assign(:endpoint, endpoint)
          |> assign(:events, events)
+         |> assign(:total_events, total_events)
          |> assign(:inbound_url, inbound_url)
          |> assign(:page_title, endpoint.name)
          |> assign(:menu_open, false)}
@@ -101,16 +105,32 @@ defmodule PrikkeWeb.EndpointLive.Show do
 
     case Endpoints.replay_event(endpoint, event) do
       {:ok, _execution} ->
-        events = Endpoints.list_inbound_events(endpoint, limit: 20)
+        current_loaded = max(length(socket.assigns.events), @per_page)
+        events = Endpoints.list_inbound_events(endpoint, limit: current_loaded)
+        total_events = Endpoints.count_inbound_events(endpoint)
 
         {:noreply,
          socket
          |> assign(:events, events)
+         |> assign(:total_events, total_events)
          |> put_flash(:info, "Event replayed")}
 
       {:error, :no_execution} ->
         {:noreply, put_flash(socket, :error, "Cannot replay: no linked execution")}
     end
+  end
+
+  def handle_event("load_more", _, socket) do
+    endpoint = socket.assigns.endpoint
+    current_count = length(socket.assigns.events)
+
+    more_events =
+      Endpoints.list_inbound_events(endpoint,
+        limit: @per_page,
+        offset: current_count
+      )
+
+    {:noreply, assign(socket, :events, socket.assigns.events ++ more_events)}
   end
 
   defp get_organization(socket, session) do
@@ -286,6 +306,21 @@ defmodule PrikkeWeb.EndpointLive.Show do
               </div>
             <% end %>
           </div>
+
+          <%= if length(@events) < @total_events do %>
+            <div class="mt-4 text-center">
+              <button
+                type="button"
+                phx-click="load_more"
+                class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-white/50 transition-colors"
+              >
+                Load more
+                <span class="text-slate-400">
+                  (showing {length(@events)} of {@total_events})
+                </span>
+              </button>
+            </div>
+          <% end %>
         <% end %>
       </div>
 

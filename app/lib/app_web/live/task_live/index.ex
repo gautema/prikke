@@ -4,6 +4,8 @@ defmodule PrikkeWeb.TaskLive.Index do
   alias Prikke.Tasks
   alias Prikke.Executions
 
+  @per_page 20
+
   @impl true
   def mount(_params, session, socket) do
     org = get_organization(socket, session)
@@ -15,7 +17,8 @@ defmodule PrikkeWeb.TaskLive.Index do
       end
 
       queues = Tasks.list_queues(org)
-      tasks = Tasks.list_tasks(org)
+      tasks = Tasks.list_tasks(org, limit: @per_page)
+      total_count = Tasks.count_tasks(org, [])
       task_ids = Enum.map(tasks, & &1.id)
       latest_statuses = Executions.get_latest_statuses(task_ids)
       task_run_histories = Executions.get_recent_statuses_for_tasks(task_ids, 20)
@@ -25,6 +28,7 @@ defmodule PrikkeWeb.TaskLive.Index do
        |> assign(:organization, org)
        |> assign(:page_title, "Tasks")
        |> assign(:tasks, tasks)
+       |> assign(:total_count, total_count)
        |> assign(:queues, queues)
        |> assign(:queue_filter, nil)
        |> assign(:type_filter, nil)
@@ -61,13 +65,17 @@ defmodule PrikkeWeb.TaskLive.Index do
     opts = build_filter_opts(socket.assigns)
 
     queues = Tasks.list_queues(org)
-    tasks = Tasks.list_tasks(org, opts)
+    # Reload up to however many the user has already loaded
+    current_loaded = max(length(socket.assigns.tasks), @per_page)
+    tasks = Tasks.list_tasks(org, [{:limit, current_loaded} | opts])
+    total_count = Tasks.count_tasks(org, opts)
     task_ids = Enum.map(tasks, & &1.id)
     latest_statuses = Executions.get_latest_statuses(task_ids)
 
     socket
     |> assign(:queues, queues)
     |> assign(:tasks, tasks)
+    |> assign(:total_count, total_count)
     |> assign(:latest_statuses, latest_statuses)
     |> assign(:task_run_histories, Executions.get_recent_statuses_for_tasks(task_ids, 20))
   end
@@ -101,7 +109,8 @@ defmodule PrikkeWeb.TaskLive.Index do
         status_filter: status_filter
       })
 
-    tasks = Tasks.list_tasks(org, opts)
+    tasks = Tasks.list_tasks(org, [{:limit, @per_page} | opts])
+    total_count = Tasks.count_tasks(org, opts)
     task_ids = Enum.map(tasks, & &1.id)
     latest_statuses = Executions.get_latest_statuses(task_ids)
 
@@ -111,8 +120,26 @@ defmodule PrikkeWeb.TaskLive.Index do
      |> assign(:type_filter, type_filter)
      |> assign(:status_filter, status_filter)
      |> assign(:tasks, tasks)
+     |> assign(:total_count, total_count)
      |> assign(:latest_statuses, latest_statuses)
      |> assign(:task_run_histories, Executions.get_recent_statuses_for_tasks(task_ids, 20))}
+  end
+
+  def handle_event("load_more", _, socket) do
+    org = socket.assigns.organization
+    opts = build_filter_opts(socket.assigns)
+    current_count = length(socket.assigns.tasks)
+
+    more_tasks = Tasks.list_tasks(org, [{:limit, @per_page}, {:offset, current_count} | opts])
+    new_task_ids = Enum.map(more_tasks, & &1.id)
+    new_statuses = Executions.get_latest_statuses(new_task_ids)
+    new_histories = Executions.get_recent_statuses_for_tasks(new_task_ids, 20)
+
+    {:noreply,
+     socket
+     |> assign(:tasks, socket.assigns.tasks ++ more_tasks)
+     |> assign(:latest_statuses, Map.merge(socket.assigns.latest_statuses, new_statuses))
+     |> assign(:task_run_histories, Map.merge(socket.assigns.task_run_histories, new_histories))}
   end
 
   def handle_event("delete", %{"id" => id}, socket) do
@@ -471,6 +498,21 @@ defmodule PrikkeWeb.TaskLive.Index do
             </div>
           <% end %>
         </div>
+
+        <%= if length(@tasks) < @total_count do %>
+          <div class="mt-4 text-center">
+            <button
+              type="button"
+              phx-click="load_more"
+              class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-white/50 transition-colors"
+            >
+              Load more
+              <span class="text-slate-400">
+                (showing {length(@tasks)} of {@total_count})
+              </span>
+            </button>
+          </div>
+        <% end %>
       <% end %>
     </Layouts.app>
     """
