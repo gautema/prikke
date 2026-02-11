@@ -111,6 +111,28 @@ defmodule PrikkeWeb.EndpointLive.New do
             Incoming webhooks will be forwarded to this URL with the original method, headers, and body.
           </p>
 
+          <.input
+            field={@form[:retry_attempts]}
+            type="number"
+            label="Retry attempts"
+            min="0"
+            max="10"
+          />
+          <p class="text-sm text-slate-500 -mt-4">
+            Number of times to retry forwarding if it fails (0-10).
+          </p>
+
+          <div class="flex items-start gap-3">
+            <.input
+              field={@form[:use_queue]}
+              type="checkbox"
+              label="Use queue (serial execution)"
+            />
+          </div>
+          <p class="text-sm text-slate-500 -mt-4">
+            When enabled, events are forwarded one at a time in order. Disable for parallel forwarding when order doesn't matter.
+          </p>
+
           <div class="pt-4">
             <button
               type="submit"

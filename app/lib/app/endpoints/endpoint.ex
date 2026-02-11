@@ -9,6 +9,8 @@ defmodule Prikke.Endpoints.Endpoint do
     field :slug, :string
     field :forward_url, :string
     field :enabled, :boolean, default: true
+    field :retry_attempts, :integer, default: 5
+    field :use_queue, :boolean, default: true
 
     belongs_to :organization, Prikke.Accounts.Organization
     has_many :inbound_events, Prikke.Endpoints.InboundEvent
@@ -18,8 +20,9 @@ defmodule Prikke.Endpoints.Endpoint do
 
   def changeset(endpoint, attrs) do
     endpoint
-    |> cast(attrs, [:name, :forward_url, :enabled])
+    |> cast(attrs, [:name, :forward_url, :enabled, :retry_attempts, :use_queue])
     |> validate_required([:name, :forward_url])
+    |> validate_number(:retry_attempts, greater_than_or_equal_to: 0, less_than_or_equal_to: 10)
     |> validate_url(:forward_url)
   end
 

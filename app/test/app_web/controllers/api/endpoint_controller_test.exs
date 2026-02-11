@@ -91,6 +91,32 @@ defmodule PrikkeWeb.Api.EndpointControllerTest do
       assert response["data"]["inbound_url"] =~ "/in/ep_"
     end
 
+    test "creates endpoint with custom retry_attempts and use_queue", %{conn: conn} do
+      conn =
+        post(conn, ~p"/api/v1/endpoints", %{
+          name: "Custom Config",
+          forward_url: "https://myapp.com/webhooks/stripe",
+          retry_attempts: 3,
+          use_queue: false
+        })
+
+      response = json_response(conn, 201)
+      assert response["data"]["retry_attempts"] == 3
+      assert response["data"]["use_queue"] == false
+    end
+
+    test "creates endpoint with default retry_attempts and use_queue", %{conn: conn} do
+      conn =
+        post(conn, ~p"/api/v1/endpoints", %{
+          name: "Defaults",
+          forward_url: "https://myapp.com/webhooks/stripe"
+        })
+
+      response = json_response(conn, 201)
+      assert response["data"]["retry_attempts"] == 5
+      assert response["data"]["use_queue"] == true
+    end
+
     test "returns validation error for missing fields", %{conn: conn} do
       conn = post(conn, ~p"/api/v1/endpoints", %{})
       assert json_response(conn, 422)
@@ -108,6 +134,20 @@ defmodule PrikkeWeb.Api.EndpointControllerTest do
 
       response = json_response(conn, 200)
       assert response["data"]["name"] == "Updated Name"
+    end
+
+    test "updates retry_attempts and use_queue", %{conn: conn, org: org} do
+      endpoint = endpoint_fixture(org)
+
+      conn =
+        put(conn, ~p"/api/v1/endpoints/#{endpoint.id}", %{
+          retry_attempts: 0,
+          use_queue: false
+        })
+
+      response = json_response(conn, 200)
+      assert response["data"]["retry_attempts"] == 0
+      assert response["data"]["use_queue"] == false
     end
 
     test "returns 404 for non-existent endpoint", %{conn: conn} do

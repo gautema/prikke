@@ -625,6 +625,16 @@ defmodule PrikkeWeb.Schemas do
           default: true,
           description: "Whether the endpoint is active"
         },
+        retry_attempts: %Schema{
+          type: :integer,
+          default: 5,
+          description: "Number of retry attempts for forwarding (0-10)"
+        },
+        use_queue: %Schema{
+          type: :boolean,
+          default: true,
+          description: "Whether to use a named queue for serial execution"
+        },
         inserted_at: %Schema{
           type: :string,
           format: :"date-time",
@@ -643,6 +653,8 @@ defmodule PrikkeWeb.Schemas do
         inbound_url: "https://runlater.eu/in/ep_abc123def456ghi789jkl012mno345",
         forward_url: "https://myapp.com/webhooks/stripe",
         enabled: true,
+        retry_attempts: 5,
+        use_queue: true,
         inserted_at: "2026-01-29T10:00:00Z",
         updated_at: "2026-01-29T10:00:00Z"
       }
@@ -660,11 +672,23 @@ defmodule PrikkeWeb.Schemas do
       properties: %{
         name: %Schema{type: :string, description: "Endpoint name"},
         forward_url: %Schema{type: :string, format: :uri, description: "URL to forward events to"},
-        enabled: %Schema{type: :boolean, default: true}
+        enabled: %Schema{type: :boolean, default: true},
+        retry_attempts: %Schema{
+          type: :integer,
+          default: 5,
+          description: "Number of retry attempts for forwarding (0-10)"
+        },
+        use_queue: %Schema{
+          type: :boolean,
+          default: true,
+          description: "Whether to use a named queue for serial execution"
+        }
       },
       example: %{
         name: "Stripe webhooks",
-        forward_url: "https://myapp.com/webhooks/stripe"
+        forward_url: "https://myapp.com/webhooks/stripe",
+        retry_attempts: 5,
+        use_queue: true
       }
     })
   end

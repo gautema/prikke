@@ -102,7 +102,9 @@ defmodule Prikke.Endpoints do
           Audit.compute_changes(old_endpoint, Map.from_struct(updated), [
             :name,
             :forward_url,
-            :enabled
+            :enabled,
+            :retry_attempts,
+            :use_queue
           ])
 
         audit_log(opts, :updated, :endpoint, updated.id, org.id,
@@ -250,8 +252,8 @@ defmodule Prikke.Endpoints do
           "scheduled_at" => now,
           "enabled" => true,
           "timeout_ms" => 30_000,
-          "retry_attempts" => 5,
-          "queue" => slugify_name(endpoint.name)
+          "retry_attempts" => endpoint.retry_attempts,
+          "queue" => if(endpoint.use_queue, do: slugify_name(endpoint.name), else: nil)
         }
 
         # skip_next_run: task is created with next_run_at=nil, no UPDATE needed

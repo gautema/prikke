@@ -140,6 +140,70 @@ defmodule Prikke.EndpointsTest do
 
       assert e1.slug != e2.slug
     end
+
+    test "create_endpoint/2 sets default retry_attempts and use_queue" do
+      org = organization_fixture()
+
+      {:ok, endpoint} =
+        Endpoints.create_endpoint(org, %{
+          name: "Defaults",
+          forward_url: "https://example.com/hook"
+        })
+
+      assert endpoint.retry_attempts == 5
+      assert endpoint.use_queue == true
+    end
+
+    test "create_endpoint/2 accepts custom retry_attempts and use_queue" do
+      org = organization_fixture()
+
+      {:ok, endpoint} =
+        Endpoints.create_endpoint(org, %{
+          name: "Custom",
+          forward_url: "https://example.com/hook",
+          retry_attempts: 2,
+          use_queue: false
+        })
+
+      assert endpoint.retry_attempts == 2
+      assert endpoint.use_queue == false
+    end
+
+    test "create_endpoint/2 validates retry_attempts range" do
+      org = organization_fixture()
+
+      assert {:error, changeset} =
+               Endpoints.create_endpoint(org, %{
+                 name: "Bad retries",
+                 forward_url: "https://example.com/hook",
+                 retry_attempts: 11
+               })
+
+      assert "must be less than or equal to 10" in errors_on(changeset).retry_attempts
+
+      assert {:error, changeset} =
+               Endpoints.create_endpoint(org, %{
+                 name: "Bad retries",
+                 forward_url: "https://example.com/hook",
+                 retry_attempts: -1
+               })
+
+      assert "must be greater than or equal to 0" in errors_on(changeset).retry_attempts
+    end
+
+    test "update_endpoint/4 updates retry_attempts and use_queue" do
+      org = organization_fixture()
+      endpoint = endpoint_fixture(org)
+
+      {:ok, updated} =
+        Endpoints.update_endpoint(org, endpoint, %{
+          retry_attempts: 0,
+          use_queue: false
+        })
+
+      assert updated.retry_attempts == 0
+      assert updated.use_queue == false
+    end
   end
 
   describe "receive_event/2" do
@@ -178,6 +242,54 @@ defmodule Prikke.EndpointsTest do
       assert execution.task.queue == "stripe-webhooks"
       assert execution.task.url == endpoint.forward_url
       assert execution.task.method == "POST"
+    end
+
+    test "uses endpoint retry_attempts on created task" do
+      org = organization_fixture()
+      endpoint = endpoint_fixture(org, %{retry_attempts: 2})
+
+      {:ok, event} =
+        Endpoints.receive_event(endpoint, %{
+          method: "POST",
+          headers: %{},
+          body: "test",
+          source_ip: "1.2.3.4"
+        })
+
+      execution = Prikke.Repo.preload(event, execution: :task).execution
+      assert execution.task.retry_attempts == 2
+    end
+
+    test "sets queue to nil when use_queue is false" do
+      org = organization_fixture()
+      endpoint = endpoint_fixture(org, %{name: "Parallel Hook", use_queue: false})
+
+      {:ok, event} =
+        Endpoints.receive_event(endpoint, %{
+          method: "POST",
+          headers: %{},
+          body: "test",
+          source_ip: "1.2.3.4"
+        })
+
+      execution = Prikke.Repo.preload(event, execution: :task).execution
+      assert execution.task.queue == nil
+    end
+
+    test "sets queue name when use_queue is true" do
+      org = organization_fixture()
+      endpoint = endpoint_fixture(org, %{name: "Serial Hook", use_queue: true})
+
+      {:ok, event} =
+        Endpoints.receive_event(endpoint, %{
+          method: "POST",
+          headers: %{},
+          body: "test",
+          source_ip: "1.2.3.4"
+        })
+
+      execution = Prikke.Repo.preload(event, execution: :task).execution
+      assert execution.task.queue == "serial-hook"
     end
   end
 

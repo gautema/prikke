@@ -219,6 +219,8 @@ defmodule PrikkeWeb.Api.EndpointController do
       inbound_url: "https://#{host}/in/#{e.slug}",
       forward_url: e.forward_url,
       enabled: e.enabled,
+      retry_attempts: e.retry_attempts,
+      use_queue: e.use_queue,
       inserted_at: e.inserted_at,
       updated_at: e.updated_at
     }
