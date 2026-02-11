@@ -674,8 +674,8 @@ defmodule Prikke.Tasks do
 
   defp apply_status_filter(query, nil), do: query
 
-  defp apply_status_filter(query, "active") do
-    from(t in query, where: t.enabled == true)
+  defp apply_status_filter(query, "pending") do
+    from(t in query, where: t.last_execution_status in ["pending", "running"])
   end
 
   defp apply_status_filter(query, "paused") do

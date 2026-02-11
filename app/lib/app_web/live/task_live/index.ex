@@ -340,7 +340,7 @@ defmodule PrikkeWeb.TaskLive.Index do
             class="text-sm border-slate-200 rounded-lg px-3 py-1.5 text-slate-700 focus:ring-emerald-500 focus:border-emerald-500"
           >
             <option value="" selected={@status_filter == nil}>All statuses</option>
-            <option value="active" selected={@status_filter == "active"}>Active</option>
+            <option value="pending" selected={@status_filter == "pending"}>Pending</option>
             <option value="paused" selected={@status_filter == "paused"}>Paused</option>
             <option value="succeeded" selected={@status_filter == "succeeded"}>Succeeded</option>
             <option value="failed" selected={@status_filter == "failed"}>Failed</option>
