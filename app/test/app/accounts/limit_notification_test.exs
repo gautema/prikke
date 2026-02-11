@@ -15,8 +15,8 @@ defmodule Prikke.Accounts.LimitNotificationTest do
     test "updates warning timestamp at 80% of limit", %{org: org} do
       assert org.limit_warning_sent_at == nil
 
-      # Free tier limit is 5000, so 80% = 4000
-      Accounts.maybe_send_limit_notification(org, 4000)
+      # Free tier limit is 10000, so 80% = 8000
+      Accounts.maybe_send_limit_notification(org, 8000)
 
       # Check timestamp was updated
       updated_org = Accounts.get_organization(org.id)
@@ -26,8 +26,8 @@ defmodule Prikke.Accounts.LimitNotificationTest do
     test "updates limit reached timestamp at 100%", %{org: org} do
       assert org.limit_reached_sent_at == nil
 
-      # Free tier limit is 5000
-      Accounts.maybe_send_limit_notification(org, 5000)
+      # Free tier limit is 10000
+      Accounts.maybe_send_limit_notification(org, 10000)
 
       # Check timestamp was updated
       updated_org = Accounts.get_organization(org.id)
@@ -35,8 +35,8 @@ defmodule Prikke.Accounts.LimitNotificationTest do
     end
 
     test "does not update timestamps below 80%", %{org: org} do
-      # 79% of 5000 = 3950
-      Accounts.maybe_send_limit_notification(org, 3950)
+      # 79% of 10000 = 7900
+      Accounts.maybe_send_limit_notification(org, 7900)
 
       # No timestamps updated
       updated_org = Accounts.get_organization(org.id)
@@ -46,13 +46,13 @@ defmodule Prikke.Accounts.LimitNotificationTest do
 
     test "does not update warning timestamp twice in same month", %{org: org} do
       # Send first warning
-      Accounts.maybe_send_limit_notification(org, 4000)
+      Accounts.maybe_send_limit_notification(org, 8000)
       updated_org = Accounts.get_organization(org.id)
       first_timestamp = updated_org.limit_warning_sent_at
       assert first_timestamp != nil
 
       # Try to send again
-      Accounts.maybe_send_limit_notification(updated_org, 4100)
+      Accounts.maybe_send_limit_notification(updated_org, 8100)
 
       # Timestamp should not change
       org_after = Accounts.get_organization(org.id)
@@ -61,13 +61,13 @@ defmodule Prikke.Accounts.LimitNotificationTest do
 
     test "does not update limit reached timestamp twice in same month", %{org: org} do
       # Send first alert
-      Accounts.maybe_send_limit_notification(org, 5000)
+      Accounts.maybe_send_limit_notification(org, 10000)
       updated_org = Accounts.get_organization(org.id)
       first_timestamp = updated_org.limit_reached_sent_at
       assert first_timestamp != nil
 
       # Try to send again
-      Accounts.maybe_send_limit_notification(updated_org, 5100)
+      Accounts.maybe_send_limit_notification(updated_org, 10100)
 
       # Timestamp should not change
       org_after = Accounts.get_organization(org.id)
@@ -88,8 +88,8 @@ defmodule Prikke.Accounts.LimitNotificationTest do
     end
 
     test "skips when below warning threshold", %{org: org} do
-      # 50% of 5000 = 2500
-      result = Accounts.maybe_send_limit_notification(org, 2500)
+      # 50% of 10000 = 5000
+      result = Accounts.maybe_send_limit_notification(org, 5000)
       assert result == :ok
 
       updated_org = Accounts.get_organization(org.id)
@@ -105,7 +105,7 @@ defmodule Prikke.Accounts.LimitNotificationTest do
       user = user_fixture()
       org = organization_fixture(%{user: user})
 
-      Accounts.maybe_send_limit_notification(org, 4000)
+      Accounts.maybe_send_limit_notification(org, 8000)
       updated_org = Accounts.get_organization(org.id)
       assert updated_org.limit_warning_sent_at != nil
     end

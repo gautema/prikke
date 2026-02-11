@@ -15,7 +15,7 @@ defmodule Prikke.Tasks do
     "free" => %{
       max_tasks: :unlimited,
       min_interval_minutes: 60,
-      max_monthly_executions: 5_000,
+      max_monthly_executions: 10_000,
       retention_days: 7
     },
     "pro" => %{

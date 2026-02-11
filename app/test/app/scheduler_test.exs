@@ -405,7 +405,7 @@ defmodule Prikke.SchedulerTest do
       |> Ecto.Changeset.change(tier: "free")
       |> Prikke.Repo.update!()
 
-      # Create many executions to hit the limit (5000 for free)
+      # Create many executions to hit the limit (10000 for free)
       # We'll mock this by checking the limit logic works
       future = DateTime.utc_now() |> DateTime.add(10, :second) |> DateTime.truncate(:second)
 

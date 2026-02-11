@@ -277,7 +277,7 @@ Two simple tiers to start:
 |---|------|-----|
 | **Price** | €0 | €29/mo |
 | **Jobs** | 5 | Unlimited |
-| **Requests** | 5k/mo | 1M/mo |
+| **Requests** | 10k/mo | 1M/mo |
 | **Min interval** | Hourly | 1 minute |
 | **History** | 7 days | 30 days |
 | **Team members** | 2 | Unlimited |
@@ -286,7 +286,7 @@ Two simple tiers to start:
 
 Notes:
 - Minute precision for all tiers (no second-level scheduling)
-- Free tier math: 5 jobs × hourly × 30 days = 3,600 requests, so 5k is comfortable
+- Free tier math: 5 jobs × hourly × 30 days = 3,600 requests, so 10k is comfortable
 - Team member limit includes pending invites
 - Add more tiers later based on real usage patterns
 

@@ -770,7 +770,7 @@ defmodule Prikke.Executions do
     )
     |> Repo.all()
     |> Enum.map(fn org ->
-      tier_limit = tier_limits[org.tier][:max_monthly_executions] || 5_000
+      tier_limit = tier_limits[org.tier][:max_monthly_executions] || 10_000
       {org, org.monthly_execution_count, tier_limit}
     end)
   end

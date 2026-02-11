@@ -50,7 +50,7 @@ Runlater is a European background jobs service. Task queues, cron scheduling, in
 | **Tasks** | Unlimited | Unlimited |
 | **Monitors** | 3 | Unlimited |
 | **Endpoints** | 3 | Unlimited |
-| **Requests** | 5k/mo | 1M/mo |
+| **Requests** | 10k/mo | 1M/mo |
 | **Min interval** | Hourly | 1 minute |
 | **History** | 7 days | 30 days |
 | **Team members** | 2 | Unlimited |

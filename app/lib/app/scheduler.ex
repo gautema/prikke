@@ -69,7 +69,7 @@ defmodule Prikke.Scheduler do
   Before creating an execution, the scheduler checks the organization's monthly
   execution count against their tier limit:
 
-  - Free: 5,000 executions/month
+  - Free: 10,000 executions/month
   - Pro: 1,000,000 executions/month
 
   If the limit is reached, the task is skipped but `next_run_at` is still advanced
@@ -560,7 +560,7 @@ defmodule Prikke.Scheduler do
   # already created for this org during the current scheduler tick.
   #
   # Limits are defined in Tasks.get_tier_limits/1:
-  # - Free: 5,000 executions/month
+  # - Free: 10,000 executions/month
   # - Pro: 1,000,000 executions/month
   defp within_monthly_limit?(task, extra_count) do
     org = task.organization
