@@ -7,9 +7,9 @@ defmodule PrikkeWeb.LandingPageTest do
       html = html_response(conn, 200)
 
       # Check hero section
-      assert html =~ "Async task infrastructure"
-      assert html =~ "for Europe"
-      assert html =~ "Queue delayed tasks"
+      assert html =~ "Webhooks, cron, and queues"
+      assert html =~ "Hosted in Europe"
+      assert html =~ "Receive and forward webhooks"
 
       # Check marketing header is present
       assert html =~ "runlater"
@@ -63,7 +63,7 @@ defmodule PrikkeWeb.LandingPageTest do
       html = html_response(conn, 200)
 
       # Should show landing page content, not redirect
-      assert html =~ "Async task infrastructure"
+      assert html =~ "Webhooks, cron, and queues"
       assert html =~ "runlater"
     end
 
