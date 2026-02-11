@@ -9,7 +9,7 @@ defmodule PrikkeWeb.LandingPageTest do
       # Check hero section
       assert html =~ "Async tasks without"
       assert html =~ "the infrastructure"
-      assert html =~ "hosted in Europe"
+      assert html =~ "owned and operated in Europe"
       assert html =~ "forward webhooks"
 
       # Check marketing header is present
@@ -41,7 +41,7 @@ defmodule PrikkeWeb.LandingPageTest do
 
       # Check why Runlater section
       assert html =~ "Why Runlater"
-      assert html =~ "European-owned. Zero US subprocessors."
+      assert html =~ "European-owned. No tracking. No US subprocessors."
       assert html =~ "Bootstrapped. No pivot risk."
       assert html =~ "Built on the BEAM"
       assert html =~ "API-first with a dashboard"
