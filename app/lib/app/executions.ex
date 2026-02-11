@@ -125,51 +125,53 @@ defmodule Prikke.Executions do
     |> Kernel.not()
   end
 
+  # Max executions to lock per claim attempt. If the first is queue-blocked,
+  # we iterate through the batch to find a non-blocked one instead of giving up.
+  @claim_batch_size 10
+
   def claim_next_execution do
     now = DateTime.utc_now()
 
-    # Simple claim: uses partial index (scheduled_for WHERE status='pending')
-    # for both filter and sort — single table scan, no JOINs.
-    # Queue deduplication is checked post-claim for tasks that use queues.
+    # Batch claim: lock up to @claim_batch_size pending executions so we can
+    # skip queue-blocked ones without releasing the lock and re-selecting
+    # the same row in a retry loop.
     query =
       from(e in Execution,
         where: e.status == "pending" and e.scheduled_for <= ^now,
         order_by: [asc: e.scheduled_for],
-        limit: 1,
+        limit: ^@claim_batch_size,
         lock: "FOR UPDATE SKIP LOCKED"
       )
 
     Repo.transaction(fn ->
-      case Repo.one(query) do
-        nil ->
-          nil
-
-        execution ->
-          # Preload task+org inside the transaction so we don't need
-          # separate fetches in queue_blocked?, execute(), and broadcast
-          execution = Repo.preload(execution, task: :organization)
-
-          # Check queue constraint: if task uses a named queue, ensure no
-          # other execution in that queue is already running
-          if queue_blocked?(execution, now) do
-            # Skip this execution, another in the same queue is running
-            nil
-          else
-            case execution |> Execution.start_changeset() |> Repo.update() do
-              {:ok, updated} ->
-                # Carry over preloaded associations to the updated execution
-                %{updated | task: execution.task}
-
-              {:error, _} ->
-                Repo.rollback(:update_failed)
-            end
-          end
-      end
+      query
+      |> Repo.all()
+      |> claim_first_available(now)
     end)
     |> case do
       {:ok, nil} -> {:ok, nil}
       {:ok, execution} -> {:ok, execution}
       {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp claim_first_available([], _now), do: nil
+
+  defp claim_first_available([execution | rest], now) do
+    execution = Repo.preload(execution, task: :organization)
+
+    if queue_blocked?(execution, now) do
+      # Skip this execution, try the next one in the batch
+      claim_first_available(rest, now)
+    else
+      case execution |> Execution.start_changeset() |> Repo.update() do
+        {:ok, updated} ->
+          %{updated | task: execution.task}
+
+        {:error, _} ->
+          # Update failed, try next
+          claim_first_available(rest, now)
+      end
     end
   end
 
