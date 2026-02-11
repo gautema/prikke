@@ -30,11 +30,11 @@ defmodule Prikke.ExecutionCounter do
   end
 
   @doc """
-  Record a task execution timestamp. Only the latest timestamp per task is kept.
+  Record a task execution timestamp and status. Only the latest per task is kept.
   """
-  def touch_task(task_id) do
+  def touch_task(task_id, status) do
     now = DateTime.utc_now(:second)
-    :ets.insert(@timestamp_table, {task_id, now})
+    :ets.insert(@timestamp_table, {task_id, now, status})
   end
 
   @doc """
@@ -91,12 +91,12 @@ defmodule Prikke.ExecutionCounter do
   defp flush_timestamps do
     entries = :ets.tab2list(@timestamp_table)
 
-    Enum.each(entries, fn {task_id, timestamp} ->
+    Enum.each(entries, fn {task_id, timestamp, status} ->
       :ets.delete(@timestamp_table, task_id)
 
       Prikke.Repo.update_all(
         from(t in Prikke.Tasks.Task, where: t.id == ^task_id),
-        set: [last_execution_at: timestamp]
+        set: [last_execution_at: timestamp, last_execution_status: status]
       )
     end)
   end

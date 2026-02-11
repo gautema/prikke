@@ -73,12 +73,14 @@ defmodule Prikke.Tasks do
 
     * `:queue` - filter by queue name. Use `"none"` to match tasks with no queue.
     * `:type` - filter by schedule type. `"cron"` for recurring, `"once"` for one-time.
+    * `:status` - filter by task status: `"active"`, `"paused"`, `"succeeded"`, `"failed"`, `"timeout"`.
     * `:limit` - maximum number of tasks to return (default 50, max 100).
     * `:offset` - number of tasks to skip (default 0).
   """
   def list_tasks(%Organization{} = org, opts \\ []) do
     queue = Keyword.get(opts, :queue)
     type = Keyword.get(opts, :type)
+    status = Keyword.get(opts, :status)
     limit = opts |> Keyword.get(:limit, 50) |> min(100) |> max(1)
     offset = opts |> Keyword.get(:offset, 0) |> max(0)
 
@@ -104,6 +106,8 @@ defmodule Prikke.Tasks do
         schedule_type -> from(t in query, where: t.schedule_type == ^schedule_type)
       end
 
+    query = apply_status_filter(query, status)
+
     query
     |> limit(^limit)
     |> offset(^offset)
@@ -117,10 +121,12 @@ defmodule Prikke.Tasks do
 
     * `:queue` - filter by queue name. Use `"none"` to match tasks with no queue.
     * `:type` - filter by schedule type. `"cron"` for recurring, `"once"` for one-time.
+    * `:status` - filter by task status: `"active"`, `"paused"`, `"succeeded"`, `"failed"`, `"timeout"`.
   """
   def count_tasks(%Organization{} = org, opts) when is_list(opts) do
     queue = Keyword.get(opts, :queue)
     type = Keyword.get(opts, :type)
+    status = Keyword.get(opts, :status)
 
     query = from(t in Task, where: t.organization_id == ^org.id)
 
@@ -136,6 +142,8 @@ defmodule Prikke.Tasks do
         nil -> query
         schedule_type -> from(t in query, where: t.schedule_type == ^schedule_type)
       end
+
+    query = apply_status_filter(query, status)
 
     Repo.aggregate(query, :count)
   end
@@ -663,6 +671,32 @@ defmodule Prikke.Tasks do
     )
     |> Repo.all()
   end
+
+  defp apply_status_filter(query, nil), do: query
+
+  defp apply_status_filter(query, "active") do
+    from(t in query,
+      where: t.enabled == true and (t.schedule_type == "cron" or not is_nil(t.next_run_at))
+    )
+  end
+
+  defp apply_status_filter(query, "paused") do
+    from(t in query, where: t.enabled == false)
+  end
+
+  defp apply_status_filter(query, "succeeded") do
+    from(t in query, where: t.last_execution_status == "success")
+  end
+
+  defp apply_status_filter(query, "failed") do
+    from(t in query, where: t.last_execution_status == "failed")
+  end
+
+  defp apply_status_filter(query, "timeout") do
+    from(t in query, where: t.last_execution_status == "timeout")
+  end
+
+  defp apply_status_filter(query, _unknown), do: query
 
   ## Private: Audit Logging
 

@@ -475,7 +475,7 @@ defmodule Prikke.Executions do
   end
 
   defp touch_task_last_execution(%Execution{} = execution) do
-    Prikke.ExecutionCounter.touch_task(execution.task_id)
+    Prikke.ExecutionCounter.touch_task(execution.task_id, execution.status)
   end
 
   defp maybe_increment_monthly_count(%Execution{attempt: 1} = execution) do
