@@ -49,7 +49,7 @@ defmodule Prikke.Worker do
   # Uses exponential backoff: starts at base, doubles up to max
   # PubSub :wake ensures instant response to new work regardless of backoff
   @poll_interval_base 2_000
-  @poll_interval_max 10_000
+  @poll_interval_max 15_000
 
   # Exit after this duration of no work (30 seconds)
   @max_idle_ms 30_000
@@ -86,20 +86,7 @@ defmodule Prikke.Worker do
   end
 
   def handle_info(:work, state) do
-    # When idle, do a cheap pending check to avoid the expensive claim query
-    should_claim =
-      if state.idle_since do
-        Executions.has_pending_executions?()
-      else
-        true
-      end
-
-    if should_claim do
-      do_claim(state)
-    else
-      # No pending work - continue backoff without running expensive claim query
-      handle_no_work(state)
-    end
+    do_claim(state)
   end
 
   def handle_info({:EXIT, _pid, reason}, state) do

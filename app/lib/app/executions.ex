@@ -110,24 +110,6 @@ defmodule Prikke.Executions do
     |> Repo.one()
   end
 
-  @doc """
-  Check if there are any claimable pending executions.
-  Excludes queue-blocked executions so the pool manager doesn't thrash.
-  """
-  def has_pending_executions? do
-    now = DateTime.utc_now()
-
-    from(e in Execution,
-      where: e.status == "pending" and e.scheduled_for <= ^now,
-      where: ^claimable_queue_filter(now),
-      limit: 1,
-      select: true
-    )
-    |> Repo.one()
-    |> is_nil()
-    |> Kernel.not()
-  end
-
   def claim_next_execution do
     now = DateTime.utc_now()
 
