@@ -63,7 +63,8 @@ defmodule Prikke.Executions do
       task_id: task.id,
       organization_id: task.organization_id,
       scheduled_for: scheduled_for,
-      attempt: attempt
+      attempt: attempt,
+      queue: task.queue
     }
 
     attrs =
@@ -115,14 +116,10 @@ defmodule Prikke.Executions do
   """
   def has_pending_executions? do
     now = DateTime.utc_now()
-    blocked = blocked_queues_subquery(now)
 
     from(e in Execution,
-      join: t in Task, on: e.task_id == t.id,
-      left_join: bq in subquery(blocked),
-        on: t.organization_id == bq.org_id and t.queue == bq.queue,
       where: e.status == "pending" and e.scheduled_for <= ^now,
-      where: is_nil(t.queue) or t.queue == "" or is_nil(bq.org_id),
+      where: ^claimable_queue_filter(now),
       limit: 1,
       select: true
     )
@@ -133,22 +130,18 @@ defmodule Prikke.Executions do
 
   def claim_next_execution do
     now = DateTime.utc_now()
-    blocked = blocked_queues_subquery(now)
 
-    # Find the next claimable pending execution using a subquery join
-    # instead of a correlated NOT EXISTS. The blocked_queues subquery is
-    # computed once and hash-joined, avoiding per-row subquery evaluation
-    # that was causing 479ms/call with 1800+ queue-blocked rows.
+    # Simple NOT IN: exclude executions whose (org, queue) has a running
+    # or pending-retry execution. The inner query hits the partial index
+    # on (organization_id, queue, status) and returns a tiny set.
+    # No joins or subquery materialization needed.
     query =
       from(e in Execution,
-        join: t in Task, on: e.task_id == t.id,
-        left_join: bq in subquery(blocked),
-          on: t.organization_id == bq.org_id and t.queue == bq.queue,
         where: e.status == "pending" and e.scheduled_for <= ^now,
-        where: is_nil(t.queue) or t.queue == "" or is_nil(bq.org_id),
+        where: ^claimable_queue_filter(now),
         order_by: [asc: e.scheduled_for],
         limit: 1,
-        lock: "FOR UPDATE OF e0 SKIP LOCKED"
+        lock: "FOR UPDATE SKIP LOCKED"
       )
 
     Repo.transaction(fn ->
@@ -376,14 +369,10 @@ defmodule Prikke.Executions do
   """
   def count_pending_executions_bounded(limit) do
     now = DateTime.utc_now()
-    blocked = blocked_queues_subquery(now)
 
     from(e in Execution,
-      join: t in Task, on: e.task_id == t.id,
-      left_join: bq in subquery(blocked),
-        on: t.organization_id == bq.org_id and t.queue == bq.queue,
       where: e.status == "pending" and e.scheduled_for <= ^now,
-      where: is_nil(t.queue) or t.queue == "" or is_nil(bq.org_id),
+      where: ^claimable_queue_filter(now),
       limit: ^limit,
       select: e.id
     )
@@ -749,17 +738,18 @@ defmodule Prikke.Executions do
     end)
   end
 
-  # Subquery returning {org_id, queue} pairs that are currently blocked.
-  # A queue is blocked when it has a running execution or a pending retry
-  # (scheduled in the future). Computed once and joined, avoiding the
-  # per-row correlated subquery that was O(n) per pending execution.
-  defp blocked_queues_subquery(now) do
-    from(e in Execution,
-      join: t in Task, on: e.task_id == t.id,
-      where: not is_nil(t.queue) and t.queue != "",
-      where: e.status == "running" or (e.status == "pending" and e.scheduled_for > ^now),
-      distinct: true,
-      select: %{org_id: t.organization_id, queue: t.queue}
+  # Dynamic filter: execution is claimable if it has no queue, or its queue
+  # is not blocked. Uses NOT IN with the partial index for a fast lookup.
+  defp claimable_queue_filter(now) do
+    dynamic(
+      [e],
+      is_nil(e.queue) or e.queue == "" or
+        fragment(
+          "(?, ?) NOT IN (SELECT organization_id, queue FROM executions WHERE queue IS NOT NULL AND queue != '' AND (status = 'running' OR (status = 'pending' AND scheduled_for > ?)))",
+          e.organization_id,
+          e.queue,
+          ^now
+        )
     )
   end
 end

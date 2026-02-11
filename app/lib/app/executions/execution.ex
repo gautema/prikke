@@ -15,6 +15,7 @@ defmodule Prikke.Executions.Execution do
     field :error_message, :string
     field :attempt, :integer, default: 1
     field :callback_url, :string
+    field :queue, :string
     field :organization_id, :binary_id
 
     belongs_to :task, Prikke.Tasks.Task, foreign_key: :task_id
@@ -49,7 +50,7 @@ defmodule Prikke.Executions.Execution do
   """
   def create_changeset(execution, attrs) do
     execution
-    |> cast(attrs, [:task_id, :organization_id, :scheduled_for, :attempt, :callback_url])
+    |> cast(attrs, [:task_id, :organization_id, :scheduled_for, :attempt, :callback_url, :queue])
     |> validate_required([:task_id, :organization_id, :scheduled_for])
     |> put_change(:status, "pending")
     |> foreign_key_constraint(:task_id)
