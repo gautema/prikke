@@ -393,7 +393,9 @@ defmodule Prikke.Executions do
   end
 
   def count_pending_executions do
-    from(e in Execution, where: e.status == "pending")
+    now = DateTime.utc_now()
+
+    from(e in Execution, where: e.status == "pending" and e.scheduled_for <= ^now)
     |> Repo.aggregate(:count)
   end
 
