@@ -537,11 +537,20 @@ defmodule PrikkeWeb.DashboardLive do
     end
   end
 
-  defp calculate_success_rate(%{total: 0}), do: "—"
+  defp calculate_success_rate(%{success: 0, failed: 0} = stats) do
+    if Map.get(stats, :timeout, 0) == 0, do: "—", else: "0%"
+  end
 
-  defp calculate_success_rate(%{total: total, success: success}) do
-    rate = round(success / total * 100)
-    "#{rate}%"
+  defp calculate_success_rate(%{success: success, failed: failed} = stats) do
+    timeout = Map.get(stats, :timeout, 0)
+    completed = success + failed + timeout
+
+    if completed == 0 do
+      "—"
+    else
+      rate = round(success / completed * 100)
+      "#{rate}%"
+    end
   end
 
   defp format_number(n) when n >= 1_000_000, do: "#{Float.round(n / 1_000_000, 1)}M"
