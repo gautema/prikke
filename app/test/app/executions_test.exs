@@ -397,6 +397,99 @@ defmodule Prikke.ExecutionsTest do
       assert claimed.task_id == task2.id
     end
 
+    test "claim_next_execution/0 skips many queue-blocked executions to find claimable work", %{
+      organization: org_a
+    } do
+      # Simulate the real scenario: org A has a named queue with one running execution
+      # and 50+ blocked pending executions. Org B has a simple non-queued task.
+      # Workers must skip all of org A's blocked items and claim org B's task.
+
+      user_b = user_fixture(%{email: "orgb-#{System.unique_integer()}@example.com"})
+      {:ok, org_b} = Accounts.create_organization(user_b, %{name: "Org B"})
+
+      # Org A: create a task in a named queue
+      {:ok, queue_task} =
+        Tasks.create_task(org_a, %{
+          name: "Queued Task",
+          url: "https://example.com/queue",
+          schedule_type: "once",
+          scheduled_at: DateTime.utc_now(),
+          queue: "slow-queue"
+        })
+
+      past = DateTime.add(DateTime.utc_now(), -120, :second)
+
+      # Create one execution and claim it (now running, blocks the queue)
+      {:ok, _first} = Executions.create_execution_for_task(queue_task, past)
+      assert {:ok, running} = Executions.claim_next_execution()
+      assert running.task_id == queue_task.id
+
+      # Create 50 more pending executions in the same queue (all blocked)
+      for i <- 1..50 do
+        scheduled = DateTime.add(past, i, :second)
+        {:ok, _} = Executions.create_execution_for_task(queue_task, scheduled)
+      end
+
+      # Org B: create a simple non-queued task with a pending execution
+      {:ok, org_b_task} =
+        Tasks.create_task(org_b, %{
+          name: "Org B Task",
+          url: "https://example.com/orgb",
+          schedule_type: "once",
+          scheduled_at: DateTime.utc_now()
+        })
+
+      org_b_scheduled = DateTime.add(DateTime.utc_now(), -10, :second)
+      {:ok, _org_b_exec} = Executions.create_execution_for_task(org_b_task, org_b_scheduled)
+
+      # The critical assertion: workers must skip all 50 blocked executions
+      # and claim org B's task
+      assert {:ok, claimed} = Executions.claim_next_execution()
+      assert claimed != nil
+      assert claimed.task_id == org_b_task.id
+    end
+
+    test "claim_next_execution/0 skips blocked queue from one org and claims from another org's queue",
+         %{organization: org_a} do
+      # Both orgs use named queues. Org A's queue is blocked, org B's is not.
+      user_b = user_fixture(%{email: "orgb2-#{System.unique_integer()}@example.com"})
+      {:ok, org_b} = Accounts.create_organization(user_b, %{name: "Org B Queued"})
+
+      {:ok, task_a} =
+        Tasks.create_task(org_a, %{
+          name: "Org A Queued",
+          url: "https://example.com/a",
+          schedule_type: "once",
+          scheduled_at: DateTime.utc_now(),
+          queue: "org-a-queue"
+        })
+
+      {:ok, task_b} =
+        Tasks.create_task(org_b, %{
+          name: "Org B Queued",
+          url: "https://example.com/b",
+          schedule_type: "once",
+          scheduled_at: DateTime.utc_now(),
+          queue: "org-b-queue"
+        })
+
+      past = DateTime.add(DateTime.utc_now(), -60, :second)
+
+      # Org A: claim one (running), create another (blocked)
+      {:ok, _} = Executions.create_execution_for_task(task_a, past)
+      assert {:ok, running} = Executions.claim_next_execution()
+      assert running.task_id == task_a.id
+
+      {:ok, _} = Executions.create_execution_for_task(task_a, past)
+
+      # Org B: one pending execution in its own queue (not blocked)
+      {:ok, _} = Executions.create_execution_for_task(task_b, past)
+
+      # Should claim org B's execution, not return nil
+      assert {:ok, claimed} = Executions.claim_next_execution()
+      assert claimed.task_id == task_b.id
+    end
+
     test "reset_monthly_execution_counts/0 resets all counters" do
       user = user_fixture()
       {:ok, org} = Accounts.create_organization(user, %{name: "Counter Reset Org"})
