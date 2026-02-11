@@ -424,7 +424,7 @@ Using Lemon Squeezy (Merchant of Record):
 ## Brand
 
 - **Name:** Runlater
-- **Tagline:** "Schedule tasks, simply."
+- **Tagline:** "Async tasks without the infrastructure."
 - **Colors:** Slate 900 (#0f172a) + Emerald 500 (#10b981)
 - **Font:** Inter
 - **Logo:** Green dot + "runlater" wordmark

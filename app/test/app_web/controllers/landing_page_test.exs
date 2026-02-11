@@ -41,9 +41,9 @@ defmodule PrikkeWeb.LandingPageTest do
 
       # Check why Runlater section
       assert html =~ "Why Runlater"
-      assert html =~ "EU-hosted, GDPR-native"
+      assert html =~ "European-owned. Zero US subprocessors."
+      assert html =~ "Bootstrapped. No pivot risk."
       assert html =~ "Built on the BEAM"
-      assert html =~ "Privacy by design"
       assert html =~ "API-first with a dashboard"
 
       # Check tech mentions

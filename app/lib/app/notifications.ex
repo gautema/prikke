@@ -284,7 +284,7 @@ defmodule Prikke.Notifications do
               <tr>
                 <td style="padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
                   <p style="margin: 0; font-size: 12px; color: #94a3b8;">
-                    Runlater - Schedule tasks, simply.
+                    Runlater - Async tasks without the infrastructure.
                   </p>
                 </td>
               </tr>
@@ -532,7 +532,7 @@ defmodule Prikke.Notifications do
               <tr>
                 <td style="padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
                   <p style="margin: 0; font-size: 12px; color: #94a3b8;">
-                    Runlater - Schedule tasks, simply.
+                    Runlater - Async tasks without the infrastructure.
                   </p>
                 </td>
               </tr>
@@ -911,7 +911,7 @@ defmodule Prikke.Notifications do
               </tr>
               <tr>
                 <td style="padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
-                  <p style="margin: 0; font-size: 12px; color: #94a3b8;">Runlater - Schedule tasks, simply.</p>
+                  <p style="margin: 0; font-size: 12px; color: #94a3b8;">Runlater - Async tasks without the infrastructure.</p>
                 </td>
               </tr>
             </table>
