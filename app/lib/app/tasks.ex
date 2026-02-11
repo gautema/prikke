@@ -675,9 +675,7 @@ defmodule Prikke.Tasks do
   defp apply_status_filter(query, nil), do: query
 
   defp apply_status_filter(query, "active") do
-    from(t in query,
-      where: t.enabled == true and (t.schedule_type == "cron" or not is_nil(t.next_run_at))
-    )
+    from(t in query, where: t.enabled == true)
   end
 
   defp apply_status_filter(query, "paused") do
