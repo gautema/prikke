@@ -110,13 +110,19 @@ defmodule Prikke.Executions do
   end
 
   @doc """
-  Cheap check using partial index - use before expensive claim query when idle.
+  Check if there are any claimable pending executions.
+  Excludes queue-blocked executions so the pool manager doesn't thrash.
   """
   def has_pending_executions? do
     now = DateTime.utc_now()
+    blocked = blocked_queues_subquery(now)
 
     from(e in Execution,
+      join: t in Task, on: e.task_id == t.id,
+      left_join: bq in subquery(blocked),
+        on: t.organization_id == bq.org_id and t.queue == bq.queue,
       where: e.status == "pending" and e.scheduled_for <= ^now,
+      where: is_nil(t.queue) or t.queue == "" or is_nil(bq.org_id),
       limit: 1,
       select: true
     )
@@ -127,42 +133,22 @@ defmodule Prikke.Executions do
 
   def claim_next_execution do
     now = DateTime.utc_now()
+    blocked = blocked_queues_subquery(now)
 
-    # Single query: find the next claimable pending execution.
-    # Queue-blocked executions are filtered at the SQL level via NOT EXISTS,
-    # so even if there are 100s of blocked queue items, Postgres skips them
-    # natively without locking them or checking in Elixir.
-    #
-    # The NOT EXISTS subquery checks: does this execution's task have a non-null
-    # queue AND does that queue have another execution that is either running or
-    # has a pending retry (scheduled_for > now)? If so, skip it.
-    # Tasks without a queue are always claimable (the subquery returns empty
-    # when queue IS NULL, so NOT EXISTS is TRUE).
+    # Find the next claimable pending execution using a subquery join
+    # instead of a correlated NOT EXISTS. The blocked_queues subquery is
+    # computed once and hash-joined, avoiding per-row subquery evaluation
+    # that was causing 479ms/call with 1800+ queue-blocked rows.
     query =
       from(e in Execution,
+        join: t in Task, on: e.task_id == t.id,
+        left_join: bq in subquery(blocked),
+          on: t.organization_id == bq.org_id and t.queue == bq.queue,
         where: e.status == "pending" and e.scheduled_for <= ^now,
-        where:
-          fragment(
-            """
-            NOT EXISTS (
-              SELECT 1 FROM executions e2
-              JOIN tasks t2 ON e2.task_id = t2.id
-              JOIN tasks t_self ON ? = t_self.id
-              WHERE t_self.queue IS NOT NULL
-                AND t_self.queue != ''
-                AND t2.organization_id = t_self.organization_id
-                AND t2.queue = t_self.queue
-                AND e2.id != ?
-                AND (e2.status = 'running' OR (e2.status = 'pending' AND e2.scheduled_for > ?))
-            )
-            """,
-            e.task_id,
-            e.id,
-            ^now
-          ),
+        where: is_nil(t.queue) or t.queue == "" or is_nil(bq.org_id),
         order_by: [asc: e.scheduled_for],
         limit: 1,
-        lock: "FOR UPDATE SKIP LOCKED"
+        lock: "FOR UPDATE OF e0 SKIP LOCKED"
       )
 
     Repo.transaction(fn ->
@@ -385,14 +371,19 @@ defmodule Prikke.Executions do
   end
 
   @doc """
-  Bounded count of pending executions - stops counting at `limit`.
-  Much cheaper than a full COUNT on large tables.
+  Bounded count of claimable pending executions - stops counting at `limit`.
+  Excludes queue-blocked executions so pool manager scales based on actual work.
   """
   def count_pending_executions_bounded(limit) do
     now = DateTime.utc_now()
+    blocked = blocked_queues_subquery(now)
 
     from(e in Execution,
+      join: t in Task, on: e.task_id == t.id,
+      left_join: bq in subquery(blocked),
+        on: t.organization_id == bq.org_id and t.queue == bq.queue,
       where: e.status == "pending" and e.scheduled_for <= ^now,
+      where: is_nil(t.queue) or t.queue == "" or is_nil(bq.org_id),
       limit: ^limit,
       select: e.id
     )
@@ -756,5 +747,19 @@ defmodule Prikke.Executions do
       tier_limit = tier_limits[org.tier][:max_monthly_executions] || 10_000
       {org, org.monthly_execution_count, tier_limit}
     end)
+  end
+
+  # Subquery returning {org_id, queue} pairs that are currently blocked.
+  # A queue is blocked when it has a running execution or a pending retry
+  # (scheduled in the future). Computed once and joined, avoiding the
+  # per-row correlated subquery that was O(n) per pending execution.
+  defp blocked_queues_subquery(now) do
+    from(e in Execution,
+      join: t in Task, on: e.task_id == t.id,
+      where: not is_nil(t.queue) and t.queue != "",
+      where: e.status == "running" or (e.status == "pending" and e.scheduled_for > ^now),
+      distinct: true,
+      select: %{org_id: t.organization_id, queue: t.queue}
+    )
   end
 end
