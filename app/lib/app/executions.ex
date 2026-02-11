@@ -125,81 +125,64 @@ defmodule Prikke.Executions do
     |> Kernel.not()
   end
 
-  # Max executions to lock per claim attempt. If the first is queue-blocked,
-  # we iterate through the batch to find a non-blocked one instead of giving up.
-  @claim_batch_size 10
-
   def claim_next_execution do
     now = DateTime.utc_now()
 
-    # Batch claim: lock up to @claim_batch_size pending executions so we can
-    # skip queue-blocked ones without releasing the lock and re-selecting
-    # the same row in a retry loop.
+    # Single query: find the next claimable pending execution.
+    # Queue-blocked executions are filtered at the SQL level via NOT EXISTS,
+    # so even if there are 100s of blocked queue items, Postgres skips them
+    # natively without locking them or checking in Elixir.
+    #
+    # The NOT EXISTS subquery checks: does this execution's task have a non-null
+    # queue AND does that queue have another execution that is either running or
+    # has a pending retry (scheduled_for > now)? If so, skip it.
+    # Tasks without a queue are always claimable (the subquery returns empty
+    # when queue IS NULL, so NOT EXISTS is TRUE).
     query =
       from(e in Execution,
         where: e.status == "pending" and e.scheduled_for <= ^now,
+        where:
+          fragment(
+            """
+            NOT EXISTS (
+              SELECT 1 FROM executions e2
+              JOIN tasks t2 ON e2.task_id = t2.id
+              JOIN tasks t_self ON ? = t_self.id
+              WHERE t_self.queue IS NOT NULL
+                AND t_self.queue != ''
+                AND t2.organization_id = t_self.organization_id
+                AND t2.queue = t_self.queue
+                AND e2.id != ?
+                AND (e2.status = 'running' OR (e2.status = 'pending' AND e2.scheduled_for > ?))
+            )
+            """,
+            e.task_id,
+            e.id,
+            ^now
+          ),
         order_by: [asc: e.scheduled_for],
-        limit: ^@claim_batch_size,
+        limit: 1,
         lock: "FOR UPDATE SKIP LOCKED"
       )
 
     Repo.transaction(fn ->
-      query
-      |> Repo.all()
-      |> claim_first_available(now)
+      case Repo.one(query) do
+        nil ->
+          nil
+
+        execution ->
+          execution = Repo.preload(execution, task: :organization)
+
+          case execution |> Execution.start_changeset() |> Repo.update() do
+            {:ok, updated} -> %{updated | task: execution.task}
+            {:error, _} -> nil
+          end
+      end
     end)
     |> case do
       {:ok, nil} -> {:ok, nil}
       {:ok, execution} -> {:ok, execution}
       {:error, reason} -> {:error, reason}
-    end
-  end
-
-  defp claim_first_available([], _now), do: nil
-
-  defp claim_first_available([execution | rest], now) do
-    execution = Repo.preload(execution, task: :organization)
-
-    if queue_blocked?(execution, now) do
-      # Skip this execution, try the next one in the batch
-      claim_first_available(rest, now)
-    else
-      case execution |> Execution.start_changeset() |> Repo.update() do
-        {:ok, updated} ->
-          %{updated | task: execution.task}
-
-        {:error, _} ->
-          # Update failed, try next
-          claim_first_available(rest, now)
-      end
-    end
-  end
-
-  defp queue_blocked?(execution, now) do
-    # Use preloaded task from claim transaction (avoids extra Repo.get)
-    task = execution.task
-
-    if is_nil(task) or is_nil(task.queue) do
-      false
-    else
-      # Check if another execution in the same org+queue is running
-      # or has a pending retry scheduled for later.
-      # Keep join on tasks since we need to filter by t.queue.
-      from(e in Execution,
-        join: t in Task,
-        on: e.task_id == t.id,
-        where:
-          e.organization_id == ^task.organization_id and
-            t.queue == ^task.queue and
-            e.id != ^execution.id and
-            (e.status == "running" or
-               (e.status == "pending" and e.scheduled_for > ^now)),
-        limit: 1,
-        select: true
-      )
-      |> Repo.one()
-      |> is_nil()
-      |> Kernel.not()
     end
   end
 
