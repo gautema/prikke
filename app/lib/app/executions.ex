@@ -402,8 +402,10 @@ defmodule Prikke.Executions do
   Much cheaper than a full COUNT on large tables.
   """
   def count_pending_executions_bounded(limit) do
+    now = DateTime.utc_now()
+
     from(e in Execution,
-      where: e.status == "pending",
+      where: e.status == "pending" and e.scheduled_for <= ^now,
       limit: ^limit,
       select: e.id
     )
