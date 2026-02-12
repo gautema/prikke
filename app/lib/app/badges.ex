@@ -121,10 +121,12 @@ defmodule Prikke.Badges do
     label_width = text_width(label) + 12
     dot_width = 20
     total_width = label_width + dot_width
+    dot_cx = label_width + div(dot_width, 2)
 
     """
     <svg xmlns="http://www.w3.org/2000/svg" width="#{total_width}" height="20" role="img" aria-label="#{escape(label)}">
       <title>#{escape(label)}</title>
+      <style>#{pulse_css(color)}</style>
       <linearGradient id="s" x2="0" y2="100%">
         <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
         <stop offset="1" stop-opacity=".1"/>
@@ -141,7 +143,8 @@ defmodule Prikke.Badges do
         <text x="#{div(label_width, 2)}" y="14" fill="#010101" fill-opacity=".3">#{escape(label)}</text>
         <text x="#{div(label_width, 2)}" y="13">#{escape(label)}</text>
       </g>
-      <circle cx="#{label_width + div(dot_width, 2)}" cy="10" r="5" fill="#{color}"/>
+      <circle class="pulse-ring" cx="#{dot_cx}" cy="10" r="5" fill="#{color}"/>
+      <circle cx="#{dot_cx}" cy="10" r="5" fill="#{color}"/>
     </svg>
     """
   end
@@ -179,9 +182,12 @@ defmodule Prikke.Badges do
         end)
         |> Enum.join("\n    ")
 
+      dot_cx = label_width + div(dot_space, 2)
+
       """
       <svg xmlns="http://www.w3.org/2000/svg" width="#{total_width}" height="20" role="img" aria-label="#{escape(label)} uptime">
         <title>#{escape(label)} uptime</title>
+        <style>#{pulse_css(status_color)}</style>
         <clipPath id="r">
           <rect width="#{total_width}" height="20" rx="3" fill="#fff"/>
         </clipPath>
@@ -193,7 +199,8 @@ defmodule Prikke.Badges do
           <text x="#{div(label_width, 2)}" y="14" fill="#010101" fill-opacity=".3">#{escape(label)}</text>
           <text x="#{div(label_width, 2)}" y="13">#{escape(label)}</text>
         </g>
-        <circle cx="#{label_width + div(dot_space, 2)}" cy="10" r="5" fill="#{status_color}"/>
+        <circle class="pulse-ring" cx="#{dot_cx}" cy="10" r="5" fill="#{status_color}"/>
+        <circle cx="#{dot_cx}" cy="10" r="5" fill="#{status_color}"/>
         #{bars_svg}
       </svg>
       """
@@ -201,6 +208,12 @@ defmodule Prikke.Badges do
   end
 
   # -- Helpers --
+
+  defp pulse_css(color) do
+    """
+    @keyframes pulse{0%{opacity:.6;r:5}70%{opacity:0;r:9}100%{opacity:0;r:9}}.pulse-ring{fill:#{color};animation:pulse 2s ease-out infinite}
+    """
+  end
 
   defp bar_color("success"), do: "#10b981"
   defp bar_color("up"), do: "#10b981"
