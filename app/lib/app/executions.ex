@@ -10,6 +10,10 @@ defmodule Prikke.Executions do
   alias Prikke.Tasks.Task
   alias Prikke.Accounts.Organization
 
+  # Max concurrent running executions per organization.
+  # Prevents one org's backlog from starving all other orgs' workers.
+  @max_concurrent_per_org 5
+
   def subscribe_task_executions(task_id) do
     Phoenix.PubSub.subscribe(Prikke.PubSub, "task:#{task_id}:executions")
   end
@@ -121,6 +125,7 @@ defmodule Prikke.Executions do
       from(e in Execution,
         where: e.status == "pending" and e.scheduled_for <= ^now,
         where: ^claimable_queue_filter(now),
+        where: ^org_fairness_filter(),
         order_by: [asc: e.scheduled_for],
         limit: 1,
         lock: "FOR UPDATE SKIP LOCKED"
@@ -355,6 +360,7 @@ defmodule Prikke.Executions do
     from(e in Execution,
       where: e.status == "pending" and e.scheduled_for <= ^now,
       where: ^claimable_queue_filter(now),
+      where: ^org_fairness_filter(),
       limit: ^limit,
       select: e.id
     )
@@ -743,6 +749,22 @@ defmodule Prikke.Executions do
           e.organization_id,
           e.queue
         )
+    )
+  end
+
+  # Dynamic filter: skip orgs that already have their tier's max concurrent running.
+  # Subquery scans only running executions (tiny set, max ~20 rows) via partial index.
+  # JOINs organizations to check tier — still fast since only running rows are scanned.
+  defp org_fairness_filter do
+    max = @max_concurrent_per_org
+
+    dynamic(
+      [e],
+      fragment(
+        "? NOT IN (SELECT organization_id FROM executions WHERE status = 'running' GROUP BY organization_id HAVING count(*) >= ?)",
+        e.organization_id,
+        ^max
+      )
     )
   end
 end

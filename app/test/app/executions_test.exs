@@ -491,6 +491,62 @@ defmodule Prikke.ExecutionsTest do
       assert claimed.task_id == task_b.id
     end
 
+    test "claim_next_execution/0 enforces per-org concurrency limit", %{
+      organization: org_a
+    } do
+      # Org A has many tasks
+      tasks_a =
+        for i <- 1..7 do
+          {:ok, task} =
+            Tasks.create_task(org_a, %{
+              name: "Org A Task #{i}",
+              url: "https://example.com/a/#{i}",
+              schedule_type: "once",
+              scheduled_at: DateTime.utc_now()
+            })
+
+          task
+        end
+
+      # Org B has one task
+      user_b = user_fixture(%{email: "orgb-fair-#{System.unique_integer()}@example.com"})
+      {:ok, org_b} = Accounts.create_organization(user_b, %{name: "Org B Fair"})
+
+      {:ok, task_b} =
+        Tasks.create_task(org_b, %{
+          name: "Org B Task",
+          url: "https://example.com/b",
+          schedule_type: "once",
+          scheduled_at: DateTime.utc_now()
+        })
+
+      past = DateTime.add(DateTime.utc_now(), -60, :second)
+
+      # Create executions for all tasks
+      for task <- tasks_a do
+        {:ok, _} = Executions.create_execution_for_task(task, past)
+      end
+
+      {:ok, _} = Executions.create_execution_for_task(task_b, past)
+
+      # Claim 5 executions for org A (hitting the concurrency limit)
+      running_a =
+        for _ <- 1..5 do
+          {:ok, claimed} = Executions.claim_next_execution()
+          assert claimed.task.organization_id == org_a.id
+          claimed
+        end
+
+      # Next claim should skip org A (at limit) and pick org B
+      assert {:ok, claimed} = Executions.claim_next_execution()
+      assert claimed.task.organization_id == org_b.id
+
+      # Complete one org A execution, then org A should be claimable again
+      {:ok, _} = Executions.complete_execution(hd(running_a), %{status_code: 200})
+      assert {:ok, claimed} = Executions.claim_next_execution()
+      assert claimed.task.organization_id == org_a.id
+    end
+
     test "reset_monthly_execution_counts/0 resets all counters" do
       user = user_fixture()
       {:ok, org} = Accounts.create_organization(user, %{name: "Counter Reset Org"})
