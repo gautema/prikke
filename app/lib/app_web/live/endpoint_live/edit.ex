@@ -117,7 +117,7 @@ defmodule PrikkeWeb.EndpointLive.Edit do
             />
           </div>
           <p class="text-sm text-slate-500 -mt-4">
-            When enabled, events are forwarded one at a time in order. Disable for parallel forwarding when order doesn't matter.
+            When enabled, events are forwarded one at a time. Disable for parallel forwarding when order doesn't matter.
           </p>
 
           <div class="pt-4">
