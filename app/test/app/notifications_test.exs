@@ -586,6 +586,325 @@ defmodule Prikke.NotificationsTest do
     end
   end
 
+  describe "failure email throttling" do
+    setup do
+      if !Process.whereis(Prikke.TaskSupervisor) do
+        start_supervised!({Task.Supervisor, name: Prikke.TaskSupervisor})
+      end
+
+      user = user_fixture()
+      flush_emails()
+
+      {:ok, org} = Accounts.create_organization(user, %{name: "Throttle Test Org"})
+
+      {:ok, org} =
+        Accounts.update_notification_settings(org, %{
+          notify_on_failure: true,
+          notification_email: "alerts@example.com"
+        })
+
+      %{org: org, user: user}
+    end
+
+    defp create_failing_task(org, name) do
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: name,
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *"
+        })
+
+      task
+    end
+
+    defp create_failed_execution(task) do
+      {:ok, execution} =
+        Executions.create_execution(%{
+          task_id: task.id,
+          organization_id: task.organization_id,
+          scheduled_for: DateTime.utc_now()
+        })
+
+      {:ok, execution} =
+        Executions.fail_execution(execution, %{
+          status_code: 500,
+          error_message: "Server Error"
+        })
+
+      Executions.get_execution_with_task(execution.id)
+    end
+
+    test "sends individual failure emails when under threshold", %{org: org} do
+      task1 = create_failing_task(org, "Task 1")
+      task2 = create_failing_task(org, "Task 2")
+
+      exec1 = create_failed_execution(task1)
+      exec2 = create_failed_execution(task2)
+
+      flush_emails()
+
+      {:ok, _} = Notifications.notify_failure(exec1)
+      Process.sleep(100)
+
+      {:ok, _} = Notifications.notify_failure(exec2)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      failure_emails =
+        Enum.filter(emails, fn email ->
+          String.contains?(email.subject, "Task failed")
+        end)
+
+      assert length(failure_emails) == 2
+    end
+
+    test "sends throttle notice on the 4th failure", %{org: org} do
+      # Pre-seed 3 failure emails in the email_logs to simulate 3 already sent
+      for i <- 1..3 do
+        Prikke.Emails.log_email(%{
+          to: "alerts@example.com",
+          subject: "[Runlater] Task failed: Task #{i}",
+          email_type: "task_failure",
+          status: "sent",
+          organization_id: org.id
+        })
+      end
+
+      task = create_failing_task(org, "Task 4")
+      exec = create_failed_execution(task)
+      flush_emails()
+
+      {:ok, _} = Notifications.notify_failure(exec)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      # Should get a throttle notice, not an individual failure email
+      throttle_email =
+        Enum.find(emails, fn email ->
+          String.contains?(email.subject, "Multiple tasks failing")
+        end)
+
+      failure_email =
+        Enum.find(emails, fn email ->
+          String.contains?(email.subject, "Task failed")
+        end)
+
+      assert throttle_email != nil, "Expected throttle notice email"
+      assert failure_email == nil, "Expected no individual failure email"
+      assert throttle_email.text_body =~ "Task 4"
+      assert throttle_email.text_body =~ "paused"
+    end
+
+    test "suppresses emails entirely after throttle notice is sent", %{org: org} do
+      # Pre-seed 3 failure emails + 1 throttle notice = 4 emails in window
+      for i <- 1..3 do
+        Prikke.Emails.log_email(%{
+          to: "alerts@example.com",
+          subject: "[Runlater] Task failed: Task #{i}",
+          email_type: "task_failure",
+          status: "sent",
+          organization_id: org.id
+        })
+      end
+
+      Prikke.Emails.log_email(%{
+        to: "alerts@example.com",
+        subject: "[Runlater] Multiple tasks failing",
+        email_type: "task_failure_throttled",
+        status: "sent",
+        organization_id: org.id
+      })
+
+      task = create_failing_task(org, "Task 5")
+      exec = create_failed_execution(task)
+      flush_emails()
+
+      {:ok, _} = Notifications.notify_failure(exec)
+      Process.sleep(100)
+
+      emails = collect_emails()
+      assert emails == [], "Expected no emails when over throttle threshold"
+    end
+
+    test "still sends webhook when email is throttled", %{org: org} do
+      # Pre-seed enough emails to trigger suppression
+      for i <- 1..4 do
+        Prikke.Emails.log_email(%{
+          to: "alerts@example.com",
+          subject: "[Runlater] Task failed: Task #{i}",
+          email_type: "task_failure",
+          status: "sent",
+          organization_id: org.id
+        })
+      end
+
+      bypass = Bypass.open()
+
+      Bypass.expect_once(bypass, "POST", "/webhook", fn conn ->
+        {:ok, body, conn} = Plug.Conn.read_body(conn)
+        payload = Jason.decode!(body)
+        assert payload["event"] == "task.failed"
+        Plug.Conn.resp(conn, 200, "OK")
+      end)
+
+      {:ok, org} =
+        org
+        |> Ecto.Changeset.change(notification_webhook_url: "http://localhost:#{bypass.port}/webhook")
+        |> Prikke.Repo.update()
+
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: "Throttled But Webhooks Work",
+          url: "https://example.com/api",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *"
+        })
+
+      exec = create_failed_execution(task)
+      flush_emails()
+
+      {:ok, _} = Notifications.notify_failure(exec)
+      Process.sleep(200)
+
+      # No emails sent (throttled)
+      emails = collect_emails()
+      assert emails == []
+
+      # But bypass assertion passes, meaning webhook was sent
+    end
+  end
+
+  describe "recovery email throttling" do
+    setup do
+      if !Process.whereis(Prikke.TaskSupervisor) do
+        start_supervised!({Task.Supervisor, name: Prikke.TaskSupervisor})
+      end
+
+      user = user_fixture()
+      flush_emails()
+
+      {:ok, org} = Accounts.create_organization(user, %{name: "Recovery Throttle Org"})
+
+      {:ok, org} =
+        Accounts.update_notification_settings(org, %{
+          notify_on_failure: true,
+          notify_on_recovery: true,
+          notification_email: "alerts@example.com"
+        })
+
+      %{org: org}
+    end
+
+    defp create_recovered_execution(org, task_name) do
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: task_name,
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *"
+        })
+
+      # Create a failed execution first
+      {:ok, failed_exec} =
+        Executions.create_execution(%{
+          task_id: task.id,
+          organization_id: task.organization_id,
+          scheduled_for: DateTime.add(DateTime.utc_now(), -120, :second)
+        })
+
+      {:ok, _} =
+        Executions.fail_execution(failed_exec, %{
+          status_code: 500,
+          error_message: "Server Error"
+        })
+
+      # Then a successful one
+      {:ok, success_exec} =
+        Executions.create_execution(%{
+          task_id: task.id,
+          organization_id: task.organization_id,
+          scheduled_for: DateTime.utc_now()
+        })
+
+      {:ok, success_exec} =
+        Executions.complete_execution(success_exec, %{
+          status_code: 200,
+          response_body: "OK",
+          duration_ms: 100
+        })
+
+      Executions.get_execution_with_task(success_exec.id)
+    end
+
+    test "sends throttle notice on 4th recovery", %{org: org} do
+      # Pre-seed 3 recovery emails
+      for i <- 1..3 do
+        Prikke.Emails.log_email(%{
+          to: "alerts@example.com",
+          subject: "[Runlater] Task recovered: Task #{i}",
+          email_type: "task_recovery",
+          status: "sent",
+          organization_id: org.id
+        })
+      end
+
+      exec = create_recovered_execution(org, "Task 4 Recovery")
+      flush_emails()
+
+      {:ok, _} = Notifications.notify_recovery(exec)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      throttle_email =
+        Enum.find(emails, fn email ->
+          String.contains?(email.subject, "Multiple tasks recovered")
+        end)
+
+      recovery_email =
+        Enum.find(emails, fn email ->
+          String.contains?(email.subject, "Task recovered")
+        end)
+
+      assert throttle_email != nil, "Expected recovery throttle notice"
+      assert recovery_email == nil, "Expected no individual recovery email"
+      assert throttle_email.text_body =~ "paused"
+    end
+
+    test "suppresses recovery emails after throttle notice", %{org: org} do
+      # Pre-seed 3 recovery + 1 throttle = 4 emails
+      for i <- 1..3 do
+        Prikke.Emails.log_email(%{
+          to: "alerts@example.com",
+          subject: "[Runlater] Task recovered: Task #{i}",
+          email_type: "task_recovery",
+          status: "sent",
+          organization_id: org.id
+        })
+      end
+
+      Prikke.Emails.log_email(%{
+        to: "alerts@example.com",
+        subject: "[Runlater] Multiple tasks recovered",
+        email_type: "task_recovery_throttled",
+        status: "sent",
+        organization_id: org.id
+      })
+
+      exec = create_recovered_execution(org, "Task 5 Recovery")
+      flush_emails()
+
+      {:ok, _} = Notifications.notify_recovery(exec)
+      Process.sleep(100)
+
+      emails = collect_emails()
+      assert emails == [], "Expected no emails when over recovery throttle threshold"
+    end
+  end
+
   describe "muted task notifications" do
     setup do
       if !Process.whereis(Prikke.TaskSupervisor) do

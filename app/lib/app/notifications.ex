@@ -13,6 +13,11 @@ defmodule Prikke.Notifications do
   import Swoosh.Email
 
   alias Prikke.Mailer
+  alias Prikke.Emails
+
+  # Throttle: max notification emails per org within the window before switching to a summary notice
+  @email_throttle_threshold 3
+  @email_throttle_window_seconds 3600
 
   @doc """
   Sends failure notifications for an execution.
@@ -54,7 +59,7 @@ defmodule Prikke.Notifications do
 
       if should_notify_recovery?(task, previous) do
         if email = notification_email(org) do
-          send_recovery_email(execution, email)
+          send_recovery_email_throttled(execution, email, org)
         end
 
         if webhook_url = org.notification_webhook_url do
@@ -105,12 +110,12 @@ defmodule Prikke.Notifications do
         previous_status = Prikke.Executions.get_previous_status(task, execution.id)
 
         if should_notify?(previous_status) do
-          # Send email notification
+          # Send email notification (with throttling)
           if email = notification_email(org) do
-            send_failure_email(execution, email)
+            send_failure_email_throttled(execution, email, org)
           end
 
-          # Send webhook notification
+          # Send webhook notification (always, no throttle)
           if webhook_url = org.notification_webhook_url do
             send_failure_webhook(execution, webhook_url)
           end
@@ -137,6 +142,55 @@ defmodule Prikke.Notifications do
       # Fall back to org owner's email
       true ->
         Prikke.Accounts.get_organization_owner_email(org)
+    end
+  end
+
+  # Checks email throttle for the org and either sends normally, sends a throttle notice, or suppresses.
+  defp send_failure_email_throttled(execution, to_email, org) do
+    recent_count =
+      Emails.count_recent_emails_for_org(
+        org.id,
+        ["task_failure", "task_failure_throttled"],
+        @email_throttle_window_seconds
+      )
+
+    cond do
+      recent_count < @email_throttle_threshold ->
+        send_failure_email(execution, to_email)
+
+      recent_count == @email_throttle_threshold ->
+        send_throttle_notice_email(execution, to_email, :failure)
+
+      true ->
+        Logger.info(
+          "[Notifications] Failure email throttled for org #{org.id} (#{recent_count} emails in window)"
+        )
+
+        :throttled
+    end
+  end
+
+  defp send_recovery_email_throttled(execution, to_email, org) do
+    recent_count =
+      Emails.count_recent_emails_for_org(
+        org.id,
+        ["task_recovery", "task_recovery_throttled"],
+        @email_throttle_window_seconds
+      )
+
+    cond do
+      recent_count < @email_throttle_threshold ->
+        send_recovery_email(execution, to_email)
+
+      recent_count == @email_throttle_threshold ->
+        send_throttle_notice_email(execution, to_email, :recovery)
+
+      true ->
+        Logger.info(
+          "[Notifications] Recovery email throttled for org #{org.id} (#{recent_count} emails in window)"
+        )
+
+        :throttled
     end
   end
 
@@ -275,6 +329,131 @@ defmodule Prikke.Notifications do
                     <tr>
                       <td align="center">
                         <a href="#{execution_url}" style="display: inline-block; padding: 14px 32px; background-color: #10b981; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 14px;">View Execution</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <!-- Footer -->
+              <tr>
+                <td style="padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
+                  <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                    Runlater - Async tasks without the infrastructure.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+    """
+  end
+
+  defp send_throttle_notice_email(execution, to_email, event_type) do
+    task = execution.task
+
+    config = Application.get_env(:app, Prikke.Mailer, [])
+    from_name = Keyword.get(config, :from_name, "Runlater")
+    from_email = Keyword.get(config, :from_email, "noreply@runlater.eu")
+
+    {subject, email_log_type, title, message, detail} =
+      case event_type do
+        :failure ->
+          {"[Runlater] Multiple tasks failing",
+           "task_failure_throttled",
+           "Multiple Tasks Failing",
+           "Several tasks in your organization are failing.",
+           "Latest failure: \"#{task.name}\""}
+
+        :recovery ->
+          {"[Runlater] Multiple tasks recovered",
+           "task_recovery_throttled",
+           "Multiple Tasks Recovered",
+           "Several tasks in your organization have recovered.",
+           "Latest recovery: \"#{task.name}\""}
+      end
+
+    dashboard_url = "https://runlater.eu/tasks"
+
+    text_body = """
+    #{message}
+
+    #{detail}
+
+    To avoid flooding your inbox, further #{event_type} emails are paused for up to an hour.
+    Check your dashboard for details: #{dashboard_url}
+    """
+
+    html_body = throttle_notice_email_template(title, message, detail, dashboard_url, event_type)
+
+    email =
+      new()
+      |> to(to_email)
+      |> from({from_name, from_email})
+      |> subject(subject)
+      |> text_body(String.trim(text_body))
+      |> html_body(html_body)
+
+    case Mailer.deliver_and_log(email, email_log_type,
+           organization_id: task.organization_id
+         ) do
+      {:ok, _} ->
+        Logger.info(
+          "[Notifications] #{event_type} throttle notice sent to #{to_email} for org #{task.organization_id}"
+        )
+
+        :ok
+
+      {:error, reason} ->
+        Logger.error(
+          "[Notifications] Failed to send #{event_type} throttle notice to #{to_email}: #{inspect(reason)}"
+        )
+
+        :error
+    end
+  end
+
+  defp throttle_notice_email_template(title, message, detail, dashboard_url, event_type) do
+    title_color = if event_type == :failure, do: "#f59e0b", else: "#10b981"
+
+    """
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 480px; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <!-- Header -->
+              <tr>
+                <td style="padding: 32px 32px 24px 32px; text-align: center; border-bottom: 1px solid #e2e8f0;">
+                  <div style="display: inline-flex; align-items: center;">
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #10b981; border-radius: 50%; margin-right: 8px;"></span>
+                    <span style="font-size: 20px; font-weight: 600; color: #0f172a;">runlater</span>
+                  </div>
+                </td>
+              </tr>
+              <!-- Content -->
+              <tr>
+                <td style="padding: 32px;">
+                  <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #{title_color};">#{title}</h2>
+                  <p style="margin: 0 0 8px 0; font-size: 14px; color: #475569; line-height: 1.6;">
+                    #{message} #{detail}
+                  </p>
+                  <p style="margin: 0 0 16px 0; font-size: 14px; color: #475569; line-height: 1.6;">
+                    To avoid flooding your inbox, further notification emails are paused for up to an hour. Webhook notifications are unaffected.
+                  </p>
+                  <!-- Button -->
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 24px;">
+                    <tr>
+                      <td align="center">
+                        <a href="#{dashboard_url}" style="display: inline-block; padding: 14px 32px; background-color: #10b981; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 14px;">View Dashboard</a>
                       </td>
                     </tr>
                   </table>

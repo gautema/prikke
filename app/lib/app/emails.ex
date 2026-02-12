@@ -68,6 +68,23 @@ defmodule Prikke.Emails do
   end
 
   @doc """
+  Counts recent emails of the given types for an organization within a time window.
+  Used for throttling failure notification emails.
+  """
+  def count_recent_emails_for_org(organization_id, email_types, seconds_ago) do
+    cutoff = DateTime.add(DateTime.utc_now(), -seconds_ago, :second)
+
+    from(e in EmailLog,
+      where:
+        e.organization_id == ^organization_id and
+          e.email_type in ^email_types and
+          e.inserted_at >= ^cutoff and
+          e.status == "sent"
+    )
+    |> Repo.aggregate(:count)
+  end
+
+  @doc """
   Deletes email logs older than the given number of days.
   """
   def cleanup_old_email_logs(retention_days) do

@@ -937,6 +937,87 @@ defmodule Prikke.TasksTest do
     end
   end
 
+  describe "list_upcoming_tasks/1" do
+    test "returns tasks with next_run_at in the future" do
+      org = organization_fixture()
+      task = task_fixture(org)
+
+      # task_fixture creates a cron task, which should have next_run_at set in the future
+      assert task.next_run_at != nil
+      assert DateTime.compare(task.next_run_at, DateTime.utc_now()) == :gt
+
+      upcoming = Tasks.list_upcoming_tasks()
+      assert length(upcoming) >= 1
+      assert Enum.any?(upcoming, &(&1.id == task.id))
+    end
+
+    test "does not return tasks with next_run_at in the past" do
+      org = organization_fixture()
+      task = task_fixture(org)
+
+      # Set next_run_at to the past
+      past = DateTime.add(DateTime.utc_now(), -3600, :second) |> DateTime.truncate(:second)
+
+      {:ok, _} =
+        task
+        |> Ecto.Changeset.change(next_run_at: past)
+        |> Prikke.Repo.update()
+
+      upcoming = Tasks.list_upcoming_tasks()
+      refute Enum.any?(upcoming, &(&1.id == task.id))
+    end
+
+    test "does not return tasks with nil next_run_at" do
+      org = organization_fixture()
+      task = task_fixture(org)
+
+      {:ok, _} =
+        task
+        |> Ecto.Changeset.change(next_run_at: nil)
+        |> Prikke.Repo.update()
+
+      upcoming = Tasks.list_upcoming_tasks()
+      refute Enum.any?(upcoming, &(&1.id == task.id))
+    end
+
+    test "orders by next_run_at ascending (soonest first)" do
+      org = organization_fixture()
+      task1 = task_fixture(org, %{name: "Later", cron_expression: "0 0 * * *"})
+      task2 = task_fixture(org, %{name: "Sooner", cron_expression: "0 * * * *"})
+
+      upcoming = Tasks.list_upcoming_tasks()
+      ids = Enum.map(upcoming, & &1.id)
+
+      idx1 = Enum.find_index(ids, &(&1 == task1.id))
+      idx2 = Enum.find_index(ids, &(&1 == task2.id))
+
+      # The task with sooner next_run_at should appear first
+      if task2.next_run_at && task1.next_run_at &&
+           DateTime.compare(task2.next_run_at, task1.next_run_at) == :lt do
+        assert idx2 < idx1
+      end
+    end
+
+    test "respects limit option" do
+      org = organization_fixture()
+      task_fixture(org, %{name: "Task 1"})
+      task_fixture(org, %{name: "Task 2"})
+      task_fixture(org, %{name: "Task 3"})
+
+      upcoming = Tasks.list_upcoming_tasks(limit: 2)
+      assert length(upcoming) <= 2
+    end
+
+    test "preloads organization" do
+      org = organization_fixture()
+      task_fixture(org)
+
+      [task | _] = Tasks.list_upcoming_tasks()
+      assert task.organization != nil
+      assert task.organization.id == org.id
+    end
+  end
+
   describe "parse_status_codes/1" do
     test "returns empty list for nil" do
       assert Tasks.parse_status_codes(nil) == []

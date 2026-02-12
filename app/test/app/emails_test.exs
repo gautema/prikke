@@ -131,6 +131,125 @@ defmodule Prikke.EmailsTest do
     end
   end
 
+  describe "count_recent_emails_for_org/3" do
+    test "counts emails of given types within time window" do
+      user = user_fixture()
+      {:ok, org} = Prikke.Accounts.create_organization(user, %{name: "Test Org"})
+
+      # Insert some task_failure emails for this org
+      for _ <- 1..3 do
+        Emails.log_email(%{
+          to: "alerts@test.com",
+          subject: "Task failed",
+          email_type: "task_failure",
+          status: "sent",
+          organization_id: org.id
+        })
+      end
+
+      # Insert a different type (should not count)
+      Emails.log_email(%{
+        to: "alerts@test.com",
+        subject: "Task recovered",
+        email_type: "task_recovery",
+        status: "sent",
+        organization_id: org.id
+      })
+
+      assert Emails.count_recent_emails_for_org(org.id, ["task_failure"], 300) == 3
+
+      assert Emails.count_recent_emails_for_org(
+               org.id,
+               ["task_failure", "task_failure_throttled"],
+               300
+             ) == 3
+    end
+
+    test "does not count emails from other organizations" do
+      user = user_fixture()
+      {:ok, org1} = Prikke.Accounts.create_organization(user, %{name: "Org 1"})
+
+      user2 = user_fixture()
+      {:ok, org2} = Prikke.Accounts.create_organization(user2, %{name: "Org 2"})
+
+      Emails.log_email(%{
+        to: "alerts@test.com",
+        subject: "Task failed",
+        email_type: "task_failure",
+        status: "sent",
+        organization_id: org1.id
+      })
+
+      Emails.log_email(%{
+        to: "alerts@test.com",
+        subject: "Task failed",
+        email_type: "task_failure",
+        status: "sent",
+        organization_id: org2.id
+      })
+
+      assert Emails.count_recent_emails_for_org(org1.id, ["task_failure"], 300) == 1
+    end
+
+    test "does not count failed delivery emails" do
+      user = user_fixture()
+      {:ok, org} = Prikke.Accounts.create_organization(user, %{name: "Test Org"})
+
+      Emails.log_email(%{
+        to: "alerts@test.com",
+        subject: "Task failed",
+        email_type: "task_failure",
+        status: "sent",
+        organization_id: org.id
+      })
+
+      Emails.log_email(%{
+        to: "alerts@test.com",
+        subject: "Task failed",
+        email_type: "task_failure",
+        status: "failed",
+        error: "Connection refused",
+        organization_id: org.id
+      })
+
+      assert Emails.count_recent_emails_for_org(org.id, ["task_failure"], 300) == 1
+    end
+
+    test "does not count emails outside the time window" do
+      user = user_fixture()
+      {:ok, org} = Prikke.Accounts.create_organization(user, %{name: "Test Org"})
+
+      {:ok, old_log} =
+        Emails.log_email(%{
+          to: "alerts@test.com",
+          subject: "Task failed",
+          email_type: "task_failure",
+          status: "sent",
+          organization_id: org.id
+        })
+
+      # Backdate to 10 minutes ago
+      old_date = DateTime.add(DateTime.utc_now(), -600, :second)
+
+      Prikke.Repo.update_all(
+        from(e in Prikke.Emails.EmailLog, where: e.id == ^old_log.id),
+        set: [inserted_at: old_date]
+      )
+
+      # This one is recent
+      Emails.log_email(%{
+        to: "alerts@test.com",
+        subject: "Task failed",
+        email_type: "task_failure",
+        status: "sent",
+        organization_id: org.id
+      })
+
+      # 5-minute window should only count the recent one
+      assert Emails.count_recent_emails_for_org(org.id, ["task_failure"], 300) == 1
+    end
+  end
+
   describe "cleanup_old_email_logs/1" do
     test "deletes logs older than retention days" do
       # Insert a log, then manually backdate it

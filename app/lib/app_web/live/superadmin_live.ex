@@ -52,6 +52,9 @@ defmodule PrikkeWeb.SuperadminLive do
     # Analytics (pageviews)
     analytics = Analytics.get_pageview_stats()
 
+    # Upcoming scheduled tasks
+    upcoming_tasks = Tasks.list_upcoming_tasks(limit: 20)
+
     # Recent activity
     recent_users = Accounts.list_recent_users(limit: 5)
     recent_tasks = Tasks.list_recent_tasks_all(limit: 5)
@@ -125,6 +128,7 @@ defmodule PrikkeWeb.SuperadminLive do
     |> assign(:recent_emails, recent_emails)
     |> assign(:emails_this_month, emails_this_month)
     |> assign(:monthly_summary_emails, monthly_summary_emails)
+    |> assign(:upcoming_tasks, upcoming_tasks)
   end
 
   @impl true
@@ -152,6 +156,45 @@ defmodule PrikkeWeb.SuperadminLive do
         </div>
       </div>
       
+    <!-- Upcoming Tasks -->
+      <%= if @upcoming_tasks != [] do %>
+        <div class="glass-card rounded-2xl mb-8">
+          <div class="px-6 py-4 border-b border-white/50 flex justify-between items-center">
+            <h2 class="text-lg font-semibold text-slate-900">Upcoming Tasks</h2>
+            <span class="text-xs text-slate-400">{length(@upcoming_tasks)} scheduled</span>
+          </div>
+          <div class="divide-y divide-white/30">
+            <%= for task <- @upcoming_tasks do %>
+              <div class="px-6 py-3 flex items-center gap-4">
+                <span class={[
+                  "text-xs px-2 py-0.5 rounded-full font-medium shrink-0",
+                  if(task.schedule_type == "cron",
+                    do: "bg-blue-100 text-blue-700",
+                    else: "bg-amber-100 text-amber-700"
+                  )
+                ]}>
+                  {task.schedule_type}
+                </span>
+                <div class="min-w-0 flex-1">
+                  <div class="text-sm font-medium text-slate-900 truncate">{task.name}</div>
+                  <div class="text-xs text-slate-500 truncate">
+                    {task.organization && task.organization.name}
+                  </div>
+                </div>
+                <div class="text-right shrink-0">
+                  <div class="text-sm font-mono text-slate-700">
+                    <.relative_time id={"upcoming-#{task.id}"} datetime={task.next_run_at} />
+                  </div>
+                  <div class="text-xs text-slate-400">
+                    {Calendar.strftime(task.next_run_at, "%b %d, %H:%M UTC")}
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
     <!-- Platform Stats -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <.stat_card

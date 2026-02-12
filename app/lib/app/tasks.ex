@@ -644,6 +644,24 @@ defmodule Prikke.Tasks do
   ## Platform-wide Stats (for superadmin)
 
   @doc """
+  Lists tasks with next_run_at in the future, across all organizations.
+  Useful for superadmin to see what's scheduled to run next.
+  """
+  def list_upcoming_tasks(opts \\ []) do
+    limit = Keyword.get(opts, :limit, 20)
+    now = DateTime.utc_now()
+
+    from(t in Task,
+      where: not is_nil(t.next_run_at),
+      where: t.next_run_at > ^now,
+      order_by: [asc: t.next_run_at],
+      limit: ^limit,
+      preload: [:organization]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Counts total tasks across all organizations.
   """
   def count_all_tasks do
