@@ -33,6 +33,7 @@ defmodule PrikkeWeb.Router do
     get "/docs/webhooks", DocsController, :webhooks
     get "/docs/endpoints", DocsController, :endpoints
     get "/docs/monitors", DocsController, :monitors
+    get "/docs/badges", DocsController, :badges
     get "/use-cases", DocsController, :use_cases
 
     # Public status page

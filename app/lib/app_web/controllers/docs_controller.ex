@@ -41,4 +41,8 @@ defmodule PrikkeWeb.DocsController do
   def endpoints(conn, _params) do
     render(conn, :endpoints, page_title: "Inbound Endpoints")
   end
+
+  def badges(conn, _params) do
+    render(conn, :badges, page_title: "Status Badges")
+  end
 end
