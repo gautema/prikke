@@ -163,8 +163,8 @@ defmodule Prikke.Badges do
       bar_width = 3
       bar_gap = 1
       bar_height = 16
-      dot_section = 16
-      label_width = text_width(label) + 12
+      dot_section = 18
+      label_width = text_width(label) + 8
       bars_area_width = count * (bar_width + bar_gap) - bar_gap
       total_width = label_width + dot_section + bars_area_width + 8
       padding_y = 2
@@ -180,7 +180,7 @@ defmodule Prikke.Badges do
         end)
         |> Enum.join("\n    ")
 
-      dot_cx = label_width + div(dot_section, 2)
+      dot_cx = label_width + 5
 
       """
       <svg xmlns="http://www.w3.org/2000/svg" width="#{total_width}" height="20" role="img" aria-label="#{escape(label)} uptime">
