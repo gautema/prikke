@@ -25,7 +25,7 @@ defmodule PrikkeWeb.BadgeController do
 
       task ->
         executions = Executions.list_task_executions(task, limit: 50)
-        send_svg(conn, Badges.task_uptime_bars(Enum.reverse(executions), name: task.name))
+        send_svg(conn, Badges.task_uptime_bars(task, Enum.reverse(executions), name: task.name))
     end
   end
 
@@ -46,7 +46,7 @@ defmodule PrikkeWeb.BadgeController do
       monitor ->
         daily_status = Monitors.get_daily_status([monitor], 30)
         days = Map.get(daily_status, monitor.id, [])
-        send_svg(conn, Badges.monitor_uptime_bars(days, name: monitor.name))
+        send_svg(conn, Badges.monitor_uptime_bars(monitor, days, name: monitor.name))
     end
   end
 
@@ -69,6 +69,7 @@ defmodule PrikkeWeb.BadgeController do
         send_not_found_badge(conn)
 
       endpoint ->
+        last_status = Endpoints.get_last_event_status(endpoint)
         events = Endpoints.list_inbound_events(endpoint, limit: 50)
 
         statuses =
@@ -78,7 +79,7 @@ defmodule PrikkeWeb.BadgeController do
             if event.execution, do: event.execution.status, else: "pending"
           end)
 
-        send_svg(conn, Badges.uptime_bars(endpoint.name, statuses))
+        send_svg(conn, Badges.endpoint_uptime_bars(endpoint, statuses, last_status))
     end
   end
 

@@ -4,18 +4,17 @@ defmodule Prikke.BadgesTest do
   alias Prikke.Badges
 
   describe "flat_badge/3" do
-    test "generates valid SVG" do
+    test "generates valid SVG with name and colored dot" do
       svg = Badges.flat_badge("status", "passing", "#10b981")
       assert svg =~ ~s(<svg xmlns="http://www.w3.org/2000/svg")
       assert svg =~ "status"
-      assert svg =~ "passing"
-      assert svg =~ "#10b981"
+      assert svg =~ ~s(fill="#10b981")
+      assert svg =~ "<circle"
     end
 
     test "escapes HTML entities in labels" do
       svg = Badges.flat_badge("<script>", "a&b", "#fff")
       assert svg =~ "&lt;script&gt;"
-      assert svg =~ "a&amp;b"
       refute svg =~ "<script>"
     end
 
@@ -37,87 +36,86 @@ defmodule Prikke.BadgesTest do
       assert svg =~ "#f97316"
     end
 
-    test "returns 'no data' badge when empty" do
+    test "returns dot badge when empty" do
       svg = Badges.uptime_bars("uptime", [])
-      assert svg =~ "no data"
+      assert svg =~ "<circle"
+      assert svg =~ "#94a3b8"
     end
   end
 
   describe "task_status_badge/1" do
-    test "shows passing for successful task" do
+    test "shows green dot for successful task" do
       task = %{name: "My Task", enabled: true, last_execution_status: "success"}
       svg = Badges.task_status_badge(task)
-      assert svg =~ "passing"
-      assert svg =~ "#10b981"
+      assert svg =~ "My Task"
+      assert svg =~ ~s(fill="#10b981")
     end
 
-    test "shows failing for failed task" do
+    test "shows red dot for failed task" do
       task = %{name: "My Task", enabled: true, last_execution_status: "failed"}
       svg = Badges.task_status_badge(task)
-      assert svg =~ "failing"
-      assert svg =~ "#ef4444"
+      assert svg =~ "My Task"
+      assert svg =~ ~s(fill="#ef4444")
     end
 
-    test "shows paused for disabled task" do
+    test "shows gray dot for disabled task" do
       task = %{name: "My Task", enabled: false, last_execution_status: "success"}
       svg = Badges.task_status_badge(task)
-      assert svg =~ "paused"
+      assert svg =~ ~s(fill="#94a3b8")
     end
 
-    test "shows unknown for task with no executions" do
+    test "shows gray dot for task with no executions" do
       task = %{name: "My Task", enabled: true, last_execution_status: nil}
       svg = Badges.task_status_badge(task)
-      assert svg =~ "unknown"
+      assert svg =~ ~s(fill="#94a3b8")
     end
   end
 
   describe "monitor_status_badge/1" do
-    test "shows up for up monitor" do
+    test "shows green dot for up monitor" do
       monitor = %{name: "My Monitor", enabled: true, status: "up"}
       svg = Badges.monitor_status_badge(monitor)
-      assert svg =~ "up"
-      assert svg =~ "#10b981"
+      assert svg =~ "My Monitor"
+      assert svg =~ ~s(fill="#10b981")
     end
 
-    test "shows down for down monitor" do
+    test "shows red dot for down monitor" do
       monitor = %{name: "My Monitor", enabled: true, status: "down"}
       svg = Badges.monitor_status_badge(monitor)
-      assert svg =~ "down"
-      assert svg =~ "#ef4444"
+      assert svg =~ ~s(fill="#ef4444")
     end
 
-    test "shows paused for disabled monitor" do
+    test "shows gray dot for disabled monitor" do
       monitor = %{name: "My Monitor", enabled: false, status: "up"}
       svg = Badges.monitor_status_badge(monitor)
-      assert svg =~ "paused"
+      assert svg =~ ~s(fill="#94a3b8")
     end
   end
 
   describe "endpoint_status_badge/2" do
-    test "shows passing when last event succeeded" do
+    test "shows green dot when last event succeeded" do
       endpoint = %{name: "My Endpoint", enabled: true}
       svg = Badges.endpoint_status_badge(endpoint, "success")
-      assert svg =~ "passing"
-      assert svg =~ "#10b981"
+      assert svg =~ "My Endpoint"
+      assert svg =~ ~s(fill="#10b981")
     end
 
-    test "shows failing when last event failed" do
+    test "shows red dot when last event failed" do
       endpoint = %{name: "My Endpoint", enabled: true}
       svg = Badges.endpoint_status_badge(endpoint, "failed")
-      assert svg =~ "failing"
-      assert svg =~ "#ef4444"
+      assert svg =~ ~s(fill="#ef4444")
     end
 
-    test "shows no data when no events" do
+    test "shows gray dot when no events" do
       endpoint = %{name: "My Endpoint", enabled: true}
       svg = Badges.endpoint_status_badge(endpoint)
-      assert svg =~ "no data"
+      assert svg =~ ~s(fill="#94a3b8")
     end
 
-    test "shows disabled for disabled endpoint" do
+    test "shows gray dot for disabled endpoint" do
       endpoint = %{name: "My Endpoint", enabled: false}
       svg = Badges.endpoint_status_badge(endpoint)
-      assert svg =~ "disabled"
+      assert svg =~ ~s(fill="#94a3b8")
     end
   end
 

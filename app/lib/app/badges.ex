@@ -22,10 +22,11 @@ defmodule Prikke.Badges do
 
   Each bar represents one execution. Green = success, red = failed, orange = timeout.
   """
-  def task_uptime_bars(executions, opts \\ []) do
+  def task_uptime_bars(task, executions, opts \\ []) do
     name = Keyword.get(opts, :name, "uptime")
+    {_label, color} = task_status(task)
     statuses = Enum.map(executions, & &1.status)
-    uptime_bars(name, statuses)
+    uptime_bars(name, statuses, color)
   end
 
   @doc """
@@ -43,10 +44,11 @@ defmodule Prikke.Badges do
 
   Each bar represents one day. Green = up, orange = degraded, red = down, gray = no data.
   """
-  def monitor_uptime_bars(daily_status, opts \\ []) do
+  def monitor_uptime_bars(monitor, daily_status, opts \\ []) do
     name = Keyword.get(opts, :name, "uptime")
+    {_label, color} = monitor_status(monitor)
     statuses = Enum.map(daily_status, fn {_date, %{status: s}} -> s end)
-    uptime_bars(name, statuses)
+    uptime_bars(name, statuses, color)
   end
 
   @doc """
@@ -57,6 +59,14 @@ defmodule Prikke.Badges do
   def endpoint_status_badge(endpoint, last_status \\ nil) do
     {label, color} = endpoint_status(endpoint, last_status)
     flat_badge(endpoint.name, label, color)
+  end
+
+  @doc """
+  Generates an uptime bar chart SVG for endpoint inbound events.
+  """
+  def endpoint_uptime_bars(endpoint, statuses, last_status \\ nil) do
+    {_label, color} = endpoint_status(endpoint, last_status)
+    uptime_bars(endpoint.name, statuses, color)
   end
 
   # -- Status resolution --
@@ -106,18 +116,15 @@ defmodule Prikke.Badges do
 
   The badge has two sections: a dark label on the left and a colored value on the right.
   """
-  def flat_badge(label, value, color) do
+  def flat_badge(label, _value, color) do
     label = truncate_label(label)
-    value = truncate_label(value)
-    logo_space = 16
-    label_width = text_width(label) + 12 + logo_space
-    value_width = text_width(value) + 12
-    total_width = label_width + value_width
-    text_center = div(logo_space, 2) + div(label_width, 2)
+    label_width = text_width(label) + 12
+    dot_width = 20
+    total_width = label_width + dot_width
 
     """
-    <svg xmlns="http://www.w3.org/2000/svg" width="#{total_width}" height="20" role="img" aria-label="#{escape(label)}: #{escape(value)}">
-      <title>#{escape(label)}: #{escape(value)}</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="#{total_width}" height="20" role="img" aria-label="#{escape(label)}">
+      <title>#{escape(label)}</title>
       <linearGradient id="s" x2="0" y2="100%">
         <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
         <stop offset="1" stop-opacity=".1"/>
@@ -127,16 +134,14 @@ defmodule Prikke.Badges do
       </clipPath>
       <g clip-path="url(#r)">
         <rect width="#{label_width}" height="20" fill="#555"/>
-        <rect x="#{label_width}" width="#{value_width}" height="20" fill="#{color}"/>
+        <rect x="#{label_width}" width="#{dot_width}" height="20" fill="#555"/>
         <rect width="#{total_width}" height="20" fill="url(#s)"/>
       </g>
-      <circle cx="9" cy="10" r="4" fill="#10b981"/>
       <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="11">
-        <text x="#{text_center}" y="14" fill="#010101" fill-opacity=".3">#{escape(label)}</text>
-        <text x="#{text_center}" y="13">#{escape(label)}</text>
-        <text x="#{label_width + div(value_width, 2)}" y="14" fill="#010101" fill-opacity=".3">#{escape(value)}</text>
-        <text x="#{label_width + div(value_width, 2)}" y="13">#{escape(value)}</text>
+        <text x="#{div(label_width, 2)}" y="14" fill="#010101" fill-opacity=".3">#{escape(label)}</text>
+        <text x="#{div(label_width, 2)}" y="13">#{escape(label)}</text>
       </g>
+      <circle cx="#{label_width + div(dot_width, 2)}" cy="10" r="5" fill="#{color}"/>
     </svg>
     """
   end
@@ -147,26 +152,27 @@ defmodule Prikke.Badges do
   Each bar is a thin vertical rectangle. Colors are mapped from status strings.
   The chart includes a label on the left.
   """
-  def uptime_bars(label, statuses) do
+  def uptime_bars(label, statuses, status_color \\ "#94a3b8") do
     count = length(statuses)
 
     if count == 0 do
-      flat_badge(label, "no data", "#94a3b8")
+      flat_badge(label, "no data", status_color)
     else
       label = truncate_label(label)
       bar_width = 3
       bar_gap = 1
       bar_height = 16
+      dot_space = 20
       label_width = text_width(label) + 12
       bars_area_width = count * (bar_width + bar_gap) - bar_gap
-      total_width = label_width + bars_area_width + 8
+      total_width = label_width + dot_space + bars_area_width + 8
       padding_y = 2
 
       bars_svg =
         statuses
         |> Enum.with_index()
         |> Enum.map(fn {status, i} ->
-          x = label_width + 4 + i * (bar_width + bar_gap)
+          x = label_width + dot_space + 4 + i * (bar_width + bar_gap)
           color = bar_color(status)
 
           ~s(<rect x="#{x}" y="#{padding_y}" width="#{bar_width}" height="#{bar_height}" rx="1" fill="#{color}"/>)
@@ -187,6 +193,7 @@ defmodule Prikke.Badges do
           <text x="#{div(label_width, 2)}" y="14" fill="#010101" fill-opacity=".3">#{escape(label)}</text>
           <text x="#{div(label_width, 2)}" y="13">#{escape(label)}</text>
         </g>
+        <circle cx="#{label_width + div(dot_space, 2)}" cy="10" r="5" fill="#{status_color}"/>
         #{bars_svg}
       </svg>
       """

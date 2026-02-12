@@ -33,10 +33,9 @@ defmodule PrikkeWeb.BadgeControllerTest do
       conn = get(conn, "/badge/task/bt_nonexistent000000000000/status.svg")
 
       assert response(conn, 404) =~ "<svg"
-      assert response(conn, 404) =~ "not found"
     end
 
-    test "shows task name and status in badge", %{conn: conn, org: org} do
+    test "shows task name in badge", %{conn: conn, org: org} do
       task = task_fixture(org, %{name: "my-cron-job"})
       {:ok, task} = Tasks.enable_badge(org, task)
 
@@ -44,6 +43,7 @@ defmodule PrikkeWeb.BadgeControllerTest do
 
       body = response(conn, 200)
       assert body =~ "my-cron-job"
+      assert body =~ "<circle"
     end
   end
 
@@ -62,13 +62,13 @@ defmodule PrikkeWeb.BadgeControllerTest do
       assert response(conn, 200) =~ "<svg"
     end
 
-    test "returns 'no data' badge when no executions", %{conn: conn, org: org} do
+    test "returns dot badge when no executions", %{conn: conn, org: org} do
       task = task_fixture(org)
       {:ok, task} = Tasks.enable_badge(org, task)
 
       conn = get(conn, "/badge/task/#{task.badge_token}/uptime.svg")
 
-      assert response(conn, 200) =~ "no data"
+      assert response(conn, 200) =~ "<circle"
     end
   end
 
@@ -86,7 +86,7 @@ defmodule PrikkeWeb.BadgeControllerTest do
     test "returns 404 SVG for unknown token", %{conn: conn} do
       conn = get(conn, "/badge/monitor/bt_nonexistent000000000000/status.svg")
 
-      assert response(conn, 404) =~ "not found"
+      assert response(conn, 404) =~ "<svg"
     end
   end
 
@@ -109,10 +109,10 @@ defmodule PrikkeWeb.BadgeControllerTest do
       conn = get(conn, "/badge/endpoint/#{endpoint.badge_token}/status.svg")
 
       assert response(conn, 200) =~ "<svg"
-      assert response(conn, 200) =~ "no data"
+      assert response(conn, 200) =~ "<circle"
     end
 
-    test "shows passing when last event succeeded", %{conn: conn, org: org} do
+    test "shows green dot when last event succeeded", %{conn: conn, org: org} do
       endpoint = endpoint_fixture(org)
       {:ok, endpoint} = Endpoints.enable_badge(org, endpoint)
 
@@ -137,13 +137,13 @@ defmodule PrikkeWeb.BadgeControllerTest do
 
       conn = get(conn, "/badge/endpoint/#{endpoint.badge_token}/status.svg")
 
-      assert response(conn, 200) =~ "passing"
+      assert response(conn, 200) =~ ~s(fill="#10b981")
     end
 
     test "returns 404 SVG for unknown token", %{conn: conn} do
       conn = get(conn, "/badge/endpoint/bt_nonexistent000000000000/status.svg")
 
-      assert response(conn, 404) =~ "not found"
+      assert response(conn, 404) =~ "<svg"
     end
   end
 
@@ -160,7 +160,7 @@ defmodule PrikkeWeb.BadgeControllerTest do
     test "returns 404 SVG for unknown token", %{conn: conn} do
       conn = get(conn, "/badge/endpoint/bt_nonexistent000000000000/uptime.svg")
 
-      assert response(conn, 404) =~ "not found"
+      assert response(conn, 404) =~ "<svg"
     end
   end
 
@@ -177,7 +177,7 @@ defmodule PrikkeWeb.BadgeControllerTest do
       {:ok, _task} = Tasks.disable_badge(org, task)
 
       # Badge no longer works
-      assert get(conn, "/badge/task/#{token}/status.svg") |> response(404) =~ "not found"
+      assert get(conn, "/badge/task/#{token}/status.svg") |> response(404) =~ "<svg"
     end
 
     test "monitor badge not accessible after disabling", %{conn: conn, org: org} do
@@ -189,7 +189,7 @@ defmodule PrikkeWeb.BadgeControllerTest do
 
       {:ok, _monitor} = Monitors.disable_badge(org, monitor)
 
-      assert get(conn, "/badge/monitor/#{token}/status.svg") |> response(404) =~ "not found"
+      assert get(conn, "/badge/monitor/#{token}/status.svg") |> response(404) =~ "<svg"
     end
 
     test "endpoint badge not accessible after disabling", %{conn: conn, org: org} do
@@ -201,7 +201,7 @@ defmodule PrikkeWeb.BadgeControllerTest do
 
       {:ok, _endpoint} = Endpoints.disable_badge(org, endpoint)
 
-      assert get(conn, "/badge/endpoint/#{token}/status.svg") |> response(404) =~ "not found"
+      assert get(conn, "/badge/endpoint/#{token}/status.svg") |> response(404) =~ "<svg"
     end
   end
 end
