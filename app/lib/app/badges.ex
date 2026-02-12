@@ -119,9 +119,9 @@ defmodule Prikke.Badges do
   def flat_badge(label, _value, color) do
     label = truncate_label(label)
     label_width = text_width(label) + 8
-    dot_section = 14
+    dot_section = 18
     total_width = label_width + dot_section
-    dot_cx = label_width + div(dot_section, 2)
+    dot_cx = label_width + 5
 
     """
     <svg xmlns="http://www.w3.org/2000/svg" width="#{total_width}" height="20" role="img" aria-label="#{escape(label)}">
