@@ -109,9 +109,11 @@ defmodule Prikke.Badges do
   def flat_badge(label, value, color) do
     label = truncate_label(label)
     value = truncate_label(value)
-    label_width = text_width(label) + 12
+    logo_space = 16
+    label_width = text_width(label) + 12 + logo_space
     value_width = text_width(value) + 12
     total_width = label_width + value_width
+    text_center = div(logo_space, 2) + div(label_width, 2)
 
     """
     <svg xmlns="http://www.w3.org/2000/svg" width="#{total_width}" height="20" role="img" aria-label="#{escape(label)}: #{escape(value)}">
@@ -128,9 +130,10 @@ defmodule Prikke.Badges do
         <rect x="#{label_width}" width="#{value_width}" height="20" fill="#{color}"/>
         <rect width="#{total_width}" height="20" fill="url(#s)"/>
       </g>
+      <circle cx="9" cy="10" r="4" fill="#10b981"/>
       <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="11">
-        <text x="#{div(label_width, 2)}" y="14" fill="#010101" fill-opacity=".3">#{escape(label)}</text>
-        <text x="#{div(label_width, 2)}" y="13">#{escape(label)}</text>
+        <text x="#{text_center}" y="14" fill="#010101" fill-opacity=".3">#{escape(label)}</text>
+        <text x="#{text_center}" y="13">#{escape(label)}</text>
         <text x="#{label_width + div(value_width, 2)}" y="14" fill="#010101" fill-opacity=".3">#{escape(value)}</text>
         <text x="#{label_width + div(value_width, 2)}" y="13">#{escape(value)}</text>
       </g>
