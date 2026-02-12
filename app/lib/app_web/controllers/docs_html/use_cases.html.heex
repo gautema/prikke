@@ -21,20 +21,29 @@
           Schedule follow-up emails without managing queues or workers.
         </p>
       </div>
-      <pre
-        phx-no-curly-interpolation
-        class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
-      ><span class="text-slate-500">// Schedule welcome email 24 hours after signup</span>
-<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/tasks'</span>, {
-  <span class="text-sky-300">method</span>: <span class="text-green-300">'POST'</span>,
-  <span class="text-sky-300">headers</span>: { <span class="text-sky-300">'Authorization'</span>: <span class="text-green-300">'Bearer YOUR_API_KEY'</span> },
-  <span class="text-sky-300">body</span>: JSON.stringify({
-    <span class="text-sky-300">name</span>: <span class="text-green-300">'welcome-email'</span>,
-    <span class="text-sky-300">url</span>: <span class="text-green-300">'https://myapp.com/api/send-welcome'</span>,
-    <span class="text-sky-300">schedule_type</span>: <span class="text-green-300">'once'</span>,
-    <span class="text-sky-300">scheduled_at</span>: <span class="text-purple-300">new</span> Date(Date.now() + <span class="text-orange-300">86400000</span>).toISOString()
-  })
-});</pre>
+      <div data-tab-group>
+        <div class="flex border-b border-slate-700">
+          <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">curl</button>
+          <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">Node.js</button>
+        </div>
+        <pre data-tab-content="curl" style="display:none" phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500"># Schedule welcome email 24 hours after signup</span>
+<span class="text-purple-300">curl</span> -X POST https://runlater.eu/api/v1/tasks \
+  -H <span class="text-green-300">"Authorization: Bearer YOUR_API_KEY"</span> \
+  -H <span class="text-green-300">"Content-Type: application/json"</span> \
+  -d <span class="text-green-300">'{
+    "name": "welcome-email",
+    "url": "https://myapp.com/api/send-welcome",
+    "delay": "24h"
+  }'</span></pre>
+        <pre data-tab-content="js" phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500">// Schedule welcome email 24 hours after signup</span>
+<span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } from <span class="text-green-300">"runlater-js"</span>
+<span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
+
+<span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">delay</span>(<span class="text-green-300">"https://myapp.com/api/send-welcome"</span>, {
+  <span class="text-sky-300">name</span>: <span class="text-green-300">"welcome-email"</span>,
+  <span class="text-sky-300">delay</span>: <span class="text-green-300">"24h"</span>
+})</pre>
+      </div>
     </div>
 
     <div class="glass-card rounded-2xl overflow-hidden">
@@ -48,19 +57,30 @@
           Generate PDFs or exports without timing out. Email when ready.
         </p>
       </div>
-      <pre
-        phx-no-curly-interpolation
-        class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
-      ><span class="text-slate-500">// Return immediately, process in background</span>
-<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/tasks'</span>, {
-  <span class="text-sky-300">method</span>: <span class="text-green-300">'POST'</span>,
-  <span class="text-sky-300">headers</span>: { <span class="text-sky-300">'Authorization'</span>: <span class="text-green-300">'Bearer YOUR_API_KEY'</span> },
-  <span class="text-sky-300">body</span>: JSON.stringify({
-    <span class="text-sky-300">url</span>: <span class="text-green-300">'https://myapp.com/api/reports/generate'</span>,
-    <span class="text-sky-300">body</span>: JSON.stringify({ reportId, userId })
-  })
-});
-<span class="text-purple-300">return</span> Response.json({ <span class="text-sky-300">status</span>: <span class="text-green-300">'processing'</span> });</pre>
+      <div data-tab-group>
+        <div class="flex border-b border-slate-700">
+          <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">curl</button>
+          <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">Node.js</button>
+        </div>
+        <pre data-tab-content="curl" style="display:none" phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500"># Delay report generation by 1 hour</span>
+<span class="text-purple-300">curl</span> -X POST https://runlater.eu/api/v1/tasks \
+  -H <span class="text-green-300">"Authorization: Bearer YOUR_API_KEY"</span> \
+  -H <span class="text-green-300">"Content-Type: application/json"</span> \
+  -d <span class="text-green-300">'{
+    "url": "https://myapp.com/api/reports/generate",
+    "body": "{\"reportId\": \"rpt_123\", \"userId\": \"usr_456\"}",
+    "delay": "1h"
+  }'</span></pre>
+        <pre data-tab-content="js" phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500">// Return immediately, process in background</span>
+<span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } from <span class="text-green-300">"runlater-js"</span>
+<span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
+
+<span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">delay</span>(<span class="text-green-300">"https://myapp.com/api/reports/generate"</span>, {
+  <span class="text-sky-300">body</span>: { <span class="text-sky-300">reportId</span>, <span class="text-sky-300">userId</span> },
+  <span class="text-sky-300">delay</span>: <span class="text-green-300">"1h"</span>
+})
+<span class="text-purple-300">return</span> Response.json({ <span class="text-sky-300">status</span>: <span class="text-green-300">"processing"</span> })</pre>
+      </div>
     </div>
 
     <div class="glass-card rounded-2xl overflow-hidden">
@@ -197,19 +217,29 @@
           Process charges one at a time per user to prevent double-billing or race conditions.
         </p>
       </div>
-      <pre
-        phx-no-curly-interpolation
-        class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
-      ><span class="text-slate-500">// Each user gets their own queue — charges never overlap</span>
-<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/tasks'</span>, {
-  <span class="text-sky-300">method</span>: <span class="text-green-300">'POST'</span>,
-  <span class="text-sky-300">headers</span>: { <span class="text-sky-300">'Authorization'</span>: <span class="text-green-300">'Bearer YOUR_API_KEY'</span> },
-  <span class="text-sky-300">body</span>: JSON.stringify({
-    <span class="text-sky-300">url</span>: <span class="text-green-300">'https://myapp.com/api/charge'</span>,
-    <span class="text-sky-300">body</span>: JSON.stringify({ userId, amount }),
-    <span class="text-sky-300">queue</span>: <span class="text-green-300">`payments-user-${userId}`</span>
-  })
-});</pre>
+      <div data-tab-group>
+        <div class="flex border-b border-slate-700">
+          <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">curl</button>
+          <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">Node.js</button>
+        </div>
+        <pre data-tab-content="curl" style="display:none" phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500"># Each user gets their own queue — charges never overlap</span>
+<span class="text-purple-300">curl</span> -X POST https://runlater.eu/api/v1/tasks \
+  -H <span class="text-green-300">"Authorization: Bearer YOUR_API_KEY"</span> \
+  -H <span class="text-green-300">"Content-Type: application/json"</span> \
+  -d <span class="text-green-300">'{
+    "url": "https://myapp.com/api/charge",
+    "body": "{\"userId\": \"usr_123\", \"amount\": 2900}",
+    "queue": "payments-user-usr_123"
+  }'</span></pre>
+        <pre data-tab-content="js" phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500">// Each user gets their own queue — charges never overlap</span>
+<span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } from <span class="text-green-300">"runlater-js"</span>
+<span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
+
+<span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">send</span>(<span class="text-green-300">"https://myapp.com/api/charge"</span>, {
+  <span class="text-sky-300">body</span>: { <span class="text-sky-300">userId</span>, <span class="text-sky-300">amount</span> },
+  <span class="text-sky-300">queue</span>: <span class="text-green-300">`payments-user-${userId}`</span>
+})</pre>
+      </div>
     </div>
 
     <div class="glass-card rounded-2xl overflow-hidden">
@@ -225,19 +255,29 @@
           Call a rate-limited third-party API without overwhelming it. One request finishes before the next starts.
         </p>
       </div>
-      <pre
-        phx-no-curly-interpolation
-        class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
-      ><span class="text-slate-500">// All Shopify sync tasks run one at a time</span>
-<span class="text-purple-300">await</span> fetch(<span class="text-green-300">'https://runlater.eu/api/v1/tasks'</span>, {
-  <span class="text-sky-300">method</span>: <span class="text-green-300">'POST'</span>,
-  <span class="text-sky-300">headers</span>: { <span class="text-sky-300">'Authorization'</span>: <span class="text-green-300">'Bearer YOUR_API_KEY'</span> },
-  <span class="text-sky-300">body</span>: JSON.stringify({
-    <span class="text-sky-300">url</span>: <span class="text-green-300">'https://myapp.com/api/sync-product'</span>,
-    <span class="text-sky-300">body</span>: JSON.stringify({ productId }),
-    <span class="text-sky-300">queue</span>: <span class="text-green-300">'shopify-sync'</span>
-  })
-});</pre>
+      <div data-tab-group>
+        <div class="flex border-b border-slate-700">
+          <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">curl</button>
+          <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">Node.js</button>
+        </div>
+        <pre data-tab-content="curl" style="display:none" phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500"># All Shopify sync tasks run one at a time</span>
+<span class="text-purple-300">curl</span> -X POST https://runlater.eu/api/v1/tasks \
+  -H <span class="text-green-300">"Authorization: Bearer YOUR_API_KEY"</span> \
+  -H <span class="text-green-300">"Content-Type: application/json"</span> \
+  -d <span class="text-green-300">'{
+    "url": "https://myapp.com/api/sync-product",
+    "body": "{\"productId\": \"prod_789\"}",
+    "queue": "shopify-sync"
+  }'</span></pre>
+        <pre data-tab-content="js" phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500">// All Shopify sync tasks run one at a time</span>
+<span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } from <span class="text-green-300">"runlater-js"</span>
+<span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
+
+<span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">send</span>(<span class="text-green-300">"https://myapp.com/api/sync-product"</span>, {
+  <span class="text-sky-300">body</span>: { <span class="text-sky-300">productId</span> },
+  <span class="text-sky-300">queue</span>: <span class="text-green-300">"shopify-sync"</span>
+})</pre>
+      </div>
     </div>
   </div>
 
@@ -255,15 +295,27 @@
           Process recurring billing daily at 6 AM UTC.
         </p>
       </div>
-      <pre
-        phx-no-curly-interpolation
-        class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
-      >{
+      <div data-tab-group>
+        <div class="flex border-b border-slate-700">
+          <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">curl</button>
+          <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">Node.js</button>
+        </div>
+        <pre data-tab-content="curl" style="display:none" phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500"># Create via API or dashboard</span>
+{
   <span class="text-sky-300">"name"</span>: <span class="text-green-300">"process-renewals"</span>,
   <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/billing/renewals"</span>,
   <span class="text-sky-300">"schedule_type"</span>: <span class="text-green-300">"cron"</span>,
   <span class="text-sky-300">"cron_expression"</span>: <span class="text-green-300">"0 6 * * *"</span>
 }</pre>
+        <pre data-tab-content="js" phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500">// Process recurring billing daily at 6 AM UTC</span>
+<span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } from <span class="text-green-300">"runlater-js"</span>
+<span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
+
+<span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">cron</span>(<span class="text-green-300">"subscription-renewals"</span>, {
+  <span class="text-sky-300">url</span>: <span class="text-green-300">"https://myapp.com/api/billing/renewals"</span>,
+  <span class="text-sky-300">schedule</span>: <span class="text-green-300">"0 6 * * *"</span>
+})</pre>
+      </div>
     </div>
 
     <div class="glass-card rounded-2xl overflow-hidden">
@@ -274,15 +326,27 @@
         <h3 class="text-lg font-semibold text-slate-900 m-0">Database Cleanup</h3>
         <p class="text-slate-600 text-sm mt-1 mb-0">Clean up old sessions every night at 2 AM.</p>
       </div>
-      <pre
-        phx-no-curly-interpolation
-        class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
-      >{
+      <div data-tab-group>
+        <div class="flex border-b border-slate-700">
+          <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">curl</button>
+          <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">Node.js</button>
+        </div>
+        <pre data-tab-content="curl" style="display:none" phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500"># Create via API or dashboard</span>
+{
   <span class="text-sky-300">"name"</span>: <span class="text-green-300">"cleanup-sessions"</span>,
   <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/maintenance/cleanup"</span>,
   <span class="text-sky-300">"schedule_type"</span>: <span class="text-green-300">"cron"</span>,
   <span class="text-sky-300">"cron_expression"</span>: <span class="text-green-300">"0 2 * * *"</span>
 }</pre>
+        <pre data-tab-content="js" phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500">// Clean up old sessions every night at 2 AM</span>
+<span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } from <span class="text-green-300">"runlater-js"</span>
+<span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
+
+<span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">cron</span>(<span class="text-green-300">"db-cleanup"</span>, {
+  <span class="text-sky-300">url</span>: <span class="text-green-300">"https://myapp.com/api/maintenance/cleanup"</span>,
+  <span class="text-sky-300">schedule</span>: <span class="text-green-300">"0 2 * * *"</span>
+})</pre>
+      </div>
     </div>
 
     <div class="glass-card rounded-2xl overflow-hidden">
@@ -293,15 +357,27 @@
         <h3 class="text-lg font-semibold text-slate-900 m-0">Health Checks</h3>
         <p class="text-slate-600 text-sm mt-1 mb-0">Monitor external APIs every 15 minutes.</p>
       </div>
-      <pre
-        phx-no-curly-interpolation
-        class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
-      >{
+      <div data-tab-group>
+        <div class="flex border-b border-slate-700">
+          <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">curl</button>
+          <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">Node.js</button>
+        </div>
+        <pre data-tab-content="curl" style="display:none" phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500"># Create via API or dashboard</span>
+{
   <span class="text-sky-300">"name"</span>: <span class="text-green-300">"healthcheck-stripe"</span>,
   <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/health/stripe"</span>,
   <span class="text-sky-300">"schedule_type"</span>: <span class="text-green-300">"cron"</span>,
   <span class="text-sky-300">"cron_expression"</span>: <span class="text-green-300">"*/15 * * * *"</span>
 }</pre>
+        <pre data-tab-content="js" phx-no-curly-interpolation class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"><span class="text-slate-500">// Monitor external APIs every 15 minutes</span>
+<span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } from <span class="text-green-300">"runlater-js"</span>
+<span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
+
+<span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">cron</span>(<span class="text-green-300">"health-check"</span>, {
+  <span class="text-sky-300">url</span>: <span class="text-green-300">"https://myapp.com/api/health/stripe"</span>,
+  <span class="text-sky-300">schedule</span>: <span class="text-green-300">"*/15 * * * *"</span>
+})</pre>
+      </div>
     </div>
   </div>
 

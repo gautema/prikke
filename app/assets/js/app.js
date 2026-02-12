@@ -68,6 +68,23 @@ document.addEventListener("click", (e) => {
 })
 
 
+// Code example tab switching (curl / Node.js SDK)
+document.addEventListener("click", (e) => {
+  const tab = e.target.closest("[data-tab]")
+  if (!tab) return
+  const group = tab.closest("[data-tab-group]")
+  group.querySelectorAll("[data-tab]").forEach(t => {
+    t.classList.remove("text-emerald-400", "border-emerald-400")
+    t.classList.add("text-slate-500", "border-transparent")
+  })
+  tab.classList.add("text-emerald-400", "border-emerald-400")
+  tab.classList.remove("text-slate-500", "border-transparent")
+  const target = tab.dataset.tab
+  group.querySelectorAll("[data-tab-content]").forEach(c => {
+    c.style.display = c.dataset.tabContent === target ? "" : "none"
+  })
+})
+
 // The lines below enable quality of life phoenix_live_reload
 // development features:
 //
