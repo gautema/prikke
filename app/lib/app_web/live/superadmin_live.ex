@@ -106,6 +106,11 @@ defmodule PrikkeWeb.SuperadminLive do
     throughput = Executions.throughput_per_minute(60)
     system_alerts = Prikke.Metrics.alerts()
 
+    # API response time metrics (from ETS, no DB queries)
+    api_percentiles = Prikke.ApiMetrics.percentiles()
+    api_by_group = Prikke.ApiMetrics.percentiles_by_group()
+    api_slowest = Prikke.ApiMetrics.slowest(10)
+
     socket
     |> assign(:metrics, metrics)
     |> assign(:metrics_history, metrics_history)
@@ -113,6 +118,9 @@ defmodule PrikkeWeb.SuperadminLive do
     |> assign(:queue_wait, queue_wait)
     |> assign(:throughput, throughput)
     |> assign(:system_alerts, system_alerts)
+    |> assign(:api_percentiles, api_percentiles)
+    |> assign(:api_by_group, api_by_group)
+    |> assign(:api_slowest, api_slowest)
     |> assign(:platform_stats, platform_stats)
     |> assign(:org_monthly_executions, org_monthly_executions)
     |> assign(:exec_stats, exec_stats)
@@ -503,6 +511,147 @@ defmodule PrikkeWeb.SuperadminLive do
         <% end %>
       </div>
       
+    <!-- API Response Times -->
+      <div class="glass-card rounded-2xl p-6 mb-8">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-semibold text-slate-900">API Response Times</h2>
+          <span class="text-xs text-slate-400">Last {@api_percentiles.count} requests</span>
+        </div>
+
+    <!-- Overall percentiles -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div>
+            <div class="text-xs text-slate-500">p50</div>
+            <div class={["text-lg font-bold", api_latency_color(@api_percentiles.p50)]}>
+              {format_api_duration(@api_percentiles.p50)}
+            </div>
+          </div>
+          <div>
+            <div class="text-xs text-slate-500">p95</div>
+            <div class={["text-lg font-bold", api_latency_color(@api_percentiles.p95)]}>
+              {format_api_duration(@api_percentiles.p95)}
+            </div>
+          </div>
+          <div>
+            <div class="text-xs text-slate-500">p99</div>
+            <div class={["text-lg font-bold", api_latency_color(@api_percentiles.p99)]}>
+              {format_api_duration(@api_percentiles.p99)}
+            </div>
+          </div>
+          <div>
+            <div class="text-xs text-slate-500">Requests tracked</div>
+            <div class="text-lg font-bold text-slate-900">{@api_percentiles.count}</div>
+          </div>
+        </div>
+
+    <!-- Per-group breakdown -->
+        <%= if @api_by_group != [] do %>
+          <div class="border-t border-white/50 pt-4 mb-4">
+            <div class="text-sm font-medium text-slate-700 mb-3">By Endpoint Group</div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full">
+                <thead>
+                  <tr class="border-b border-white/50">
+                    <th class="py-2 text-left text-xs font-medium text-slate-500">Group</th>
+                    <th class="py-2 text-right text-xs font-medium text-slate-500">Count</th>
+                    <th class="py-2 text-right text-xs font-medium text-slate-500">p50</th>
+                    <th class="py-2 text-right text-xs font-medium text-slate-500">p95</th>
+                    <th class="py-2 text-right text-xs font-medium text-slate-500">p99</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-white/30">
+                  <%= for group_stats <- @api_by_group do %>
+                    <tr>
+                      <td class="py-2 text-sm font-medium text-slate-900">
+                        {group_stats.group}
+                      </td>
+                      <td class="py-2 text-right text-sm font-mono text-slate-600">
+                        {group_stats.count}
+                      </td>
+                      <td class={[
+                        "py-2 text-right text-sm font-mono",
+                        api_latency_color(group_stats.p50)
+                      ]}>
+                        {format_api_duration(group_stats.p50)}
+                      </td>
+                      <td class={[
+                        "py-2 text-right text-sm font-mono",
+                        api_latency_color(group_stats.p95)
+                      ]}>
+                        {format_api_duration(group_stats.p95)}
+                      </td>
+                      <td class={[
+                        "py-2 text-right text-sm font-mono",
+                        api_latency_color(group_stats.p99)
+                      ]}>
+                        {format_api_duration(group_stats.p99)}
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        <% end %>
+
+    <!-- Slowest requests -->
+        <%= if @api_slowest != [] do %>
+          <div class="border-t border-white/50 pt-4">
+            <div class="text-sm font-medium text-slate-700 mb-3">Slowest Requests</div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full">
+                <thead>
+                  <tr class="border-b border-white/50">
+                    <th class="py-2 text-left text-xs font-medium text-slate-500">Method</th>
+                    <th class="py-2 text-left text-xs font-medium text-slate-500">Path</th>
+                    <th class="py-2 text-right text-xs font-medium text-slate-500">Status</th>
+                    <th class="py-2 text-right text-xs font-medium text-slate-500">Duration</th>
+                    <th class="py-2 text-right text-xs font-medium text-slate-500">When</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-white/30">
+                  <%= for req <- @api_slowest do %>
+                    <tr>
+                      <td class="py-2">
+                        <span class={[
+                          "text-xs px-2 py-0.5 rounded-full font-medium",
+                          api_method_class(req.method)
+                        ]}>
+                          {req.method}
+                        </span>
+                      </td>
+                      <td class="py-2 text-sm font-mono text-slate-600 truncate max-w-[300px]">
+                        {req.path}
+                      </td>
+                      <td class="py-2 text-right">
+                        <span class={[
+                          "text-sm font-mono",
+                          api_status_color(req.status)
+                        ]}>
+                          {req.status}
+                        </span>
+                      </td>
+                      <td class={[
+                        "py-2 text-right text-sm font-mono font-medium",
+                        api_latency_color(req.duration_us)
+                      ]}>
+                        {format_api_duration(req.duration_us)}
+                      </td>
+                      <td class="py-2 text-right text-xs text-slate-400 whitespace-nowrap">
+                        <.relative_time
+                          id={"api-slow-#{:erlang.phash2(req)}"}
+                          datetime={req.timestamp}
+                        />
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
     <!-- Execution Trend Chart -->
       <div class="glass-card rounded-2xl p-6 mb-8">
         <h2 class="text-lg font-semibold text-slate-900 mb-4">Execution Trend (14 days)</h2>
@@ -1007,6 +1156,30 @@ defmodule PrikkeWeb.SuperadminLive do
   defp success_rate_color(rate) when rate >= 95, do: "text-emerald-600"
   defp success_rate_color(rate) when rate >= 80, do: "text-amber-600"
   defp success_rate_color(_), do: "text-red-600"
+
+  defp format_api_duration(0), do: "-"
+  defp format_api_duration(us) when us < 1000, do: "#{us}us"
+  defp format_api_duration(us) when us < 1_000_000, do: "#{Float.round(us / 1000, 1)}ms"
+  defp format_api_duration(us), do: "#{Float.round(us / 1_000_000, 1)}s"
+
+  # Color based on microseconds: <10ms green, <100ms normal, <500ms amber, >500ms red
+  defp api_latency_color(0), do: "text-slate-400"
+  defp api_latency_color(us) when us < 10_000, do: "text-emerald-600"
+  defp api_latency_color(us) when us < 100_000, do: "text-slate-900"
+  defp api_latency_color(us) when us < 500_000, do: "text-amber-600"
+  defp api_latency_color(_us), do: "text-red-600"
+
+  defp api_method_class("GET"), do: "bg-blue-100 text-blue-700"
+  defp api_method_class("POST"), do: "bg-emerald-100 text-emerald-700"
+  defp api_method_class("PUT"), do: "bg-amber-100 text-amber-700"
+  defp api_method_class("PATCH"), do: "bg-amber-100 text-amber-700"
+  defp api_method_class("DELETE"), do: "bg-red-100 text-red-700"
+  defp api_method_class(_), do: "bg-slate-100 text-slate-600"
+
+  defp api_status_color(status) when status >= 200 and status < 300, do: "text-emerald-600"
+  defp api_status_color(status) when status >= 400 and status < 500, do: "text-amber-600"
+  defp api_status_color(status) when status >= 500, do: "text-red-600"
+  defp api_status_color(_), do: "text-slate-600"
 
   defp format_duration(nil), do: nil
   defp format_duration(ms) when ms < 1000, do: "#{ms}ms"

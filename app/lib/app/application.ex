@@ -59,7 +59,8 @@ defmodule Prikke.Application do
           Prikke.Cleanup,
           Prikke.StatusMonitor,
           Prikke.MonitorChecker,
-          Prikke.Metrics
+          Prikke.Metrics,
+          Prikke.ApiMetrics
         ]
     end
   end
