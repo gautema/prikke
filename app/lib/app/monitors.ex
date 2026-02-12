@@ -307,7 +307,7 @@ defmodule Prikke.Monitors do
     expected_interval = get_expected_interval_seconds(monitor)
     if expected_interval == 0, do: throw(:no_interval)
 
-    threshold = expected_interval + min(monitor.grace_period_seconds, expected_interval)
+    threshold = expected_interval + monitor.grace_period_seconds
 
     {:ok, monitor_id_binary} = Ecto.UUID.dump(monitor.id)
 
