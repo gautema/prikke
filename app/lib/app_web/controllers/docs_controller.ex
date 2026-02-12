@@ -45,4 +45,8 @@ defmodule PrikkeWeb.DocsController do
   def badges(conn, _params) do
     render(conn, :badges, page_title: "Status Badges")
   end
+
+  def status_pages(conn, _params) do
+    render(conn, :status_pages, page_title: "Status Pages")
+  end
 end

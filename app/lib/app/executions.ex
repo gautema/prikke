@@ -674,6 +674,31 @@ defmodule Prikke.Executions do
     end)
   end
 
+  @doc """
+  Returns the uptime percentage for a task over the given number of days.
+  Calculated as successful executions / total completed executions.
+  Returns nil if there are no executions.
+  """
+  def task_uptime_percentage(task, days \\ 30) do
+    since = DateTime.utc_now() |> DateTime.add(-days, :day)
+
+    stats =
+      from(e in Execution,
+        where: e.task_id == ^task.id and e.scheduled_for >= ^since,
+        where: e.status in ["success", "failed", "timeout"],
+        select: %{
+          total: count(),
+          success: count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status))
+        }
+      )
+      |> Repo.one()
+
+    case stats do
+      %{total: 0} -> nil
+      %{total: total, success: success} -> Float.round(success / total * 100, 2)
+    end
+  end
+
   def executions_by_day_for_org(organization, days \\ 14) do
     since = DateTime.utc_now() |> DateTime.add(-days, :day)
     today = Date.utc_today()

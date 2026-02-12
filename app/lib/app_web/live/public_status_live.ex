@@ -75,7 +75,7 @@ defmodule PrikkeWeb.PublicStatusLive do
 
         <%!-- Resources --%>
         <div class="space-y-3">
-          <%= for {task, status_label, daily_status} <- @task_data do %>
+          <%= for {task, status_label, daily_status, uptime} <- @task_data do %>
             <div class="bg-white rounded-xl border border-slate-200 p-4">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
@@ -83,9 +83,16 @@ defmodule PrikkeWeb.PublicStatusLive do
                   <span class="text-sm font-medium text-slate-900">{task.name}</span>
                   <span class="text-xs text-slate-400">Task</span>
                 </div>
-                <span class={["text-xs font-medium px-2 py-0.5 rounded", status_pill(status_label)]}>
-                  {status_label}
-                </span>
+                <div class="flex items-center gap-2">
+                  <%= if uptime do %>
+                    <span class={["text-xs font-semibold tabular-nums", uptime_color(uptime)]}>
+                      {format_uptime(uptime)}
+                    </span>
+                  <% end %>
+                  <span class={["text-xs font-medium px-2 py-0.5 rounded", status_pill(status_label)]}>
+                    {status_label}
+                  </span>
+                </div>
               </div>
               <%= if daily_status != [] do %>
                 <.task_bars days={daily_status} />
@@ -93,7 +100,7 @@ defmodule PrikkeWeb.PublicStatusLive do
             </div>
           <% end %>
 
-          <%= for {monitor, status_label, daily_status} <- @monitor_data do %>
+          <%= for {monitor, status_label, daily_status, uptime} <- @monitor_data do %>
             <div class="bg-white rounded-xl border border-slate-200 p-4">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
@@ -101,9 +108,16 @@ defmodule PrikkeWeb.PublicStatusLive do
                   <span class="text-sm font-medium text-slate-900">{monitor.name}</span>
                   <span class="text-xs text-slate-400">Monitor</span>
                 </div>
-                <span class={["text-xs font-medium px-2 py-0.5 rounded", status_pill(status_label)]}>
-                  {status_label}
-                </span>
+                <div class="flex items-center gap-2">
+                  <%= if uptime do %>
+                    <span class={["text-xs font-semibold tabular-nums", uptime_color(uptime)]}>
+                      {format_uptime(uptime)}
+                    </span>
+                  <% end %>
+                  <span class={["text-xs font-medium px-2 py-0.5 rounded", status_pill(status_label)]}>
+                    {status_label}
+                  </span>
+                </div>
               </div>
               <%= if daily_status != [] do %>
                 <.monitor_bars days={daily_status} />
@@ -191,16 +205,18 @@ defmodule PrikkeWeb.PublicStatusLive do
   defp load_task_data(tasks) do
     Enum.map(tasks, fn task ->
       daily_status = Executions.get_daily_status_for_task(task, 30)
+      uptime = Executions.task_uptime_percentage(task, 30)
       {label, _color} = task_status(task)
-      {task, label, daily_status}
+      {task, label, daily_status, uptime}
     end)
   end
 
   defp load_monitor_data(monitors) do
     Enum.map(monitors, fn monitor ->
       daily_status = Monitors.get_daily_status([monitor], 30) |> Map.get(monitor.id, [])
+      uptime = Monitors.monitor_uptime_percentage(monitor, 30)
       {label, _color} = monitor_status(monitor)
-      {monitor, label, daily_status}
+      {monitor, label, daily_status, uptime}
     end)
   end
 
@@ -252,8 +268,8 @@ defmodule PrikkeWeb.PublicStatusLive do
 
   defp compute_overall_status(task_data, monitor_data, endpoint_data) do
     statuses =
-      Enum.map(task_data, fn {_, label, _} -> label end) ++
-        Enum.map(monitor_data, fn {_, label, _} -> label end) ++
+      Enum.map(task_data, fn {_, label, _, _} -> label end) ++
+        Enum.map(monitor_data, fn {_, label, _, _} -> label end) ++
         Enum.map(endpoint_data, fn {_, label} -> label end)
 
     cond do
@@ -312,4 +328,12 @@ defmodule PrikkeWeb.PublicStatusLive do
   defp day_status_label("degraded"), do: "Degraded"
   defp day_status_label("down"), do: "Down"
   defp day_status_label(_), do: "No data"
+
+  defp format_uptime(percent) when percent == 100.0, do: "100%"
+  defp format_uptime(percent), do: "#{percent}%"
+
+  defp uptime_color(percent) when percent >= 99.9, do: "text-emerald-600"
+  defp uptime_color(percent) when percent >= 99.0, do: "text-emerald-600"
+  defp uptime_color(percent) when percent >= 95.0, do: "text-amber-600"
+  defp uptime_color(_), do: "text-red-600"
 end

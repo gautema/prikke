@@ -1,0 +1,76 @@
+<.docs_layout current_scope={@current_scope}>
+  <h1>Status Pages</h1>
+  <p class="text-xl text-slate-600 mb-10">
+    Give your customers a public status page showing the health of your services. No code required.
+  </p>
+
+  <h2>Overview</h2>
+  <p>
+    Each organization can create a public status page at a custom URL like
+    <code>runlater.eu/s/your-company</code>. The page shows the live status of your
+    tasks, monitors, and endpoints &mdash; with 30-day uptime bars for each resource.
+  </p>
+  <p>
+    Status pages are updated automatically. When a task fails or a monitor goes down,
+    the page reflects it immediately. No manual incident management needed.
+  </p>
+
+  <h2>Setting Up</h2>
+  <ol>
+    <li>Go to <strong>Status Page</strong> from the organization menu</li>
+    <li>Enter a title, optional description, and choose a URL slug</li>
+    <li>Toggle the page to <strong>Enabled</strong></li>
+    <li>Choose which resources to show by toggling visibility for each task, monitor, and endpoint</li>
+  </ol>
+
+  <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded-r-lg my-6">
+    <p class="m-0 text-sm text-emerald-800">
+      <strong>Tip:</strong> Only resources with badges enabled will appear on the status page.
+      Enable badges from the Status Page settings &mdash; no need to visit each resource individually.
+    </p>
+  </div>
+
+  <h2>What Visitors See</h2>
+  <p>Your status page shows:</p>
+  <ul>
+    <li><strong>Overall status banner</strong> &mdash; "All systems operational", "Partial outage", or "Major outage" based on all visible resources</li>
+    <li><strong>Task cards</strong> &mdash; 30-day daily execution bars. Green = all passed, red = any failures, grey = no executions</li>
+    <li><strong>Monitor cards</strong> &mdash; 30-day daily uptime bars. Green = operational, amber = degraded, red = down</li>
+    <li><strong>Endpoint cards</strong> &mdash; current status indicator</li>
+  </ul>
+  <p>
+    Each bar has a tooltip showing the date and details (e.g., "12 Feb 2026: All 5 passed").
+  </p>
+
+  <h2>Visibility Controls</h2>
+  <p>
+    You have full control over which resources appear on your status page.
+    From the Status Page settings, toggle each task, monitor, and endpoint
+    between <strong>Visible</strong> and <strong>Hidden</strong>.
+  </p>
+  <p>
+    Hidden resources won't appear on the public page. You can change visibility at any time
+    without affecting the resource itself.
+  </p>
+
+  <h2>URL and Sharing</h2>
+  <p>
+    Your status page lives at <code>runlater.eu/s/YOUR-SLUG</code>. Choose a slug that matches
+    your company or product name. The URL is shareable &mdash; send it to customers, link it from
+    your docs, or add it to your footer.
+  </p>
+
+  <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg my-6">
+    <p class="m-0 text-sm text-amber-800">
+      <strong>Note:</strong> Changing the slug will break any existing links to the old URL.
+      Choose a slug you plan to keep.
+    </p>
+  </div>
+
+  <h2>Disabling</h2>
+  <p>
+    Toggle the status page to <strong>Disabled</strong> to take it offline. Visitors will see
+    a "Status page not found" message. Your configuration and visibility settings are preserved
+    so you can re-enable it at any time.
+  </p>
+</.docs_layout>

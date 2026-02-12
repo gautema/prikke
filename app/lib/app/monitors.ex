@@ -202,6 +202,41 @@ defmodule Prikke.Monitors do
   end
 
   @doc """
+  Returns the uptime percentage for a monitor over the given number of days.
+  Calculated as actual pings received / expected pings, with minute resolution.
+  Returns nil if no pings are expected.
+  """
+  def monitor_uptime_percentage(%Monitor{} = monitor, days \\ 30) do
+    since = DateTime.utc_now() |> DateTime.add(-days, :day)
+
+    actual_pings =
+      from(p in MonitorPing,
+        where: p.monitor_id == ^monitor.id and p.received_at >= ^since,
+        select: count()
+      )
+      |> Repo.one()
+
+    daily_expected = expected_daily_pings(monitor)
+
+    if daily_expected == 0 do
+      nil
+    else
+      # Scale for partial first/last day
+      created_at = monitor.inserted_at
+      start_time = if DateTime.compare(created_at, since) == :gt, do: created_at, else: since
+      minutes_monitored = DateTime.diff(DateTime.utc_now(), start_time, :minute)
+      expected_total = minutes_monitored / (86400 / daily_expected / 60)
+
+      if expected_total <= 0 do
+        nil
+      else
+        percent = min(actual_pings / expected_total * 100, 100.0)
+        Float.round(percent, 2)
+      end
+    end
+  end
+
+  @doc """
   Lists all monitors with badges enabled for an organization.
   Used by status pages to show public resource status.
   """
