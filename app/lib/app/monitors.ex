@@ -201,6 +201,19 @@ defmodule Prikke.Monitors do
     |> Repo.update()
   end
 
+  @doc """
+  Lists all monitors with badges enabled for an organization.
+  Used by status pages to show public resource status.
+  """
+  def list_badge_enabled_monitors(%Organization{} = org) do
+    from(m in Monitor,
+      where: m.organization_id == ^org.id,
+      where: not is_nil(m.badge_token),
+      order_by: [asc: m.name]
+    )
+    |> Repo.all()
+  end
+
   ## Ping Handling
 
   def record_ping!(token) do

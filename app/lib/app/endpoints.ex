@@ -220,6 +220,19 @@ defmodule Prikke.Endpoints do
     |> Repo.update()
   end
 
+  @doc """
+  Lists all endpoints with badges enabled for an organization.
+  Used by status pages to show public resource status.
+  """
+  def list_badge_enabled_endpoints(%Organization{} = org) do
+    from(e in Endpoint,
+      where: e.organization_id == ^org.id,
+      where: not is_nil(e.badge_token),
+      order_by: [asc: e.name]
+    )
+    |> Repo.all()
+  end
+
   def get_last_event_status(%Endpoint{} = endpoint) do
     from(e in InboundEvent,
       where: e.endpoint_id == ^endpoint.id,

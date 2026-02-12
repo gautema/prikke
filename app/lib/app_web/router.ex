@@ -50,6 +50,16 @@ defmodule PrikkeWeb.Router do
     get "/presentation", PageController, :presentation
   end
 
+  # Public customer-facing status pages
+  scope "/", PrikkeWeb do
+    pipe_through :browser
+
+    live_session :public_status_page,
+      layout: {PrikkeWeb.Layouts, :root} do
+      live "/s/:slug", PublicStatusLive, :show
+    end
+  end
+
   # Health check endpoint for Koyeb
   scope "/health", PrikkeWeb do
     pipe_through :api
@@ -179,6 +189,8 @@ defmodule PrikkeWeb.Router do
       live "/endpoints/new", EndpointLive.New, :new
       live "/endpoints/:id", EndpointLive.Show, :show
       live "/endpoints/:id/edit", EndpointLive.Edit, :edit
+
+      live "/status-page", StatusLive.Index, :index
     end
 
     get "/users/settings", UserSettingsController, :edit

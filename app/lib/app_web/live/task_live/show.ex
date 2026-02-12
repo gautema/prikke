@@ -205,32 +205,6 @@ defmodule PrikkeWeb.TaskLive.Show do
     {:noreply, assign(socket, :test_result, nil)}
   end
 
-  def handle_event("enable_badge", _, socket) do
-    org = socket.assigns.organization
-    task = socket.assigns.task
-
-    case Tasks.enable_badge(org, task) do
-      {:ok, updated_task} ->
-        {:noreply, assign(socket, :task, updated_task)}
-
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Failed to enable badge")}
-    end
-  end
-
-  def handle_event("disable_badge", _, socket) do
-    org = socket.assigns.organization
-    task = socket.assigns.task
-
-    case Tasks.disable_badge(org, task) do
-      {:ok, updated_task} ->
-        {:noreply, assign(socket, :task, updated_task)}
-
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Failed to disable badge")}
-    end
-  end
-
   def handle_event("delete", _, socket) do
     {:ok, _} =
       Tasks.delete_task(socket.assigns.organization, socket.assigns.task,
@@ -541,65 +515,28 @@ defmodule PrikkeWeb.TaskLive.Show do
             </div>
           </div>
 
-    <!-- Badge (cron tasks only) -->
+    <!-- Badge -->
           <%= if @task.schedule_type == "cron" do %>
             <div>
               <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">
                 Public Badge
               </h3>
               <div class="bg-white/30 rounded-xl p-3 sm:p-4">
-                <%= if @task.badge_token do %>
-                  <div class="space-y-4">
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-2">
-                        <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
-                          Enabled
-                        </span>
-                        <span class="text-sm text-slate-500">
-                          Badge is publicly accessible
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        phx-click="disable_badge"
-                        class="text-sm text-red-600 hover:text-red-700 cursor-pointer"
-                      >
-                        Disable
-                      </button>
-                    </div>
-                    <div>
-                      <p class="text-xs text-slate-500 uppercase mb-2">Status badge</p>
-                      <div class="flex items-center gap-3 mb-2">
-                        <img src={"https://#{@host}/badge/task/#{@task.badge_token}/status.svg"} alt="Status badge" class="h-5" />
-                      </div>
-                      <div class="bg-slate-100 rounded p-2">
-                        <code class="text-xs text-slate-700 break-all select-all">![Status](https://{@host}/badge/task/{@task.badge_token}/status.svg)</code>
-                      </div>
-                    </div>
-                    <div>
-                      <p class="text-xs text-slate-500 uppercase mb-2">Uptime bars</p>
-                      <div class="flex items-center gap-3 mb-2">
-                        <img src={"https://#{@host}/badge/task/#{@task.badge_token}/uptime.svg"} alt="Uptime badge" class="h-5" />
-                      </div>
-                      <div class="bg-slate-100 rounded p-2">
-                        <code class="text-xs text-slate-700 break-all select-all">![Uptime](https://{@host}/badge/task/{@task.badge_token}/uptime.svg)</code>
-                      </div>
-                    </div>
-                  </div>
-                <% else %>
-                  <div class="flex items-center justify-between">
-                    <p class="text-sm text-slate-500">
-                      Enable a public badge to embed status in READMEs or status pages.
-                    </p>
-                    <button
-                      type="button"
-                      phx-click="enable_badge"
-                      class="px-3 py-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-md transition-colors cursor-pointer"
-                    >
-                      Enable Badge
-                    </button>
-                  </div>
-                <% end %>
+                <div class="flex items-center justify-between">
+                  <p class="text-sm text-slate-500">
+                    <%= if @task.badge_token do %>
+                      Badge is enabled and publicly visible.
+                    <% else %>
+                      Enable badges and manage your public status page.
+                    <% end %>
+                  </p>
+                  <.link
+                    navigate={~p"/status-page"}
+                    class="text-sm font-medium text-emerald-600 hover:text-emerald-700"
+                  >
+                    Manage in Status page
+                  </.link>
+                </div>
               </div>
             </div>
           <% end %>

@@ -681,6 +681,20 @@ defmodule Prikke.Tasks do
     |> Repo.update()
   end
 
+  @doc """
+  Lists all cron tasks with badges enabled for an organization.
+  Used by status pages to show public resource status.
+  """
+  def list_badge_enabled_tasks(%Organization{} = org) do
+    from(t in Task,
+      where: t.organization_id == ^org.id,
+      where: not is_nil(t.badge_token),
+      where: t.schedule_type == "cron",
+      order_by: [asc: t.name]
+    )
+    |> Repo.all()
+  end
+
   ## Platform-wide Stats (for superadmin)
 
   @doc """
