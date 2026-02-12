@@ -54,8 +54,8 @@ defmodule Prikke.Badges do
 
   Shows the endpoint name and enabled/disabled status.
   """
-  def endpoint_status_badge(endpoint) do
-    {label, color} = endpoint_status(endpoint)
+  def endpoint_status_badge(endpoint, last_status \\ nil) do
+    {label, color} = endpoint_status(endpoint, last_status)
     flat_badge(endpoint.name, label, color)
   end
 
@@ -86,8 +86,18 @@ defmodule Prikke.Badges do
     end
   end
 
-  defp endpoint_status(%{enabled: true}), do: {"active", "#10b981"}
-  defp endpoint_status(%{enabled: false}), do: {"disabled", "#94a3b8"}
+  defp endpoint_status(%{enabled: false}, _last_status), do: {"disabled", "#94a3b8"}
+
+  defp endpoint_status(_endpoint, last_status) do
+    case last_status do
+      "success" -> {"passing", "#10b981"}
+      "failed" -> {"failing", "#ef4444"}
+      "timeout" -> {"timeout", "#f97316"}
+      "running" -> {"running", "#3b82f6"}
+      "pending" -> {"pending", "#94a3b8"}
+      _ -> {"no data", "#94a3b8"}
+    end
+  end
 
   # -- SVG generators --
 

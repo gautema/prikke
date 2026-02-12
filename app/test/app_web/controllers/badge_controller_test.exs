@@ -109,7 +109,35 @@ defmodule PrikkeWeb.BadgeControllerTest do
       conn = get(conn, "/badge/endpoint/#{endpoint.badge_token}/status.svg")
 
       assert response(conn, 200) =~ "<svg"
-      assert response(conn, 200) =~ "active"
+      assert response(conn, 200) =~ "no data"
+    end
+
+    test "shows passing when last event succeeded", %{conn: conn, org: org} do
+      endpoint = endpoint_fixture(org)
+      {:ok, endpoint} = Endpoints.enable_badge(org, endpoint)
+
+      # Create an inbound event with a successful execution
+      Endpoints.receive_event(endpoint, %{
+        headers: %{},
+        body: "test",
+        method: "POST",
+        source_ip: "127.0.0.1"
+      })
+
+      # Get the event and complete its execution
+      [event] = Endpoints.list_inbound_events(endpoint, limit: 1)
+
+      if event.execution do
+        Prikke.Executions.complete_execution(event.execution, %{
+          status_code: 200,
+          response_body: "ok",
+          duration_ms: 50
+        })
+      end
+
+      conn = get(conn, "/badge/endpoint/#{endpoint.badge_token}/status.svg")
+
+      assert response(conn, 200) =~ "passing"
     end
 
     test "returns 404 SVG for unknown token", %{conn: conn} do

@@ -93,12 +93,25 @@ defmodule Prikke.BadgesTest do
     end
   end
 
-  describe "endpoint_status_badge/1" do
-    test "shows active for enabled endpoint" do
+  describe "endpoint_status_badge/2" do
+    test "shows passing when last event succeeded" do
+      endpoint = %{name: "My Endpoint", enabled: true}
+      svg = Badges.endpoint_status_badge(endpoint, "success")
+      assert svg =~ "passing"
+      assert svg =~ "#10b981"
+    end
+
+    test "shows failing when last event failed" do
+      endpoint = %{name: "My Endpoint", enabled: true}
+      svg = Badges.endpoint_status_badge(endpoint, "failed")
+      assert svg =~ "failing"
+      assert svg =~ "#ef4444"
+    end
+
+    test "shows no data when no events" do
       endpoint = %{name: "My Endpoint", enabled: true}
       svg = Badges.endpoint_status_badge(endpoint)
-      assert svg =~ "active"
-      assert svg =~ "#10b981"
+      assert svg =~ "no data"
     end
 
     test "shows disabled for disabled endpoint" do

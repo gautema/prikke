@@ -54,8 +54,12 @@ defmodule PrikkeWeb.BadgeController do
 
   def endpoint_status(conn, %{"token" => token}) do
     case Endpoints.get_endpoint_by_badge_token(token) do
-      nil -> send_not_found_badge(conn)
-      endpoint -> send_svg(conn, Badges.endpoint_status_badge(endpoint))
+      nil ->
+        send_not_found_badge(conn)
+
+      endpoint ->
+        last_status = Endpoints.get_last_event_status(endpoint)
+        send_svg(conn, Badges.endpoint_status_badge(endpoint, last_status))
     end
   end
 

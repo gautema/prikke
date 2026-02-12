@@ -220,6 +220,21 @@ defmodule Prikke.Endpoints do
     |> Repo.update()
   end
 
+  def get_last_event_status(%Endpoint{} = endpoint) do
+    from(e in InboundEvent,
+      where: e.endpoint_id == ^endpoint.id,
+      order_by: [desc: e.received_at],
+      limit: 1,
+      preload: [:execution]
+    )
+    |> Repo.one()
+    |> case do
+      nil -> nil
+      %{execution: nil} -> "pending"
+      %{execution: execution} -> execution.status
+    end
+  end
+
   ## Inbound Events
 
   def list_inbound_events(%Endpoint{} = endpoint, opts \\ []) do
