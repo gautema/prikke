@@ -317,6 +317,15 @@ defmodule PrikkeWeb.EndpointLive.Show do
                 <code class="text-xs text-slate-700 break-all select-all">![Status](https://{@host}/badge/endpoint/{@endpoint.badge_token}/status.svg)</code>
               </div>
             </div>
+            <div>
+              <p class="text-xs text-slate-500 uppercase mb-2">Uptime bars</p>
+              <div class="flex items-center gap-3 mb-2">
+                <img src={"https://#{@host}/badge/endpoint/#{@endpoint.badge_token}/uptime.svg"} alt="Uptime badge" class="h-5" />
+              </div>
+              <div class="bg-slate-100 rounded p-2">
+                <code class="text-xs text-slate-700 break-all select-all">![Uptime](https://{@host}/badge/endpoint/{@endpoint.badge_token}/uptime.svg)</code>
+              </div>
+            </div>
           </div>
         <% else %>
           <div class="flex items-center justify-between">

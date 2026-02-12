@@ -119,6 +119,23 @@ defmodule PrikkeWeb.BadgeControllerTest do
     end
   end
 
+  describe "GET /badge/endpoint/:token/uptime.svg" do
+    test "returns uptime bars SVG", %{conn: conn, org: org} do
+      endpoint = endpoint_fixture(org)
+      {:ok, endpoint} = Endpoints.enable_badge(org, endpoint)
+
+      conn = get(conn, "/badge/endpoint/#{endpoint.badge_token}/uptime.svg")
+
+      assert response(conn, 200) =~ "<svg"
+    end
+
+    test "returns 404 SVG for unknown token", %{conn: conn} do
+      conn = get(conn, "/badge/endpoint/bt_nonexistent000000000000/uptime.svg")
+
+      assert response(conn, 404) =~ "not found"
+    end
+  end
+
   describe "badge token lifecycle" do
     test "task badge not accessible after disabling", %{conn: conn, org: org} do
       task = task_fixture(org)

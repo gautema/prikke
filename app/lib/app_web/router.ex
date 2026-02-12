@@ -80,6 +80,7 @@ defmodule PrikkeWeb.Router do
     get "/monitor/:token/status.svg", BadgeController, :monitor_status
     get "/monitor/:token/uptime.svg", BadgeController, :monitor_uptime
     get "/endpoint/:token/status.svg", BadgeController, :endpoint_status
+    get "/endpoint/:token/uptime.svg", BadgeController, :endpoint_uptime
   end
 
   # Inbound webhook endpoint (public, slug is auth)

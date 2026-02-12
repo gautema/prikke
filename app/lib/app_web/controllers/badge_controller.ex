@@ -59,6 +59,25 @@ defmodule PrikkeWeb.BadgeController do
     end
   end
 
+  def endpoint_uptime(conn, %{"token" => token}) do
+    case Endpoints.get_endpoint_by_badge_token(token) do
+      nil ->
+        send_not_found_badge(conn)
+
+      endpoint ->
+        events = Endpoints.list_inbound_events(endpoint, limit: 50)
+
+        statuses =
+          events
+          |> Enum.reverse()
+          |> Enum.map(fn event ->
+            if event.execution, do: event.execution.status, else: "pending"
+          end)
+
+        send_svg(conn, Badges.uptime_bars(endpoint.name, statuses))
+    end
+  end
+
   # -- Helpers --
 
   defp send_svg(conn, svg) do
