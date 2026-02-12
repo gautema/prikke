@@ -6,7 +6,7 @@
 
   <h2>Overview</h2>
   <p>
-    Every task, monitor, and endpoint can have a public badge enabled from its detail page.
+    Every recurring task (cron), monitor, and endpoint can have a public badge enabled from its detail page.
     When enabled, a unique token is generated and two SVG badge URLs become available:
   </p>
   <ul>
@@ -20,7 +20,7 @@
 
   <h2>Enabling a Badge</h2>
   <ol>
-    <li>Open the detail page of a task, monitor, or endpoint</li>
+    <li>Open the detail page of a recurring task, monitor, or endpoint</li>
     <li>Scroll to the <strong>Public Badge</strong> section</li>
     <li>Click <strong>Enable Badge</strong></li>
     <li>Copy the markdown or URL from the embed snippets</li>
@@ -31,7 +31,7 @@
     Once enabled, your badges are available at these URLs (replace <code>TOKEN</code> with the generated token):
   </p>
 
-  <h3>Task badges</h3>
+  <h3>Task badges (cron only)</h3>
   <pre class="bg-slate-900 text-slate-100 p-4 font-mono text-sm leading-relaxed overflow-x-auto rounded-lg">https://runlater.eu/badge/task/TOKEN/status.svg
 https://runlater.eu/badge/task/TOKEN/uptime.svg</pre>
 
@@ -66,7 +66,7 @@ https://runlater.eu/badge/endpoint/TOKEN/uptime.svg</pre>
     </thead>
     <tbody>
       <tr class="border-t border-slate-100">
-        <td class="py-2 px-3">Task</td>
+        <td class="py-2 px-3">Task (cron)</td>
         <td class="py-2 px-3">
           <span class="text-emerald-600">passing</span>,
           <span class="text-red-600">failing</span>,
@@ -89,8 +89,12 @@ https://runlater.eu/badge/endpoint/TOKEN/uptime.svg</pre>
       <tr class="border-t border-slate-100">
         <td class="py-2 px-3">Endpoint</td>
         <td class="py-2 px-3">
-          <span class="text-emerald-600">active</span>,
-          <span class="text-slate-500">disabled</span>
+          <span class="text-emerald-600">passing</span>,
+          <span class="text-red-600">failing</span>,
+          <span class="text-orange-500">timeout</span>,
+          <span class="text-blue-600">running</span>,
+          <span class="text-slate-500">disabled</span>,
+          <span class="text-slate-400">no data</span>
         </td>
       </tr>
     </tbody>
@@ -99,7 +103,7 @@ https://runlater.eu/badge/endpoint/TOKEN/uptime.svg</pre>
   <h3>Uptime bars</h3>
   <p>A horizontal bar chart showing recent history. Each bar represents:</p>
   <ul>
-    <li><strong>Tasks</strong> &mdash; one bar per execution (last 50). Green = success, red = failed, orange = timeout.</li>
+    <li><strong>Tasks (cron)</strong> &mdash; one bar per execution (last 50). Green = success, red = failed, orange = timeout.</li>
     <li><strong>Monitors</strong> &mdash; one bar per day (last 30 days). Green = up, orange = degraded, red = down.</li>
     <li><strong>Endpoints</strong> &mdash; one bar per inbound event (last 50). Color reflects forwarding execution status.</li>
   </ul>
