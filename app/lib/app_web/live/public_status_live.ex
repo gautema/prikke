@@ -75,7 +75,7 @@ defmodule PrikkeWeb.PublicStatusLive do
 
         <%!-- Resources --%>
         <div class="space-y-3">
-          <%= for {task, status_label, executions} <- @task_data do %>
+          <%= for {task, status_label, daily_status} <- @task_data do %>
             <div class="bg-white rounded-xl border border-slate-200 p-4">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
@@ -87,8 +87,8 @@ defmodule PrikkeWeb.PublicStatusLive do
                   {status_label}
                 </span>
               </div>
-              <%= if executions != [] do %>
-                <.execution_bars executions={executions} />
+              <%= if daily_status != [] do %>
+                <.task_bars days={daily_status} />
               <% end %>
             </div>
           <% end %>
@@ -142,23 +142,23 @@ defmodule PrikkeWeb.PublicStatusLive do
     """
   end
 
-  defp execution_bars(assigns) do
+  defp task_bars(assigns) do
     ~H"""
     <div>
       <div class="flex gap-0.5">
-        <%= for execution <- Enum.reverse(@executions) do %>
+        <%= for {date, %{status: status, total: total, failed: failed}} <- @days do %>
           <div
             class={[
               "flex-1 h-8 rounded-sm transition-opacity hover:opacity-80",
-              execution_bar_color(execution.status)
+              task_bar_color(status)
             ]}
-            title={"#{Calendar.strftime(execution.inserted_at, "%d %b %Y %H:%M")}: #{execution_status_label(execution.status)}"}
+            title={"#{Calendar.strftime(date, "%d %b %Y")}: #{task_day_label(status, total, failed)}"}
           />
         <% end %>
       </div>
       <div class="flex justify-between mt-2 text-xs text-slate-400">
-        <span>Oldest</span>
-        <span>Latest</span>
+        <span>30 days ago</span>
+        <span>Today</span>
       </div>
     </div>
     """
@@ -190,9 +190,9 @@ defmodule PrikkeWeb.PublicStatusLive do
 
   defp load_task_data(tasks) do
     Enum.map(tasks, fn task ->
-      executions = Executions.list_task_executions(task, limit: 50)
+      daily_status = Executions.get_daily_status_for_task(task, 30)
       {label, _color} = task_status(task)
-      {task, label, executions}
+      {task, label, daily_status}
     end)
   end
 
@@ -294,15 +294,14 @@ defmodule PrikkeWeb.PublicStatusLive do
   defp status_pill("degraded"), do: "bg-orange-100 text-orange-700"
   defp status_pill(_), do: "bg-slate-100 text-slate-600"
 
-  defp execution_bar_color("success"), do: "bg-emerald-600"
-  defp execution_bar_color("failed"), do: "bg-red-500"
-  defp execution_bar_color("timeout"), do: "bg-orange-500"
-  defp execution_bar_color(_), do: "bg-slate-200"
+  defp task_bar_color("success"), do: "bg-emerald-600"
+  defp task_bar_color("failed"), do: "bg-red-500"
+  defp task_bar_color(_), do: "bg-slate-200"
 
-  defp execution_status_label("success"), do: "Success"
-  defp execution_status_label("failed"), do: "Failed"
-  defp execution_status_label("timeout"), do: "Timeout"
-  defp execution_status_label(_), do: "Unknown"
+  defp task_day_label("none", _, _), do: "No executions"
+  defp task_day_label("success", total, _), do: "All #{total} passed"
+  defp task_day_label("failed", total, failed), do: "#{failed} of #{total} failed"
+  defp task_day_label(_, _, _), do: "No data"
 
   defp day_bar_color("up"), do: "bg-emerald-600"
   defp day_bar_color("degraded"), do: "bg-amber-500"

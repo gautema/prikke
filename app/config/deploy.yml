@@ -19,10 +19,7 @@ proxy:
     path: /health
 
 registry:
-  server: ghcr.io
-  username: gautema
-  password:
-    - KAMAL_REGISTRY_PASSWORD
+  server: localhost:5555
 
 env:
   clear:

@@ -634,6 +634,46 @@ defmodule Prikke.Executions do
     |> Repo.one()
   end
 
+  @doc """
+  Returns daily execution status for a task over the given number of days.
+  Each day is classified as "success" (all passed), "failed" (any failed/timeout),
+  or "none" (no executions).
+  """
+  def get_daily_status_for_task(task, days \\ 30) do
+    since = DateTime.utc_now() |> DateTime.add(-days, :day)
+    today = Date.utc_today()
+
+    data =
+      from(e in Execution,
+        where: e.task_id == ^task.id and e.scheduled_for >= ^since,
+        group_by: fragment("DATE(?)", e.scheduled_for),
+        select: {
+          fragment("DATE(?)", e.scheduled_for),
+          %{
+            total: count(),
+            success: count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status)),
+            failed: count(fragment("CASE WHEN ? IN ('failed', 'timeout') THEN 1 END", e.status))
+          }
+        }
+      )
+      |> Repo.all()
+      |> Map.new()
+
+    Enum.map(0..(days - 1), fn offset ->
+      date = Date.add(today, -days + 1 + offset)
+      stats = Map.get(data, date, %{total: 0, success: 0, failed: 0})
+
+      status =
+        cond do
+          stats.total == 0 -> "none"
+          stats.failed > 0 -> "failed"
+          true -> "success"
+        end
+
+      {date, %{status: status, total: stats.total, success: stats.success, failed: stats.failed}}
+    end)
+  end
+
   def executions_by_day_for_org(organization, days \\ 14) do
     since = DateTime.utc_now() |> DateTime.add(-days, :day)
     today = Date.utc_today()
