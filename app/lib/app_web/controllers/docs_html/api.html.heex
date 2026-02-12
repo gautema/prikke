@@ -730,7 +730,14 @@
         </tr>
       </table>
     </div>
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -fsS --retry 3 https://runlater.eu/ping/<span class="text-green-300">pm_your_token_here</span></pre>
+    <div data-tab-group>
+      <div class="flex border-b border-slate-700">
+        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
+        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+      </div>
+      <pre data-tab-content="curl" class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -fsS --retry 3 https://runlater.eu/ping/<span class="text-green-300">pm_your_token_here</span></pre>
+      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">ping</span>(<span class="text-green-300">"pm_your_token_here"</span>)</pre>
+    </div>
   </div>
 
   <h2>Endpoints API</h2>
