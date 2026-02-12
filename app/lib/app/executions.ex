@@ -682,6 +682,18 @@ defmodule Prikke.Executions do
     end)
   end
 
+  def list_pending_retries(opts \\ []) do
+    limit = Keyword.get(opts, :limit, 50)
+
+    from(e in Execution,
+      where: e.status == "pending" and e.attempt > 1,
+      order_by: [asc: e.scheduled_for],
+      limit: ^limit,
+      preload: [task: :organization]
+    )
+    |> Repo.all()
+  end
+
   def list_recent_executions_all(opts \\ []) do
     limit = Keyword.get(opts, :limit, 20)
 

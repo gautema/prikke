@@ -55,6 +55,9 @@ defmodule PrikkeWeb.SuperadminLive do
     # Upcoming scheduled tasks
     upcoming_tasks = Tasks.list_upcoming_tasks(limit: 20)
 
+    # Pending retries
+    pending_retries = Executions.list_pending_retries(limit: 50)
+
     # Recent activity
     recent_users = Accounts.list_recent_users(limit: 5)
     recent_tasks = Tasks.list_recent_tasks_all(limit: 5)
@@ -129,6 +132,7 @@ defmodule PrikkeWeb.SuperadminLive do
     |> assign(:emails_this_month, emails_this_month)
     |> assign(:monthly_summary_emails, monthly_summary_emails)
     |> assign(:upcoming_tasks, upcoming_tasks)
+    |> assign(:pending_retries, pending_retries)
   end
 
   @impl true
@@ -156,6 +160,48 @@ defmodule PrikkeWeb.SuperadminLive do
         </div>
       </div>
       
+    <!-- Pending Retries -->
+      <%= if @pending_retries != [] do %>
+        <div class="rounded-2xl mb-8 border-2 border-amber-300 bg-amber-50/50">
+          <div class="px-6 py-4 border-b border-amber-200 flex justify-between items-center">
+            <h2 class="text-lg font-semibold text-amber-900">
+              Pending Retries
+            </h2>
+            <span class="text-xs font-semibold px-2 py-1 rounded-full bg-amber-200 text-amber-800">
+              {length(@pending_retries)} waiting
+            </span>
+          </div>
+          <div class="divide-y divide-amber-100">
+            <%= for execution <- @pending_retries do %>
+              <div class="px-6 py-3 flex items-center gap-4">
+                <span class="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-200 text-amber-800 shrink-0">
+                  {execution.attempt}/{execution.task.retry_attempts}
+                </span>
+                <div class="min-w-0 flex-1">
+                  <div class="text-sm font-medium text-slate-900 truncate">
+                    {execution.task.name}
+                  </div>
+                  <div class="text-xs text-slate-500 truncate">
+                    {execution.task.organization && execution.task.organization.name}
+                  </div>
+                </div>
+                <div class="text-right shrink-0">
+                  <div class="text-sm font-mono text-slate-700">
+                    <.relative_time
+                      id={"retry-#{execution.id}"}
+                      datetime={execution.scheduled_for}
+                    />
+                  </div>
+                  <div class="text-xs text-slate-400">
+                    {Calendar.strftime(execution.scheduled_for, "%b %d, %H:%M UTC")}
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
     <!-- Upcoming Tasks -->
       <%= if @upcoming_tasks != [] do %>
         <div class="glass-card rounded-2xl mb-8">

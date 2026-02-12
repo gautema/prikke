@@ -386,6 +386,8 @@ defmodule Prikke.Worker do
 
       case Executions.create_execution_for_task(task, scheduled_for, execution.attempt + 1) do
         {:ok, _retry_execution} ->
+          # Update denormalized status so task shows as "pending" (retrying)
+          Prikke.ExecutionCounter.touch_task(task.id, "pending")
           # Wake the scheduler to process the retry when it's due
           Tasks.notify_scheduler()
           :ok
