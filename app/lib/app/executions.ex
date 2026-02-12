@@ -734,15 +734,14 @@ defmodule Prikke.Executions do
 
   # Dynamic filter: execution is claimable if it has no queue, or its queue
   # is not blocked. Uses NOT IN with the partial index for a fast lookup.
-  defp claimable_queue_filter(now) do
+  defp claimable_queue_filter(_now) do
     dynamic(
       [e],
       is_nil(e.queue) or e.queue == "" or
         fragment(
-          "(?, ?) NOT IN (SELECT organization_id, queue FROM executions WHERE queue IS NOT NULL AND queue != '' AND (status = 'running' OR (status = 'pending' AND scheduled_for > ?)))",
+          "(?, ?) NOT IN (SELECT organization_id, queue FROM executions WHERE queue IS NOT NULL AND queue != '' AND status = 'running')",
           e.organization_id,
-          e.queue,
-          ^now
+          e.queue
         )
     )
   end

@@ -303,7 +303,7 @@ defmodule Prikke.ExecutionsTest do
       assert org.monthly_execution_count == 0
     end
 
-    test "claim_next_execution/0 blocks queue when earlier pending execution exists", %{
+    test "claim_next_execution/0 does not block queue for future-scheduled retries", %{
       organization: org
     } do
       # Create two tasks in the same queue
@@ -328,15 +328,16 @@ defmodule Prikke.ExecutionsTest do
       past = DateTime.add(DateTime.utc_now(), -60, :second)
       future = DateTime.add(DateTime.utc_now(), 30, :second)
 
-      # Create execution for task1 scheduled in the future (simulates a retry)
+      # Create execution for task1 scheduled in the future (simulates a retry with backoff)
       {:ok, _retry_exec} = Executions.create_execution_for_task(task1, future)
 
       # Create execution for task2 scheduled in the past (ready to run)
       {:ok, _exec2} = Executions.create_execution_for_task(task2, past)
 
-      # Even though task2's execution is ready, it should be blocked
-      # because task1 has an earlier-created pending execution in the same queue
-      assert {:ok, nil} = Executions.claim_next_execution()
+      # task2's execution should be claimable — a future-scheduled retry
+      # for task1 should not block the entire queue
+      assert {:ok, claimed} = Executions.claim_next_execution()
+      assert claimed.task_id == task2.id
     end
 
     test "claim_next_execution/0 allows queue execution when no earlier pending exists", %{
