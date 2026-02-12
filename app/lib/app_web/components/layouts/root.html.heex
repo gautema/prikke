@@ -135,51 +135,95 @@
                 >
                   Monitors
                 </.link>
-                <span class="w-px h-5 bg-slate-200 mx-1"></span>
-                <!-- Org Switcher -->
-                <%= if assigns[:organizations] && length(@organizations) > 0 do %>
-                  <div class="relative" data-dropdown>
-                    <button
-                      type="button"
-                      class="flex items-center gap-2 text-sm text-slate-700 hover:text-slate-900 px-3 py-1.5 rounded-md hover:bg-slate-100 transition-colors"
-                      data-dropdown-toggle
-                    >
-                      <span class="font-medium truncate max-w-[120px]">
-                        {if @current_organization,
-                          do: @current_organization.name,
-                          else: "Select org"}
+                <!-- Unified dropdown -->
+                <div class="relative ml-1" data-dropdown>
+                  <button
+                    type="button"
+                    class="relative flex items-center gap-2 text-sm text-slate-700 hover:text-slate-900 px-3 py-1.5 rounded-md hover:bg-slate-100 transition-colors"
+                    data-dropdown-toggle
+                  >
+                    <span class="font-medium truncate max-w-[140px]">
+                      {if @current_organization,
+                        do: @current_organization.name,
+                        else: "Menu"}
+                    </span>
+                    <.icon name="hero-chevron-down" class="w-4 h-4 text-slate-400" />
+                    <%= if assigns[:pending_invites_count] && @pending_invites_count > 0 do %>
+                      <span class="absolute top-0.5 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white">
                       </span>
-                      <.icon name="hero-chevron-down" class="w-4 h-4 text-slate-400" />
-                    </button>
-                    <div
-                      class="hidden absolute right-0 top-full mt-1 w-56 bg-white/80 backdrop-blur-xl rounded-2xl py-1 z-50 border border-white/50"
-                      data-dropdown-menu
-                    >
-                      <%= for org <- @organizations do %>
-                        <%= if @current_organization && org.id == @current_organization.id do %>
-                          <div class="px-4 py-2 text-sm text-slate-900 bg-white/50 flex items-center justify-between">
-                            <span>{org.name}</span>
-                            <.icon name="hero-check" class="w-4 h-4 text-emerald-600" />
-                          </div>
-                        <% else %>
-                          <.link
-                            href={~p"/organizations/#{org.id}/switch"}
-                            method="post"
-                            class="block px-4 py-2 text-sm text-slate-700 hover:bg-white/50 no-underline"
-                          >
-                            {org.name}
-                          </.link>
-                        <% end %>
-                      <% end %>
+                    <% end %>
+                  </button>
+                  <div
+                    class="hidden absolute right-0 top-full mt-1 w-64 bg-white/80 backdrop-blur-xl rounded-2xl py-1 z-50 border border-white/50"
+                    data-dropdown-menu
+                  >
+                    <%!-- Org section --%>
+                    <%= if @current_organization do %>
+                      <div class="px-4 py-2">
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wide">
+                          {@current_organization.name}
+                        </p>
+                      </div>
+                      <.link
+                        href={~p"/status-page"}
+                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-white/50 no-underline"
+                      >
+                        Status Page
+                      </.link>
+                      <.link
+                        href={~p"/organizations/settings"}
+                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-white/50 no-underline"
+                      >
+                        Settings
+                      </.link>
+                      <.link
+                        href={~p"/organizations/members"}
+                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-white/50 no-underline"
+                      >
+                        Members
+                      </.link>
+                      <.link
+                        href={~p"/organizations/notifications"}
+                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-white/50 no-underline"
+                      >
+                        Notifications
+                      </.link>
+                      <.link
+                        href={~p"/organizations/api-keys"}
+                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-white/50 no-underline"
+                      >
+                        API Keys
+                      </.link>
+                      <.link
+                        href={~p"/organizations/audit"}
+                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-white/50 no-underline"
+                      >
+                        Audit Log
+                      </.link>
+                    <% end %>
+                    <%!-- Switch org section (only if multiple orgs) --%>
+                    <%= if assigns[:organizations] && length(@organizations) > 1 do %>
                       <div class="border-t border-slate-200 mt-1 pt-1">
-                        <%= if @current_organization do %>
-                          <.link
-                            href={~p"/organizations/settings"}
-                            class="flex items-center justify-between px-4 py-2 text-sm text-slate-700 hover:bg-white/50 no-underline"
-                          >
-                            Organization settings
-                            <.icon name="hero-chevron-right" class="w-4 h-4 text-slate-400" />
-                          </.link>
+                        <div class="px-4 py-2">
+                          <p class="text-xs font-medium text-slate-400 uppercase tracking-wide">
+                            Switch organization
+                          </p>
+                        </div>
+                        <%= for org <- @organizations do %>
+                          <%= if @current_organization && org.id == @current_organization.id do %>
+                            <div class="px-4 py-2 text-sm text-slate-900 bg-white/50 flex items-center justify-between">
+                              <span>{org.name}</span>
+                              <.icon name="hero-check" class="w-4 h-4 text-emerald-600" />
+                            </div>
+                          <% else %>
+                            <.link
+                              href={~p"/organizations/#{org.id}/switch"}
+                              method="post"
+                              class="block px-4 py-2 text-sm text-slate-700 hover:bg-white/50 no-underline"
+                            >
+                              {org.name}
+                            </.link>
+                          <% end %>
                         <% end %>
                         <.link
                           href={~p"/organizations/new"}
@@ -188,50 +232,31 @@
                           + New organization
                         </.link>
                       </div>
-                    </div>
-                  </div>
-                <% end %>
-                <!-- User menu -->
-                <div class="relative" data-dropdown>
-                  <button
-                    type="button"
-                    class="relative flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 px-2 py-1.5 rounded-md hover:bg-slate-100 transition-colors"
-                    data-dropdown-toggle
-                  >
-                    <.icon name="hero-user" class="w-4 h-4" />
-                    <.icon name="hero-chevron-down" class="w-3 h-3 text-slate-400" />
-                    <%= if assigns[:pending_invites_count] && @pending_invites_count > 0 do %>
-                      <span class="absolute top-0.5 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white">
-                      </span>
                     <% end %>
-                  </button>
-                  <div
-                    class="hidden absolute right-0 top-full mt-1 w-56 bg-white/80 backdrop-blur-xl rounded-2xl py-1 z-50 border border-white/50"
-                    data-dropdown-menu
-                  >
-                    <div class="px-4 py-2 border-b border-slate-200">
-                      <p class="text-sm font-medium text-slate-900 truncate">
-                        {@current_scope.user.email}
-                      </p>
-                    </div>
-                    <%= if assigns[:pending_invites_count] && @pending_invites_count > 0 do %>
-                      <.link
-                        href={~p"/invites"}
-                        class="flex items-center justify-between px-4 py-2 text-sm text-slate-700 hover:bg-white/50 no-underline"
-                      >
-                        Invites
-                        <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-emerald-600 rounded-full">
-                          {@pending_invites_count}
-                        </span>
-                      </.link>
-                    <% end %>
-                    <.link
-                      href={~p"/users/settings"}
-                      class="block px-4 py-2 text-sm text-slate-700 hover:bg-white/50 no-underline"
-                    >
-                      Settings
-                    </.link>
+                    <%!-- User section --%>
                     <div class="border-t border-slate-200 mt-1 pt-1">
+                      <div class="px-4 py-2">
+                        <p class="text-sm text-slate-400 truncate">
+                          {@current_scope.user.email}
+                        </p>
+                      </div>
+                      <.link
+                        href={~p"/users/settings"}
+                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-white/50 no-underline"
+                      >
+                        Account settings
+                      </.link>
+                      <%= if assigns[:pending_invites_count] && @pending_invites_count > 0 do %>
+                        <.link
+                          href={~p"/invites"}
+                          class="flex items-center justify-between px-4 py-2 text-sm text-slate-700 hover:bg-white/50 no-underline"
+                        >
+                          Invites
+                          <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-emerald-600 rounded-full">
+                            {@pending_invites_count}
+                          </span>
+                        </.link>
+                      <% end %>
                       <.link
                         href={~p"/users/log-out"}
                         method="delete"
@@ -263,6 +288,7 @@
         <div class="hidden group-has-[:checked]/menu:!block sm:!hidden fixed inset-x-0 top-14 bottom-0 bg-white border-t border-slate-200 z-50 overflow-y-auto">
           <div class="px-4 py-2">
             <%= if @current_scope do %>
+              <%!-- Main nav links --%>
               <.link href={~p"/dashboard"} class="block py-3 text-base font-medium text-slate-700">
                 Dashboard
               </.link>
@@ -275,9 +301,36 @@
               <.link href={~p"/monitors"} class="block py-3 text-base font-medium text-slate-700">
                 Monitors
               </.link>
-              <%= if assigns[:organizations] && length(@organizations) > 0 do %>
+              <%!-- Org section --%>
+              <%= if @current_organization do %>
                 <div class="py-2 border-t border-slate-100">
-                  <p class="text-xs text-slate-400 uppercase tracking-wide py-2">Organizations</p>
+                  <p class="text-xs text-slate-400 uppercase tracking-wide py-2">
+                    {@current_organization.name}
+                  </p>
+                  <.link href={~p"/status-page"} class="block py-3 text-base text-slate-600 no-underline">
+                    Status Page
+                  </.link>
+                  <.link href={~p"/organizations/settings"} class="block py-3 text-base text-slate-600 no-underline">
+                    Settings
+                  </.link>
+                  <.link href={~p"/organizations/members"} class="block py-3 text-base text-slate-600 no-underline">
+                    Members
+                  </.link>
+                  <.link href={~p"/organizations/notifications"} class="block py-3 text-base text-slate-600 no-underline">
+                    Notifications
+                  </.link>
+                  <.link href={~p"/organizations/api-keys"} class="block py-3 text-base text-slate-600 no-underline">
+                    API Keys
+                  </.link>
+                  <.link href={~p"/organizations/audit"} class="block py-3 text-base text-slate-600 no-underline">
+                    Audit Log
+                  </.link>
+                </div>
+              <% end %>
+              <%!-- Switch org section (only if multiple orgs) --%>
+              <%= if assigns[:organizations] && length(@organizations) > 1 do %>
+                <div class="py-2 border-t border-slate-100">
+                  <p class="text-xs text-slate-400 uppercase tracking-wide py-2">Switch organization</p>
                   <%= for org <- @organizations do %>
                     <%= if @current_organization && org.id == @current_organization.id do %>
                       <div class="flex items-center justify-between py-3 text-base text-slate-900">
@@ -294,15 +347,6 @@
                       </.link>
                     <% end %>
                   <% end %>
-                  <%= if @current_organization do %>
-                    <.link
-                      href={~p"/organizations/settings"}
-                      class="flex items-center justify-between py-3 text-base text-slate-600 no-underline"
-                    >
-                      Organization settings
-                      <.icon name="hero-chevron-right" class="w-5 h-5 text-slate-400" />
-                    </.link>
-                  <% end %>
                   <.link
                     href={~p"/organizations/new"}
                     class="block py-3 text-base text-emerald-600 no-underline"
@@ -311,8 +355,12 @@
                   </.link>
                 </div>
               <% end %>
+              <%!-- User section --%>
               <div class="pt-2 border-t border-slate-100">
                 <p class="text-xs text-slate-400 py-2">{@current_scope.user.email}</p>
+                <.link href={~p"/users/settings"} class="block py-3 text-base text-slate-600">
+                  Account settings
+                </.link>
                 <%= if assigns[:pending_invites_count] && @pending_invites_count > 0 do %>
                   <.link
                     href={~p"/invites"}
@@ -332,9 +380,6 @@
                     Admin
                   </.link>
                 <% end %>
-                <.link href={~p"/users/settings"} class="block py-3 text-base text-slate-600">
-                  Settings
-                </.link>
                 <.link
                   href={~p"/users/log-out"}
                   method="delete"
