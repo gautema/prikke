@@ -252,6 +252,26 @@ defmodule PrikkeWeb.DashboardLive do
           </div>
         </div>
         
+    <%!-- API Keys prompt --%>
+        <%= unless @has_api_keys do %>
+          <div class="glass-card rounded-2xl p-4 mb-4 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center shrink-0">
+                <.icon name="hero-key" class="w-4 h-4 text-amber-600" />
+              </div>
+              <p class="text-sm text-slate-600">
+                Create an API key to start queuing tasks programmatically.
+              </p>
+            </div>
+            <.link
+              navigate={~p"/organizations/api-keys"}
+              class="text-sm font-medium text-emerald-600 hover:text-emerald-700 whitespace-nowrap"
+            >
+              Create API key →
+            </.link>
+          </div>
+        <% end %>
+
     <!-- Tasks Section -->
         <div class="glass-card rounded-2xl mb-4">
           <div class="px-4 sm:px-6 py-4 border-b border-white/50 flex justify-between items-center gap-2">
@@ -466,26 +486,6 @@ defmodule PrikkeWeb.DashboardLive do
             </div>
           <% end %>
         </div>
-
-        <%!-- API Keys prompt --%>
-        <%= unless @has_api_keys do %>
-          <div class="glass-card rounded-2xl p-4 flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center shrink-0">
-                <.icon name="hero-key" class="w-4 h-4 text-amber-600" />
-              </div>
-              <p class="text-sm text-slate-600">
-                Create an API key to start queuing tasks programmatically.
-              </p>
-            </div>
-            <.link
-              navigate={~p"/organizations/api-keys"}
-              class="text-sm font-medium text-emerald-600 hover:text-emerald-700 whitespace-nowrap"
-            >
-              Create API key →
-            </.link>
-          </div>
-        <% end %>
       <% else %>
         <!-- No organization state -->
         <div class="glass-card rounded-2xl p-12 text-center">
