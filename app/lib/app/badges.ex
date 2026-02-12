@@ -118,8 +118,8 @@ defmodule Prikke.Badges do
   """
   def flat_badge(label, _value, color) do
     label = truncate_label(label)
-    label_width = text_width(label) + 10
-    dot_section = 16
+    label_width = text_width(label) + 8
+    dot_section = 14
     total_width = label_width + dot_section
     dot_cx = label_width + div(dot_section, 2)
 
