@@ -118,15 +118,14 @@ defmodule Prikke.Badges do
   """
   def flat_badge(label, _value, color) do
     label = truncate_label(label)
-    label_width = text_width(label) + 12
-    dot_width = 20
-    total_width = label_width + dot_width
-    dot_cx = label_width + div(dot_width, 2)
+    label_width = text_width(label) + 10
+    dot_section = 16
+    total_width = label_width + dot_section
+    dot_cx = label_width + div(dot_section, 2)
 
     """
     <svg xmlns="http://www.w3.org/2000/svg" width="#{total_width}" height="20" role="img" aria-label="#{escape(label)}">
       <title>#{escape(label)}</title>
-      <style>#{pulse_css(color)}</style>
       <linearGradient id="s" x2="0" y2="100%">
         <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
         <stop offset="1" stop-opacity=".1"/>
@@ -136,15 +135,14 @@ defmodule Prikke.Badges do
       </clipPath>
       <g clip-path="url(#r)">
         <rect width="#{label_width}" height="20" fill="#555"/>
-        <rect x="#{label_width}" width="#{dot_width}" height="20" fill="#555"/>
+        <rect x="#{label_width}" width="#{dot_section}" height="20" fill="#555"/>
         <rect width="#{total_width}" height="20" fill="url(#s)"/>
       </g>
       <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="11">
         <text x="#{div(label_width, 2)}" y="14" fill="#010101" fill-opacity=".3">#{escape(label)}</text>
         <text x="#{div(label_width, 2)}" y="13">#{escape(label)}</text>
       </g>
-      <circle class="pulse-ring" cx="#{dot_cx}" cy="10" r="5" fill="#{color}"/>
-      <circle cx="#{dot_cx}" cy="10" r="5" fill="#{color}"/>
+      #{pulse_dot(dot_cx, color)}
     </svg>
     """
   end
@@ -165,42 +163,41 @@ defmodule Prikke.Badges do
       bar_width = 3
       bar_gap = 1
       bar_height = 16
-      dot_space = 20
+      dot_section = 16
       label_width = text_width(label) + 12
       bars_area_width = count * (bar_width + bar_gap) - bar_gap
-      total_width = label_width + dot_space + bars_area_width + 8
+      total_width = label_width + dot_section + bars_area_width + 8
       padding_y = 2
 
       bars_svg =
         statuses
         |> Enum.with_index()
         |> Enum.map(fn {status, i} ->
-          x = label_width + dot_space + 4 + i * (bar_width + bar_gap)
+          x = label_width + dot_section + 4 + i * (bar_width + bar_gap)
           color = bar_color(status)
 
           ~s(<rect x="#{x}" y="#{padding_y}" width="#{bar_width}" height="#{bar_height}" rx="1" fill="#{color}"/>)
         end)
         |> Enum.join("\n    ")
 
-      dot_cx = label_width + div(dot_space, 2)
+      dot_cx = label_width + div(dot_section, 2)
 
       """
       <svg xmlns="http://www.w3.org/2000/svg" width="#{total_width}" height="20" role="img" aria-label="#{escape(label)} uptime">
         <title>#{escape(label)} uptime</title>
-        <style>#{pulse_css(status_color)}</style>
         <clipPath id="r">
           <rect width="#{total_width}" height="20" rx="3" fill="#fff"/>
         </clipPath>
         <g clip-path="url(#r)">
           <rect width="#{label_width}" height="20" fill="#555"/>
-          <rect x="#{label_width}" width="#{total_width - label_width}" height="20" fill="#e2e8f0"/>
+          <rect x="#{label_width}" width="#{dot_section}" height="20" fill="#555"/>
+          <rect x="#{label_width + dot_section}" width="#{total_width - label_width - dot_section}" height="20" fill="#e2e8f0"/>
         </g>
         <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="11">
           <text x="#{div(label_width, 2)}" y="14" fill="#010101" fill-opacity=".3">#{escape(label)}</text>
           <text x="#{div(label_width, 2)}" y="13">#{escape(label)}</text>
         </g>
-        <circle class="pulse-ring" cx="#{dot_cx}" cy="10" r="5" fill="#{status_color}"/>
-        <circle cx="#{dot_cx}" cy="10" r="5" fill="#{status_color}"/>
+        #{pulse_dot(dot_cx, status_color)}
         #{bars_svg}
       </svg>
       """
@@ -209,9 +206,13 @@ defmodule Prikke.Badges do
 
   # -- Helpers --
 
-  defp pulse_css(color) do
+  defp pulse_dot(cx, color) do
     """
-    @keyframes pulse{0%{opacity:.6;r:5}70%{opacity:0;r:9}100%{opacity:0;r:9}}.pulse-ring{fill:#{color};animation:pulse 2s ease-out infinite}
+    <circle cx="#{cx}" cy="10" r="4" fill="#{color}" opacity="0.6">
+        <animate attributeName="r" values="4;8;8" dur="2s" keyTimes="0;0.7;1" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.6;0;0" dur="2s" keyTimes="0;0.7;1" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="#{cx}" cy="10" r="4" fill="#{color}"/>
     """
   end
 
