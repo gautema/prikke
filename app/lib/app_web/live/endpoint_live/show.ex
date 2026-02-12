@@ -35,7 +35,8 @@ defmodule PrikkeWeb.EndpointLive.Show do
          |> assign(:total_events, total_events)
          |> assign(:inbound_url, inbound_url)
          |> assign(:page_title, endpoint.name)
-         |> assign(:menu_open, false)}
+         |> assign(:menu_open, false)
+         |> assign(:host, host)}
       end
     else
       {:ok,
@@ -86,6 +87,32 @@ defmodule PrikkeWeb.EndpointLive.Show do
       )
 
     {:noreply, assign(socket, :endpoint, updated)}
+  end
+
+  def handle_event("enable_badge", _, socket) do
+    org = socket.assigns.organization
+    endpoint = socket.assigns.endpoint
+
+    case Endpoints.enable_badge(org, endpoint) do
+      {:ok, updated} ->
+        {:noreply, assign(socket, :endpoint, updated)}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Failed to enable badge")}
+    end
+  end
+
+  def handle_event("disable_badge", _, socket) do
+    org = socket.assigns.organization
+    endpoint = socket.assigns.endpoint
+
+    case Endpoints.disable_badge(org, endpoint) do
+      {:ok, updated} ->
+        {:noreply, assign(socket, :endpoint, updated)}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Failed to disable badge")}
+    end
   end
 
   def handle_event("delete", _, socket) do
@@ -257,6 +284,63 @@ defmodule PrikkeWeb.EndpointLive.Show do
             </dd>
           </div>
         </dl>
+      </div>
+
+      <%!-- Public Badge --%>
+      <div class="glass-card rounded-2xl p-6 mb-6">
+        <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-3">
+          Public Badge
+        </h2>
+        <%= if @endpoint.badge_token do %>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
+                  Enabled
+                </span>
+                <span class="text-sm text-slate-500">Badge is publicly accessible</span>
+              </div>
+              <button
+                type="button"
+                phx-click="disable_badge"
+                class="text-sm text-red-600 hover:text-red-700 cursor-pointer"
+              >
+                Disable
+              </button>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 uppercase mb-2">Status badge</p>
+              <div class="flex items-center gap-3 mb-2">
+                <img src={"https://#{@host}/badge/endpoint/#{@endpoint.badge_token}/status.svg"} alt="Status badge" class="h-5" />
+              </div>
+              <div class="bg-slate-100 rounded p-2">
+                <code class="text-xs text-slate-700 break-all select-all">![Status](https://{@host}/badge/endpoint/{@endpoint.badge_token}/status.svg)</code>
+              </div>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 uppercase mb-2">Uptime bars</p>
+              <div class="flex items-center gap-3 mb-2">
+                <img src={"https://#{@host}/badge/endpoint/#{@endpoint.badge_token}/uptime.svg"} alt="Uptime badge" class="h-5" />
+              </div>
+              <div class="bg-slate-100 rounded p-2">
+                <code class="text-xs text-slate-700 break-all select-all">![Uptime](https://{@host}/badge/endpoint/{@endpoint.badge_token}/uptime.svg)</code>
+              </div>
+            </div>
+          </div>
+        <% else %>
+          <div class="flex items-center justify-between">
+            <p class="text-sm text-slate-500">
+              Enable a public badge to embed status in READMEs or status pages.
+            </p>
+            <button
+              type="button"
+              phx-click="enable_badge"
+              class="px-3 py-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-md transition-colors cursor-pointer"
+            >
+              Enable Badge
+            </button>
+          </div>
+        <% end %>
       </div>
 
       <%!-- Recent Events --%>

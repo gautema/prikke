@@ -1,0 +1,121 @@
+<.docs_layout current_scope={@current_scope}>
+  <h1>Status Badges</h1>
+  <p class="text-xl text-slate-600 mb-10">
+    Embeddable SVG badges for your tasks, monitors, and endpoints. Show live status in READMEs, dashboards, or status pages.
+  </p>
+
+  <h2>Overview</h2>
+  <p>
+    Every task, monitor, and endpoint can have a public badge enabled from its detail page.
+    When enabled, a unique token is generated and two SVG badge URLs become available:
+  </p>
+  <ul>
+    <li><strong>Status badge</strong> &mdash; a shields.io-style flat badge showing the current state</li>
+    <li><strong>Uptime bars</strong> &mdash; a bar chart of recent executions or daily status</li>
+  </ul>
+  <p>
+    Badges are publicly accessible via their token URL &mdash; no API key or login required.
+    Disable the badge at any time to revoke access.
+  </p>
+
+  <h2>Enabling a Badge</h2>
+  <ol>
+    <li>Open the detail page of a task, monitor, or endpoint</li>
+    <li>Scroll to the <strong>Public Badge</strong> section</li>
+    <li>Click <strong>Enable Badge</strong></li>
+    <li>Copy the markdown or URL from the embed snippets</li>
+  </ol>
+
+  <h2>Badge URLs</h2>
+  <p>
+    Once enabled, your badges are available at these URLs (replace <code>TOKEN</code> with the generated token):
+  </p>
+
+  <h3>Task badges</h3>
+  <pre class="bg-slate-900 text-slate-100 p-4 font-mono text-sm leading-relaxed overflow-x-auto rounded-lg">https://runlater.eu/badge/task/TOKEN/status.svg
+https://runlater.eu/badge/task/TOKEN/uptime.svg</pre>
+
+  <h3>Monitor badges</h3>
+  <pre class="bg-slate-900 text-slate-100 p-4 font-mono text-sm leading-relaxed overflow-x-auto rounded-lg">https://runlater.eu/badge/monitor/TOKEN/status.svg
+https://runlater.eu/badge/monitor/TOKEN/uptime.svg</pre>
+
+  <h3>Endpoint badges</h3>
+  <pre class="bg-slate-900 text-slate-100 p-4 font-mono text-sm leading-relaxed overflow-x-auto rounded-lg">https://runlater.eu/badge/endpoint/TOKEN/status.svg
+https://runlater.eu/badge/endpoint/TOKEN/uptime.svg</pre>
+
+  <h2>Embedding</h2>
+
+  <h3>Markdown (GitHub, GitLab, etc.)</h3>
+  <pre class="bg-slate-900 text-slate-100 p-4 font-mono text-sm leading-relaxed overflow-x-auto rounded-lg">![Status](https://runlater.eu/badge/task/TOKEN/status.svg)
+![Uptime](https://runlater.eu/badge/task/TOKEN/uptime.svg)</pre>
+
+  <h3>HTML</h3>
+  <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-4 font-mono text-sm leading-relaxed overflow-x-auto rounded-lg">&lt;img src="https://runlater.eu/badge/task/TOKEN/status.svg" alt="Status" /&gt;
+&lt;img src="https://runlater.eu/badge/task/TOKEN/uptime.svg" alt="Uptime" /&gt;</pre>
+
+  <h2>Badge Types</h2>
+
+  <h3>Status badge</h3>
+  <p>A flat, shields.io-style badge with two sections: the resource name on the left and its current status on the right.</p>
+  <table class="w-full text-sm mb-6">
+    <thead>
+      <tr>
+        <th class="text-left py-2 px-3 bg-slate-100 rounded-tl-lg">Resource</th>
+        <th class="text-left py-2 px-3 bg-slate-100 rounded-tr-lg">Possible values</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-slate-100">
+        <td class="py-2 px-3">Task</td>
+        <td class="py-2 px-3">
+          <span class="text-emerald-600">passing</span>,
+          <span class="text-red-600">failing</span>,
+          <span class="text-orange-500">timeout</span>,
+          <span class="text-blue-600">running</span>,
+          <span class="text-slate-500">paused</span>,
+          <span class="text-slate-400">unknown</span>
+        </td>
+      </tr>
+      <tr class="border-t border-slate-100">
+        <td class="py-2 px-3">Monitor</td>
+        <td class="py-2 px-3">
+          <span class="text-emerald-600">up</span>,
+          <span class="text-red-600">down</span>,
+          <span class="text-orange-500">degraded</span>,
+          <span class="text-slate-500">paused</span>,
+          <span class="text-slate-400">new</span>
+        </td>
+      </tr>
+      <tr class="border-t border-slate-100">
+        <td class="py-2 px-3">Endpoint</td>
+        <td class="py-2 px-3">
+          <span class="text-emerald-600">active</span>,
+          <span class="text-slate-500">disabled</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Uptime bars</h3>
+  <p>A horizontal bar chart showing recent history. Each bar represents:</p>
+  <ul>
+    <li><strong>Tasks</strong> &mdash; one bar per execution (last 50). Green = success, red = failed, orange = timeout.</li>
+    <li><strong>Monitors</strong> &mdash; one bar per day (last 30 days). Green = up, orange = degraded, red = down.</li>
+    <li><strong>Endpoints</strong> &mdash; one bar per inbound event (last 50). Color reflects forwarding execution status.</li>
+  </ul>
+
+  <h2>Caching</h2>
+  <p>
+    Badge responses include a <code>Cache-Control: public, max-age=60</code> header.
+    This means CDNs, browsers, and proxies will cache the badge for up to 60 seconds.
+    Status updates will appear within a minute.
+  </p>
+
+  <h2>Security</h2>
+  <ul>
+    <li>Badges are <strong>opt-in</strong> &mdash; disabled by default, must be explicitly enabled per resource</li>
+    <li>Each badge uses a unique, unguessable token (24 hex characters)</li>
+    <li>Disabling a badge clears the token &mdash; the old URL immediately returns a 404</li>
+    <li>Badges only expose the resource name and status &mdash; no URLs, headers, response bodies, or other sensitive data</li>
+  </ul>
+</.docs_layout>

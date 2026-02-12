@@ -25,6 +25,7 @@ defmodule Prikke.Tasks.Task do
     field :queue, :string
     field :last_execution_at, :utc_datetime
     field :last_execution_status, :string
+    field :badge_token, :string
 
     # Virtual field for form editing
     field :headers_json, :string, virtual: true

@@ -33,6 +33,7 @@ defmodule PrikkeWeb.Router do
     get "/docs/webhooks", DocsController, :webhooks
     get "/docs/endpoints", DocsController, :endpoints
     get "/docs/monitors", DocsController, :monitors
+    get "/docs/badges", DocsController, :badges
     get "/use-cases", DocsController, :use_cases
 
     # Public status page
@@ -69,6 +70,18 @@ defmodule PrikkeWeb.Router do
     pipe_through :api
 
     post "/creem", CreemWebhookController, :handle
+  end
+
+  # Public badge endpoints (token is auth)
+  scope "/badge", PrikkeWeb do
+    pipe_through :api
+
+    get "/task/:token/status.svg", BadgeController, :task_status
+    get "/task/:token/uptime.svg", BadgeController, :task_uptime
+    get "/monitor/:token/status.svg", BadgeController, :monitor_status
+    get "/monitor/:token/uptime.svg", BadgeController, :monitor_uptime
+    get "/endpoint/:token/status.svg", BadgeController, :endpoint_status
+    get "/endpoint/:token/uptime.svg", BadgeController, :endpoint_uptime
   end
 
   # Inbound webhook endpoint (public, slug is auth)

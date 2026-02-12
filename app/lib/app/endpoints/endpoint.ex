@@ -11,6 +11,7 @@ defmodule Prikke.Endpoints.Endpoint do
     field :enabled, :boolean, default: true
     field :retry_attempts, :integer, default: 5
     field :use_queue, :boolean, default: true
+    field :badge_token, :string
 
     belongs_to :organization, Prikke.Accounts.Organization
     has_many :inbound_events, Prikke.Endpoints.InboundEvent

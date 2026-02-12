@@ -16,6 +16,7 @@ defmodule Prikke.Monitors.Monitor do
     field :next_expected_at, :utc_datetime
     field :enabled, :boolean, default: true
     field :muted, :boolean, default: false
+    field :badge_token, :string
 
     belongs_to :organization, Prikke.Accounts.Organization
     has_many :pings, Prikke.Monitors.MonitorPing
