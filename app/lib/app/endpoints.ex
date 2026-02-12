@@ -180,6 +180,46 @@ defmodule Prikke.Endpoints do
     Endpoint.create_changeset(%Endpoint{}, attrs, org.id)
   end
 
+  ## Badge tokens
+
+  @doc """
+  Looks up an endpoint by its badge token. Returns nil if not found.
+  """
+  def get_endpoint_by_badge_token(nil), do: nil
+
+  def get_endpoint_by_badge_token(token) do
+    from(e in Endpoint, where: e.badge_token == ^token)
+    |> Repo.one()
+  end
+
+  @doc """
+  Enables the public badge for an endpoint by generating a badge token.
+  """
+  def enable_badge(%Organization{} = org, %Endpoint{} = endpoint) do
+    if endpoint.organization_id != org.id do
+      raise ArgumentError, "endpoint does not belong to organization"
+    end
+
+    token = endpoint.badge_token || Prikke.Badges.generate_token()
+
+    endpoint
+    |> Ecto.Changeset.change(badge_token: token)
+    |> Repo.update()
+  end
+
+  @doc """
+  Disables the public badge for an endpoint by clearing the badge token.
+  """
+  def disable_badge(%Organization{} = org, %Endpoint{} = endpoint) do
+    if endpoint.organization_id != org.id do
+      raise ArgumentError, "endpoint does not belong to organization"
+    end
+
+    endpoint
+    |> Ecto.Changeset.change(badge_token: nil)
+    |> Repo.update()
+  end
+
   ## Inbound Events
 
   def list_inbound_events(%Endpoint{} = endpoint, opts \\ []) do
