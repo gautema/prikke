@@ -360,16 +360,9 @@
     <span class="text-sky-300">"cron_expression"</span>: <span class="text-green-300">"0 7 * * *"</span>,
     <span class="text-sky-300">"enabled"</span>: <span class="text-orange-300">false</span>
   }'</pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/tasks/TASK_ID"</span>, {
-  <span class="text-sky-300">method</span>: <span class="text-green-300">"PUT"</span>,
-  <span class="text-sky-300">headers</span>: {
-    <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.<span class="text-sky-300">RUNLATER_KEY</span>}`</span>,
-    <span class="text-green-300">"Content-Type"</span>: <span class="text-green-300">"application/json"</span>
-  },
-  <span class="text-sky-300">body</span>: JSON.<span class="text-sky-300">stringify</span>({
-    <span class="text-sky-300">cron_expression</span>: <span class="text-green-300">"0 7 * * *"</span>,
-    <span class="text-sky-300">enabled</span>: <span class="text-orange-300">false</span>
-  })
+      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">tasks</span>.<span class="text-sky-300">update</span>(<span class="text-green-300">"TASK_ID"</span>, {
+  <span class="text-sky-300">cron_expression</span>: <span class="text-green-300">"0 7 * * *"</span>,
+  <span class="text-sky-300">enabled</span>: <span class="text-orange-300">false</span>
 })</pre>
     </div>
   </div>
@@ -630,15 +623,8 @@
   -d '{
     <span class="text-sky-300">"grace_period_seconds"</span>: <span class="text-orange-300">3600</span>
   }'</pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/monitors/MONITOR_ID"</span>, {
-  <span class="text-sky-300">method</span>: <span class="text-green-300">"PUT"</span>,
-  <span class="text-sky-300">headers</span>: {
-    <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.<span class="text-sky-300">RUNLATER_KEY</span>}`</span>,
-    <span class="text-green-300">"Content-Type"</span>: <span class="text-green-300">"application/json"</span>
-  },
-  <span class="text-sky-300">body</span>: JSON.<span class="text-sky-300">stringify</span>({
-    <span class="text-sky-300">grace_period_seconds</span>: <span class="text-orange-300">3600</span>
-  })
+      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">update</span>(<span class="text-green-300">"MONITOR_ID"</span>, {
+  <span class="text-sky-300">grace_period_seconds</span>: <span class="text-orange-300">3600</span>
 })</pre>
     </div>
   </div>

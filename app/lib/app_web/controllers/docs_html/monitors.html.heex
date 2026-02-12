@@ -349,17 +349,9 @@ curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">h
     "name": "Updated Name",
     "grace_period_seconds": 3600
   }'</pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-slate-500">// No SDK method — use fetch directly</span>
-<span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/monitors/MONITOR_ID"</span>, {
-  <span class="text-sky-300">method</span>: <span class="text-green-300">"PUT"</span>,
-  <span class="text-sky-300">headers</span>: {
-    <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.RUNLATER_KEY}`</span>,
-    <span class="text-green-300">"Content-Type"</span>: <span class="text-green-300">"application/json"</span>
-  },
-  <span class="text-sky-300">body</span>: JSON.<span class="text-sky-300">stringify</span>({
-    <span class="text-sky-300">name</span>: <span class="text-green-300">"Updated Name"</span>,
-    <span class="text-sky-300">grace_period_seconds</span>: <span class="text-orange-300">3600</span>
-  })
+      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">update</span>(<span class="text-green-300">"MONITOR_ID"</span>, {
+  <span class="text-sky-300">name</span>: <span class="text-green-300">"Updated Name"</span>,
+  <span class="text-sky-300">grace_period_seconds</span>: <span class="text-orange-300">3600</span>
 })</pre>
     </div>
   </div>
@@ -389,11 +381,7 @@ curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">h
       </div>
       <pre data-tab-content="curl" class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl <span class="text-green-300">https://runlater.eu/api/v1/monitors/:id/pings?limit=20</span> \
   -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span></pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-slate-500">// No SDK method — use fetch directly</span>
-<span class="text-purple-300">const</span> <span class="text-sky-300">res</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/monitors/MONITOR_ID/pings?limit=20"</span>, {
-  <span class="text-sky-300">headers</span>: { <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.RUNLATER_KEY}`</span> }
-})
-<span class="text-purple-300">const</span> { <span class="text-sky-300">data</span> } = <span class="text-purple-300">await</span> <span class="text-sky-300">res</span>.<span class="text-sky-300">json</span>()</pre>
+      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">const</span> <span class="text-sky-300">pings</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">pings</span>(<span class="text-green-300">"MONITOR_ID"</span>, <span class="text-orange-300">20</span>)</pre>
     </div>
   </div>
 
