@@ -115,14 +115,14 @@ defmodule Prikke.ApiMetricsTest do
     test "groups by endpoint category" do
       record_and_sync(make_entry(%{group: "tasks", duration_us: 1000}))
       record_and_sync(make_entry(%{group: "tasks", duration_us: 2000}))
-      record_and_sync(make_entry(%{group: "monitors", duration_us: 3000}))
-      record_and_sync(make_entry(%{group: "ping", duration_us: 500}))
+      record_and_sync(make_entry(%{group: "ping", duration_us: 3000}))
+      record_and_sync(make_entry(%{group: "inbound", duration_us: 500}))
 
       results = ApiMetrics.percentiles_by_group()
       assert length(results) == 3
 
       groups = Enum.map(results, & &1.group) |> Enum.sort()
-      assert groups == ["monitors", "ping", "tasks"]
+      assert groups == ["inbound", "ping", "tasks"]
 
       tasks_group = Enum.find(results, &(&1.group == "tasks"))
       assert tasks_group.count == 2
@@ -161,10 +161,10 @@ defmodule Prikke.ApiMetricsTest do
     test "categorizes API paths correctly" do
       assert ApiMetrics.categorize_path("/api/v1/tasks") == "tasks"
       assert ApiMetrics.categorize_path("/api/v1/tasks/123") == "tasks"
-      assert ApiMetrics.categorize_path("/api/v1/monitors") == "monitors"
-      assert ApiMetrics.categorize_path("/api/v1/monitors/123/pings") == "monitors"
-      assert ApiMetrics.categorize_path("/api/v1/endpoints") == "endpoints"
-      assert ApiMetrics.categorize_path("/api/v1/sync") == "sync"
+      assert ApiMetrics.categorize_path("/api/v1/monitors") == "other_api"
+      assert ApiMetrics.categorize_path("/api/v1/monitors/123/pings") == "other_api"
+      assert ApiMetrics.categorize_path("/api/v1/endpoints") == "other_api"
+      assert ApiMetrics.categorize_path("/api/v1/sync") == "other_api"
       assert ApiMetrics.categorize_path("/ping/abc123") == "ping"
       assert ApiMetrics.categorize_path("/in/my-webhook") == "inbound"
       assert ApiMetrics.categorize_path("/api/v1/openapi") == "other_api"

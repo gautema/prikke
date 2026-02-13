@@ -146,9 +146,6 @@ defmodule Prikke.ApiMetrics do
 
   @doc false
   def categorize_path("/api/v1/tasks" <> _), do: "tasks"
-  def categorize_path("/api/v1/monitors" <> _), do: "monitors"
-  def categorize_path("/api/v1/endpoints" <> _), do: "endpoints"
-  def categorize_path("/api/v1/sync" <> _), do: "sync"
   def categorize_path("/ping/" <> _), do: "ping"
   def categorize_path("/in/" <> _), do: "inbound"
   def categorize_path("/api/v1/" <> _), do: "other_api"
