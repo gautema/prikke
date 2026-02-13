@@ -227,3 +227,17 @@ body:has(#mobile-menu-toggle:checked) {
   border-radius: 50%;
   animation: pulse-ring 2s ease-out infinite;
 }
+
+/* Anchor-positioned bar chart tooltips */
+.bar-tooltip {
+  display: none;
+  position: fixed;
+  position-area: top;
+  position-try-fallbacks: flip-inline;
+  margin-bottom: 8px;
+  width: max-content;
+}
+
+.bar-anchor:hover .bar-tooltip {
+  display: block;
+}

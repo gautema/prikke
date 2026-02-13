@@ -84,4 +84,45 @@ defmodule PrikkeWeb.StatusHTML do
     days = div(minutes, 1440)
     "#{days} day#{if days > 1, do: "s", else: ""}"
   end
+
+  @doc """
+  Returns a Tailwind color class based on p95 SLO compliance.
+  Green: p95 < 200ms, Yellow: 200-500ms, Red: > 500ms, Gray: no data.
+  """
+  def latency_bar_color(0), do: "bg-slate-200"
+  def latency_bar_color(p95_us) when p95_us <= 200_000, do: "bg-emerald-600"
+  def latency_bar_color(p95_us) when p95_us <= 500_000, do: "bg-amber-500"
+  def latency_bar_color(_p95_us), do: "bg-red-500"
+
+  @doc """
+  Formats a latency value in microseconds to a human-readable string.
+  """
+  def format_latency(0), do: "-"
+
+  def format_latency(us) when us < 1_000 do
+    "#{us}us"
+  end
+
+  def format_latency(us) when us < 1_000_000 do
+    ms = us / 1_000
+    if ms >= 10, do: "#{round(ms)}ms", else: "#{Float.round(ms, 1)}ms"
+  end
+
+  def format_latency(us) do
+    s = us / 1_000_000
+    "#{Float.round(s, 1)}s"
+  end
+
+  @doc """
+  Builds a list of 30 days with latency data, filling gaps with nil entries.
+  """
+  def fill_latency_days(daily_latency, days \\ 30) do
+    today = Date.utc_today()
+    latency_by_date = Map.new(daily_latency, fn entry -> {entry.date, entry} end)
+
+    for offset <- (-(days - 1))..0 do
+      date = Date.add(today, offset)
+      {date, Map.get(latency_by_date, date)}
+    end
+  end
 end

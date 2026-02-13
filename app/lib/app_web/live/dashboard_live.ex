@@ -721,16 +721,16 @@ defmodule PrikkeWeb.DashboardLive do
         <%= for {{date, stats}, idx} <- Enum.with_index(@trend) do %>
           <% height = if stats.total > 0, do: max(round(stats.total / @max_val * 100), 6), else: 0 %>
           <% bar_color = trend_bar_color(stats) %>
-          <div class="flex-1 flex flex-col justify-end h-full group relative">
+          <div class="flex-1 flex flex-col justify-end h-full bar-anchor" style={"anchor-name: --task-#{idx}"}>
             <%= if stats.total > 0 do %>
               <div class={["rounded-t-sm", bar_color]} style={"height: #{height}%"} />
             <% else %>
               <div class="bg-slate-100 h-1 rounded-sm" />
             <% end %>
-            <div class={[
-              "hidden group-hover:block absolute bottom-full mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap z-10",
-              tooltip_position(idx, length(@trend))
-            ]}>
+            <div
+              class="bar-tooltip px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap z-10"
+              style={"position-anchor: --task-#{idx}"}
+            >
               <div class="font-medium">{Calendar.strftime(date, "%b %d")}</div>
               <div>{stats.total} total</div>
               <%= if stats.failed > 0 do %>
@@ -767,7 +767,7 @@ defmodule PrikkeWeb.DashboardLive do
       <div class="text-xs font-medium text-slate-500 mb-2">{length(@trend)}-day uptime</div>
       <div class="h-16 flex items-end gap-px">
         <%= for {{date, stats}, idx} <- Enum.with_index(@trend) do %>
-          <div class="flex-1 flex flex-col justify-end h-full group relative">
+          <div class="flex-1 flex flex-col justify-end h-full bar-anchor" style={"anchor-name: --monitor-#{idx}"}>
             <%= if stats.total > 0 do %>
               <div class="flex flex-col h-full">
                 <%= if stats.down > 0 do %>
@@ -792,10 +792,10 @@ defmodule PrikkeWeb.DashboardLive do
             <% else %>
               <div class="bg-slate-100 h-1 rounded-sm" />
             <% end %>
-            <div class={[
-              "hidden group-hover:block absolute bottom-full mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap z-10",
-              tooltip_position(idx, length(@trend))
-            ]}>
+            <div
+              class="bar-tooltip px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap z-10"
+              style={"position-anchor: --monitor-#{idx}"}
+            >
               <div class="font-medium">{Calendar.strftime(date, "%b %d")}</div>
               <%= if stats.up > 0 do %>
                 <div class="text-emerald-400">{stats.up} up</div>
@@ -815,14 +815,6 @@ defmodule PrikkeWeb.DashboardLive do
       </div>
     </div>
     """
-  end
-
-  defp tooltip_position(idx, total) do
-    cond do
-      idx < 3 -> "left-0"
-      idx > total - 4 -> "right-0"
-      true -> "left-1/2 -translate-x-1/2"
-    end
   end
 
   defp task_summary(assigns) do

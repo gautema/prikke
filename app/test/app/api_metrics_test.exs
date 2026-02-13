@@ -171,4 +171,137 @@ defmodule Prikke.ApiMetricsTest do
       assert ApiMetrics.categorize_path("/dashboard") == "unknown"
     end
   end
+
+  describe "bucket_index/1" do
+    test "assigns sub-millisecond to bucket 0" do
+      assert ApiMetrics.bucket_index(500) == 0
+      assert ApiMetrics.bucket_index(999) == 0
+    end
+
+    test "assigns 1-5ms to bucket 1" do
+      assert ApiMetrics.bucket_index(1_000) == 1
+      assert ApiMetrics.bucket_index(4_999) == 1
+    end
+
+    test "assigns 5-10ms to bucket 2" do
+      assert ApiMetrics.bucket_index(5_000) == 2
+      assert ApiMetrics.bucket_index(9_999) == 2
+    end
+
+    test "assigns 10-25ms to bucket 3" do
+      assert ApiMetrics.bucket_index(10_000) == 3
+      assert ApiMetrics.bucket_index(24_999) == 3
+    end
+
+    test "assigns 25-50ms to bucket 4" do
+      assert ApiMetrics.bucket_index(25_000) == 4
+    end
+
+    test "assigns 50-100ms to bucket 5" do
+      assert ApiMetrics.bucket_index(50_000) == 5
+    end
+
+    test "assigns 100-250ms to bucket 6" do
+      assert ApiMetrics.bucket_index(100_000) == 6
+    end
+
+    test "assigns 250-500ms to bucket 7" do
+      assert ApiMetrics.bucket_index(250_000) == 7
+    end
+
+    test "assigns 500ms-1s to bucket 8" do
+      assert ApiMetrics.bucket_index(500_000) == 8
+    end
+
+    test "assigns 1-2.5s to bucket 9" do
+      assert ApiMetrics.bucket_index(1_000_000) == 9
+    end
+
+    test "assigns 2.5-5s to bucket 10" do
+      assert ApiMetrics.bucket_index(2_500_000) == 10
+    end
+
+    test "assigns 5-10s to bucket 11" do
+      assert ApiMetrics.bucket_index(5_000_000) == 11
+    end
+
+    test "assigns >10s to bucket 12" do
+      assert ApiMetrics.bucket_index(10_000_000) == 12
+      assert ApiMetrics.bucket_index(99_000_000) == 12
+    end
+  end
+
+  describe "compute_percentiles_from_buckets/1" do
+    test "returns zeros for empty histogram" do
+      buckets = List.duplicate(0, 13)
+      assert ApiMetrics.compute_percentiles_from_buckets(buckets) == %{p50: 0, p95: 0, p99: 0}
+    end
+
+    test "returns correct percentiles for single bucket" do
+      # All 100 requests in bucket 1 (1-5ms, upper bound 5_000us)
+      buckets = [0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      result = ApiMetrics.compute_percentiles_from_buckets(buckets)
+      assert result.p50 == 5_000
+      assert result.p95 == 5_000
+      assert result.p99 == 5_000
+    end
+
+    test "returns correct percentiles for distributed requests" do
+      # 50 in bucket 1 (1-5ms), 40 in bucket 3 (10-25ms), 10 in bucket 6 (100-250ms)
+      buckets = [0, 50, 0, 40, 0, 0, 10, 0, 0, 0, 0, 0, 0]
+      result = ApiMetrics.compute_percentiles_from_buckets(buckets)
+
+      # p50: 50th request out of 100 → in bucket 1 (first 50 are bucket 1)
+      assert result.p50 == 5_000
+
+      # p95: 95th request → 50 + 40 = 90, so 95th is in bucket 6
+      assert result.p95 == 250_000
+
+      # p99: 99th request → in bucket 6
+      assert result.p99 == 250_000
+    end
+  end
+
+  describe "histogram recording in ETS" do
+    test "records histogram data alongside circular buffer" do
+      record_and_sync(make_entry(%{duration_us: 3_000, group: "tasks"}))
+      record_and_sync(make_entry(%{duration_us: 15_000, group: "ping"}))
+
+      today = Date.utc_today() |> Date.to_iso8601()
+
+      # Check "all" group count
+      [{_, all_count}] = :ets.lookup(:prikke_api_metrics, {:hist_count, today, "all"})
+      assert all_count == 2
+
+      # Check per-group counts
+      [{_, tasks_count}] = :ets.lookup(:prikke_api_metrics, {:hist_count, today, "tasks"})
+      assert tasks_count == 1
+
+      [{_, ping_count}] = :ets.lookup(:prikke_api_metrics, {:hist_count, today, "ping"})
+      assert ping_count == 1
+    end
+
+    test "increments correct histogram bucket" do
+      # 3_000us should go to bucket 1 (1-5ms)
+      record_and_sync(make_entry(%{duration_us: 3_000, group: "tasks"}))
+
+      today = Date.utc_today() |> Date.to_iso8601()
+
+      [{_, bucket_1_count}] = :ets.lookup(:prikke_api_metrics, {:hist, today, "tasks", 1})
+      assert bucket_1_count == 1
+
+      # Bucket 0 should be empty
+      assert :ets.lookup(:prikke_api_metrics, {:hist, today, "tasks", 0}) == []
+    end
+
+    test "accumulates duration sum" do
+      record_and_sync(make_entry(%{duration_us: 3_000, group: "tasks"}))
+      record_and_sync(make_entry(%{duration_us: 7_000, group: "tasks"}))
+
+      today = Date.utc_today() |> Date.to_iso8601()
+
+      [{_, total_duration}] = :ets.lookup(:prikke_api_metrics, {:hist_duration, today, "tasks"})
+      assert total_duration == 10_000
+    end
+  end
 end

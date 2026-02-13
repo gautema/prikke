@@ -167,15 +167,18 @@ defmodule Prikke.Cleanup do
     # Clean old audit logs (90 days)
     {audit_deleted, _} = Audit.cleanup_old_audit_logs(90)
 
+    # Clean old API latency data (90 days)
+    {latency_deleted, _} = cleanup_old_latency_data(90)
+
     # Reset monthly execution counters if new month
     Executions.reset_monthly_execution_counts()
 
     pings_deleted = total_pings
 
     if total_executions > 0 or total_tasks > 0 or idempotency_deleted > 0 or pings_deleted > 0 or
-         emails_deleted > 0 or audit_deleted > 0 do
+         emails_deleted > 0 or audit_deleted > 0 or latency_deleted > 0 do
       Logger.info(
-        "[Cleanup] Deleted #{total_executions} executions, #{total_tasks} completed one-time tasks, #{idempotency_deleted} idempotency keys, #{pings_deleted} monitor pings, #{emails_deleted} email logs, #{audit_deleted} audit logs"
+        "[Cleanup] Deleted #{total_executions} executions, #{total_tasks} completed one-time tasks, #{idempotency_deleted} idempotency keys, #{pings_deleted} monitor pings, #{emails_deleted} email logs, #{audit_deleted} audit logs, #{latency_deleted} latency rows"
       )
     else
       Logger.info("[Cleanup] Nothing to clean up")
@@ -188,7 +191,8 @@ defmodule Prikke.Cleanup do
        idempotency_keys: idempotency_deleted,
        monitor_pings: pings_deleted,
        email_logs: emails_deleted,
-       audit_logs: audit_deleted
+       audit_logs: audit_deleted,
+       latency_rows: latency_deleted
      }}
   end
 
@@ -251,6 +255,16 @@ defmodule Prikke.Cleanup do
       {:error, reason} ->
         Logger.error("[Cleanup] Failed to send monthly summary: #{inspect(reason)}")
     end
+  end
+
+  defp cleanup_old_latency_data(days) do
+    import Ecto.Query
+
+    cutoff = Date.utc_today() |> Date.add(-days)
+
+    Prikke.ApiMetrics.DailyLatency
+    |> where([d], d.date < ^cutoff)
+    |> Repo.delete_all()
   end
 
   # Recover executions stuck in "running" status (worker crashed or server restarted)
