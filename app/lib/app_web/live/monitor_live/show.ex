@@ -87,7 +87,7 @@ defmodule PrikkeWeb.MonitorLive.Show do
   def handle_event("toggle", _, socket) do
     org = socket.assigns.organization
     monitor = socket.assigns.monitor
-    {:ok, updated} = Monitors.toggle_monitor(org, monitor)
+    {:ok, updated} = Monitors.toggle_monitor(org, monitor, scope: socket.assigns.current_scope)
     {:noreply, assign(socket, :monitor, updated)}
   end
 
@@ -95,7 +95,7 @@ defmodule PrikkeWeb.MonitorLive.Show do
     org = socket.assigns.organization
     monitor = socket.assigns.monitor
 
-    case Monitors.update_monitor(org, monitor, %{muted: !monitor.muted}) do
+    case Monitors.update_monitor(org, monitor, %{muted: !monitor.muted}, scope: socket.assigns.current_scope) do
       {:ok, updated} ->
         {:noreply, assign(socket, :monitor, updated)}
 
@@ -107,7 +107,7 @@ defmodule PrikkeWeb.MonitorLive.Show do
   def handle_event("delete", _, socket) do
     org = socket.assigns.organization
     monitor = socket.assigns.monitor
-    {:ok, _} = Monitors.delete_monitor(org, monitor)
+    {:ok, _} = Monitors.delete_monitor(org, monitor, scope: socket.assigns.current_scope)
 
     {:noreply,
      socket

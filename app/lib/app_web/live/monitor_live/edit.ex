@@ -39,7 +39,7 @@ defmodule PrikkeWeb.MonitorLive.Edit do
     org = socket.assigns.organization
     monitor = socket.assigns.monitor
 
-    case Monitors.update_monitor(org, monitor, params) do
+    case Monitors.update_monitor(org, monitor, params, scope: socket.assigns.current_scope) do
       {:ok, updated} ->
         {:noreply,
          socket

@@ -35,7 +35,7 @@ defmodule PrikkeWeb.MonitorLive.New do
   end
 
   def handle_event("save", %{"monitor" => params}, socket) do
-    case Monitors.create_monitor(socket.assigns.organization, params) do
+    case Monitors.create_monitor(socket.assigns.organization, params, scope: socket.assigns.current_scope) do
       {:ok, monitor} ->
         {:noreply,
          socket

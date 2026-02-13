@@ -5,6 +5,7 @@ defmodule PrikkeWeb.StatusLive.Index do
   alias Prikke.Tasks
   alias Prikke.Monitors
   alias Prikke.Endpoints
+  alias Prikke.Audit
 
   @impl true
   def mount(_params, session, socket) do
@@ -47,8 +48,20 @@ defmodule PrikkeWeb.StatusLive.Index do
   end
 
   def handle_event("save", %{"status_page" => params}, socket) do
-    case StatusPages.update_status_page(socket.assigns.status_page, params) do
+    old = socket.assigns.status_page
+
+    case StatusPages.update_status_page(old, params) do
       {:ok, status_page} ->
+        changes =
+          Audit.compute_changes(old, status_page, [:title, :slug, :description, :enabled])
+
+        if changes != %{} do
+          Audit.log(socket.assigns.current_scope, :updated, :status_page, status_page.id,
+            organization_id: socket.assigns.organization.id,
+            changes: changes
+          )
+        end
+
         {:noreply,
          socket
          |> assign(:status_page, status_page)
@@ -62,42 +75,68 @@ defmodule PrikkeWeb.StatusLive.Index do
 
   def handle_event("enable_badge", %{"type" => type, "id" => id}, socket) do
     org = socket.assigns.organization
+    scope = socket.assigns.current_scope
 
     case type do
       "task" ->
         task = Tasks.get_task!(org, id)
         {:ok, _} = Tasks.enable_badge(org, task)
+        Audit.log(scope, :enabled, :status_page_badge, id,
+          organization_id: org.id,
+          metadata: %{"resource_type" => "task", "resource_name" => task.name}
+        )
         {:noreply, assign(socket, :tasks, Tasks.list_tasks(org, type: "cron"))}
 
       "monitor" ->
         monitor = Monitors.get_monitor!(org, id)
         {:ok, _} = Monitors.enable_badge(org, monitor)
+        Audit.log(scope, :enabled, :status_page_badge, id,
+          organization_id: org.id,
+          metadata: %{"resource_type" => "monitor", "resource_name" => monitor.name}
+        )
         {:noreply, assign(socket, :monitors, Monitors.list_monitors(org))}
 
       "endpoint" ->
         endpoint = Endpoints.get_endpoint!(org, id)
         {:ok, _} = Endpoints.enable_badge(org, endpoint)
+        Audit.log(scope, :enabled, :status_page_badge, id,
+          organization_id: org.id,
+          metadata: %{"resource_type" => "endpoint", "resource_name" => endpoint.name}
+        )
         {:noreply, assign(socket, :endpoints, Endpoints.list_endpoints(org))}
     end
   end
 
   def handle_event("disable_badge", %{"type" => type, "id" => id}, socket) do
     org = socket.assigns.organization
+    scope = socket.assigns.current_scope
 
     case type do
       "task" ->
         task = Tasks.get_task!(org, id)
         {:ok, _} = Tasks.disable_badge(org, task)
+        Audit.log(scope, :disabled, :status_page_badge, id,
+          organization_id: org.id,
+          metadata: %{"resource_type" => "task", "resource_name" => task.name}
+        )
         {:noreply, assign(socket, :tasks, Tasks.list_tasks(org, type: "cron"))}
 
       "monitor" ->
         monitor = Monitors.get_monitor!(org, id)
         {:ok, _} = Monitors.disable_badge(org, monitor)
+        Audit.log(scope, :disabled, :status_page_badge, id,
+          organization_id: org.id,
+          metadata: %{"resource_type" => "monitor", "resource_name" => monitor.name}
+        )
         {:noreply, assign(socket, :monitors, Monitors.list_monitors(org))}
 
       "endpoint" ->
         endpoint = Endpoints.get_endpoint!(org, id)
         {:ok, _} = Endpoints.disable_badge(org, endpoint)
+        Audit.log(scope, :disabled, :status_page_badge, id,
+          organization_id: org.id,
+          metadata: %{"resource_type" => "endpoint", "resource_name" => endpoint.name}
+        )
         {:noreply, assign(socket, :endpoints, Endpoints.list_endpoints(org))}
     end
   end

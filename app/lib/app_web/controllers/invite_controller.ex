@@ -2,6 +2,7 @@ defmodule PrikkeWeb.InviteController do
   use PrikkeWeb, :controller
 
   alias Prikke.Accounts
+  alias Prikke.Audit
 
   def index(conn, _params) do
     user = conn.assigns.current_scope.user
@@ -23,6 +24,11 @@ defmodule PrikkeWeb.InviteController do
           invite,
           raw_token,
           &url(~p"/invites/#{&1}")
+        )
+
+        Audit.log(conn.assigns.current_scope, :invited, :invite, invite.id,
+          organization_id: organization.id,
+          metadata: %{"email" => email, "role" => role}
         )
 
         conn
@@ -77,6 +83,11 @@ defmodule PrikkeWeb.InviteController do
 
     if invite do
       Accounts.delete_invite(invite)
+
+      Audit.log(conn.assigns.current_scope, :deleted, :invite, invite.id,
+        organization_id: organization.id,
+        metadata: %{"email" => invite.email}
+      )
 
       conn
       |> put_flash(:info, "Invitation cancelled.")

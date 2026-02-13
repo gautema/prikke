@@ -201,5 +201,8 @@ defmodule Prikke.Audit do
   def format_resource_type("invite"), do: "Invite"
   def format_resource_type("api_key"), do: "API Key"
   def format_resource_type("endpoint"), do: "Endpoint"
+  def format_resource_type("status_page"), do: "Status Page"
+  def format_resource_type("status_page_badge"), do: "Status Page Badge"
+  def format_resource_type("monitor"), do: "Monitor"
   def format_resource_type(type), do: String.capitalize(type)
 end

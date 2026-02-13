@@ -8,6 +8,7 @@ defmodule Prikke.Monitors do
 
   alias Prikke.Monitors.{Monitor, MonitorPing}
   alias Prikke.Accounts.Organization
+  alias Prikke.Audit
 
   @tier_limits %{
     "free" => %{max_monitors: 3},
@@ -54,12 +55,13 @@ defmodule Prikke.Monitors do
     Repo.one(from m in Monitor, where: m.ping_token == ^token, preload: [:organization])
   end
 
-  def create_monitor(%Organization{} = org, attrs, _opts \\ []) do
+  def create_monitor(%Organization{} = org, attrs, opts \\ []) do
     changeset = Monitor.create_changeset(%Monitor{}, attrs, org.id)
 
     with :ok <- check_monitor_limit(org),
          {:ok, monitor} <- Repo.insert(changeset) do
       broadcast(org, {:monitor_created, monitor})
+      audit_log(opts, :created, :monitor, monitor.id, org.id, metadata: %{"monitor_name" => monitor.name})
       {:ok, monitor}
     else
       {:error, :monitor_limit_reached} ->
@@ -75,7 +77,7 @@ defmodule Prikke.Monitors do
     end
   end
 
-  def update_monitor(%Organization{} = org, %Monitor{} = monitor, attrs, _opts \\ []) do
+  def update_monitor(%Organization{} = org, %Monitor{} = monitor, attrs, opts \\ []) do
     if monitor.organization_id != org.id do
       raise ArgumentError, "monitor does not belong to organization"
     end
@@ -85,6 +87,8 @@ defmodule Prikke.Monitors do
     case Repo.update(changeset) do
       {:ok, updated} ->
         broadcast(org, {:monitor_updated, updated})
+        changes = Audit.compute_changes(monitor, updated, [:name, :url, :method, :interval_seconds, :grace_period_seconds, :timeout_ms, :expected_status_code])
+        audit_log(opts, :updated, :monitor, updated.id, org.id, changes: changes)
         {:ok, updated}
 
       error ->
@@ -92,7 +96,7 @@ defmodule Prikke.Monitors do
     end
   end
 
-  def delete_monitor(%Organization{} = org, %Monitor{} = monitor, _opts \\ []) do
+  def delete_monitor(%Organization{} = org, %Monitor{} = monitor, opts \\ []) do
     if monitor.organization_id != org.id do
       raise ArgumentError, "monitor does not belong to organization"
     end
@@ -100,6 +104,7 @@ defmodule Prikke.Monitors do
     case Repo.delete(monitor) do
       {:ok, monitor} ->
         broadcast(org, {:monitor_deleted, monitor})
+        audit_log(opts, :deleted, :monitor, monitor.id, org.id, metadata: %{"monitor_name" => monitor.name})
         {:ok, monitor}
 
       error ->
@@ -107,21 +112,33 @@ defmodule Prikke.Monitors do
     end
   end
 
-  def toggle_monitor(%Organization{} = org, %Monitor{} = monitor, _opts \\ []) do
+  def toggle_monitor(%Organization{} = org, %Monitor{} = monitor, opts \\ []) do
     if monitor.organization_id != org.id do
       raise ArgumentError, "monitor does not belong to organization"
     end
 
-    if monitor.enabled do
-      monitor
-      |> Ecto.Changeset.change(enabled: false, status: "paused")
-      |> Repo.update()
-      |> tap_broadcast(org)
-    else
-      monitor
-      |> Ecto.Changeset.change(enabled: true, status: "new", next_expected_at: nil)
-      |> Repo.update()
-      |> tap_broadcast(org)
+    action = if monitor.enabled, do: :disabled, else: :enabled
+
+    result =
+      if monitor.enabled do
+        monitor
+        |> Ecto.Changeset.change(enabled: false, status: "paused")
+        |> Repo.update()
+        |> tap_broadcast(org)
+      else
+        monitor
+        |> Ecto.Changeset.change(enabled: true, status: "new", next_expected_at: nil)
+        |> Repo.update()
+        |> tap_broadcast(org)
+      end
+
+    case result do
+      {:ok, updated} ->
+        audit_log(opts, action, :monitor, updated.id, org.id, metadata: %{"monitor_name" => updated.name})
+        result
+
+      _ ->
+        result
     end
   end
 
@@ -694,6 +711,24 @@ defmodule Prikke.Monitors do
 
       max when is_integer(max) ->
         if count_monitors(org) < max, do: :ok, else: {:error, :monitor_limit_reached}
+    end
+  end
+
+  ## Private: Audit Logging
+
+  defp audit_log(opts, action, resource_type, resource_id, org_id, extra_opts) do
+    scope = Keyword.get(opts, :scope)
+    changes = Keyword.get(extra_opts, :changes, %{})
+    metadata = Keyword.get(extra_opts, :metadata, %{})
+
+    if scope do
+      Audit.log(scope, action, resource_type, resource_id,
+        organization_id: org_id,
+        changes: changes,
+        metadata: metadata
+      )
+    else
+      :ok
     end
   end
 end
