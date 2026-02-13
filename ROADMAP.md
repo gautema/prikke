@@ -25,18 +25,23 @@ Runlater is a **task queue with cron built in**, not a cron scheduler with a que
 - [ ] **Job versioning / change history** — Track edits to a job (who changed what, when).
 - [ ] **Bulk job export/import** (JSON/YAML) — Back up configs or move between orgs.
 - [ ] **Rate limiting per endpoint** — Limit how fast inbound events are forwarded, for target APIs with rate limits.
+- [ ] **Framework guide pages** — SEO-targeted docs for Next.js, Express, Remix, Cloudflare Workers (e.g. "Background jobs in Next.js").
+- [ ] **Docs section grouping** — Reorganize docs into sections: Getting Started, Guides, Features, API Reference.
+- [ ] **Content marketing** — dev.to/Hashnode articles targeting "next.js cron", "vercel background jobs", etc. Link back to runlater.eu.
+- [ ] **Python SDK** (`runlater` on PyPI) — Django/FastAPI crowd.
+- [ ] **Go SDK** — For the infrastructure-minded.
 
 ## Priority 3 — Revenue & Adoption
 
 - [ ] **Payment integration** (Lemon Squeezy) — Replace manual upgrades with real checkout. They handle EU VAT as Merchant of Record.
-- [ ] **SDK / client libraries** — Node.js/Python wrappers around the API to lower adoption barrier.
-- [ ] **Customer-facing status pages** — Let users create public status pages for their own services, powered by monitors and job health.
+- [x] **Node.js SDK** — Published as `runlater-js` on npm. Zero dependencies, native fetch, ESM + CJS.
+- [x] **Customer-facing status pages** — Public status pages per org with uptime bars, uptime percentages, and visibility controls.
 
 ## Priority 4 — Advanced Features
 
 - [ ] **Workflows** — Multi-step jobs with dependencies (output of one becomes input of the next).
 - [ ] **Bulk push API** — Queue multiple jobs in a single API call (transaction-safe).
-- [ ] **Per-org worker fairness** — Limit each org to one concurrent worker so slow endpoints can't monopolize the pool.
+- [x] **Per-org worker fairness** — Max 3 concurrent executions per org so slow endpoints can't monopolize the pool.
 
 ## Priority 5 — Infrastructure
 
