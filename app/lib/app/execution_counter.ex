@@ -46,10 +46,19 @@ defmodule Prikke.ExecutionCounter do
 
   @impl true
   def init(_) do
+    Process.flag(:trap_exit, true)
     :ets.new(@counter_table, [:set, :public, :named_table])
     :ets.new(@timestamp_table, [:set, :public, :named_table])
     schedule_flush()
     {:ok, %{}}
+  end
+
+  @impl true
+  def terminate(_reason, _state) do
+    flush()
+    :ok
+  rescue
+    _ -> :ok
   end
 
   @impl true

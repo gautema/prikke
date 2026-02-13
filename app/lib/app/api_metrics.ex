@@ -235,6 +235,7 @@ defmodule Prikke.ApiMetrics do
   def init(opts) do
     test_mode = Keyword.get(opts, :test_mode, false)
 
+    Process.flag(:trap_exit, true)
     :ets.new(@table, [:named_table, :set, :public])
 
     unless test_mode do
