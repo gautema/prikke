@@ -257,6 +257,32 @@ defmodule PrikkeWeb.EndpointLive.Show do
               <.local_time id="endpoint-created" datetime={@endpoint.inserted_at} />
             </dd>
           </div>
+          <%= if not is_nil(@endpoint.notify_on_failure) do %>
+            <div>
+              <dt class="text-sm text-slate-500">Failure Alerts</dt>
+              <dd class="text-sm font-medium mt-0.5">
+                <span class={[
+                  "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium",
+                  if(@endpoint.notify_on_failure, do: "bg-emerald-100 text-emerald-700", else: "bg-slate-100 text-slate-600")
+                ]}>
+                  {if @endpoint.notify_on_failure, do: "On", else: "Off"}
+                </span>
+              </dd>
+            </div>
+          <% end %>
+          <%= if not is_nil(@endpoint.notify_on_recovery) do %>
+            <div>
+              <dt class="text-sm text-slate-500">Recovery Alerts</dt>
+              <dd class="text-sm font-medium mt-0.5">
+                <span class={[
+                  "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium",
+                  if(@endpoint.notify_on_recovery, do: "bg-emerald-100 text-emerald-700", else: "bg-slate-100 text-slate-600")
+                ]}>
+                  {if @endpoint.notify_on_recovery, do: "On", else: "Off"}
+                </span>
+              </dd>
+            </div>
+          <% end %>
         </dl>
       </div>
 

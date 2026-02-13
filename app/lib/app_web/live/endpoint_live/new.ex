@@ -26,6 +26,8 @@ defmodule PrikkeWeb.EndpointLive.New do
 
   @impl true
   def handle_event("validate", %{"endpoint" => params}, socket) do
+    params = cast_notification_overrides(params)
+
     changeset =
       %Endpoint{}
       |> Endpoints.change_endpoint(params)
@@ -35,6 +37,7 @@ defmodule PrikkeWeb.EndpointLive.New do
   end
 
   def handle_event("save", %{"endpoint" => params}, socket) do
+    params = cast_notification_overrides(params)
     case Endpoints.create_endpoint(socket.assigns.organization, params,
            scope: socket.assigns.current_scope
          ) do
@@ -49,6 +52,21 @@ defmodule PrikkeWeb.EndpointLive.New do
          socket
          |> put_flash(:error, "Could not create endpoint")
          |> assign_form(Map.put(changeset, :action, :validate))}
+    end
+  end
+
+  defp cast_notification_overrides(params) do
+    params
+    |> cast_notification_field("notify_on_failure")
+    |> cast_notification_field("notify_on_recovery")
+  end
+
+  defp cast_notification_field(params, field) do
+    case Map.get(params, field) do
+      "" -> Map.put(params, field, nil)
+      "true" -> Map.put(params, field, true)
+      "false" -> Map.put(params, field, false)
+      _ -> params
     end
   end
 
@@ -132,6 +150,69 @@ defmodule PrikkeWeb.EndpointLive.New do
           <p class="text-sm text-slate-500 -mt-4">
             When enabled, events are forwarded one at a time. Disable for parallel forwarding when order doesn't matter.
           </p>
+
+          <div class="pt-4 border-t border-slate-100 mt-4">
+            <h3 class="text-sm font-semibold text-slate-900 mb-3">Notifications</h3>
+            <p class="text-sm text-slate-500 mb-4">
+              Override organization-level notification settings for forwarded events.
+            </p>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">
+                  Failure notifications
+                </label>
+                <select
+                  name={@form[:notify_on_failure].name}
+                  id="endpoint_notify_on_failure"
+                  class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
+                >
+                  <option value="" selected={is_nil(@form[:notify_on_failure].value)}>
+                    Use org default
+                  </option>
+                  <option
+                    value="true"
+                    selected={@form[:notify_on_failure].value == true}
+                  >
+                    Enabled
+                  </option>
+                  <option
+                    value="false"
+                    selected={@form[:notify_on_failure].value == false}
+                  >
+                    Disabled
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">
+                  Recovery notifications
+                </label>
+                <select
+                  name={@form[:notify_on_recovery].name}
+                  id="endpoint_notify_on_recovery"
+                  class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
+                >
+                  <option value="" selected={is_nil(@form[:notify_on_recovery].value)}>
+                    Use org default
+                  </option>
+                  <option
+                    value="true"
+                    selected={@form[:notify_on_recovery].value == true}
+                  >
+                    Enabled
+                  </option>
+                  <option
+                    value="false"
+                    selected={@form[:notify_on_recovery].value == false}
+                  >
+                    Disabled
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
 
           <div class="pt-4">
             <button

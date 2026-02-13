@@ -18,7 +18,6 @@ defmodule Prikke.Tasks.Task do
     field :retry_attempts, :integer, default: 3
     field :timeout_ms, :integer, default: 30000
     field :next_run_at, :utc_datetime
-    field :muted, :boolean, default: false
     field :callback_url, :string
     field :expected_status_codes, :string
     field :expected_body_pattern, :string
@@ -62,7 +61,6 @@ defmodule Prikke.Tasks.Task do
         :retry_attempts,
         :timeout_ms,
         :callback_url,
-        :muted,
         :expected_status_codes,
         :expected_body_pattern,
         :queue,

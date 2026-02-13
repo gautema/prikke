@@ -370,7 +370,7 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
     <li><code>false</code> — never notify, even if org setting is on</li>
   </ul>
   <p class="mt-2">
-    The <code>muted</code> flag remains a master kill switch — if a task or monitor is muted, no notifications are sent regardless of overrides.
+    Set both <code>notify_on_failure</code> and <code>notify_on_recovery</code> to <code>false</code> to silence all notifications for a specific resource.
   </p>
 
   <h3>Notification Webhook Payloads</h3>

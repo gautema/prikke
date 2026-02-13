@@ -406,11 +406,6 @@ defmodule PrikkeWeb.TaskLive.Index do
                     >
                       {task.name}
                     </.link>
-                    <%= if task.muted do %>
-                      <span title="Notifications muted">
-                        <.icon name="hero-bell-slash" class="w-4 h-4 text-slate-400" />
-                      </span>
-                    <% end %>
                     <.task_status_badge task={task} latest_info={@latest_statuses[task.id]} />
                     <%= if task.queue do %>
                       <span class="text-xs font-medium px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100">

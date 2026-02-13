@@ -439,7 +439,6 @@ defmodule PrikkeWeb.Api.TaskController do
       enabled: task.enabled,
       timeout_ms: task.timeout_ms,
       retry_attempts: task.retry_attempts,
-      muted: task.muted,
       expected_status_codes: task.expected_status_codes,
       expected_body_pattern: task.expected_body_pattern,
       queue: task.queue,

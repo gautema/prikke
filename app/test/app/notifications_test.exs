@@ -905,7 +905,7 @@ defmodule Prikke.NotificationsTest do
     end
   end
 
-  describe "muted task notifications" do
+  describe "silenced task notifications (both overrides disabled)" do
     setup do
       if !Process.whereis(Prikke.TaskSupervisor) do
         start_supervised!({Task.Supervisor, name: Prikke.TaskSupervisor})
@@ -925,17 +925,18 @@ defmodule Prikke.NotificationsTest do
 
       {:ok, task} =
         Tasks.create_task(org, %{
-          name: "Muted Task",
+          name: "Silenced Task",
           url: "https://example.com/webhook",
           schedule_type: "cron",
           cron_expression: "0 * * * *",
-          muted: true
+          notify_on_failure: false,
+          notify_on_recovery: false
         })
 
       %{org: org, task: task}
     end
 
-    test "does not send failure notification for muted task", %{task: task} do
+    test "does not send failure notification for silenced task", %{task: task} do
       {:ok, execution} =
         Executions.create_execution(%{
           task_id: task.id,
@@ -962,10 +963,10 @@ defmodule Prikke.NotificationsTest do
           String.contains?(email.subject, "Task failed")
         end)
 
-      assert failure_emails == [], "Expected no failure emails for muted task"
+      assert failure_emails == [], "Expected no failure emails for silenced task"
     end
 
-    test "does not send recovery notification for muted task", %{task: task} do
+    test "does not send recovery notification for silenced task", %{task: task} do
       # Create a failed execution first
       {:ok, failed_exec} =
         Executions.create_execution(%{
@@ -1008,23 +1009,22 @@ defmodule Prikke.NotificationsTest do
           String.contains?(email.subject, "Task recovered")
         end)
 
-      assert recovery_emails == [], "Expected no recovery emails for muted task"
+      assert recovery_emails == [], "Expected no recovery emails for silenced task"
     end
 
-    test "sends failure notification for unmuted task", %{org: org} do
-      {:ok, unmuted_task} =
+    test "sends failure notification for task with default overrides", %{org: org} do
+      {:ok, default_task} =
         Tasks.create_task(org, %{
-          name: "Unmuted Task",
+          name: "Default Task",
           url: "https://example.com/webhook",
           schedule_type: "cron",
-          cron_expression: "0 * * * *",
-          muted: false
+          cron_expression: "0 * * * *"
         })
 
       {:ok, execution} =
         Executions.create_execution(%{
-          task_id: unmuted_task.id,
-          organization_id: unmuted_task.organization_id,
+          task_id: default_task.id,
+          organization_id: default_task.organization_id,
           scheduled_for: DateTime.utc_now()
         })
 
@@ -1047,11 +1047,11 @@ defmodule Prikke.NotificationsTest do
           String.contains?(email.subject, "Task failed")
         end)
 
-      assert failure_email != nil, "Expected failure email for unmuted task"
+      assert failure_email != nil, "Expected failure email for task with default overrides"
     end
   end
 
-  describe "muted monitor notifications" do
+  describe "silenced monitor notifications (both overrides disabled)" do
     setup do
       if !Process.whereis(Prikke.TaskSupervisor) do
         start_supervised!({Task.Supervisor, name: Prikke.TaskSupervisor})
@@ -1071,11 +1071,12 @@ defmodule Prikke.NotificationsTest do
 
       {:ok, monitor} =
         Prikke.Monitors.create_monitor(org, %{
-          name: "Muted Monitor",
+          name: "Silenced Monitor",
           schedule_type: "interval",
           interval_seconds: 3600,
           grace_period_seconds: 300,
-          muted: true
+          notify_on_failure: false,
+          notify_on_recovery: false
         })
 
       # Preload organization for notification logic
@@ -1084,7 +1085,7 @@ defmodule Prikke.NotificationsTest do
       %{org: org, monitor: monitor}
     end
 
-    test "does not send down notification for muted monitor", %{monitor: monitor} do
+    test "does not send down notification for silenced monitor", %{monitor: monitor} do
       flush_emails()
 
       {:ok, _pid} = Notifications.notify_monitor_down(monitor)
@@ -1097,10 +1098,10 @@ defmodule Prikke.NotificationsTest do
           String.contains?(email.subject, "Monitor down")
         end)
 
-      assert down_emails == [], "Expected no down emails for muted monitor"
+      assert down_emails == [], "Expected no down emails for silenced monitor"
     end
 
-    test "does not send recovery notification for muted monitor", %{monitor: monitor} do
+    test "does not send recovery notification for silenced monitor", %{monitor: monitor} do
       monitor = %{monitor | last_ping_at: DateTime.utc_now()}
       flush_emails()
 
@@ -1114,7 +1115,7 @@ defmodule Prikke.NotificationsTest do
           String.contains?(email.subject, "Monitor recovered")
         end)
 
-      assert recovery_emails == [], "Expected no recovery emails for muted monitor"
+      assert recovery_emails == [], "Expected no recovery emails for silenced monitor"
     end
   end
 

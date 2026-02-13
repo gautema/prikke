@@ -52,11 +52,6 @@ defmodule PrikkeWeb.Schemas do
           default: true,
           description: "Whether the task is enabled"
         },
-        muted: %Schema{
-          type: :boolean,
-          default: false,
-          description: "Whether notifications are muted for this task"
-        },
         timeout_ms: %Schema{
           type: :integer,
           default: 30000,
@@ -164,11 +159,6 @@ defmodule PrikkeWeb.Schemas do
           description: "Required for one-time tasks"
         },
         enabled: %Schema{type: :boolean, default: true},
-        muted: %Schema{
-          type: :boolean,
-          default: false,
-          description: "Mute notifications for this task"
-        },
         timeout_ms: %Schema{type: :integer, default: 30000},
         retry_attempts: %Schema{type: :integer, default: 3},
         callback_url: %Schema{
@@ -467,11 +457,6 @@ defmodule PrikkeWeb.Schemas do
           default: true,
           description: "Whether the monitor is active"
         },
-        muted: %Schema{
-          type: :boolean,
-          default: false,
-          description: "Whether notifications are muted for this monitor"
-        },
         notify_on_failure: %Schema{
           type: :boolean,
           nullable: true,
@@ -552,11 +537,6 @@ defmodule PrikkeWeb.Schemas do
           description: "Grace period in seconds (0-3600)"
         },
         enabled: %Schema{type: :boolean, default: true},
-        muted: %Schema{
-          type: :boolean,
-          default: false,
-          description: "Mute notifications for this monitor"
-        },
         notify_on_failure: %Schema{
           type: :boolean,
           nullable: true,
@@ -683,6 +663,18 @@ defmodule PrikkeWeb.Schemas do
           default: true,
           description: "Whether to use a named queue for serial execution"
         },
+        notify_on_failure: %Schema{
+          type: :boolean,
+          nullable: true,
+          description:
+            "Override org-level failure notification setting for forwarded events. null = use org default."
+        },
+        notify_on_recovery: %Schema{
+          type: :boolean,
+          nullable: true,
+          description:
+            "Override org-level recovery notification setting for forwarded events. null = use org default."
+        },
         inserted_at: %Schema{
           type: :string,
           format: :"date-time",
@@ -730,6 +722,18 @@ defmodule PrikkeWeb.Schemas do
           type: :boolean,
           default: true,
           description: "Whether to use a named queue for serial execution"
+        },
+        notify_on_failure: %Schema{
+          type: :boolean,
+          nullable: true,
+          description:
+            "Override org-level failure notification setting for forwarded events. null = use org default."
+        },
+        notify_on_recovery: %Schema{
+          type: :boolean,
+          nullable: true,
+          description:
+            "Override org-level recovery notification setting for forwarded events. null = use org default."
         }
       },
       example: %{

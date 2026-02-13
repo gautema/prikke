@@ -221,6 +221,8 @@ defmodule PrikkeWeb.Api.EndpointController do
       enabled: e.enabled,
       retry_attempts: e.retry_attempts,
       use_queue: e.use_queue,
+      notify_on_failure: e.notify_on_failure,
+      notify_on_recovery: e.notify_on_recovery,
       inserted_at: e.inserted_at,
       updated_at: e.updated_at
     }

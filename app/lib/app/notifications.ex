@@ -54,7 +54,7 @@ defmodule Prikke.Notifications do
     task = execution.task
     org = task.organization
 
-    if should_notify_on_recovery?(task, org) and not task.muted do
+    if should_notify_on_recovery?(task, org) do
       previous = Prikke.Executions.get_previous_execution_info(task, execution.id)
 
       if should_notify_recovery?(task, previous) do
@@ -104,8 +104,8 @@ defmodule Prikke.Notifications do
         "[Notifications] Skipping notification - retry #{execution.attempt}/#{task.retry_attempts} pending"
       )
     else
-      # Check if notifications are enabled and task is not muted
-      if should_notify_on_failure?(task, org) and not task.muted do
+      # Check if notifications are enabled
+      if should_notify_on_failure?(task, org) do
         # Only notify on status change (first failure in a sequence)
         previous_status = Prikke.Executions.get_previous_status(task, execution.id)
 
@@ -846,7 +846,7 @@ defmodule Prikke.Notifications do
   defp send_monitor_down_notifications(monitor) do
     org = monitor.organization
 
-    if should_notify_on_failure?(monitor, org) and not monitor.muted do
+    if should_notify_on_failure?(monitor, org) do
       if email = notification_email(org) do
         send_monitor_down_email(monitor, email)
       end
@@ -860,7 +860,7 @@ defmodule Prikke.Notifications do
   defp send_monitor_recovery_notifications(monitor) do
     org = monitor.organization
 
-    if should_notify_on_recovery?(monitor, org) and not monitor.muted do
+    if should_notify_on_recovery?(monitor, org) do
       if email = notification_email(org) do
         send_monitor_recovery_email(monitor, email)
       end

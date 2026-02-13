@@ -321,7 +321,9 @@ defmodule Prikke.Endpoints do
           "enabled" => true,
           "timeout_ms" => 30_000,
           "retry_attempts" => endpoint.retry_attempts,
-          "queue" => if(endpoint.use_queue, do: slugify_name(endpoint.name), else: nil)
+          "queue" => if(endpoint.use_queue, do: slugify_name(endpoint.name), else: nil),
+          "notify_on_failure" => endpoint.notify_on_failure,
+          "notify_on_recovery" => endpoint.notify_on_recovery
         }
 
         # skip_next_run: task is created with next_run_at=nil, no UPDATE needed

@@ -162,7 +162,7 @@ Simple, no dependencies, full control.
 - [x] Execution callbacks (POST results to a URL on completion)
 - [x] Audit logging (user + API key actions)
 - [x] HTTP uptime monitors with ping endpoints
-- [ ] Per-job notification overrides
+- [x] Per-job notification overrides
 - [ ] Customer-facing status pages
 
 ### v3

@@ -232,11 +232,6 @@ defmodule PrikkeWeb.MonitorLive.Index do
                     >
                       {monitor.name}
                     </.link>
-                    <%= if monitor.muted do %>
-                      <span title="Notifications muted">
-                        <.icon name="hero-bell-slash" class="w-4 h-4 text-slate-400" />
-                      </span>
-                    <% end %>
                     <span class={[
                       "text-xs font-medium px-2 py-0.5 rounded",
                       monitor.status == "up" && "bg-emerald-100 text-emerald-700",

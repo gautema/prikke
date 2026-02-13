@@ -91,19 +91,6 @@ defmodule PrikkeWeb.MonitorLive.Show do
     {:noreply, assign(socket, :monitor, updated)}
   end
 
-  def handle_event("toggle_mute", _, socket) do
-    org = socket.assigns.organization
-    monitor = socket.assigns.monitor
-
-    case Monitors.update_monitor(org, monitor, %{muted: !monitor.muted}, scope: socket.assigns.current_scope) do
-      {:ok, updated} ->
-        {:noreply, assign(socket, :monitor, updated)}
-
-      {:error, _changeset} ->
-        {:noreply, put_flash(socket, :error, "Failed to update mute setting")}
-    end
-  end
-
   def handle_event("delete", _, socket) do
     org = socket.assigns.organization
     monitor = socket.assigns.monitor
@@ -252,14 +239,6 @@ defmodule PrikkeWeb.MonitorLive.Show do
       <div class="flex justify-between items-center mb-6">
         <div class="flex items-center gap-3">
           <h1 class="text-xl sm:text-2xl font-bold text-slate-900">{@monitor.name}</h1>
-          <%= if @monitor.muted do %>
-            <span
-              class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-500"
-              title="Notifications muted"
-            >
-              <.icon name="hero-bell-slash" class="w-3.5 h-3.5" /> Muted
-            </span>
-          <% end %>
           <span class={["text-xs font-medium px-2 py-0.5 rounded", status_color(@monitor.status)]}>
             {status_label(@monitor.status)}
           </span>
@@ -282,17 +261,6 @@ defmodule PrikkeWeb.MonitorLive.Show do
                 >
                   Edit
                 </.link>
-                <button
-                  type="button"
-                  phx-click="toggle_mute"
-                  class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                >
-                  <%= if @monitor.muted do %>
-                    <.icon name="hero-bell" class="w-4 h-4 text-slate-400" /> Unmute
-                  <% else %>
-                    <.icon name="hero-bell-slash" class="w-4 h-4 text-slate-400" /> Mute
-                  <% end %>
-                </button>
                 <button
                   type="button"
                   phx-click="toggle"
