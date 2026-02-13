@@ -135,11 +135,11 @@ defmodule Prikke.MetricsTest do
     test "get_scheduling_precision/1 returns correct structure with no data" do
       result = Executions.get_scheduling_precision()
       assert result.count == 0
-      assert is_nil(result.p50)
-      assert is_nil(result.p95)
-      assert is_nil(result.p99)
-      assert is_nil(result.avg)
-      assert is_nil(result.max)
+      assert result.p50 == 0
+      assert result.p95 == 0
+      assert result.p99 == 0
+      assert result.avg == 0
+      assert result.max == 0
     end
 
     test "get_scheduling_precision/1 with execution data" do

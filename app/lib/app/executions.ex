@@ -629,6 +629,16 @@ defmodule Prikke.Executions do
       }
     )
     |> Repo.one()
+    |> then(fn result ->
+      %{
+        p50: round_or_zero(result.p50),
+        p95: round_or_zero(result.p95),
+        p99: round_or_zero(result.p99),
+        avg: round_or_zero(result.avg),
+        max: round_or_zero(result.max),
+        count: result.count
+      }
+    end)
   end
 
   @doc """
