@@ -1118,6 +1118,321 @@ defmodule Prikke.NotificationsTest do
     end
   end
 
+  describe "per-task notification overrides" do
+    setup do
+      if !Process.whereis(Prikke.TaskSupervisor) do
+        start_supervised!({Task.Supervisor, name: Prikke.TaskSupervisor})
+      end
+
+      user = user_fixture()
+      flush_emails()
+
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org"})
+
+      {:ok, org} =
+        Accounts.update_notification_settings(org, %{
+          notify_on_failure: true,
+          notify_on_recovery: true,
+          notification_email: "alerts@example.com"
+        })
+
+      %{org: org}
+    end
+
+    test "task with notify_on_failure: false suppresses failure notification even when org enables it",
+         %{org: org} do
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: "Silent Task",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *",
+          notify_on_failure: false
+        })
+
+      {:ok, execution} =
+        Executions.create_execution(%{
+          task_id: task.id,
+          organization_id: task.organization_id,
+          scheduled_for: DateTime.utc_now()
+        })
+
+      {:ok, execution} =
+        Executions.fail_execution(execution, %{
+          status_code: 500,
+          error_message: "Server Error"
+        })
+
+      execution = Executions.get_execution_with_task(execution.id)
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_failure(execution)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      failure_emails =
+        Enum.filter(emails, fn email ->
+          String.contains?(email.subject, "Task failed")
+        end)
+
+      assert failure_emails == [],
+             "Expected no failure email when task has notify_on_failure: false"
+    end
+
+    test "task with notify_on_failure: true sends failure notification even when org disables it",
+         %{org: org} do
+      # Disable org-level failure notifications
+      {:ok, org} =
+        Accounts.update_notification_settings(org, %{notify_on_failure: false})
+
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: "Critical Task",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *",
+          notify_on_failure: true
+        })
+
+      {:ok, execution} =
+        Executions.create_execution(%{
+          task_id: task.id,
+          organization_id: task.organization_id,
+          scheduled_for: DateTime.utc_now()
+        })
+
+      {:ok, execution} =
+        Executions.fail_execution(execution, %{
+          status_code: 500,
+          error_message: "Server Error"
+        })
+
+      execution = Executions.get_execution_with_task(execution.id)
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_failure(execution)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      failure_email =
+        Enum.find(emails, fn email ->
+          String.contains?(email.subject, "Task failed")
+        end)
+
+      assert failure_email != nil,
+             "Expected failure email when task has notify_on_failure: true"
+    end
+
+    test "task with notify_on_recovery: false suppresses recovery notification", %{org: org} do
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: "No Recovery Task",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *",
+          notify_on_recovery: false
+        })
+
+      # Create a failed execution first
+      {:ok, failed_exec} =
+        Executions.create_execution(%{
+          task_id: task.id,
+          organization_id: task.organization_id,
+          scheduled_for: DateTime.add(DateTime.utc_now(), -120, :second)
+        })
+
+      {:ok, _failed_exec} =
+        Executions.fail_execution(failed_exec, %{
+          status_code: 500,
+          error_message: "Server Error"
+        })
+
+      # Create a successful execution after
+      {:ok, success_exec} =
+        Executions.create_execution(%{
+          task_id: task.id,
+          organization_id: task.organization_id,
+          scheduled_for: DateTime.utc_now()
+        })
+
+      {:ok, success_exec} =
+        Executions.complete_execution(success_exec, %{
+          status_code: 200,
+          response_body: "OK",
+          duration_ms: 100
+        })
+
+      execution = Executions.get_execution_with_task(success_exec.id)
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_recovery(execution)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      recovery_emails =
+        Enum.filter(emails, fn email ->
+          String.contains?(email.subject, "Task recovered")
+        end)
+
+      assert recovery_emails == [],
+             "Expected no recovery email when task has notify_on_recovery: false"
+    end
+
+    test "task with nil overrides falls back to org settings", %{org: org} do
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: "Default Task",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *"
+        })
+
+      # Verify notify_on_failure and notify_on_recovery are nil (using org default)
+      assert is_nil(task.notify_on_failure)
+      assert is_nil(task.notify_on_recovery)
+
+      {:ok, execution} =
+        Executions.create_execution(%{
+          task_id: task.id,
+          organization_id: task.organization_id,
+          scheduled_for: DateTime.utc_now()
+        })
+
+      {:ok, execution} =
+        Executions.fail_execution(execution, %{
+          status_code: 500,
+          error_message: "Server Error"
+        })
+
+      execution = Executions.get_execution_with_task(execution.id)
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_failure(execution)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      failure_email =
+        Enum.find(emails, fn email ->
+          String.contains?(email.subject, "Task failed")
+        end)
+
+      assert failure_email != nil,
+             "Expected failure email when task has nil override and org has notify_on_failure: true"
+    end
+  end
+
+  describe "per-monitor notification overrides" do
+    setup do
+      if !Process.whereis(Prikke.TaskSupervisor) do
+        start_supervised!({Task.Supervisor, name: Prikke.TaskSupervisor})
+      end
+
+      user = user_fixture()
+      flush_emails()
+
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org"})
+
+      {:ok, org} =
+        Accounts.update_notification_settings(org, %{
+          notify_on_failure: true,
+          notify_on_recovery: true,
+          notification_email: "alerts@example.com"
+        })
+
+      %{org: org}
+    end
+
+    test "monitor with notify_on_failure: false suppresses down notification", %{org: org} do
+      {:ok, monitor} =
+        Prikke.Monitors.create_monitor(org, %{
+          name: "Silent Monitor",
+          schedule_type: "interval",
+          interval_seconds: 3600,
+          grace_period_seconds: 300,
+          notify_on_failure: false
+        })
+
+      monitor = Prikke.Repo.preload(monitor, :organization)
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_monitor_down(monitor)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      down_emails =
+        Enum.filter(emails, fn email ->
+          String.contains?(email.subject, "Monitor down")
+        end)
+
+      assert down_emails == [],
+             "Expected no down email when monitor has notify_on_failure: false"
+    end
+
+    test "monitor with notify_on_failure: true sends down notification when org disables it",
+         %{org: org} do
+      {:ok, org} =
+        Accounts.update_notification_settings(org, %{notify_on_failure: false})
+
+      {:ok, monitor} =
+        Prikke.Monitors.create_monitor(org, %{
+          name: "Critical Monitor",
+          schedule_type: "interval",
+          interval_seconds: 3600,
+          grace_period_seconds: 300,
+          notify_on_failure: true
+        })
+
+      monitor = Prikke.Repo.preload(monitor, :organization)
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_monitor_down(monitor)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      down_email =
+        Enum.find(emails, fn email ->
+          String.contains?(email.subject, "Monitor down")
+        end)
+
+      assert down_email != nil,
+             "Expected down email when monitor has notify_on_failure: true"
+    end
+
+    test "monitor with notify_on_recovery: false suppresses recovery notification", %{org: org} do
+      {:ok, monitor} =
+        Prikke.Monitors.create_monitor(org, %{
+          name: "No Recovery Monitor",
+          schedule_type: "interval",
+          interval_seconds: 3600,
+          grace_period_seconds: 300,
+          notify_on_recovery: false
+        })
+
+      monitor = Prikke.Repo.preload(monitor, :organization)
+      monitor = %{monitor | last_ping_at: DateTime.utc_now()}
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_monitor_recovery(monitor)
+      Process.sleep(100)
+
+      emails = collect_emails()
+
+      recovery_emails =
+        Enum.filter(emails, fn email ->
+          String.contains?(email.subject, "Monitor recovered")
+        end)
+
+      assert recovery_emails == [],
+             "Expected no recovery email when monitor has notify_on_recovery: false"
+    end
+  end
+
   # Helper to collect all emails from the mailbox
   defp collect_emails(acc \\ []) do
     receive do

@@ -17,6 +17,8 @@ defmodule Prikke.Monitors.Monitor do
     field :enabled, :boolean, default: true
     field :muted, :boolean, default: false
     field :badge_token, :string
+    field :notify_on_failure, :boolean
+    field :notify_on_recovery, :boolean
 
     belongs_to :organization, Prikke.Accounts.Organization
     has_many :pings, Prikke.Monitors.MonitorPing
@@ -35,7 +37,9 @@ defmodule Prikke.Monitors.Monitor do
       :interval_seconds,
       :grace_period_seconds,
       :enabled,
-      :muted
+      :muted,
+      :notify_on_failure,
+      :notify_on_recovery
     ])
     |> validate_required([:name, :schedule_type])
     |> validate_inclusion(:schedule_type, @schedule_types)

@@ -26,6 +26,8 @@ defmodule Prikke.Tasks.Task do
     field :last_execution_at, :utc_datetime
     field :last_execution_status, :string
     field :badge_token, :string
+    field :notify_on_failure, :boolean
+    field :notify_on_recovery, :boolean
 
     # Virtual field for form editing
     field :headers_json, :string, virtual: true
@@ -63,7 +65,9 @@ defmodule Prikke.Tasks.Task do
         :muted,
         :expected_status_codes,
         :expected_body_pattern,
-        :queue
+        :queue,
+        :notify_on_failure,
+        :notify_on_recovery
       ])
       |> trim_url()
       |> maybe_generate_name()

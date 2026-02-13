@@ -27,6 +27,8 @@ defmodule PrikkeWeb.MonitorLive.Edit do
 
   @impl true
   def handle_event("validate", %{"monitor" => params}, socket) do
+    params = cast_notification_overrides(params)
+
     changeset =
       socket.assigns.monitor
       |> Monitors.change_monitor(params)
@@ -36,6 +38,7 @@ defmodule PrikkeWeb.MonitorLive.Edit do
   end
 
   def handle_event("save", %{"monitor" => params}, socket) do
+    params = cast_notification_overrides(params)
     org = socket.assigns.organization
     monitor = socket.assigns.monitor
 
@@ -65,6 +68,21 @@ defmodule PrikkeWeb.MonitorLive.Edit do
         [org | _] -> org
         [] -> nil
       end
+    end
+  end
+
+  defp cast_notification_overrides(params) do
+    params
+    |> cast_notification_field("notify_on_failure")
+    |> cast_notification_field("notify_on_recovery")
+  end
+
+  defp cast_notification_field(params, field) do
+    case Map.get(params, field) do
+      "" -> Map.put(params, field, nil)
+      "true" -> Map.put(params, field, true)
+      "false" -> Map.put(params, field, false)
+      _ -> params
     end
   end
 
@@ -137,6 +155,69 @@ defmodule PrikkeWeb.MonitorLive.Edit do
               {"1 hour", "3600"}
             ]}
           />
+
+          <div class="pt-4 border-t border-slate-100 mt-4">
+            <h3 class="text-sm font-semibold text-slate-900 mb-3">Notifications</h3>
+            <p class="text-sm text-slate-500 mb-4">
+              Override organization-level notification settings for this monitor.
+            </p>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">
+                  Failure notifications
+                </label>
+                <select
+                  name={@form[:notify_on_failure].name}
+                  id="monitor_notify_on_failure"
+                  class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
+                >
+                  <option value="" selected={is_nil(@form[:notify_on_failure].value)}>
+                    Use org default
+                  </option>
+                  <option
+                    value="true"
+                    selected={@form[:notify_on_failure].value == true}
+                  >
+                    Enabled
+                  </option>
+                  <option
+                    value="false"
+                    selected={@form[:notify_on_failure].value == false}
+                  >
+                    Disabled
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">
+                  Recovery notifications
+                </label>
+                <select
+                  name={@form[:notify_on_recovery].name}
+                  id="monitor_notify_on_recovery"
+                  class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
+                >
+                  <option value="" selected={is_nil(@form[:notify_on_recovery].value)}>
+                    Use org default
+                  </option>
+                  <option
+                    value="true"
+                    selected={@form[:notify_on_recovery].value == true}
+                  >
+                    Enabled
+                  </option>
+                  <option
+                    value="false"
+                    selected={@form[:notify_on_recovery].value == false}
+                  >
+                    Disabled
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
 
           <div class="pt-4">
             <button

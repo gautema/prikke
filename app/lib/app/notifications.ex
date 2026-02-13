@@ -54,7 +54,7 @@ defmodule Prikke.Notifications do
     task = execution.task
     org = task.organization
 
-    if org.notify_on_recovery and not task.muted do
+    if should_notify_on_recovery?(task, org) and not task.muted do
       previous = Prikke.Executions.get_previous_execution_info(task, execution.id)
 
       if should_notify_recovery?(task, previous) do
@@ -105,7 +105,7 @@ defmodule Prikke.Notifications do
       )
     else
       # Check if notifications are enabled and task is not muted
-      if org.notify_on_failure and not task.muted do
+      if should_notify_on_failure?(task, org) and not task.muted do
         # Only notify on status change (first failure in a sequence)
         previous_status = Prikke.Executions.get_previous_status(task, execution.id)
 
@@ -846,7 +846,7 @@ defmodule Prikke.Notifications do
   defp send_monitor_down_notifications(monitor) do
     org = monitor.organization
 
-    if org.notify_on_failure and not monitor.muted do
+    if should_notify_on_failure?(monitor, org) and not monitor.muted do
       if email = notification_email(org) do
         send_monitor_down_email(monitor, email)
       end
@@ -860,7 +860,7 @@ defmodule Prikke.Notifications do
   defp send_monitor_recovery_notifications(monitor) do
     org = monitor.organization
 
-    if org.notify_on_recovery and not monitor.muted do
+    if should_notify_on_recovery?(monitor, org) and not monitor.muted do
       if email = notification_email(org) do
         send_monitor_recovery_email(monitor, email)
       end
@@ -1100,6 +1100,22 @@ defmodule Prikke.Notifications do
     </body>
     </html>
     """
+  end
+
+  # Per-resource notification override helpers.
+  # nil = use org default, true/false = override.
+  defp should_notify_on_failure?(resource, org) do
+    case resource.notify_on_failure do
+      nil -> org.notify_on_failure
+      value -> value
+    end
+  end
+
+  defp should_notify_on_recovery?(resource, org) do
+    case resource.notify_on_recovery do
+      nil -> org.notify_on_recovery
+      value -> value
+    end
   end
 
   defp format_schedule(monitor) do

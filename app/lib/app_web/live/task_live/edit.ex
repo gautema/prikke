@@ -62,6 +62,8 @@ defmodule PrikkeWeb.TaskLive.Edit do
   def handle_event("validate", %{"task" => task_params}, socket) do
     schedule_type = task_params["schedule_type"] || socket.assigns.schedule_type
 
+    task_params = cast_notification_overrides(task_params)
+
     changeset =
       Task.changeset(socket.assigns.task, task_params, skip_ssrf: true)
       |> Map.put(:action, :validate)
@@ -73,7 +75,7 @@ defmodule PrikkeWeb.TaskLive.Edit do
   end
 
   def handle_event("save", %{"task" => task_params}, socket) do
-    task_params = parse_headers(task_params)
+    task_params = task_params |> parse_headers() |> cast_notification_overrides()
 
     case Tasks.update_task(socket.assigns.organization, socket.assigns.task, task_params,
            scope: socket.assigns.current_scope
@@ -266,6 +268,21 @@ defmodule PrikkeWeb.TaskLive.Edit do
   end
 
   defp parse_timeout(_), do: 10_000
+
+  defp cast_notification_overrides(params) do
+    params
+    |> cast_notification_field("notify_on_failure")
+    |> cast_notification_field("notify_on_recovery")
+  end
+
+  defp cast_notification_field(params, field) do
+    case Map.get(params, field) do
+      "" -> Map.put(params, field, nil)
+      "true" -> Map.put(params, field, true)
+      "false" -> Map.put(params, field, false)
+      _ -> params
+    end
+  end
 
   defp parse_headers(%{"headers_json" => json} = params) when is_binary(json) and json != "" do
     case Jason.decode(json) do
@@ -670,6 +687,72 @@ defmodule PrikkeWeb.TaskLive.Edit do
           </div>
         </div>
         
+    <!-- Notifications -->
+        <div class="glass-card rounded-2xl p-6">
+          <div class="mb-4">
+            <h2 class="text-lg font-semibold text-slate-900">Notifications</h2>
+            <p class="text-sm text-slate-500 mt-1">
+              Override organization-level notification settings for this task.
+            </p>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">
+                Failure notifications
+              </label>
+              <select
+                name={@form[:notify_on_failure].name}
+                id="task_notify_on_failure"
+                class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
+              >
+                <option value="" selected={is_nil(@form[:notify_on_failure].value)}>
+                  Use org default
+                </option>
+                <option
+                  value="true"
+                  selected={@form[:notify_on_failure].value == true}
+                >
+                  Enabled
+                </option>
+                <option
+                  value="false"
+                  selected={@form[:notify_on_failure].value == false}
+                >
+                  Disabled
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">
+                Recovery notifications
+              </label>
+              <select
+                name={@form[:notify_on_recovery].name}
+                id="task_notify_on_recovery"
+                class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
+              >
+                <option value="" selected={is_nil(@form[:notify_on_recovery].value)}>
+                  Use org default
+                </option>
+                <option
+                  value="true"
+                  selected={@form[:notify_on_recovery].value == true}
+                >
+                  Enabled
+                </option>
+                <option
+                  value="false"
+                  selected={@form[:notify_on_recovery].value == false}
+                >
+                  Disabled
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+
     <!-- Actions -->
         <div class="flex justify-end gap-4">
           <.link

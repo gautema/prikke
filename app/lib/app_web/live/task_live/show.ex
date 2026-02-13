@@ -512,6 +512,30 @@ defmodule PrikkeWeb.TaskLive.Show do
                   <p class="text-slate-900 font-mono text-sm">"{@task.expected_body_pattern}"</p>
                 </div>
               <% end %>
+              <%= if not is_nil(@task.notify_on_failure) do %>
+                <div>
+                  <span class="text-xs text-slate-500 uppercase">Failure Alerts</span>
+                  <p class={[
+                    "text-sm font-medium",
+                    @task.notify_on_failure && "text-emerald-600",
+                    !@task.notify_on_failure && "text-slate-500"
+                  ]}>
+                    {if @task.notify_on_failure, do: "On", else: "Off"}
+                  </p>
+                </div>
+              <% end %>
+              <%= if not is_nil(@task.notify_on_recovery) do %>
+                <div>
+                  <span class="text-xs text-slate-500 uppercase">Recovery Alerts</span>
+                  <p class={[
+                    "text-sm font-medium",
+                    @task.notify_on_recovery && "text-emerald-600",
+                    !@task.notify_on_recovery && "text-slate-500"
+                  ]}>
+                    {if @task.notify_on_recovery, do: "On", else: "Off"}
+                  </p>
+                </div>
+              <% end %>
             </div>
           </div>
 

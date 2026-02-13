@@ -295,7 +295,9 @@ defmodule PrikkeWeb.Api.TaskController do
       "callback_url" => params["callback_url"],
       "expected_status_codes" => params["expected_status_codes"],
       "expected_body_pattern" => params["expected_body_pattern"],
-      "queue" => params["queue"]
+      "queue" => params["queue"],
+      "notify_on_failure" => params["notify_on_failure"],
+      "notify_on_recovery" => params["notify_on_recovery"]
     }
 
     case Tasks.create_task(org, task_params, api_key_name: api_key_name) do
@@ -370,7 +372,9 @@ defmodule PrikkeWeb.Api.TaskController do
       "callback_url" => params["callback_url"],
       "expected_status_codes" => params["expected_status_codes"],
       "expected_body_pattern" => params["expected_body_pattern"],
-      "queue" => params["queue"]
+      "queue" => params["queue"],
+      "notify_on_failure" => params["notify_on_failure"],
+      "notify_on_recovery" => params["notify_on_recovery"]
     }
 
     execution_opts =
@@ -439,6 +443,8 @@ defmodule PrikkeWeb.Api.TaskController do
       expected_status_codes: task.expected_status_codes,
       expected_body_pattern: task.expected_body_pattern,
       queue: task.queue,
+      notify_on_failure: task.notify_on_failure,
+      notify_on_recovery: task.notify_on_recovery,
       next_run_at: task.next_run_at,
       inserted_at: task.inserted_at,
       updated_at: task.updated_at

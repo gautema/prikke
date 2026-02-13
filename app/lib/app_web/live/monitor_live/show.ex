@@ -379,6 +379,30 @@ defmodule PrikkeWeb.MonitorLive.Show do
               <% end %>
             </dd>
           </div>
+          <%= if not is_nil(@monitor.notify_on_failure) do %>
+            <div>
+              <dt class="text-sm text-slate-500">Failure Alerts</dt>
+              <dd class={[
+                "text-sm font-medium mt-0.5",
+                @monitor.notify_on_failure && "text-emerald-600",
+                !@monitor.notify_on_failure && "text-slate-500"
+              ]}>
+                {if @monitor.notify_on_failure, do: "On", else: "Off"}
+              </dd>
+            </div>
+          <% end %>
+          <%= if not is_nil(@monitor.notify_on_recovery) do %>
+            <div>
+              <dt class="text-sm text-slate-500">Recovery Alerts</dt>
+              <dd class={[
+                "text-sm font-medium mt-0.5",
+                @monitor.notify_on_recovery && "text-emerald-600",
+                !@monitor.notify_on_recovery && "text-slate-500"
+              ]}>
+                {if @monitor.notify_on_recovery, do: "On", else: "Off"}
+              </dd>
+            </div>
+          <% end %>
         </dl>
       </div>
 
