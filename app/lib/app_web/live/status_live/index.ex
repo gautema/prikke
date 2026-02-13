@@ -14,7 +14,7 @@ defmodule PrikkeWeb.StatusLive.Index do
     if org do
       {:ok, status_page} = StatusPages.get_or_create_status_page(org)
 
-      host = PrikkeWeb.Endpoint.host()
+      base_url = PrikkeWeb.Endpoint.url()
 
       tasks = Tasks.list_tasks(org, type: "cron")
       monitors = Monitors.list_monitors(org)
@@ -29,7 +29,7 @@ defmodule PrikkeWeb.StatusLive.Index do
        |> assign(:tasks, tasks)
        |> assign(:monitors, monitors)
        |> assign(:endpoints, endpoints)
-       |> assign(:host, host)}
+       |> assign(:base_url, base_url)}
     else
       {:ok,
        socket
@@ -172,7 +172,7 @@ defmodule PrikkeWeb.StatusLive.Index do
                 <p class="text-xs text-slate-400 mt-1">
                   Your status page will be available at
                   <span class="font-mono text-slate-600">
-                    https://{@host}/s/{Phoenix.HTML.Form.input_value(@form, :slug) || @status_page.slug}
+                    {@base_url}/s/{Phoenix.HTML.Form.input_value(@form, :slug) || @status_page.slug}
                   </span>
                 </p>
               </div>
@@ -365,12 +365,12 @@ defmodule PrikkeWeb.StatusLive.Index do
                     <div>
                       <p class="text-xs text-slate-400 mb-1">Status</p>
                       <div class="flex items-center gap-2 bg-slate-100 rounded p-2">
-                        <code class="flex-1 text-xs text-slate-700 break-all select-all">![{task.name}](https://{@host}/badge/task/{task.badge_token}/status.svg)</code>
+                        <code class="flex-1 text-xs text-slate-700 break-all select-all">![{task.name}]({@base_url}/badge/task/{task.badge_token}/status.svg)</code>
                         <button
                           type="button"
                           id={"copy-task-status-#{task.id}"}
                           phx-hook="CopyToClipboard"
-                          data-clipboard-text={"![#{task.name}](https://#{@host}/badge/task/#{task.badge_token}/status.svg)"}
+                          data-clipboard-text={"![#{task.name}](#{@base_url}/badge/task/#{task.badge_token}/status.svg)"}
                           class="shrink-0 text-slate-400 hover:text-emerald-600 p-1 rounded transition-colors cursor-pointer"
                           title="Copy to clipboard"
                         >
@@ -381,12 +381,12 @@ defmodule PrikkeWeb.StatusLive.Index do
                     <div>
                       <p class="text-xs text-slate-400 mb-1">Uptime</p>
                       <div class="flex items-center gap-2 bg-slate-100 rounded p-2">
-                        <code class="flex-1 text-xs text-slate-700 break-all select-all">![{task.name} uptime](https://{@host}/badge/task/{task.badge_token}/uptime.svg)</code>
+                        <code class="flex-1 text-xs text-slate-700 break-all select-all">![{task.name} uptime]({@base_url}/badge/task/{task.badge_token}/uptime.svg)</code>
                         <button
                           type="button"
                           id={"copy-task-uptime-#{task.id}"}
                           phx-hook="CopyToClipboard"
-                          data-clipboard-text={"![#{task.name} uptime](https://#{@host}/badge/task/#{task.badge_token}/uptime.svg)"}
+                          data-clipboard-text={"![#{task.name} uptime](#{@base_url}/badge/task/#{task.badge_token}/uptime.svg)"}
                           class="shrink-0 text-slate-400 hover:text-emerald-600 p-1 rounded transition-colors cursor-pointer"
                           title="Copy to clipboard"
                         >
@@ -404,12 +404,12 @@ defmodule PrikkeWeb.StatusLive.Index do
                     <div>
                       <p class="text-xs text-slate-400 mb-1">Status</p>
                       <div class="flex items-center gap-2 bg-slate-100 rounded p-2">
-                        <code class="flex-1 text-xs text-slate-700 break-all select-all">![{monitor.name}](https://{@host}/badge/monitor/{monitor.badge_token}/status.svg)</code>
+                        <code class="flex-1 text-xs text-slate-700 break-all select-all">![{monitor.name}]({@base_url}/badge/monitor/{monitor.badge_token}/status.svg)</code>
                         <button
                           type="button"
                           id={"copy-monitor-status-#{monitor.id}"}
                           phx-hook="CopyToClipboard"
-                          data-clipboard-text={"![#{monitor.name}](https://#{@host}/badge/monitor/#{monitor.badge_token}/status.svg)"}
+                          data-clipboard-text={"![#{monitor.name}](#{@base_url}/badge/monitor/#{monitor.badge_token}/status.svg)"}
                           class="shrink-0 text-slate-400 hover:text-emerald-600 p-1 rounded transition-colors cursor-pointer"
                           title="Copy to clipboard"
                         >
@@ -420,12 +420,12 @@ defmodule PrikkeWeb.StatusLive.Index do
                     <div>
                       <p class="text-xs text-slate-400 mb-1">Uptime</p>
                       <div class="flex items-center gap-2 bg-slate-100 rounded p-2">
-                        <code class="flex-1 text-xs text-slate-700 break-all select-all">![{monitor.name} uptime](https://{@host}/badge/monitor/{monitor.badge_token}/uptime.svg)</code>
+                        <code class="flex-1 text-xs text-slate-700 break-all select-all">![{monitor.name} uptime]({@base_url}/badge/monitor/{monitor.badge_token}/uptime.svg)</code>
                         <button
                           type="button"
                           id={"copy-monitor-uptime-#{monitor.id}"}
                           phx-hook="CopyToClipboard"
-                          data-clipboard-text={"![#{monitor.name} uptime](https://#{@host}/badge/monitor/#{monitor.badge_token}/uptime.svg)"}
+                          data-clipboard-text={"![#{monitor.name} uptime](#{@base_url}/badge/monitor/#{monitor.badge_token}/uptime.svg)"}
                           class="shrink-0 text-slate-400 hover:text-emerald-600 p-1 rounded transition-colors cursor-pointer"
                           title="Copy to clipboard"
                         >
@@ -443,12 +443,12 @@ defmodule PrikkeWeb.StatusLive.Index do
                     <div>
                       <p class="text-xs text-slate-400 mb-1">Status</p>
                       <div class="flex items-center gap-2 bg-slate-100 rounded p-2">
-                        <code class="flex-1 text-xs text-slate-700 break-all select-all">![{endpoint.name}](https://{@host}/badge/endpoint/{endpoint.badge_token}/status.svg)</code>
+                        <code class="flex-1 text-xs text-slate-700 break-all select-all">![{endpoint.name}]({@base_url}/badge/endpoint/{endpoint.badge_token}/status.svg)</code>
                         <button
                           type="button"
                           id={"copy-endpoint-status-#{endpoint.id}"}
                           phx-hook="CopyToClipboard"
-                          data-clipboard-text={"![#{endpoint.name}](https://#{@host}/badge/endpoint/#{endpoint.badge_token}/status.svg)"}
+                          data-clipboard-text={"![#{endpoint.name}](#{@base_url}/badge/endpoint/#{endpoint.badge_token}/status.svg)"}
                           class="shrink-0 text-slate-400 hover:text-emerald-600 p-1 rounded transition-colors cursor-pointer"
                           title="Copy to clipboard"
                         >
@@ -459,12 +459,12 @@ defmodule PrikkeWeb.StatusLive.Index do
                     <div>
                       <p class="text-xs text-slate-400 mb-1">Uptime</p>
                       <div class="flex items-center gap-2 bg-slate-100 rounded p-2">
-                        <code class="flex-1 text-xs text-slate-700 break-all select-all">![{endpoint.name} uptime](https://{@host}/badge/endpoint/{endpoint.badge_token}/uptime.svg)</code>
+                        <code class="flex-1 text-xs text-slate-700 break-all select-all">![{endpoint.name} uptime]({@base_url}/badge/endpoint/{endpoint.badge_token}/uptime.svg)</code>
                         <button
                           type="button"
                           id={"copy-endpoint-uptime-#{endpoint.id}"}
                           phx-hook="CopyToClipboard"
-                          data-clipboard-text={"![#{endpoint.name} uptime](https://#{@host}/badge/endpoint/#{endpoint.badge_token}/uptime.svg)"}
+                          data-clipboard-text={"![#{endpoint.name} uptime](#{@base_url}/badge/endpoint/#{endpoint.badge_token}/uptime.svg)"}
                           class="shrink-0 text-slate-400 hover:text-emerald-600 p-1 rounded transition-colors cursor-pointer"
                           title="Copy to clipboard"
                         >
