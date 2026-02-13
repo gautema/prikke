@@ -201,9 +201,9 @@
                         Audit Log
                       </.link>
                     <% end %>
-                    <%!-- Switch org section (only if multiple orgs) --%>
-                    <%= if assigns[:organizations] && length(@organizations) > 1 do %>
-                      <div class="border-t border-slate-200 mt-1 pt-1">
+                    <%!-- Switch org section --%>
+                    <div class="border-t border-slate-200 mt-1 pt-1">
+                      <%= if assigns[:organizations] && length(@organizations) > 1 do %>
                         <div class="px-4 py-2">
                           <p class="text-xs font-medium text-slate-400 uppercase tracking-wide">
                             Switch organization
@@ -225,14 +225,14 @@
                             </.link>
                           <% end %>
                         <% end %>
-                        <.link
-                          href={~p"/organizations/new"}
-                          class="block px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 no-underline transition-colors"
-                        >
-                          + New organization
-                        </.link>
-                      </div>
-                    <% end %>
+                      <% end %>
+                      <.link
+                        href={~p"/organizations/new"}
+                        class="block px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 no-underline transition-colors"
+                      >
+                        + New organization
+                      </.link>
+                    </div>
                     <%!-- User section --%>
                     <div class="border-t border-slate-200 mt-1 pt-1">
                       <div class="px-4 py-2">
@@ -327,9 +327,9 @@
                   </.link>
                 </div>
               <% end %>
-              <%!-- Switch org section (only if multiple orgs) --%>
-              <%= if assigns[:organizations] && length(@organizations) > 1 do %>
-                <div class="py-2 border-t border-slate-100">
+              <%!-- Switch org section --%>
+              <div class="py-2 border-t border-slate-100">
+                <%= if assigns[:organizations] && length(@organizations) > 1 do %>
                   <p class="text-xs text-slate-400 uppercase tracking-wide py-2">Switch organization</p>
                   <%= for org <- @organizations do %>
                     <%= if @current_organization && org.id == @current_organization.id do %>
@@ -347,14 +347,14 @@
                       </.link>
                     <% end %>
                   <% end %>
-                  <.link
-                    href={~p"/organizations/new"}
-                    class="block py-3 text-base text-emerald-600 no-underline"
-                  >
-                    + New organization
-                  </.link>
-                </div>
-              <% end %>
+                <% end %>
+                <.link
+                  href={~p"/organizations/new"}
+                  class="block py-3 text-base text-emerald-600 no-underline"
+                >
+                  + New organization
+                </.link>
+              </div>
               <%!-- User section --%>
               <div class="pt-2 border-t border-slate-100">
                 <p class="text-xs text-slate-400 py-2">{@current_scope.user.email}</p>
