@@ -598,6 +598,7 @@ defmodule Prikke.Executions do
     since = since || DateTime.add(DateTime.utc_now(), -1, :hour)
 
     from(e in Execution,
+      where: is_nil(e.queue),
       where: e.status in ["success", "failed", "timeout"],
       where: e.finished_at >= ^since,
       where: not is_nil(e.started_at),
@@ -697,6 +698,7 @@ defmodule Prikke.Executions do
 
     results =
       from(e in Execution,
+        where: is_nil(e.queue),
         where: e.status in ["success", "failed", "timeout"],
         where: e.scheduled_for >= ^since,
         where: e.scheduled_for < ^until_dt,
@@ -772,6 +774,7 @@ defmodule Prikke.Executions do
     since = DateTime.new!(since_date, ~T[00:00:00], "Etc/UTC")
 
     from(e in Execution,
+      where: is_nil(e.queue),
       where: e.status in ["success", "failed", "timeout"],
       where: e.scheduled_for >= ^since,
       where: not is_nil(e.started_at),
