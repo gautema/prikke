@@ -194,7 +194,21 @@
           <td class="py-2 pr-4"><code class="text-sky-600">muted</code></td>
           <td class="py-2 pr-4 text-slate-500">boolean</td>
           <td class="py-2 text-slate-600">
-            Mute failure/recovery notifications (default: false)
+            Mute all notifications for this task (default: false)
+          </td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">notify_on_failure</code></td>
+          <td class="py-2 pr-4 text-slate-500">boolean | null</td>
+          <td class="py-2 text-slate-600">
+            Override org-level failure notification setting. <code>null</code> = use org default, <code>true</code> = always notify, <code>false</code> = never notify. (optional)
+          </td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">notify_on_recovery</code></td>
+          <td class="py-2 pr-4 text-slate-500">boolean | null</td>
+          <td class="py-2 text-slate-600">
+            Override org-level recovery notification setting. <code>null</code> = use org default, <code>true</code> = always notify, <code>false</code> = never notify. (optional)
           </td>
         </tr>
         <tr class="border-b border-slate-50">
@@ -561,11 +575,25 @@
           <td class="py-2 pr-4 text-slate-500">boolean</td>
           <td class="py-2 text-slate-600">Whether monitoring is active (default: true)</td>
         </tr>
-        <tr>
+        <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">muted</code></td>
           <td class="py-2 pr-4 text-slate-500">boolean</td>
           <td class="py-2 text-slate-600">
-            Mute down/recovery notifications for this monitor (default: false)
+            Mute all notifications for this monitor (default: false)
+          </td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">notify_on_failure</code></td>
+          <td class="py-2 pr-4 text-slate-500">boolean | null</td>
+          <td class="py-2 text-slate-600">
+            Override org-level failure notification setting. <code>null</code> = use org default. (optional)
+          </td>
+        </tr>
+        <tr>
+          <td class="py-2 pr-4"><code class="text-sky-600">notify_on_recovery</code></td>
+          <td class="py-2 pr-4 text-slate-500">boolean | null</td>
+          <td class="py-2 text-slate-600">
+            Override org-level recovery notification setting. <code>null</code> = use org default. (optional)
           </td>
         </tr>
       </table>

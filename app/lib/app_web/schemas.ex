@@ -85,6 +85,18 @@ defmodule PrikkeWeb.Schemas do
           description:
             "Response body must contain this text to count as success. Empty means any body."
         },
+        notify_on_failure: %Schema{
+          type: :boolean,
+          nullable: true,
+          description:
+            "Override org-level failure notification setting. null = use org default, true = always notify, false = never notify."
+        },
+        notify_on_recovery: %Schema{
+          type: :boolean,
+          nullable: true,
+          description:
+            "Override org-level recovery notification setting. null = use org default, true = always notify, false = never notify."
+        },
         next_run_at: %Schema{
           type: :string,
           format: :"date-time",
@@ -176,6 +188,18 @@ defmodule PrikkeWeb.Schemas do
           nullable: true,
           description:
             "Response body must contain this text to count as success. Empty means any body."
+        },
+        notify_on_failure: %Schema{
+          type: :boolean,
+          nullable: true,
+          description:
+            "Override org-level failure notification setting. null = use org default."
+        },
+        notify_on_recovery: %Schema{
+          type: :boolean,
+          nullable: true,
+          description:
+            "Override org-level recovery notification setting. null = use org default."
         }
       },
       example: %{
@@ -448,6 +472,18 @@ defmodule PrikkeWeb.Schemas do
           default: false,
           description: "Whether notifications are muted for this monitor"
         },
+        notify_on_failure: %Schema{
+          type: :boolean,
+          nullable: true,
+          description:
+            "Override org-level failure notification setting. null = use org default."
+        },
+        notify_on_recovery: %Schema{
+          type: :boolean,
+          nullable: true,
+          description:
+            "Override org-level recovery notification setting. null = use org default."
+        },
         last_ping_at: %Schema{
           type: :string,
           format: :"date-time",
@@ -520,6 +556,18 @@ defmodule PrikkeWeb.Schemas do
           type: :boolean,
           default: false,
           description: "Mute notifications for this monitor"
+        },
+        notify_on_failure: %Schema{
+          type: :boolean,
+          nullable: true,
+          description:
+            "Override org-level failure notification setting. null = use org default."
+        },
+        notify_on_recovery: %Schema{
+          type: :boolean,
+          nullable: true,
+          description:
+            "Override org-level recovery notification setting. null = use org default."
         }
       },
       example: %{
