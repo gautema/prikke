@@ -139,7 +139,7 @@ defmodule PrikkeWeb.StatusHTML do
   Formats a delay value in milliseconds to a human-readable string.
   """
   def format_delay(nil), do: "-"
-  def format_delay(0), do: "-"
+  def format_delay(0), do: "<1s"
 
   def format_delay(ms) when ms < 1_000 do
     "#{ms}ms"
