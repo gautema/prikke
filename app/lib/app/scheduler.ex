@@ -100,12 +100,13 @@ defmodule Prikke.Scheduler do
   # Used for leader election in multi-node clusters
   @advisory_lock_id 728_492_847
 
-  # Tick interval in milliseconds (10 seconds)
-  @tick_interval 10_000
+  # Tick interval in milliseconds (5 seconds)
+  @tick_interval 5_000
 
   # Lookahead window in seconds (10 seconds)
   # Tasks are created this far in advance for more precise timing.
   # Workers only claim executions when scheduled_for <= now.
+  # Must be larger than @tick_interval to guarantee pre-creation.
   @lookahead_seconds 10
 
   ## Client API

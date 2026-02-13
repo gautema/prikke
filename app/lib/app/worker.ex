@@ -102,13 +102,15 @@ defmodule Prikke.Worker do
     end
   end
 
-  # Wake signal from PubSub - check for work immediately
+  # Wake signal from PubSub - check for work immediately and reset backoff.
+  # Even if nothing is claimable yet (lookahead), the worker will poll
+  # eagerly at base interval so it catches the job as soon as it's due.
   def handle_info(:wake, state) do
     unless state.working do
       send(self(), :work)
     end
 
-    {:noreply, state}
+    {:noreply, %{state | poll_interval: @poll_interval_base}}
   end
 
   # Ignore unexpected messages (e.g., from test mailer sending :email messages)
