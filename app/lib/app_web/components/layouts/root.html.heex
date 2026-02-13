@@ -113,25 +113,25 @@
                 <% end %>
                 <.link
                   href={~p"/dashboard"}
-                  class="text-sm font-medium text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-md hover:bg-slate-100 transition-colors"
+                  class="text-sm font-medium text-slate-600 hover:text-emerald-600 px-3 py-1.5 rounded-md hover:bg-slate-100 transition-colors"
                 >
                   Dashboard
                 </.link>
                 <.link
                   href={~p"/tasks"}
-                  class="text-sm font-medium text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-md hover:bg-slate-100 transition-colors"
+                  class="text-sm font-medium text-slate-600 hover:text-emerald-600 px-3 py-1.5 rounded-md hover:bg-slate-100 transition-colors"
                 >
                   Tasks
                 </.link>
                 <.link
                   href={~p"/endpoints"}
-                  class="text-sm font-medium text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-md hover:bg-slate-100 transition-colors"
+                  class="text-sm font-medium text-slate-600 hover:text-emerald-600 px-3 py-1.5 rounded-md hover:bg-slate-100 transition-colors"
                 >
                   Endpoints
                 </.link>
                 <.link
                   href={~p"/monitors"}
-                  class="text-sm font-medium text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-md hover:bg-slate-100 transition-colors"
+                  class="text-sm font-medium text-slate-600 hover:text-emerald-600 px-3 py-1.5 rounded-md hover:bg-slate-100 transition-colors"
                 >
                   Monitors
                 </.link>
@@ -139,7 +139,7 @@
                 <div class="relative ml-1" data-dropdown>
                   <button
                     type="button"
-                    class="relative flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-md hover:bg-slate-100 transition-colors"
+                    class="relative flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-emerald-600 px-3 py-1.5 rounded-md hover:bg-slate-100 transition-colors"
                     data-dropdown-toggle
                   >
                     <span class="font-medium truncate max-w-[140px]">
@@ -166,37 +166,37 @@
                       </div>
                       <.link
                         href={~p"/status-page"}
-                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 no-underline transition-colors"
+                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-emerald-600 no-underline transition-colors"
                       >
                         Status Page
                       </.link>
                       <.link
                         href={~p"/organizations/settings"}
-                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 no-underline transition-colors"
+                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-emerald-600 no-underline transition-colors"
                       >
                         Settings
                       </.link>
                       <.link
                         href={~p"/organizations/members"}
-                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 no-underline transition-colors"
+                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-emerald-600 no-underline transition-colors"
                       >
                         Members
                       </.link>
                       <.link
                         href={~p"/organizations/notifications"}
-                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 no-underline transition-colors"
+                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-emerald-600 no-underline transition-colors"
                       >
                         Notifications
                       </.link>
                       <.link
                         href={~p"/organizations/api-keys"}
-                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 no-underline transition-colors"
+                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-emerald-600 no-underline transition-colors"
                       >
                         API Keys
                       </.link>
                       <.link
                         href={~p"/organizations/audit"}
-                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 no-underline transition-colors"
+                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-emerald-600 no-underline transition-colors"
                       >
                         Audit Log
                       </.link>
@@ -219,7 +219,7 @@
                             <.link
                               href={~p"/organizations/#{org.id}/switch"}
                               method="post"
-                              class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 no-underline transition-colors"
+                              class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-emerald-600 no-underline transition-colors"
                             >
                               {org.name}
                             </.link>
@@ -242,14 +242,14 @@
                       </div>
                       <.link
                         href={~p"/users/settings"}
-                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 no-underline transition-colors"
+                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-emerald-600 no-underline transition-colors"
                       >
                         Account settings
                       </.link>
                       <%= if assigns[:pending_invites_count] && @pending_invites_count > 0 do %>
                         <.link
                           href={~p"/invites"}
-                          class="flex items-center justify-between px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 no-underline transition-colors"
+                          class="flex items-center justify-between px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-emerald-600 no-underline transition-colors"
                         >
                           Invites
                           <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-emerald-600 rounded-full">
@@ -260,7 +260,7 @@
                       <.link
                         href={~p"/users/log-out"}
                         method="delete"
-                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 no-underline transition-colors"
+                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-emerald-600 no-underline transition-colors"
                       >
                         Log out
                       </.link>
