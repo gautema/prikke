@@ -119,7 +119,6 @@
                 <%= if entry && entry.request_count > 0 do %>
                   <div>p50 {format_latency(entry.p50)} · p95 {format_latency(entry.p95)}</div>
                   <div>p99 {format_latency(entry.p99)} · avg {format_latency(entry.avg)}</div>
-                  <div class="text-slate-400">{entry.request_count} requests</div>
                 <% else %>
                   <div class="text-slate-400">No data</div>
                 <% end %>
@@ -214,7 +213,6 @@
                 <%= if entry && entry.count > 0 do %>
                   <div>p50 {format_delay(entry.p50)} · p95 {format_delay(entry.p95)}</div>
                   <div>p99 {format_delay(entry.p99)} · avg {format_delay(entry.avg)}</div>
-                  <div class="text-slate-400">{entry.count} executions</div>
                 <% else %>
                   <div class="text-slate-400">No data</div>
                 <% end %>
