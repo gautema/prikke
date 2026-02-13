@@ -46,9 +46,9 @@ defmodule Prikke.Worker do
   alias Prikke.WebhookSignature
 
   # How long to wait between polls when no work is found (ms)
-  # Uses exponential backoff: starts at base, doubles up to max
-  # PubSub :wake ensures instant response to new work regardless of backoff
-  @poll_interval_base 2_000
+  # Uses gradual backoff (1.5x): 1s → 1.5s → 2.2s → 3.4s → 5s → 7.6s → 11.4s → 15s
+  # PubSub :wake resets to base for instant response to new work
+  @poll_interval_base 1_000
   @poll_interval_max 15_000
 
   # Exit after this duration of no work (30 seconds)
@@ -149,7 +149,7 @@ defmodule Prikke.Worker do
     if idle_duration >= @max_idle_ms do
       {:stop, :normal, state}
     else
-      next_interval = min(state.poll_interval * 2, @poll_interval_max)
+      next_interval = min(round(state.poll_interval * 1.5), @poll_interval_max)
       Process.send_after(self(), :work, state.poll_interval)
 
       {:noreply, %{state | idle_since: idle_since, poll_interval: next_interval, working: false}}
