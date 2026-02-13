@@ -25,11 +25,55 @@ import {LiveSocket} from "phoenix_live_view"
 import {hooks as colocatedHooks} from "phoenix-colocated/app"
 import topbar from "../vendor/topbar"
 
+const CopyToClipboard = {
+  mounted() {
+    this.el.addEventListener("click", () => {
+      const text = this.el.getAttribute("data-clipboard-text")
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => this.flash())
+      } else {
+        const ta = document.createElement("textarea")
+        ta.value = text
+        ta.style.position = "fixed"
+        ta.style.left = "-9999px"
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand("copy")
+        document.body.removeChild(ta)
+        this.flash()
+      }
+    })
+  },
+  flash() {
+    if (this.el.dataset.copied) return
+    this.el.dataset.copied = "true"
+    const icon = this.el.querySelector("span")
+    const originalClass = icon ? icon.getAttribute("class") : null
+    if (icon) {
+      icon.setAttribute("class", originalClass.replace("hero-clipboard-document", "hero-check"))
+      icon.style.color = "#10b981"
+    }
+    const tip = document.createElement("span")
+    tip.textContent = "Copied!"
+    tip.style.cssText = "position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:6px;padding:4px 10px;background:#0f172a;color:white;font-size:12px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:50"
+    this.el.style.position = "relative"
+    this.el.appendChild(tip)
+    setTimeout(() => {
+      if (icon && originalClass) {
+        icon.setAttribute("class", originalClass)
+        icon.style.color = ""
+      }
+      tip.remove()
+      delete this.el.dataset.copied
+    }, 1500)
+  }
+}
+
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: {...colocatedHooks},
+  hooks: {...colocatedHooks, CopyToClipboard},
 })
 
 // Show progress bar on live navigation and form submits
