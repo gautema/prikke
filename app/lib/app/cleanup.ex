@@ -142,6 +142,10 @@ defmodule Prikke.Cleanup do
 
     organizations = Accounts.list_all_organizations()
 
+    # Aggregate scheduling precision BEFORE deleting executions
+    # This preserves historical precision data beyond execution retention
+    aggregate_scheduling_precision()
+
     {total_executions, total_tasks, total_pings} =
       Enum.reduce(organizations, {0, 0, 0}, fn org, {exec_acc, task_acc, ping_acc} ->
         retention_days = get_retention_days(org.tier)
@@ -170,15 +174,18 @@ defmodule Prikke.Cleanup do
     # Clean old API latency data (90 days)
     {latency_deleted, _} = cleanup_old_latency_data(90)
 
+    # Clean old scheduling precision data (90 days)
+    {precision_deleted, _} = cleanup_old_precision_data(90)
+
     # Reset monthly execution counters if new month
     Executions.reset_monthly_execution_counts()
 
     pings_deleted = total_pings
 
     if total_executions > 0 or total_tasks > 0 or idempotency_deleted > 0 or pings_deleted > 0 or
-         emails_deleted > 0 or audit_deleted > 0 or latency_deleted > 0 do
+         emails_deleted > 0 or audit_deleted > 0 or latency_deleted > 0 or precision_deleted > 0 do
       Logger.info(
-        "[Cleanup] Deleted #{total_executions} executions, #{total_tasks} completed one-time tasks, #{idempotency_deleted} idempotency keys, #{pings_deleted} monitor pings, #{emails_deleted} email logs, #{audit_deleted} audit logs, #{latency_deleted} latency rows"
+        "[Cleanup] Deleted #{total_executions} executions, #{total_tasks} completed one-time tasks, #{idempotency_deleted} idempotency keys, #{pings_deleted} monitor pings, #{emails_deleted} email logs, #{audit_deleted} audit logs, #{latency_deleted} latency rows, #{precision_deleted} precision rows"
       )
     else
       Logger.info("[Cleanup] Nothing to clean up")
@@ -192,7 +199,8 @@ defmodule Prikke.Cleanup do
        monitor_pings: pings_deleted,
        email_logs: emails_deleted,
        audit_logs: audit_deleted,
-       latency_rows: latency_deleted
+       latency_rows: latency_deleted,
+       precision_rows: precision_deleted
      }}
   end
 
@@ -265,6 +273,30 @@ defmodule Prikke.Cleanup do
     Prikke.ApiMetrics.DailyLatency
     |> where([d], d.date < ^cutoff)
     |> Repo.delete_all()
+  end
+
+  defp cleanup_old_precision_data(days) do
+    import Ecto.Query
+
+    cutoff = Date.utc_today() |> Date.add(-days)
+
+    Prikke.Executions.SchedulingPrecisionDaily
+    |> where([d], d.date < ^cutoff)
+    |> Repo.delete_all()
+  end
+
+  defp aggregate_scheduling_precision do
+    # Only aggregate the last 3 days — older days are already stored.
+    # This ensures yesterday's data is captured before executions get cleaned up,
+    # while keeping the query fast (scans only a few days of executions).
+    yesterday = Date.utc_today() |> Date.add(-1)
+    three_days_ago = Date.utc_today() |> Date.add(-3)
+
+    count = Executions.aggregate_scheduling_precision(three_days_ago, yesterday)
+
+    if count > 0 do
+      Logger.info("[Cleanup] Aggregated scheduling precision for #{count} days")
+    end
   end
 
   # Recover executions stuck in "running" status (worker crashed or server restarted)

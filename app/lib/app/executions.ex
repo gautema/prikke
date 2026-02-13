@@ -590,6 +590,232 @@ defmodule Prikke.Executions do
     |> Repo.one()
   end
 
+  @doc """
+  Returns scheduling precision percentiles (p50, p95, p99, avg, max) for the last hour.
+  Delay = started_at - scheduled_for in milliseconds.
+  """
+  def get_scheduling_precision(since \\ nil) do
+    since = since || DateTime.add(DateTime.utc_now(), -1, :hour)
+
+    from(e in Execution,
+      where: e.status in ["success", "failed", "timeout"],
+      where: e.finished_at >= ^since,
+      where: not is_nil(e.started_at),
+      where: not is_nil(e.scheduled_for),
+      select: %{
+        p50:
+          fragment(
+            "percentile_cont(0.5) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (? - ?)) * 1000)",
+            e.started_at,
+            e.scheduled_for
+          ),
+        p95:
+          fragment(
+            "percentile_cont(0.95) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (? - ?)) * 1000)",
+            e.started_at,
+            e.scheduled_for
+          ),
+        p99:
+          fragment(
+            "percentile_cont(0.99) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (? - ?)) * 1000)",
+            e.started_at,
+            e.scheduled_for
+          ),
+        avg:
+          avg(fragment("EXTRACT(EPOCH FROM (? - ?)) * 1000", e.started_at, e.scheduled_for)),
+        max:
+          max(fragment("EXTRACT(EPOCH FROM (? - ?)) * 1000", e.started_at, e.scheduled_for)),
+        count: count(e.id)
+      }
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Returns daily scheduling precision for the last N days.
+  Reads from the scheduling_precision_daily table (persisted aggregates)
+  and supplements with live data from executions for recent days still in retention.
+  """
+  def get_daily_scheduling_precision(days \\ 90) do
+    alias Prikke.Executions.SchedulingPrecisionDaily
+
+    since = Date.utc_today() |> Date.add(-days)
+
+    # Read stored daily aggregates
+    stored =
+      from(s in SchedulingPrecisionDaily,
+        where: s.date >= ^since,
+        order_by: [asc: s.date]
+      )
+      |> Repo.all()
+      |> Map.new(fn row ->
+        {row.date,
+         %{
+           date: row.date,
+           p50: row.p50_ms,
+           p95: row.p95_ms,
+           p99: row.p99_ms,
+           avg: if(row.request_count > 0, do: div(row.total_delay_ms, row.request_count), else: 0),
+           max: row.max_ms,
+           count: row.request_count
+         }}
+      end)
+
+    # Compute today's data live from executions (not yet aggregated)
+    today = Date.utc_today()
+    live = compute_daily_precision_from_executions(today)
+    live_by_date = Map.new(live, fn entry -> {entry.date, entry} end)
+
+    # Merge: stored for historical, live for today
+    merged = Map.merge(stored, live_by_date)
+
+    merged
+    |> Map.values()
+    |> Enum.sort_by(& &1.date, Date)
+  end
+
+  @doc """
+  Aggregates scheduling precision from executions for a date range and stores
+  in scheduling_precision_daily. Called by cleanup before deleting old executions.
+  """
+  def aggregate_scheduling_precision(since_date, until_date \\ nil) do
+    alias Prikke.Executions.SchedulingPrecisionDaily
+
+    until_date = until_date || Date.utc_today()
+    since = DateTime.new!(since_date, ~T[00:00:00], "Etc/UTC")
+    until_dt = DateTime.new!(Date.add(until_date, 1), ~T[00:00:00], "Etc/UTC")
+
+    results =
+      from(e in Execution,
+        where: e.status in ["success", "failed", "timeout"],
+        where: e.scheduled_for >= ^since,
+        where: e.scheduled_for < ^until_dt,
+        where: not is_nil(e.started_at),
+        where: not is_nil(e.scheduled_for),
+        group_by: fragment("DATE(?)", e.scheduled_for),
+        select: {
+          fragment("DATE(?)", e.scheduled_for),
+          %{
+            p50:
+              fragment(
+                "percentile_cont(0.5) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (? - ?)) * 1000)",
+                e.started_at,
+                e.scheduled_for
+              ),
+            p95:
+              fragment(
+                "percentile_cont(0.95) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (? - ?)) * 1000)",
+                e.started_at,
+                e.scheduled_for
+              ),
+            p99:
+              fragment(
+                "percentile_cont(0.99) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (? - ?)) * 1000)",
+                e.started_at,
+                e.scheduled_for
+              ),
+            avg:
+              avg(fragment("EXTRACT(EPOCH FROM (? - ?)) * 1000", e.started_at, e.scheduled_for)),
+            max:
+              max(fragment("EXTRACT(EPOCH FROM (? - ?)) * 1000", e.started_at, e.scheduled_for)),
+            count: count(e.id)
+          }
+        }
+      )
+      |> Repo.all()
+
+    now = DateTime.utc_now(:second)
+
+    for {date, stats} <- results do
+      Repo.query!(
+        """
+        INSERT INTO scheduling_precision_daily (id, date, request_count, total_delay_ms, p50_ms, p95_ms, p99_ms, max_ms, inserted_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        ON CONFLICT (date) DO UPDATE SET
+          request_count = EXCLUDED.request_count,
+          total_delay_ms = EXCLUDED.total_delay_ms,
+          p50_ms = EXCLUDED.p50_ms,
+          p95_ms = EXCLUDED.p95_ms,
+          p99_ms = EXCLUDED.p99_ms,
+          max_ms = EXCLUDED.max_ms,
+          updated_at = EXCLUDED.updated_at
+        """,
+        [
+          Ecto.UUID.bingenerate(),
+          date,
+          stats.count,
+          round_or_zero(stats.avg) * stats.count,
+          round_or_zero(stats.p50),
+          round_or_zero(stats.p95),
+          round_or_zero(stats.p99),
+          round_or_zero(stats.max),
+          now,
+          now
+        ]
+      )
+    end
+
+    length(results)
+  end
+
+  defp compute_daily_precision_from_executions(since_date) do
+    since = DateTime.new!(since_date, ~T[00:00:00], "Etc/UTC")
+
+    from(e in Execution,
+      where: e.status in ["success", "failed", "timeout"],
+      where: e.scheduled_for >= ^since,
+      where: not is_nil(e.started_at),
+      where: not is_nil(e.scheduled_for),
+      group_by: fragment("DATE(?)", e.scheduled_for),
+      order_by: [asc: fragment("DATE(?)", e.scheduled_for)],
+      select: {
+        fragment("DATE(?)", e.scheduled_for),
+        %{
+          p50:
+            fragment(
+              "percentile_cont(0.5) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (? - ?)) * 1000)",
+              e.started_at,
+              e.scheduled_for
+            ),
+          p95:
+            fragment(
+              "percentile_cont(0.95) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (? - ?)) * 1000)",
+              e.started_at,
+              e.scheduled_for
+            ),
+          p99:
+            fragment(
+              "percentile_cont(0.99) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (? - ?)) * 1000)",
+              e.started_at,
+              e.scheduled_for
+            ),
+          avg:
+            avg(fragment("EXTRACT(EPOCH FROM (? - ?)) * 1000", e.started_at, e.scheduled_for)),
+          max:
+            max(fragment("EXTRACT(EPOCH FROM (? - ?)) * 1000", e.started_at, e.scheduled_for)),
+          count: count(e.id)
+        }
+      }
+    )
+    |> Repo.all()
+    |> Enum.map(fn {date, stats} ->
+      %{
+        date: date,
+        p50: round_or_zero(stats.p50),
+        p95: round_or_zero(stats.p95),
+        p99: round_or_zero(stats.p99),
+        avg: round_or_zero(stats.avg),
+        max: round_or_zero(stats.max),
+        count: stats.count
+      }
+    end)
+  end
+
+  defp round_or_zero(nil), do: 0
+  defp round_or_zero(%Decimal{} = d), do: Decimal.to_float(d) |> round()
+  defp round_or_zero(f) when is_float(f), do: round(f)
+  defp round_or_zero(i), do: i
+
   def throughput_per_minute(minutes \\ 60) do
     since = DateTime.add(DateTime.utc_now(), -minutes, :minute)
 

@@ -131,5 +131,113 @@ defmodule Prikke.MetricsTest do
       {_timestamp, count} = hd(result)
       assert count >= 1
     end
+
+    test "get_scheduling_precision/1 returns correct structure with no data" do
+      result = Executions.get_scheduling_precision()
+      assert result.count == 0
+      assert is_nil(result.p50)
+      assert is_nil(result.p95)
+      assert is_nil(result.p99)
+      assert is_nil(result.avg)
+      assert is_nil(result.max)
+    end
+
+    test "get_scheduling_precision/1 with execution data" do
+      org = organization_fixture()
+      task = task_fixture(org)
+
+      now = DateTime.utc_now()
+      scheduled_for = DateTime.add(now, -5, :second)
+
+      {:ok, execution} = Executions.create_execution_for_task(task, scheduled_for)
+
+      # Simulate worker claiming the execution (sets started_at)
+      {:ok, claimed} =
+        execution
+        |> Prikke.Executions.Execution.start_changeset()
+        |> Prikke.Repo.update()
+
+      {:ok, _} =
+        Executions.complete_execution(claimed, %{
+          status_code: 200,
+          duration_ms: 100,
+          response_body: "ok"
+        })
+
+      result = Executions.get_scheduling_precision()
+      assert result.count == 1
+      # Delay should be positive (started_at - scheduled_for ~ 5 seconds = ~5000ms)
+      assert result.p95 > 0
+    end
+
+    test "get_daily_scheduling_precision/1 returns empty list with no data" do
+      result = Executions.get_daily_scheduling_precision()
+      assert result == []
+    end
+
+    test "aggregate_scheduling_precision/2 stores data and get_daily reads it" do
+      org = organization_fixture()
+      task = task_fixture(org)
+
+      now = DateTime.utc_now()
+      scheduled_for = DateTime.add(now, -2, :second)
+
+      {:ok, execution} = Executions.create_execution_for_task(task, scheduled_for)
+
+      {:ok, claimed} =
+        execution
+        |> Prikke.Executions.Execution.start_changeset()
+        |> Prikke.Repo.update()
+
+      {:ok, _} =
+        Executions.complete_execution(claimed, %{
+          status_code: 200,
+          duration_ms: 100,
+          response_body: "ok"
+        })
+
+      # Aggregate today's data into the stored table
+      count = Executions.aggregate_scheduling_precision(Date.utc_today(), Date.utc_today())
+      assert count == 1
+
+      # Verify it's stored in the DB
+      alias Prikke.Executions.SchedulingPrecisionDaily
+      row = Prikke.Repo.get_by(SchedulingPrecisionDaily, date: Date.utc_today())
+      assert row != nil
+      assert row.request_count == 1
+      assert row.p95_ms > 0
+    end
+
+    test "get_daily_scheduling_precision/1 with execution data" do
+      org = organization_fixture()
+      task = task_fixture(org)
+
+      now = DateTime.utc_now()
+      scheduled_for = DateTime.add(now, -3, :second)
+
+      {:ok, execution} = Executions.create_execution_for_task(task, scheduled_for)
+
+      # Simulate worker claiming the execution (sets started_at)
+      {:ok, claimed} =
+        execution
+        |> Prikke.Executions.Execution.start_changeset()
+        |> Prikke.Repo.update()
+
+      {:ok, _} =
+        Executions.complete_execution(claimed, %{
+          status_code: 200,
+          duration_ms: 100,
+          response_body: "ok"
+        })
+
+      result = Executions.get_daily_scheduling_precision(90)
+      assert length(result) == 1
+
+      day = hd(result)
+      assert day.date == Date.utc_today()
+      assert day.count == 1
+      assert day.p95 > 0
+      assert day.avg > 0
+    end
   end
 end

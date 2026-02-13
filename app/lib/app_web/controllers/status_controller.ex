@@ -3,6 +3,7 @@ defmodule PrikkeWeb.StatusController do
 
   alias Prikke.Status
   alias Prikke.ApiMetrics
+  alias Prikke.Executions
 
   plug :put_layout, false
   plug :assign_hide_header_footer
@@ -22,6 +23,8 @@ defmodule PrikkeWeb.StatusController do
     all_incidents = Status.list_all_incidents(90)
     daily_latency = ApiMetrics.list_daily_latency(90)
     today_latency = ApiMetrics.get_today_latency()
+    daily_precision = Executions.get_daily_scheduling_precision(90)
+    today_precision = Executions.get_scheduling_precision()
 
     render(conn, :index,
       status: status,
@@ -31,7 +34,9 @@ defmodule PrikkeWeb.StatusController do
       daily_uptime: daily_uptime,
       all_incidents: all_incidents,
       daily_latency: daily_latency,
-      today_latency: today_latency
+      today_latency: today_latency,
+      daily_precision: daily_precision,
+      today_precision: today_precision
     )
   end
 end

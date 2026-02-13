@@ -103,6 +103,7 @@ defmodule PrikkeWeb.SuperadminLive do
     metrics_history = Prikke.Metrics.recent(60)
     duration_percentiles = Executions.get_duration_percentiles()
     queue_wait = Executions.get_avg_queue_wait()
+    scheduling_precision = Executions.get_scheduling_precision()
     throughput = Executions.throughput_per_minute(60)
     system_alerts = Prikke.Metrics.alerts()
 
@@ -116,6 +117,7 @@ defmodule PrikkeWeb.SuperadminLive do
     |> assign(:metrics_history, metrics_history)
     |> assign(:duration_percentiles, duration_percentiles)
     |> assign(:queue_wait, queue_wait)
+    |> assign(:scheduling_precision, scheduling_precision)
     |> assign(:throughput, throughput)
     |> assign(:system_alerts, system_alerts)
     |> assign(:api_percentiles, api_percentiles)
@@ -457,6 +459,19 @@ defmodule PrikkeWeb.SuperadminLive do
             <div class="text-xs text-slate-500">Queue Wait (avg)</div>
             <div class="text-base font-semibold text-slate-900">
               {format_duration_short(@queue_wait && @queue_wait.avg_wait_ms)}
+            </div>
+          </div>
+          <div>
+            <div class="text-xs text-slate-500">Sched Precision (p95)</div>
+            <div class={[
+              "text-base font-semibold",
+              cond do
+                @scheduling_precision == nil || @scheduling_precision.count == 0 -> "text-slate-400"
+                @scheduling_precision.p95 <= 30_000 -> "text-emerald-600"
+                true -> "text-red-600"
+              end
+            ]}>
+              {format_duration_short(@scheduling_precision && @scheduling_precision.p95)}
             </div>
           </div>
           <div>

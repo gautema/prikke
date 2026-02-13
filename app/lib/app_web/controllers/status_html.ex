@@ -114,7 +114,7 @@ defmodule PrikkeWeb.StatusHTML do
   end
 
   @doc """
-  Builds a list of 30 days with latency data, filling gaps with nil entries.
+  Builds a list of days with latency data, filling gaps with nil entries.
   """
   def fill_latency_days(daily_latency, days \\ 30) do
     today = Date.utc_today()
@@ -123,6 +123,48 @@ defmodule PrikkeWeb.StatusHTML do
     for offset <- (-(days - 1))..0 do
       date = Date.add(today, offset)
       {date, Map.get(latency_by_date, date)}
+    end
+  end
+
+  @doc """
+  Returns a Tailwind color class based on scheduling precision SLO compliance.
+  Green: p95 < 30s, Yellow: 30-60s, Red: > 60s, Gray: no data.
+  """
+  def precision_bar_color(0), do: "bg-slate-200"
+  def precision_bar_color(p95_ms) when p95_ms <= 30_000, do: "bg-emerald-600"
+  def precision_bar_color(p95_ms) when p95_ms <= 60_000, do: "bg-amber-500"
+  def precision_bar_color(_p95_ms), do: "bg-red-500"
+
+  @doc """
+  Formats a delay value in milliseconds to a human-readable string.
+  """
+  def format_delay(nil), do: "-"
+  def format_delay(0), do: "-"
+
+  def format_delay(ms) when ms < 1_000 do
+    "#{ms}ms"
+  end
+
+  def format_delay(ms) when ms < 60_000 do
+    s = ms / 1_000
+    if s >= 10, do: "#{round(s)}s", else: "#{Float.round(s, 1)}s"
+  end
+
+  def format_delay(ms) do
+    m = ms / 60_000
+    "#{Float.round(m, 1)}min"
+  end
+
+  @doc """
+  Builds a list of days with scheduling precision data, filling gaps with nil entries.
+  """
+  def fill_precision_days(daily_precision, days \\ 90) do
+    today = Date.utc_today()
+    precision_by_date = Map.new(daily_precision, fn entry -> {entry.date, entry} end)
+
+    for offset <- (-(days - 1))..0 do
+      date = Date.add(today, offset)
+      {date, Map.get(precision_by_date, date)}
     end
   end
 end
