@@ -1,0 +1,58 @@
+# Staging environment — used with: kamal deploy -d staging
+# First-time setup: kamal setup -d staging
+#
+# Secrets loaded from .kamal/secrets-staging (Kamal convention for destinations)
+
+servers:
+  web:
+    hosts:
+      - 116.203.39.95
+
+proxy:
+  ssl: true
+  host: staging.runlater.eu
+  app_port: 4000
+  healthcheck:
+    path: /health
+
+builder:
+  arch: amd64
+  remote: ssh://root@116.203.39.95
+
+registry:
+  server: localhost:5555
+
+env:
+  clear:
+    PHX_HOST: staging.runlater.eu
+    PORT: 4000
+    MIX_ENV: prod
+    ADMIN_EMAIL: support@runlater.eu
+    POOL_SIZE: 20
+    RATE_LIMIT_PER_MINUTE: "100000"
+    RATE_LIMIT_PER_HOUR: "1000000"
+  secret:
+    - SECRET_KEY_BASE
+    - DATABASE_URL
+    - MAILJET_API_KEY
+    - MAILJET_SECRET_KEY
+    - CREEM_API_KEY
+    - CREEM_WEBHOOK_SECRET
+    - CREEM_MONTHLY_PRODUCT_ID
+    - CREEM_YEARLY_PRODUCT_ID
+
+accessories:
+  db:
+    image: postgres:18
+    host: 116.203.39.95
+    env:
+      clear:
+        POSTGRES_DB: runlater_staging
+      secret:
+        - POSTGRES_USER
+        - POSTGRES_PASSWORD
+    options:
+      shm-size: 2304m
+    cmd: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c shared_buffers=2GB -c effective_cache_size=4GB -c work_mem=4MB -c max_parallel_workers_per_gather=2
+    directories:
+      - /mnt/secure/postgresql-data:/var/lib/postgresql

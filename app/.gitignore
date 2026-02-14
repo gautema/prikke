@@ -37,4 +37,5 @@ npm-debug.log
 
 # Kamal secrets (contains passwords and tokens)
 .kamal/secrets
+.kamal/secrets.*
 
