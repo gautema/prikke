@@ -28,7 +28,7 @@ env:
     PORT: 4000
     MIX_ENV: prod
     ADMIN_EMAIL: support@runlater.eu
-    POOL_SIZE: 50
+    POOL_SIZE: 100
     RATE_LIMIT_PER_MINUTE: "100000"
     RATE_LIMIT_PER_HOUR: "1000000"
   secret:
