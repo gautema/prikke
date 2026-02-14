@@ -10,6 +10,8 @@ servers:
   web:
     hosts:
       - 46.225.66.205
+    options:
+      ulimit: nofile=65536:65536
 
 proxy:
   ssl: true
