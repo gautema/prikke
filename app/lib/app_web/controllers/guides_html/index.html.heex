@@ -1,0 +1,46 @@
+<.docs_layout current_scope={@current_scope}>
+  <h1>Framework Guides</h1>
+  <p class="text-xl text-slate-600 mb-10">
+    Step-by-step tutorials for adding background jobs, cron scheduling, and task queues to
+    platforms that don't support them natively.
+  </p>
+
+  <a
+    href="/guides/nextjs-background-jobs"
+    class="block glass-card rounded-2xl p-6 mb-4 no-underline hover:no-underline hover:border-emerald-300 hover:scale-[1.01] transition-all"
+  >
+    <h3 class="m-0 mb-2 text-slate-900">Background Jobs in Next.js</h3>
+    <p class="m-0 text-slate-500 text-sm">
+      Delayed emails, Stripe syncs, image processing, and trial reminders from a Vercel-deployed app.
+      Includes SDK setup, real-world examples, and declarative task management.
+    </p>
+  </a>
+
+  <a
+    href="/guides/cloudflare-workers-cron"
+    class="block glass-card rounded-2xl p-6 mb-4 no-underline hover:no-underline hover:border-emerald-300 hover:scale-[1.01] transition-all"
+  >
+    <h3 class="m-0 mb-2 text-slate-900">Cron Jobs in Cloudflare Workers</h3>
+    <p class="m-0 text-slate-500 text-sm">
+      KV cleanup, order processing queues, usage reports, and webhook forwarding.
+      Replace basic Cron Triggers with flexible scheduling and retries.
+    </p>
+  </a>
+
+  <a
+    href="/guides/supabase-scheduled-tasks"
+    class="block glass-card rounded-2xl p-6 mb-4 no-underline hover:no-underline hover:border-emerald-300 hover:scale-[1.01] transition-all"
+  >
+    <h3 class="m-0 mb-2 text-slate-900">Scheduled Tasks with Supabase</h3>
+    <p class="m-0 text-slate-500 text-sm">
+      Daily reports, file upload processing, onboarding drip emails, and session cleanup.
+      Trigger Edge Functions on a cron schedule without pg_cron workarounds.
+    </p>
+  </a>
+
+  <div class="mt-10">
+    <p class="text-slate-500 text-sm">
+      Looking for the API reference? Check the <a href="/docs">documentation</a>.
+    </p>
+  </div>
+</.docs_layout>

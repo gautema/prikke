@@ -37,6 +37,12 @@ defmodule PrikkeWeb.Router do
     get "/docs/status-pages", DocsController, :status_pages
     get "/use-cases", DocsController, :use_cases
 
+    # Framework guides
+    get "/guides", GuidesController, :index
+    get "/guides/nextjs-background-jobs", GuidesController, :nextjs
+    get "/guides/cloudflare-workers-cron", GuidesController, :cloudflare_workers
+    get "/guides/supabase-scheduled-tasks", GuidesController, :supabase
+
     # Public status page
     get "/status", StatusController, :index
 
