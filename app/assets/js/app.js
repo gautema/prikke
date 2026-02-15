@@ -112,6 +112,49 @@ document.addEventListener("click", (e) => {
 })
 
 
+// Copy to clipboard for dead views (data-copy attribute)
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-copy]")
+  if (!btn) return
+  const text = btn.dataset.copy
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => flashCopyButton(btn))
+  } else {
+    const ta = document.createElement("textarea")
+    ta.value = text
+    ta.style.position = "fixed"
+    ta.style.left = "-9999px"
+    document.body.appendChild(ta)
+    ta.select()
+    document.execCommand("copy")
+    document.body.removeChild(ta)
+    flashCopyButton(btn)
+  }
+})
+
+function flashCopyButton(btn) {
+  if (btn.dataset.copied) return
+  btn.dataset.copied = "true"
+  const icon = btn.querySelector("span")
+  const originalClass = icon ? icon.getAttribute("class") : null
+  if (icon) {
+    icon.setAttribute("class", originalClass.replace("hero-clipboard-document", "hero-check"))
+    icon.style.color = "#10b981"
+  }
+  const tip = document.createElement("span")
+  tip.textContent = "Copied!"
+  tip.style.cssText = "position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:6px;padding:4px 10px;background:#0f172a;color:white;font-size:12px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:50"
+  btn.appendChild(tip)
+  setTimeout(() => {
+    if (icon && originalClass) {
+      icon.setAttribute("class", originalClass)
+      icon.style.color = ""
+    }
+    tip.remove()
+    delete btn.dataset.copied
+  }, 1500)
+}
+
 // Code example tab switching (curl / Node.js SDK)
 document.addEventListener("click", (e) => {
   const tab = e.target.closest("[data-tab]")

@@ -74,8 +74,16 @@
         <p class="text-sm text-amber-700 mb-4">
           Copy this key now. You won't be able to see it again!
         </p>
-        <div class="bg-white border border-amber-300 rounded-md p-3 font-mono text-sm break-all select-all">
-          {@new_key}
+        <div class="flex items-center gap-2 bg-white border border-amber-300 rounded-md p-3">
+          <code class="flex-1 font-mono text-sm break-all select-all">{@new_key}</code>
+          <button
+            type="button"
+            data-copy={@new_key}
+            class="shrink-0 text-amber-500 hover:text-emerald-600 p-1.5 rounded transition-colors relative"
+            title="Copy to clipboard"
+          >
+            <.icon name="hero-clipboard-document" class="w-5 h-5" />
+          </button>
         </div>
         <p class="text-xs text-amber-600 mt-3">
           Use this in the Authorization header:
@@ -138,8 +146,16 @@
         header to ensure requests are from Runlater.
       </p>
       <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-        <div class="flex-1 bg-white/50 border border-white/50 rounded-md p-3 font-mono text-sm break-all select-all">
-          {@organization.webhook_secret}
+        <div class="flex items-center gap-2 flex-1 bg-white/50 border border-white/50 rounded-md p-3">
+          <code class="flex-1 font-mono text-sm break-all select-all">{@organization.webhook_secret}</code>
+          <button
+            type="button"
+            data-copy={@organization.webhook_secret}
+            class="shrink-0 text-slate-400 hover:text-emerald-600 p-1.5 rounded transition-colors relative"
+            title="Copy to clipboard"
+          >
+            <.icon name="hero-clipboard-document" class="w-5 h-5" />
+          </button>
         </div>
         <.form
           for={%{}}
