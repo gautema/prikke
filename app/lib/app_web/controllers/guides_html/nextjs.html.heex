@@ -4,6 +4,48 @@
     How to run scheduled tasks, cron jobs, and async work from a Next.js app deployed on Vercel.
   </p>
 
+  <h2>Prerequisites</h2>
+  <ul>
+    <li>Node.js 18+ and a Next.js 13+ project using the App Router</li>
+    <li>A <a href="/users/register">Runlater account</a> (free tier works)</li>
+    <li>Your app deployed to a public URL (Vercel, Railway, etc.)</li>
+  </ul>
+
+  <h2>SDK overview</h2>
+  <p>The <code class="bg-slate-100 px-2 py-1 rounded text-sm">runlater-js</code> SDK methods used in this guide:</p>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm border border-slate-200 rounded-lg">
+      <thead class="bg-slate-50">
+        <tr>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Method</th>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.send(url, opts)</td>
+          <td class="p-3 border-b border-slate-100">Queue a task for immediate execution</td>
+        </tr>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.delay(url, opts)</td>
+          <td class="p-3 border-b border-slate-100">Execute after a delay (e.g. <code class="bg-slate-100 px-1 rounded">"30m"</code>, <code class="bg-slate-100 px-1 rounded">"2h"</code>)</td>
+        </tr>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.schedule(url, opts)</td>
+          <td class="p-3 border-b border-slate-100">Execute at a specific date/time</td>
+        </tr>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.cron(name, opts)</td>
+          <td class="p-3 border-b border-slate-100">Create or update a recurring cron job (idempotent)</td>
+        </tr>
+        <tr>
+          <td class="p-3 font-mono text-emerald-700">rl.sync(opts)</td>
+          <td class="p-3">Declare all tasks at once &mdash; creates, updates, and removes to match</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
   <h2>Why you need this</h2>
   <p>
     Next.js on Vercel runs on serverless functions. There are no persistent processes, no background workers,
@@ -13,7 +55,7 @@
   </p>
   <p>
     Runlater solves this by acting as your background job infrastructure. You schedule tasks via the SDK,
-    and Runlater calls your Next.js API routes when it's time to execute. Your app stays serverless —
+    and Runlater calls your Next.js API routes when it's time to execute. Your app stays serverless &mdash;
     Runlater handles the persistence, retries, and scheduling.
   </p>
 
@@ -28,14 +70,15 @@
   </div>
 
   <p>
-    Add your API key to <code class="bg-slate-100 px-2 py-1 rounded text-sm">.env.local</code>:
+    Add your API key and app URL to <code class="bg-slate-100 px-2 py-1 rounded text-sm">.env.local</code>:
   </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
-    >RUNLATER_KEY=pk_live_your_api_key</pre>
+    >RUNLATER_KEY=pk_live_your_api_key
+APP_URL=https://myapp.vercel.app</pre>
   </div>
 
   <p>
@@ -44,14 +87,14 @@
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">lib/runlater.js</span>
+      <span class="text-xs text-slate-400 font-mono">lib/runlater.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Runlater</span> <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 
-<span class="text-purple-300">export const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)</pre>
+<span class="text-purple-300">export const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>!)</pre>
   </div>
 
   <h2>Example: Send a welcome email after signup</h2>
@@ -63,7 +106,7 @@
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">app/actions/signup.js</span>
+      <span class="text-xs text-slate-400 font-mono">app/actions/signup.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
@@ -71,9 +114,9 @@
     ><span class="text-green-300">"use server"</span>
 <span class="text-purple-300">import</span> { <span class="text-sky-300">rl</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/runlater"</span>
 
-<span class="text-purple-300">export async function</span> <span class="text-sky-300">onSignup</span>(userId) {
+<span class="text-purple-300">export async function</span> <span class="text-sky-300">onSignup</span>(userId: string) {
   <span class="text-slate-500">// Send welcome email in 30 minutes</span>
-  <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">delay</span>(<span class="text-green-300">"https://myapp.vercel.app/api/send-welcome"</span>, {
+  <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">delay</span>(<span class="text-green-300">`${process.env.APP_URL}/api/send-welcome`</span>, {
     <span class="text-sky-300">delay</span>: <span class="text-green-300">"30m"</span>,
     <span class="text-sky-300">body</span>: { <span class="text-sky-300">user_id</span>: userId },
     <span class="text-sky-300">retries</span>: <span class="text-orange-300">3</span>,
@@ -85,16 +128,21 @@
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">app/api/send-welcome/route.js</span>
+      <span class="text-xs text-slate-400 font-mono">app/api/send-welcome/route.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> { <span class="text-sky-300">sendEmail</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/email"</span>
+<span class="text-purple-300">import</span> { <span class="text-sky-300">prisma</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/db"</span> <span class="text-slate-500">// Your Prisma client</span>
 
-<span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(request) {
+<span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(request: Request) {
   <span class="text-purple-300">const</span> { <span class="text-sky-300">user_id</span> } = <span class="text-purple-300">await</span> request.json()
-  <span class="text-purple-300">const</span> user = <span class="text-purple-300">await</span> db.user.findUnique({ <span class="text-sky-300">where</span>: { <span class="text-sky-300">id</span>: user_id } })
+  <span class="text-purple-300">const</span> user = <span class="text-purple-300">await</span> prisma.user.findUnique({ <span class="text-sky-300">where</span>: { <span class="text-sky-300">id</span>: user_id } })
+
+  <span class="text-purple-300">if</span> (!user) {
+    <span class="text-purple-300">return</span> Response.json({ <span class="text-sky-300">error</span>: <span class="text-green-300">"User not found"</span> }, { <span class="text-sky-300">status</span>: <span class="text-orange-300">404</span> })
+  }
 
   <span class="text-purple-300">await</span> sendEmail({
     <span class="text-sky-300">to</span>: user.email,
@@ -114,33 +162,35 @@
   <h2>Example: Sync data on a cron schedule</h2>
   <p>
     Pull data from an external API every 5 minutes. Use <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.cron()</code>
-    to create a recurring task — it's idempotent, so you can call it on every deploy without creating duplicates:
+    to create a recurring task &mdash; it's idempotent, so you can call it on every deploy without creating duplicates:
   </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">scripts/setup-tasks.js</span>
+      <span class="text-xs text-slate-400 font-mono">scripts/setup-tasks.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> { <span class="text-sky-300">rl</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/runlater"</span>
 
+<span class="text-purple-300">const</span> <span class="text-sky-300">BASE</span> = process.env.<span class="text-sky-300">APP_URL</span>!
+
 <span class="text-slate-500">// Sync Stripe data every 5 minutes</span>
 <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">cron</span>(<span class="text-green-300">"stripe-sync"</span>, {
-  <span class="text-sky-300">url</span>: <span class="text-green-300">"https://myapp.vercel.app/api/stripe/sync"</span>,
+  <span class="text-sky-300">url</span>: <span class="text-green-300">`${BASE}/api/stripe/sync`</span>,
   <span class="text-sky-300">schedule</span>: <span class="text-green-300">"*/5 * * * *"</span>,
 })
 
 <span class="text-slate-500">// Clean up expired sessions every night at 2 AM</span>
 <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">cron</span>(<span class="text-green-300">"session-cleanup"</span>, {
-  <span class="text-sky-300">url</span>: <span class="text-green-300">"https://myapp.vercel.app/api/cleanup/sessions"</span>,
+  <span class="text-sky-300">url</span>: <span class="text-green-300">`${BASE}/api/cleanup/sessions`</span>,
   <span class="text-sky-300">schedule</span>: <span class="text-green-300">"0 2 * * *"</span>,
 })
 
 <span class="text-slate-500">// Generate daily usage report at 8 AM</span>
 <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">cron</span>(<span class="text-green-300">"daily-report"</span>, {
-  <span class="text-sky-300">url</span>: <span class="text-green-300">"https://myapp.vercel.app/api/reports/daily"</span>,
+  <span class="text-sky-300">url</span>: <span class="text-green-300">`${BASE}/api/reports/daily`</span>,
   <span class="text-sky-300">schedule</span>: <span class="text-green-300">"0 8 * * *"</span>,
   <span class="text-sky-300">method</span>: <span class="text-green-300">"POST"</span>,
 })</pre>
@@ -150,16 +200,17 @@
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">app/api/stripe/sync/route.js</span>
+      <span class="text-xs text-slate-400 font-mono">app/api/stripe/sync/route.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Stripe</span> <span class="text-purple-300">from</span> <span class="text-green-300">"stripe"</span>
+<span class="text-purple-300">import</span> { <span class="text-sky-300">prisma</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/db"</span>
 
-<span class="text-purple-300">const</span> stripe = <span class="text-purple-300">new</span> <span class="text-sky-300">Stripe</span>(process.env.<span class="text-sky-300">STRIPE_SECRET_KEY</span>)
+<span class="text-purple-300">const</span> stripe = <span class="text-purple-300">new</span> <span class="text-sky-300">Stripe</span>(process.env.<span class="text-sky-300">STRIPE_SECRET_KEY</span>!)
 
-<span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(request) {
+<span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(request: Request) {
   <span class="text-slate-500">// Fetch recent charges from Stripe</span>
   <span class="text-purple-300">const</span> charges = <span class="text-purple-300">await</span> stripe.charges.list({
     <span class="text-sky-300">created</span>: { <span class="text-sky-300">gte</span>: Math.floor(Date.now() / <span class="text-orange-300">1000</span>) - <span class="text-orange-300">300</span> },
@@ -167,7 +218,7 @@
 
   <span class="text-slate-500">// Update your database</span>
   <span class="text-purple-300">for</span> (<span class="text-purple-300">const</span> charge <span class="text-purple-300">of</span> charges.data) {
-    <span class="text-purple-300">await</span> db.payment.upsert({
+    <span class="text-purple-300">await</span> prisma.payment.upsert({
       <span class="text-sky-300">where</span>: { <span class="text-sky-300">stripeId</span>: charge.id },
       <span class="text-sky-300">update</span>: { <span class="text-sky-300">status</span>: charge.status },
       <span class="text-sky-300">create</span>: { <span class="text-sky-300">stripeId</span>: charge.id, <span class="text-sky-300">amount</span>: charge.amount, <span class="text-sky-300">status</span>: charge.status },
@@ -187,18 +238,18 @@
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">app/api/upload/route.js</span>
+      <span class="text-xs text-slate-400 font-mono">app/api/upload/route.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> { <span class="text-sky-300">rl</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/runlater"</span>
 
-<span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(request) {
+<span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(request: Request) {
   <span class="text-purple-300">const</span> { <span class="text-sky-300">fileUrl</span>, <span class="text-sky-300">userId</span> } = <span class="text-purple-300">await</span> request.json()
 
   <span class="text-slate-500">// Queue the processing — returns immediately</span>
-  <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">send</span>(<span class="text-green-300">"https://myapp.vercel.app/api/process-upload"</span>, {
+  <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">send</span>(<span class="text-green-300">`${process.env.APP_URL}/api/process-upload`</span>, {
     <span class="text-sky-300">body</span>: { <span class="text-sky-300">file_url</span>: fileUrl, <span class="text-sky-300">user_id</span>: userId },
     <span class="text-sky-300">retries</span>: <span class="text-orange-300">5</span>,
     <span class="text-sky-300">timeout</span>: <span class="text-orange-300">120000</span>, <span class="text-slate-500">// 2 min for heavy processing</span>
@@ -210,14 +261,15 @@
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">app/api/process-upload/route.js</span>
+      <span class="text-xs text-slate-400 font-mono">app/api/process-upload/route.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">sharp</span> <span class="text-purple-300">from</span> <span class="text-green-300">"sharp"</span>
+<span class="text-purple-300">import</span> { <span class="text-sky-300">prisma</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/db"</span>
 
-<span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(request) {
+<span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(request: Request) {
   <span class="text-purple-300">const</span> { <span class="text-sky-300">file_url</span>, <span class="text-sky-300">user_id</span> } = <span class="text-purple-300">await</span> request.json()
 
   <span class="text-slate-500">// Download and resize the image</span>
@@ -229,7 +281,7 @@
     .toBuffer()
 
   <span class="text-purple-300">await</span> uploadToS3(thumbnail, <span class="text-green-300">`thumbnails/${user_id}.jpg`</span>)
-  <span class="text-purple-300">await</span> db.user.update({
+  <span class="text-purple-300">await</span> prisma.user.update({
     <span class="text-sky-300">where</span>: { <span class="text-sky-300">id</span>: user_id },
     <span class="text-sky-300">data</span>: { <span class="text-sky-300">avatarProcessed</span>: <span class="text-orange-300">true</span> },
   })
@@ -246,7 +298,7 @@
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">app/actions/start-trial.js</span>
+      <span class="text-xs text-slate-400 font-mono">app/actions/start-trial.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
@@ -254,12 +306,12 @@
     ><span class="text-green-300">"use server"</span>
 <span class="text-purple-300">import</span> { <span class="text-sky-300">rl</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/runlater"</span>
 
-<span class="text-purple-300">export async function</span> <span class="text-sky-300">startTrial</span>(userId) {
+<span class="text-purple-300">export async function</span> <span class="text-sky-300">startTrial</span>(userId: string) {
   <span class="text-purple-300">const</span> trialEnd = <span class="text-purple-300">new</span> Date(Date.now() + <span class="text-orange-300">14</span> * <span class="text-orange-300">24</span> * <span class="text-orange-300">60</span> * <span class="text-orange-300">60</span> * <span class="text-orange-300">1000</span>)
   <span class="text-purple-300">const</span> reminderDate = <span class="text-purple-300">new</span> Date(Date.now() + <span class="text-orange-300">12</span> * <span class="text-orange-300">24</span> * <span class="text-orange-300">60</span> * <span class="text-orange-300">60</span> * <span class="text-orange-300">1000</span>)
 
   <span class="text-slate-500">// Remind them 2 days before trial ends</span>
-  <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">schedule</span>(<span class="text-green-300">"https://myapp.vercel.app/api/trial-reminder"</span>, {
+  <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">schedule</span>(<span class="text-green-300">`${process.env.APP_URL}/api/trial-reminder`</span>, {
     <span class="text-sky-300">at</span>: reminderDate,
     <span class="text-sky-300">body</span>: { <span class="text-sky-300">user_id</span>: userId, <span class="text-sky-300">trial_end</span>: trialEnd.toISOString() },
   })
@@ -269,34 +321,36 @@
   <h2>Advanced: Declarative task management</h2>
   <p>
     Instead of creating tasks individually, use <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.sync()</code>
-    to declare all your scheduled tasks in one place. Run this as part of your deploy process — it creates,
+    to declare all your scheduled tasks in one place. Run this as part of your deploy process &mdash; it creates,
     updates, and optionally deletes tasks to match your spec:
   </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">scripts/sync-tasks.js</span>
+      <span class="text-xs text-slate-400 font-mono">scripts/sync-tasks.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> { <span class="text-sky-300">rl</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/runlater"</span>
 
+<span class="text-purple-300">const</span> <span class="text-sky-300">BASE</span> = process.env.<span class="text-sky-300">APP_URL</span>!
+
 <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">sync</span>({
   <span class="text-sky-300">tasks</span>: [
     {
       <span class="text-sky-300">name</span>: <span class="text-green-300">"stripe-sync"</span>,
-      <span class="text-sky-300">url</span>: <span class="text-green-300">"https://myapp.vercel.app/api/stripe/sync"</span>,
+      <span class="text-sky-300">url</span>: <span class="text-green-300">`${BASE}/api/stripe/sync`</span>,
       <span class="text-sky-300">schedule</span>: <span class="text-green-300">"*/5 * * * *"</span>,
     },
     {
       <span class="text-sky-300">name</span>: <span class="text-green-300">"session-cleanup"</span>,
-      <span class="text-sky-300">url</span>: <span class="text-green-300">"https://myapp.vercel.app/api/cleanup/sessions"</span>,
+      <span class="text-sky-300">url</span>: <span class="text-green-300">`${BASE}/api/cleanup/sessions`</span>,
       <span class="text-sky-300">schedule</span>: <span class="text-green-300">"0 2 * * *"</span>,
     },
     {
       <span class="text-sky-300">name</span>: <span class="text-green-300">"daily-report"</span>,
-      <span class="text-sky-300">url</span>: <span class="text-green-300">"https://myapp.vercel.app/api/reports/daily"</span>,
+      <span class="text-sky-300">url</span>: <span class="text-green-300">`${BASE}/api/reports/daily`</span>,
       <span class="text-sky-300">schedule</span>: <span class="text-green-300">"0 8 * * *"</span>,
     },
   ],
@@ -314,16 +368,28 @@
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-sky-300">"scripts"</span>: {
-  <span class="text-sky-300">"build"</span>: <span class="text-green-300">"next build && node scripts/sync-tasks.js"</span>
+  <span class="text-sky-300">"build"</span>: <span class="text-green-300">"next build && npx tsx scripts/sync-tasks.ts"</span>
 }</pre>
   </div>
 
   <h2>Best practices</h2>
   <ul>
     <li>
+      <strong>Protect your handler endpoints.</strong> Your API routes are public URLs. Verify that requests
+      come from Runlater by checking the
+      <a href="/docs/webhooks">webhook signature</a> in the
+      <code class="bg-slate-100 px-2 py-1 rounded text-sm">x-runlater-signature</code> header, or check for a
+      shared secret you set in the task headers.
+    </li>
+    <li>
       <strong>Keep handlers idempotent.</strong> Runlater retries failed tasks, so your API routes should
       be safe to call more than once. Use database upserts instead of inserts, and check for duplicates
       before sending emails.
+    </li>
+    <li>
+      <strong>Return 2xx for success, 4xx/5xx for failure.</strong> Runlater uses the HTTP status code to
+      determine if the task succeeded. A non-2xx response triggers a retry (up to the configured limit).
+      Retries use exponential backoff.
     </li>
     <li>
       <strong>Return quickly.</strong> Your handler has up to 5 minutes (configurable via

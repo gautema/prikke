@@ -4,6 +4,44 @@
     How to add flexible cron scheduling, task queues, and retry logic to Cloudflare Workers.
   </p>
 
+  <h2>Prerequisites</h2>
+  <ul>
+    <li>A Cloudflare Workers project with <a href="https://developers.cloudflare.com/workers/wrangler/" class="text-emerald-700">Wrangler</a> configured</li>
+    <li>A <a href="/users/register">Runlater account</a> (free tier works)</li>
+    <li>Your Worker deployed to a public URL</li>
+  </ul>
+
+  <h2>SDK overview</h2>
+  <p>The <code class="bg-slate-100 px-2 py-1 rounded text-sm">runlater-js</code> SDK methods used in this guide:</p>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm border border-slate-200 rounded-lg">
+      <thead class="bg-slate-50">
+        <tr>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Method</th>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.send(url, opts)</td>
+          <td class="p-3 border-b border-slate-100">Queue a task for immediate execution</td>
+        </tr>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.delay(url, opts)</td>
+          <td class="p-3 border-b border-slate-100">Execute after a delay (e.g. <code class="bg-slate-100 px-1 rounded">"5m"</code>, <code class="bg-slate-100 px-1 rounded">"1h"</code>)</td>
+        </tr>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.cron(name, opts)</td>
+          <td class="p-3 border-b border-slate-100">Create or update a recurring cron job (idempotent)</td>
+        </tr>
+        <tr>
+          <td class="p-3 font-mono text-emerald-700">rl.sync(opts)</td>
+          <td class="p-3">Declare all tasks at once &mdash; creates, updates, and removes to match</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
   <h2>Why you need this</h2>
   <p>
     Cloudflare Workers are great for request handling, but their scheduling options are basic.
@@ -13,7 +51,7 @@
   </p>
   <p>
     Runlater handles the scheduling and calls your Worker endpoint via HTTP. You get retries,
-    monitoring, failure alerts, and execution history — without adding any infrastructure to your
+    monitoring, failure alerts, and execution history &mdash; without adding any infrastructure to your
     Cloudflare account. Your Workers stay lightweight; Runlater handles the orchestration.
   </p>
 
@@ -28,7 +66,7 @@
   </div>
 
   <p>
-    Add your API key to <code class="bg-slate-100 px-2 py-1 rounded text-sm">wrangler.toml</code> as a secret:
+    Add your API key as a Worker secret (this makes it available via the <code class="bg-slate-100 px-2 py-1 rounded text-sm">env</code> parameter in your Worker):
   </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
@@ -38,21 +76,29 @@
     >npx wrangler secret put RUNLATER_KEY</pre>
   </div>
 
+  <p>
+    For setup scripts that run locally (not inside a Worker), your API key should be in your shell
+    environment or a local <code class="bg-slate-100 px-2 py-1 rounded text-sm">.env</code> file as
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">RUNLATER_KEY</code>.
+  </p>
+
   <h2>Example: Nightly KV cleanup</h2>
   <p>
-    Clean up expired keys from KV every night at 2 AM. Create the cron task using the SDK — run this
-    once from a script or as part of your deploy:
+    Clean up expired keys from KV every night at 2 AM. Create the cron task using the SDK &mdash; run this
+    once from a local script or as part of your deploy:
   </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">scripts/setup-tasks.js</span>
+      <span class="text-xs text-slate-400 font-mono">scripts/setup-tasks.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Runlater</span> <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
-<span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
+
+<span class="text-slate-500">// Setup script runs locally — uses process.env</span>
+<span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>!)
 
 <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">cron</span>(<span class="text-green-300">"kv-cleanup"</span>, {
   <span class="text-sky-300">url</span>: <span class="text-green-300">"https://my-worker.username.workers.dev/cron/cleanup"</span>,
@@ -64,32 +110,37 @@
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">src/index.js</span>
+      <span class="text-xs text-slate-400 font-mono">src/index.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">export default</span> {
-  <span class="text-purple-300">async</span> <span class="text-sky-300">fetch</span>(request, env) {
+  <span class="text-purple-300">async</span> <span class="text-sky-300">fetch</span>(request: Request, env: Env) {
     <span class="text-purple-300">const</span> url = <span class="text-purple-300">new</span> URL(request.url)
 
-    <span class="text-purple-300">if</span> (url.pathname === <span class="text-green-300">"/cron/cleanup"</span> && request.method === <span class="text-green-300">"POST"</span>) {
-      <span class="text-slate-500">// List all keys and delete expired ones</span>
-      <span class="text-purple-300">const</span> keys = <span class="text-purple-300">await</span> env.SESSIONS.list()
-
-      <span class="text-purple-300">let</span> deleted = <span class="text-orange-300">0</span>
-      <span class="text-purple-300">for</span> (<span class="text-purple-300">const</span> key <span class="text-purple-300">of</span> keys.keys) {
-        <span class="text-purple-300">if</span> (key.expiration &amp;&amp; key.expiration &lt; Date.now() / <span class="text-orange-300">1000</span>) {
-          <span class="text-purple-300">await</span> env.SESSIONS.delete(key.name)
-          deleted++
-        }
-      }
-
-      <span class="text-purple-300">return</span> Response.json({ deleted })
+    <span class="text-purple-300">if</span> (url.pathname === <span class="text-green-300">"/cron/cleanup"</span> &amp;&amp; request.method === <span class="text-green-300">"POST"</span>) {
+      <span class="text-purple-300">return</span> handleCleanup(env)
     }
 
     <span class="text-purple-300">return new</span> Response(<span class="text-green-300">"Not found"</span>, { <span class="text-sky-300">status</span>: <span class="text-orange-300">404</span> })
   }
+}
+
+<span class="text-purple-300">async function</span> <span class="text-sky-300">handleCleanup</span>(env: Env) {
+  <span class="text-slate-500">// KV list() returns up to 1000 keys per call.</span>
+  <span class="text-slate-500">// For namespaces with more keys, use cursor-based pagination.</span>
+  <span class="text-purple-300">const</span> keys = <span class="text-purple-300">await</span> env.SESSIONS.list()
+
+  <span class="text-purple-300">let</span> deleted = <span class="text-orange-300">0</span>
+  <span class="text-purple-300">for</span> (<span class="text-purple-300">const</span> key <span class="text-purple-300">of</span> keys.keys) {
+    <span class="text-purple-300">if</span> (key.expiration &amp;&amp; key.expiration &lt; Date.now() / <span class="text-orange-300">1000</span>) {
+      <span class="text-purple-300">await</span> env.SESSIONS.delete(key.name)
+      deleted++
+    }
+  }
+
+  <span class="text-purple-300">return</span> Response.json({ deleted })
 }</pre>
   </div>
 
@@ -107,7 +158,7 @@
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">src/index.js</span>
+      <span class="text-xs text-slate-400 font-mono">src/index.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
@@ -115,32 +166,49 @@
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Runlater</span> <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 
 <span class="text-purple-300">export default</span> {
-  <span class="text-purple-300">async</span> <span class="text-sky-300">fetch</span>(request, env) {
-    <span class="text-purple-300">if</span> (request.method === <span class="text-green-300">"POST"</span> && <span class="text-purple-300">new</span> URL(request.url).pathname === <span class="text-green-300">"/orders"</span>) {
-      <span class="text-purple-300">const</span> order = <span class="text-purple-300">await</span> request.json()
-      <span class="text-purple-300">const</span> rl = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(env.<span class="text-sky-300">RUNLATER_KEY</span>)
+  <span class="text-purple-300">async</span> <span class="text-sky-300">fetch</span>(request: Request, env: Env) {
+    <span class="text-purple-300">const</span> url = <span class="text-purple-300">new</span> URL(request.url)
 
-      <span class="text-slate-500">// Queue confirmation email</span>
-      <span class="text-purple-300">await</span> rl.send(<span class="text-green-300">"https://my-worker.username.workers.dev/send-confirmation"</span>, {
-        <span class="text-sky-300">body</span>: { <span class="text-sky-300">order_id</span>: order.id, <span class="text-sky-300">email</span>: order.email },
-        <span class="text-sky-300">retries</span>: <span class="text-orange-300">3</span>,
-      })
-
-      <span class="text-slate-500">// Queue inventory update with serial execution</span>
-      <span class="text-purple-300">await</span> rl.send(<span class="text-green-300">"https://my-worker.username.workers.dev/update-inventory"</span>, {
-        <span class="text-sky-300">body</span>: { <span class="text-sky-300">items</span>: order.items },
-        <span class="text-sky-300">queue</span>: <span class="text-green-300">"inventory"</span>, <span class="text-slate-500">// One at a time</span>
-      })
-
-      <span class="text-purple-300">return</span> Response.json({ <span class="text-sky-300">status</span>: <span class="text-green-300">"accepted"</span> }, { <span class="text-sky-300">status</span>: <span class="text-orange-300">202</span> })
+    <span class="text-purple-300">if</span> (url.pathname === <span class="text-green-300">"/orders"</span> &amp;&amp; request.method === <span class="text-green-300">"POST"</span>) {
+      <span class="text-purple-300">return</span> handleOrder(request, env)
     }
+
+    <span class="text-slate-500">// ... other routes</span>
   }
+}
+
+<span class="text-purple-300">async function</span> <span class="text-sky-300">handleOrder</span>(request: Request, env: Env) {
+  <span class="text-purple-300">const</span> order = <span class="text-purple-300">await</span> request.json()
+
+  <span class="text-slate-500">// In Workers, create the SDK with env (not process.env)</span>
+  <span class="text-purple-300">const</span> rl = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(env.<span class="text-sky-300">RUNLATER_KEY</span>)
+  <span class="text-purple-300">const</span> base = <span class="text-green-300">"https://my-worker.username.workers.dev"</span>
+
+  <span class="text-slate-500">// Queue confirmation email</span>
+  <span class="text-purple-300">await</span> rl.send(<span class="text-green-300">`${base}/send-confirmation`</span>, {
+    <span class="text-sky-300">body</span>: { <span class="text-sky-300">order_id</span>: order.id, <span class="text-sky-300">email</span>: order.email },
+    <span class="text-sky-300">retries</span>: <span class="text-orange-300">3</span>,
+  })
+
+  <span class="text-slate-500">// Queue inventory update with serial execution</span>
+  <span class="text-purple-300">await</span> rl.send(<span class="text-green-300">`${base}/update-inventory`</span>, {
+    <span class="text-sky-300">body</span>: { <span class="text-sky-300">items</span>: order.items },
+    <span class="text-sky-300">queue</span>: <span class="text-green-300">"inventory"</span>, <span class="text-slate-500">// One at a time</span>
+  })
+
+  <span class="text-purple-300">return</span> Response.json({ <span class="text-sky-300">status</span>: <span class="text-green-300">"accepted"</span> }, { <span class="text-sky-300">status</span>: <span class="text-orange-300">202</span> })
 }</pre>
   </div>
 
   <p>
     The <code class="bg-slate-100 px-2 py-1 rounded text-sm">queue: "inventory"</code> parameter ensures
-    inventory updates run one at a time — no race conditions when multiple orders come in simultaneously.
+    inventory updates run one at a time &mdash; no race conditions when multiple orders come in simultaneously.
+  </p>
+
+  <p>
+    Note: In Cloudflare Workers, secrets are accessed via the <code class="bg-slate-100 px-2 py-1 rounded text-sm">env</code>
+    parameter passed to your fetch handler (not <code class="bg-slate-100 px-2 py-1 rounded text-sm">process.env</code>).
+    The SDK is instantiated per-request since each request receives its own <code class="bg-slate-100 px-2 py-1 rounded text-sm">env</code>.
   </p>
 
   <h2>Example: Hourly usage reports</h2>
@@ -150,7 +218,7 @@
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">scripts/setup-tasks.js</span>
+      <span class="text-xs text-slate-400 font-mono">scripts/setup-tasks.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
@@ -162,14 +230,19 @@
 })</pre>
   </div>
 
+  <p>Handle it in your Worker's fetch handler by routing to a dedicated function:</p>
+
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">src/routes/reports.js</span>
+      <span class="text-xs text-slate-400 font-mono">src/index.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
-    ><span class="text-purple-300">export async function</span> <span class="text-sky-300">handleUsageReport</span>(request, env) {
+    ><span class="text-slate-500">// In your main fetch handler, add a route for this:</span>
+<span class="text-slate-500">// if (url.pathname === "/reports/usage") return handleUsageReport(env)</span>
+
+<span class="text-purple-300">async function</span> <span class="text-sky-300">handleUsageReport</span>(env: Env) {
   <span class="text-purple-300">const</span> hourAgo = <span class="text-purple-300">new</span> Date(Date.now() - <span class="text-orange-300">3600000</span>).toISOString()
 
   <span class="text-slate-500">// Query D1 for usage data</span>
@@ -185,26 +258,26 @@
 }</pre>
   </div>
 
-  <h2>Example: Delayed webhook retries</h2>
+  <h2>Example: Queued webhook processing</h2>
   <p>
-    When your Worker receives a webhook from a third party and needs to forward it to a service that's
-    temporarily down, use <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.delay()</code> to retry later:
+    When your Worker receives a webhook from a third party and needs to forward it to a downstream service,
+    use <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.send()</code> to queue the processing with retries:
   </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">src/index.js</span>
+      <span class="text-xs text-slate-400 font-mono">src/index.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Runlater</span> <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 
-<span class="text-purple-300">async function</span> <span class="text-sky-300">handleWebhook</span>(request, env) {
+<span class="text-purple-300">async function</span> <span class="text-sky-300">handleWebhook</span>(request: Request, env: Env) {
   <span class="text-purple-300">const</span> payload = <span class="text-purple-300">await</span> request.json()
   <span class="text-purple-300">const</span> rl = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(env.<span class="text-sky-300">RUNLATER_KEY</span>)
 
-  <span class="text-slate-500">// Forward the webhook, retry in 5 min if it fails</span>
+  <span class="text-slate-500">// Queue the webhook for reliable processing with retries</span>
   <span class="text-purple-300">await</span> rl.send(<span class="text-green-300">"https://my-worker.username.workers.dev/process-webhook"</span>, {
     <span class="text-sky-300">body</span>: payload,
     <span class="text-sky-300">retries</span>: <span class="text-orange-300">5</span>,
@@ -224,13 +297,15 @@
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">scripts/sync-tasks.js</span>
+      <span class="text-xs text-slate-400 font-mono">scripts/sync-tasks.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Runlater</span> <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
-<span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
+
+<span class="text-slate-500">// Setup script runs locally — uses process.env</span>
+<span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>!)
 
 <span class="text-purple-300">const</span> <span class="text-sky-300">BASE</span> = <span class="text-green-300">"https://my-worker.username.workers.dev"</span>
 
@@ -259,14 +334,29 @@
   <h2>Best practices</h2>
   <ul>
     <li>
-      <strong>Authenticate your cron endpoints.</strong> Anyone can call a public Worker URL. Check for a
-      shared secret in the request headers, or use Runlater's
-      <a href="/docs/webhooks">webhook signatures</a> to verify the request came from Runlater.
+      <strong>Authenticate your cron endpoints.</strong> Anyone can call a public Worker URL. Verify requests
+      using Runlater's <a href="/docs/webhooks">webhook signatures</a>
+      (<code class="bg-slate-100 px-2 py-1 rounded text-sm">x-runlater-signature</code> header), or set a shared
+      secret in the task headers and check it in your Worker:
+      <div class="glass-card rounded-2xl overflow-hidden my-3">
+        <pre
+          phx-no-curly-interpolation
+          class="m-0 bg-slate-900 text-slate-100 p-4 text-sm font-mono leading-relaxed overflow-x-auto"
+        ><span class="text-purple-300">const</span> secret = request.headers.get(<span class="text-green-300">"x-cron-secret"</span>)
+<span class="text-purple-300">if</span> (secret !== env.<span class="text-sky-300">CRON_SECRET</span>) {
+  <span class="text-purple-300">return new</span> Response(<span class="text-green-300">"Unauthorized"</span>, { <span class="text-sky-300">status</span>: <span class="text-orange-300">401</span> })
+}</pre>
+      </div>
     </li>
     <li>
       <strong>Keep handlers idempotent.</strong> Retries mean your endpoint may be called more than once.
       Use KV's <code class="bg-slate-100 px-2 py-1 rounded text-sm">put</code> (which overwrites) instead of
       append-only patterns.
+    </li>
+    <li>
+      <strong>Return 2xx for success, 4xx/5xx for failure.</strong> Runlater uses the HTTP status code to
+      determine if the task succeeded. A non-2xx response triggers a retry (up to the configured limit).
+      Retries use exponential backoff.
     </li>
     <li>
       <strong>Use queues for serial work.</strong> If two tasks shouldn't run at the same time (e.g. inventory

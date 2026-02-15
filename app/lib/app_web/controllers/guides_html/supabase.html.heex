@@ -4,32 +4,86 @@
     How to add cron jobs, background tasks, and scheduled work to Supabase Edge Functions.
   </p>
 
+  <h2>Prerequisites</h2>
+  <ul>
+    <li>A <a href="https://supabase.com" class="text-emerald-700">Supabase</a> project with Edge Functions enabled</li>
+    <li>The <a href="https://supabase.com/docs/guides/cli" class="text-emerald-700">Supabase CLI</a> installed</li>
+    <li>A <a href="/users/register">Runlater account</a> (free tier works)</li>
+  </ul>
+
+  <h2>SDK overview</h2>
+  <p>The <code class="bg-slate-100 px-2 py-1 rounded text-sm">runlater-js</code> SDK methods used in this guide:</p>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm border border-slate-200 rounded-lg">
+      <thead class="bg-slate-50">
+        <tr>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Method</th>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.send(url, opts)</td>
+          <td class="p-3 border-b border-slate-100">Queue a task for immediate execution</td>
+        </tr>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.delay(url, opts)</td>
+          <td class="p-3 border-b border-slate-100">Execute after a delay (e.g. <code class="bg-slate-100 px-1 rounded">"10m"</code>, <code class="bg-slate-100 px-1 rounded">"1d"</code>)</td>
+        </tr>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.cron(name, opts)</td>
+          <td class="p-3 border-b border-slate-100">Create or update a recurring cron job (idempotent)</td>
+        </tr>
+        <tr>
+          <td class="p-3 font-mono text-emerald-700">rl.sync(opts)</td>
+          <td class="p-3">Declare all tasks at once &mdash; creates, updates, and removes to match</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
   <h2>Why you need this</h2>
   <p>
-    Supabase Edge Functions run on Deno Deploy — they're serverless and stateless. There's no built-in cron
+    Supabase Edge Functions run on Deno Deploy &mdash; they're serverless and stateless. There's no built-in cron
     scheduler for Edge Functions, no task queue, and no way to run a function on a timer. The
     <code class="bg-slate-100 px-2 py-1 rounded text-sm">pg_cron</code> extension can schedule SQL queries
     inside Postgres, but it can't trigger Edge Functions or call external HTTP endpoints.
   </p>
   <p>
     Runlater bridges this gap. You define scheduled tasks via the SDK, and Runlater calls your Edge
-    Functions on schedule with the right auth headers. Your Supabase project stays clean — no
+    Functions on schedule with the right auth headers. Your Supabase project stays clean &mdash; no
     pg_cron workarounds, no external schedulers to manage.
   </p>
 
   <h2>Setup</h2>
-  <p>Install the SDK. You can use it from Edge Functions (Deno) or from your frontend/backend (Node.js):</p>
+  <p>
+    The SDK is used in two contexts: <strong>setup scripts</strong> (Node.js, run locally) and
+    <strong>Edge Functions</strong> (Deno, run on Supabase). Install differs slightly for each:
+  </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">For setup scripts (Node.js)</span>
+    </div>
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     >npm install runlater-js</pre>
   </div>
 
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">For Edge Functions (Deno)</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500">// No install needed — use the npm: specifier in your import:</span>
+import Runlater from "npm:runlater-js"</pre>
+  </div>
+
   <p>
     Store your API keys. You'll need your Runlater key and your Supabase
-    <code class="bg-slate-100 px-2 py-1 rounded text-sm">anon</code> or
     <code class="bg-slate-100 px-2 py-1 rounded text-sm">service_role</code> key (so Runlater can
     authenticate with your Edge Functions):
   </p>
@@ -38,27 +92,39 @@
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
-    ><span class="text-slate-500"># .env or your deployment config</span>
+    ><span class="text-slate-500"># .env (for local setup scripts)</span>
 RUNLATER_KEY=pk_live_your_api_key
 SUPABASE_URL=https://xyzproject.supabase.co
 SUPABASE_ANON_KEY=your_supabase_anon_key</pre>
   </div>
 
+  <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg my-6">
+    <strong class="text-amber-800">Security note:</strong>
+    <span class="text-amber-700">
+      The Supabase key you put in task headers is stored on Runlater's servers and sent with every
+      request. Use the <code class="bg-amber-100 px-1 rounded text-sm">anon</code> key (not
+      <code class="bg-amber-100 px-1 rounded text-sm">service_role</code>) in task headers. Inside
+      your Edge Function, use
+      <code class="bg-amber-100 px-1 rounded text-sm">SUPABASE_SERVICE_ROLE_KEY</code> from
+      <code class="bg-amber-100 px-1 rounded text-sm">Deno.env</code> for admin operations.
+    </span>
+  </div>
+
   <h2>Example: Daily report email</h2>
   <p>
     Query yesterday's data from your Supabase database and send a summary email every morning at 8 AM.
-    First, create the cron task:
+    First, create the cron task from a local setup script:
   </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">scripts/setup-tasks.js</span>
+      <span class="text-xs text-slate-400 font-mono">scripts/setup-tasks.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Runlater</span> <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
-<span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
+<span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>!)
 
 <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">cron</span>(<span class="text-green-300">"daily-report"</span>, {
   <span class="text-sky-300">url</span>: <span class="text-green-300">`${process.env.SUPABASE_URL}/functions/v1/daily-report`</span>,
@@ -81,6 +147,7 @@ SUPABASE_ANON_KEY=your_supabase_anon_key</pre>
     ><span class="text-purple-300">import</span> { createClient } <span class="text-purple-300">from</span> <span class="text-green-300">"@supabase/supabase-js"</span>
 
 Deno.serve(<span class="text-purple-300">async</span> () => {
+  <span class="text-slate-500">// Use service_role inside the function for admin access</span>
   <span class="text-purple-300">const</span> supabase = createClient(
     Deno.env.get(<span class="text-green-300">"SUPABASE_URL"</span>)!,
     Deno.env.get(<span class="text-green-300">"SUPABASE_SERVICE_ROLE_KEY"</span>)!
@@ -123,7 +190,10 @@ Deno.serve(<span class="text-purple-300">async</span> () => {
   <h2>Example: Process file uploads</h2>
   <p>
     When a user uploads a file to Supabase Storage, queue a background task to process it.
-    Use a database webhook or trigger to call Runlater, then handle the work in an Edge Function:
+    You can trigger this from a
+    <a href="https://supabase.com/docs/guides/database/webhooks" class="text-emerald-700">database webhook</a>
+    that fires when a row is inserted into your storage metadata table, calling an Edge Function
+    that queues the work via Runlater:
   </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
@@ -204,6 +274,15 @@ Deno.serve(<span class="text-purple-300">async</span> (req) => {
 })</pre>
   </div>
 
+  <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg my-6">
+    <strong class="text-amber-800">Cancellation:</strong>
+    <span class="text-amber-700">
+      If a user deletes their account, the scheduled drip emails are still pending. Use the Runlater
+      dashboard or the API to cancel pending tasks for that user, or check if the user still exists
+      inside your <code class="bg-amber-100 px-1 rounded text-sm">send-email</code> Edge Function before sending.
+    </span>
+  </div>
+
   <h2>Example: Clean up expired sessions</h2>
   <p>
     Run a nightly cleanup to delete expired rows from your database:
@@ -211,7 +290,7 @@ Deno.serve(<span class="text-purple-300">async</span> (req) => {
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">scripts/setup-tasks.js</span>
+      <span class="text-xs text-slate-400 font-mono">scripts/setup-tasks.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
@@ -242,7 +321,7 @@ Deno.serve(<span class="text-purple-300">async</span> () => {
 
   <span class="text-purple-300">const</span> { count } = <span class="text-purple-300">await</span> supabase
     .from(<span class="text-green-300">"sessions"</span>)
-    .delete()
+    .delete({ <span class="text-sky-300">count</span>: <span class="text-green-300">"exact"</span> })
     .lt(<span class="text-green-300">"expires_at"</span>, <span class="text-purple-300">new</span> Date().toISOString())
 
   <span class="text-purple-300">return new</span> Response(JSON.stringify({ <span class="text-sky-300">deleted</span>: count }), {
@@ -259,13 +338,13 @@ Deno.serve(<span class="text-purple-300">async</span> () => {
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">scripts/sync-tasks.js</span>
+      <span class="text-xs text-slate-400 font-mono">scripts/sync-tasks.ts</span>
     </div>
     <pre
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Runlater</span> <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
-<span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
+<span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>!)
 
 <span class="text-purple-300">const</span> <span class="text-sky-300">BASE</span> = <span class="text-green-300">`${process.env.SUPABASE_URL}/functions/v1`</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">auth</span> = { <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.SUPABASE_ANON_KEY}`</span> }
@@ -300,12 +379,20 @@ Deno.serve(<span class="text-purple-300">async</span> () => {
     <li>
       <strong>Use service_role for background work.</strong> Edge Functions called by Runlater don't have a
       user session. Use the <code class="bg-slate-100 px-2 py-1 rounded text-sm">service_role</code> key inside
-      the function to bypass Row Level Security for admin operations like cleanups and reports.
+      the function (from <code class="bg-slate-100 px-2 py-1 rounded text-sm">Deno.env</code>) to bypass Row Level
+      Security for admin operations like cleanups and reports.
     </li>
     <li>
-      <strong>Pass auth via task headers.</strong> When creating the task, include your Supabase key in the
-      <code class="bg-slate-100 px-2 py-1 rounded text-sm">headers</code> field. Runlater stores it securely
-      and sends it with every call.
+      <strong>Pass anon key in task headers.</strong> When creating the task, include your Supabase
+      <code class="bg-slate-100 px-2 py-1 rounded text-sm">anon</code> key in the
+      <code class="bg-slate-100 px-2 py-1 rounded text-sm">headers</code> field for authentication.
+      Keep the <code class="bg-slate-100 px-2 py-1 rounded text-sm">service_role</code> key only inside
+      your Edge Functions, never in external task headers.
+    </li>
+    <li>
+      <strong>Return 2xx for success, 4xx/5xx for failure.</strong> Runlater uses the HTTP status code to
+      determine if the task succeeded. A non-2xx response triggers a retry (up to the configured limit).
+      Retries use exponential backoff.
     </li>
     <li>
       <strong>Keep handlers idempotent.</strong> Retries mean your function may be called more than once.
