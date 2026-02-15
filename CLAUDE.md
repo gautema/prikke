@@ -163,13 +163,13 @@ Simple, no dependencies, full control.
 - [x] Audit logging (user + API key actions)
 - [x] HTTP uptime monitors with ping endpoints
 - [x] Per-job notification overrides
-- [ ] Customer-facing status pages
+- [x] Customer-facing status pages (per-org public pages at /s/:slug with uptime bars)
 
 ### v3
+- [x] Per-org worker fairness (max 5 concurrent executions per org, Postgres subquery filter)
+- [x] Cron monitoring (expect ping, alert if missing)
+- [x] Rate limiting per IP
 - [ ] Workflows (multi-step jobs)
-- [ ] Rate limiting per endpoint
-- [ ] Cron monitoring (expect ping, alert if missing)
-- [ ] Per-org worker fairness (limit each org to 1 concurrent worker so slow endpoints can't starve other orgs)
 
 ### Ops & Monitoring
 - [x] Error tracking (ErrorTracker, built-in)

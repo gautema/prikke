@@ -2,17 +2,74 @@
 
 ## Summary
 
-Load testing at 50-1000 req/s revealed and eliminated several bottlenecks. Through iterative profiling with `pg_stat_statements` and targeted fixes, the API now handles **500 req/s with p95=432ms and 0% errors** on a single 4-core shared VPS. Performance scales linearly with CPU — 8 shared cores handles 750 req/s, 8 dedicated handles 1000 req/s.
+Two rounds of load testing revealed and eliminated bottlenecks. The first round (production, 4 shared cores) optimized DB queries and reached 500 req/s. The second round (staging, 16 vCPUs) discovered that **Docker's default `ulimit nofile=1024` was the #1 throughput bottleneck** — once raised to 65536, the ceiling jumped from ~900 req/s to **4000 req/s on a €30/mo server**.
 
-## Server (Production)
+All earlier hardware comparisons (4 shared → 8 shared → 8 dedicated) were hitting the FD limit, not actual hardware limits.
 
-- 4 shared CPU cores, 7.6GB RAM (~€6/month)
+## Staging Server (Current Best Results)
+
+- Hetzner CPX62: 16 vCPUs (AMD), 32GB RAM (~€30/mo)
 - App + Postgres on the same VPS
-- DB pool: 40 connections
-- Postgres: shared_buffers=2GB, effective_cache_size=4GB, work_mem=64MB
-- Postgres shared memory: 256MB (Docker `--shm-size`)
+- DB pool: 100 connections
+- Docker ulimit: nofile=65536:65536
+- k6 run from inside Docker on the same server (no network latency)
 
-## Results Timeline
+## Results — Staging (CPX62, 16 vCPUs, after ulimit fix)
+
+| Rate | Success | p95 Latency | Tasks/s created | Notes |
+|------|---------|-------------|-----------------|-------|
+| 2000/s | **100%** | 97ms | 1399/s | Clean |
+| 3000/s | **100%** | 139ms | 2108/s | Clean |
+| 3500/s | **100%** | 456ms | 3452/s | Clean |
+| **4000/s** | **100%** | **253ms** | **3986/s** | **Sweet spot** |
+| 5000/s | 100% | 1.4s | 4544/s | 5% dropped iterations |
+| 6000/s | 91% | 3.5s | 4481/s | Breaking down |
+
+**Ceiling: ~4000 req/s sustained at 100% success, p95 253ms.**
+
+## Results — Staging (CX33, 4 shared cores, production-identical hardware)
+
+Tested with ulimit fix, POOL_SIZE=80, workers active, k6 from remote (over internet + TLS).
+
+| Rate | Success | p95 Latency | Actual Throughput | Notes |
+|------|---------|-------------|-------------------|-------|
+| **500/s** | **100%** | **505ms** | **483/s** | Clean |
+| **750/s** | **100%** | **567ms** | **718/s** | Sweet spot |
+| 1000/s | 100% | 2.55s | 818/s | Latency rising |
+| 1500/s | 76% | 5.07s | 1150/s | Breaking down |
+
+**Ceiling: ~750 req/s sustained at 100% success, p95 567ms.**
+
+DB pool contention is the main bottleneck. Workers actively executing tasks compete for DB connections.
+
+### Pool Size Comparison (CX33, 750 req/s, 30s burst)
+
+Tested POOL_SIZE values at 750 req/s to find the optimal setting:
+
+| Pool Size | p95 Latency | Avg Latency | Actual Throughput | Notes |
+|-----------|-------------|-------------|-------------------|-------|
+| 40 | 1.5s | ~800ms | 698/s | Pool contention |
+| 60 | 941ms | ~500ms | 664/s | Better but still contending |
+| **80** | **247ms** | **158ms** | **725/s** | **Optimal — clear winner** |
+| 100 | 673ms | ~400ms | 709/s | Diminishing returns |
+| 120 | 282ms | ~170ms | 706/s | Close to 80 but more Postgres overhead |
+
+POOL_SIZE=80 is the sweet spot for CX33 hardware. Beyond 80, Postgres connection management overhead offsets the pool availability gains. Applied to both production and staging.
+
+## Results — Staging (Google C4D, 12 cores, before ulimit discovery)
+
+| Rate | Success | p95 Latency | Tasks/s | Notes |
+|------|---------|-------------|---------|-------|
+| 500/s | 99.87% | 321ms | 339/s | From remote (internet latency) |
+| 1000/s | 98.27% | 346ms | 663/s | From remote |
+| 2000/s | 100% | 97ms | 1399/s | From server (after ulimit fix) |
+| 3000/s | 100% | 139ms | 2108/s | From server (after ulimit fix) |
+
+## Results — Production Round 1 (CX33, 4 shared cores)
+
+These results were **capped by Docker's 1024 FD limit**, not actual hardware. True ceiling is likely ~800-1200 req/s with the ulimit fix deployed.
+
+### Optimization Timeline
 
 | Change | Rate | p95 | Errors |
 |--------|------|-----|--------|
@@ -26,9 +83,9 @@ Load testing at 50-1000 req/s revealed and eliminated several bottlenecks. Throu
 | + Pool 20→40, removed count(*) from API | 300 req/s | 762ms | 0% |
 | + Missing PK index on tasks partition | 300 req/s | 762ms | 0% |
 | + Finch connection pool (TLS reuse) | **500 req/s** | **432ms** | **0%** |
-| 1000 req/s stress test (4 shared cores) | 1000 req/s | 8,240ms | 37% |
+| 1000 req/s stress test | 1000 req/s | 8,240ms | 37% |
 
-## Hardware Comparison (30s burst tests)
+### Old Hardware Comparison (invalidated by ulimit discovery)
 
 | Hardware | Cost | Rate | p95 | Errors |
 |----------|------|------|-----|--------|
@@ -36,7 +93,9 @@ Load testing at 50-1000 req/s revealed and eliminated several bottlenecks. Throu
 | 8 shared cores | ~€11/mo | 750 req/s | 1,310ms | 0% |
 | 8 dedicated cores | ~€59/mo | 1000 req/s | 187ms | 0% (14% rate-limited) |
 
-## Sustained Load Tests (10 minutes, data accumulating)
+All were hitting the Docker FD limit (~900 req/s ceiling), not hardware limits.
+
+### Sustained Load Tests (10 minutes, data accumulating)
 
 | Hardware | Rate | p95 | Errors | Tasks created |
 |----------|------|-----|--------|---------------|
@@ -45,21 +104,42 @@ Load testing at 50-1000 req/s revealed and eliminated several bottlenecks. Throu
 
 Sustained tests are harder than burst tests because data accumulates (100k+ tasks in one org), making the `list_tasks` query progressively slower. Real-world usage across many orgs with smaller task counts per org would perform better.
 
+## Key Bottlenecks Found (in order of impact)
+
+1. **Docker ulimit nofile=1024** — The #1 bottleneck. Capped throughput at ~900 req/s on every machine. Fix: `ulimit: nofile=65536:65536` in Kamal deploy config.
+2. **DB query optimization** (round 1) — Subqueries, missing indexes, redundant fetches. Fixed via denormalization, LATERAL joins, ETS buffering.
+3. **Finch pool `count: 1`** — Serialized TLS handshakes through one process. Fixed to `count: 4`.
+4. **DB pool size** — 20 connections too few at high throughput. Tested 40/60/80/100/120 at 750 req/s — 80 is optimal for CX33. Increased to 80 (prod + staging).
+5. **Rate limiter** — 100k/min = 1667/s effective ceiling. Bumped for staging tests.
+
 ## Capacity Estimates
 
-At 500k executions/month per user:
+| Hardware | Cost | API Throughput | Pool Size | Est. Users (500k exec/mo) |
+|----------|------|----------------|-----------|---------------------------|
+| CX33 (4 shared) | ~€6/mo | 750 req/s (tested) | 80 | ~500 |
+| CPX62 (16 vCPU) | ~€30/mo | 4000 req/s (tested) | 100 | ~2000+ |
 
-| Hardware | Cost | Users supported |
-|----------|------|-----------------|
-| 4 shared cores | ~€6/mo | ~200-300 |
-| 8 shared cores | ~€11/mo | ~500-600 |
-| 8 dedicated cores | ~€59/mo | ~800+ |
+CX33 with POOL_SIZE=40 caps at ~430 req/s usable; bumping to 80 unlocks 750 req/s.
 
-Scales linearly with CPU. Architecture supports horizontal scaling (multiple app nodes) with zero code changes.
+Workers are the real execution bottleneck: 20 workers at ~100ms avg = ~200 executions/s. API ingestion has massive headroom.
+
+### 10k Pro Users Estimate
+
+| | Value |
+|---|---|
+| Revenue | €290k/mo (€3.5M ARR) |
+| Total tasks | ~100k |
+| Execution rate | ~274/s (mixed intervals) |
+| Workers needed | ~55-137 (depends on endpoint latency) |
+| Execution history | ~23M rows/day, 710M rows at 30-day retention |
+| Infrastructure needed | 2x app nodes + dedicated Postgres (~€300-400/mo) |
+| Code changes needed | Partition executions table, batch scheduler inserts |
+
+Infrastructure cost at 10k users: ~0.14% of revenue.
 
 ## Load Test Profile
 
-70% immediate task creation, 15% delayed task creation, 15% task list reads. See `loadtest.js`.
+70% immediate task creation, 15% delayed task creation, 15% task list reads. See `loadtest.js` and `loadtest/k6/`.
 
 ## Optimizations Done
 
@@ -134,12 +214,18 @@ Workers made ephemeral HTTP connections — every request did a fresh TLS handsh
 
 Default Postgres config only used 128MB shared_buffers on a 7.6GB server. Tuned to: shared_buffers=2GB, effective_cache_size=4GB, work_mem=64MB. Improves caching and aggregate query performance.
 
+### 14. Docker file descriptor limit
+**File:** `config/deploy.yml`, `config/deploy.staging.yml`
+
+Docker defaults to `ulimit nofile=1024`. At ~900 req/s, the container runs out of file descriptors (each TCP connection uses one FD), causing `connection reset by peer` errors. Fix: `options: { ulimit: nofile=65536:65536 }` in Kamal deploy config. This was the single biggest throughput unlock — all previous hardware tests were hitting this ceiling.
+
 ## Infrastructure Changes
 
 - Enabled `pg_stat_statements` in docker-compose.yml and deploy.yml
-- DB pool increased from 20 to 40
+- DB pool increased from 20 to 80 (prod + staging) — tested 40/60/80/100/120, 80 optimal
 - Postgres shared memory increased from 64MB to 256MB (Docker `--shm-size`)
 - Postgres tuned: shared_buffers=2GB, effective_cache_size=4GB, work_mem=64MB
+- Docker ulimit: nofile=65536:65536 (prod + staging)
 - Superadmin dashboard: replaced disk usage with peak throughput metric
 
 ## Profiling Commands
@@ -180,10 +266,10 @@ ssh root@46.225.66.205 'docker logs $(docker ps --filter label=service=runlater 
 
 The DB layer is fully optimized — all queries are sub-millisecond. The bottleneck is CPU. To scale:
 
-1. **Now (4 shared cores, ~€6/mo)**: 500 req/s, ~200-300 users at 500k/mo
-2. **Upgrade VPS (8 shared cores, ~€11/mo)**: 750 req/s, ~500-600 users
+1. **Now (4 shared cores, ~€6/mo)**: ~800-1200 req/s (estimated with ulimit fix), production server
+2. **CPX62 (16 vCPU, ~€30/mo)**: 4000 req/s, p95=253ms — tested on staging
 3. **Add second app node**: Kamal multi-host, SKIP LOCKED handles coordination — doubles capacity
 4. **Separate DB server**: App gets all CPU cores, DB gets dedicated resources
-5. **Dedicated cores (~€59/mo)**: 1000 req/s, p95=187ms — for when latency matters
+5. **AX102 + dedicated Postgres (~€300-400/mo)**: For 10k+ users, ~274 exec/s, €3.5M ARR
 
 Architecture supports horizontal scaling with zero code changes. Workers scale perfectly with CPU via SKIP LOCKED.

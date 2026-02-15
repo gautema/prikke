@@ -19,8 +19,6 @@ proxy:
   app_port: 4000
   healthcheck:
     path: /health
-  deploy_timeout: 30
-  drain_timeout: 60
 
 registry:
   server: localhost:5555
@@ -31,7 +29,7 @@ env:
     PORT: 4000
     MIX_ENV: prod
     ADMIN_EMAIL: support@runlater.eu
-    POOL_SIZE: 40
+    POOL_SIZE: 80
     RATE_LIMIT_PER_MINUTE: "500"
     RATE_LIMIT_PER_HOUR: "10000"
   secret:
