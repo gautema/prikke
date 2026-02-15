@@ -102,8 +102,8 @@ if config_env() == :prod do
 
   # Rate limiting
   config :app, PrikkeWeb.RateLimit,
-    limit_per_minute: String.to_integer(System.get_env("RATE_LIMIT_PER_MINUTE") || "3000"),
-    limit_per_hour: String.to_integer(System.get_env("RATE_LIMIT_PER_HOUR") || "50000")
+    limit_per_minute: String.to_integer(System.get_env("RATE_LIMIT_PER_MINUTE") || "500"),
+    limit_per_hour: String.to_integer(System.get_env("RATE_LIMIT_PER_HOUR") || "10000")
 
   # Configure Creem payments
   config :app, Prikke.Billing.Creem,

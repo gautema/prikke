@@ -61,9 +61,9 @@ No external job libraries - just GenServers and Postgres:
 ```
 
 **Scheduler GenServer** (`lib/app/scheduler.ex`):
-- Ticks every 10 seconds for timely job execution
+- Ticks every 5 seconds with a 10-second lookahead window
 - Uses Postgres advisory lock for leader election (only one node schedules)
-- Finds jobs where `enabled = true AND next_run_at <= now`
+- Finds jobs where `enabled = true AND next_run_at <= now + 10s`
 - Creates pending executions and advances `next_run_at`
 - Enforces monthly execution limits before scheduling
 
@@ -80,7 +80,7 @@ No external job libraries - just GenServers and Postgres:
 **PubSub Wake-up:**
 - Scheduler subscribes to "scheduler" topic
 - `Jobs.notify_scheduler/0` broadcasts `:wake` when job enabled/updated
-- Reduces latency for one-time jobs (no 60s wait)
+- Reduces latency for one-time jobs (no 5s wait)
 
 **Worker Pool (GenServer pool or Task.Supervisor):**
 - Workers claim pending executions: `FOR UPDATE SKIP LOCKED`

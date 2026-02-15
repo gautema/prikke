@@ -30,6 +30,8 @@ env:
     MIX_ENV: prod
     ADMIN_EMAIL: support@runlater.eu
     POOL_SIZE: 40
+    RATE_LIMIT_PER_MINUTE: "500"
+    RATE_LIMIT_PER_HOUR: "10000"
   secret:
     - SECRET_KEY_BASE
     - DATABASE_URL

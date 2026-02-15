@@ -17,7 +17,7 @@ defmodule Prikke.Application do
         # HTTP connection pool for workers (reuses TLS connections)
         {Finch,
          name: Prikke.Finch,
-         pools: %{default: [size: 25, count: 1, conn_opts: [transport_opts: [timeout: 10_000]]]}},
+         pools: %{default: [size: 25, count: 4, conn_opts: [transport_opts: [timeout: 10_000]]]}},
         # Buffered execution counter (flushes to DB every 5s)
         Prikke.ExecutionCounter,
         # Task supervisor for async notifications
