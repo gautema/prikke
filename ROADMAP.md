@@ -21,7 +21,6 @@ Runlater is a **task queue with cron built in**, not a cron scheduler with a que
 
 - [ ] **Postgres high availability** — Dedicated PG server with hourly backups and offsite sync. Future: `pg_auto_failover` when downtime cost justifies complexity.
 - [ ] **Multi-server with load balancing** — HAProxy + Keepalived with Hetzner Floating IP, or Hetzner Load Balancer (~$5/mo).
-- [ ] **Degraded mode (Postgres resilience)** — Keep running jobs from ETS cache when Postgres is down, buffer results in DETS, flush on reconnect. At-least-once delivery during outage.
 
 ## Priority 3 — Growth & Engagement
 
@@ -32,7 +31,7 @@ Runlater is a **task queue with cron built in**, not a cron scheduler with a que
 
 ## Priority 4 — Advanced Features
 
-- [ ] **Workflows** — Multi-step jobs with dependencies (output of one becomes input of the next).
+- [ ] **Task chaining** — Lightweight alternative to workflows. Add `on_success` to any task: when it succeeds, automatically queue the next task with the previous response injected via `{{response}}`. No SDK, no new concepts — just tasks creating tasks. Chains can be unlimited depth (each `on_success` can have its own `on_success`). Later: `on_failure`, `{{response.field}}` JSON path extraction, dashboard chain visualization. Scope: one new JSON column + ~20 lines in worker + API params. Competitive edge vs QStash: no SDK required, pure HTTP config, no vendor lock-in.
 - [ ] **Bulk push API** — Queue multiple jobs in a single API call (transaction-safe).
 - [ ] **Bulk job export/import** (JSON/YAML) — Back up configs or move between orgs.
 - [ ] **Python SDK** (`runlater` on PyPI) — Django/FastAPI crowd.
