@@ -25,4 +25,8 @@ defmodule PrikkeWeb.GuidesController do
   def supabase(conn, _params) do
     render(conn, :supabase, page_title: "Scheduled Tasks with Supabase")
   end
+
+  def webhook_proxy(conn, _params) do
+    render(conn, :webhook_proxy, page_title: "Never Lose a Webhook Again")
+  end
 end

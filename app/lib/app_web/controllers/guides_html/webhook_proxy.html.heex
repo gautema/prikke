@@ -1,0 +1,437 @@
+<.docs_layout current_scope={@current_scope}>
+  <h1>Never Lose a Webhook Again</h1>
+  <p class="text-xl text-slate-600 mb-10">
+    Buffer incoming webhooks from Stripe, GitHub, and any service. Forward them to your app with
+    retries, serial delivery, and full event replay.
+  </p>
+
+  <h2>The problem</h2>
+  <p>
+    When Stripe sends you a <code class="bg-slate-100 px-2 py-1 rounded text-sm">payment_intent.succeeded</code>
+    webhook, your server has to be up, healthy, and fast enough to respond. If you're mid-deploy,
+    scaling down, or having a bad minute &mdash; that webhook is gone. Stripe retries a few times over
+    72 hours, but other services are less forgiving. Some don't retry at all.
+  </p>
+  <p>
+    This is especially painful on serverless platforms. Vercel cold starts can cause timeouts.
+    Cloudflare Workers have a 30-second CPU limit. Supabase Edge Functions might be cold when
+    the webhook arrives. You need a buffer between the sender and your app.
+  </p>
+
+  <h2>How inbound endpoints work</h2>
+  <p>
+    Runlater gives you a stable URL that's always up. Point external services at that URL instead
+    of your app directly. Runlater accepts the webhook instantly (200 OK), stores the full payload,
+    and forwards it to your app with retries.
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >Stripe/GitHub/Shopify
+        |
+        v
+  runlater.eu/in/ep_xxx   &lt;-- always up, returns 200 instantly
+        |
+        |  stores payload, then forwards with retries
+        v
+  your-app.com/webhooks   &lt;-- can be down, slow, or mid-deploy</pre>
+  </div>
+
+  <p>If your app is down when the webhook arrives, Runlater retries with exponential backoff &mdash;
+    up to 10 attempts. Every event is stored with full headers and body, so you can replay any
+    event from the dashboard or API.</p>
+
+  <h2>Quick start</h2>
+
+  <h3>1. Create an endpoint</h3>
+  <p>Tell Runlater where to forward webhooks. You can do this from the
+    <a href="/endpoints">dashboard</a>, the API, or the SDK:</p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">Using fetch</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-purple-300">const</span> res = <span class="text-purple-300">await</span> fetch(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints"</span>, {
+  <span class="text-sky-300">method</span>: <span class="text-green-300">"POST"</span>,
+  <span class="text-sky-300">headers</span>: {
+    <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.RUNLATER_KEY}`</span>,
+    <span class="text-green-300">"Content-Type"</span>: <span class="text-green-300">"application/json"</span>,
+  },
+  <span class="text-sky-300">body</span>: JSON.stringify({
+    <span class="text-sky-300">name</span>: <span class="text-green-300">"Stripe webhooks"</span>,
+    <span class="text-sky-300">forward_url</span>: <span class="text-green-300">"https://myapp.com/webhooks/stripe"</span>,
+    <span class="text-sky-300">retry_attempts</span>: <span class="text-orange-300">5</span>,
+    <span class="text-sky-300">use_queue</span>: <span class="text-orange-300">true</span>,  <span class="text-slate-500">// Forward events one at a time (preserves order)</span>
+  }),
+})
+
+<span class="text-purple-300">const</span> { data } = <span class="text-purple-300">await</span> res.json()
+console.log(data.inbound_url)
+<span class="text-slate-500">// https://runlater.eu/in/ep_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span></pre>
+  </div>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">Using curl</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X POST https://runlater.eu/api/v1/endpoints \
+  -H "Authorization: Bearer pk_xxx.sk_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Stripe webhooks",
+    "forward_url": "https://myapp.com/webhooks/stripe",
+    "retry_attempts": 5,
+    "use_queue": true
+  }'</pre>
+  </div>
+
+  <h3>2. Point Stripe at the inbound URL</h3>
+  <p>
+    Copy the <code class="bg-slate-100 px-2 py-1 rounded text-sm">inbound_url</code> from the response
+    and paste it into your Stripe webhook settings (or GitHub, Shopify, Twilio &mdash; any service that
+    sends webhooks):
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">https://runlater.eu/in/ep_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</pre>
+  </div>
+
+  <p>
+    The URL accepts any HTTP method (POST, PUT, etc.) and any content type. No authentication
+    is required &mdash; the slug itself is the secret.
+  </p>
+
+  <h3>3. Handle webhooks in your app</h3>
+  <p>
+    Your app receives the forwarded webhook at the <code class="bg-slate-100 px-2 py-1 rounded text-sm">forward_url</code>
+    you configured. The original method, headers, and body are preserved:
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">app/api/webhooks/stripe/route.ts (Next.js)</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-purple-300">import</span> <span class="text-sky-300">Stripe</span> <span class="text-purple-300">from</span> <span class="text-green-300">"stripe"</span>
+
+<span class="text-purple-300">const</span> stripe = <span class="text-purple-300">new</span> <span class="text-sky-300">Stripe</span>(process.env.<span class="text-sky-300">STRIPE_SECRET_KEY</span>!)
+
+<span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(request: Request) {
+  <span class="text-purple-300">const</span> body = <span class="text-purple-300">await</span> request.text()
+  <span class="text-purple-300">const</span> sig = request.headers.get(<span class="text-green-300">"stripe-signature"</span>)!
+
+  <span class="text-slate-500">// Stripe signature verification still works —</span>
+  <span class="text-slate-500">// Runlater forwards the original headers</span>
+  <span class="text-purple-300">const</span> event = stripe.webhooks.constructEvent(
+    body, sig, process.env.<span class="text-sky-300">STRIPE_WEBHOOK_SECRET</span>!
+  )
+
+  <span class="text-purple-300">switch</span> (event.type) {
+    <span class="text-purple-300">case</span> <span class="text-green-300">"payment_intent.succeeded"</span>:
+      <span class="text-purple-300">await</span> handlePaymentSuccess(event.data.object)
+      <span class="text-purple-300">break</span>
+    <span class="text-purple-300">case</span> <span class="text-green-300">"customer.subscription.deleted"</span>:
+      <span class="text-purple-300">await</span> handleSubscriptionCanceled(event.data.object)
+      <span class="text-purple-300">break</span>
+  }
+
+  <span class="text-purple-300">return</span> Response.json({ <span class="text-sky-300">received</span>: <span class="text-orange-300">true</span> })
+}</pre>
+  </div>
+
+  <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded-r-lg my-6">
+    <strong class="text-emerald-800">Signature verification still works.</strong>
+    <span class="text-emerald-700">
+      Runlater forwards the original headers and body byte-for-byte. Stripe signature
+      verification, GitHub HMAC validation, and similar schemes work without changes.
+    </span>
+  </div>
+
+  <h2>Serial vs. parallel delivery</h2>
+  <p>
+    Endpoints have two delivery modes:
+  </p>
+
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm border border-slate-200 rounded-lg">
+      <thead class="bg-slate-50">
+        <tr>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Mode</th>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Behavior</th>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Use when</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-semibold">Serial (default)</td>
+          <td class="p-3 border-b border-slate-100">Events are forwarded one at a time, in order</td>
+          <td class="p-3 border-b border-slate-100">Stripe, Shopify &mdash; order matters, duplicate processing is dangerous</td>
+        </tr>
+        <tr>
+          <td class="p-3 font-semibold">Parallel</td>
+          <td class="p-3">Events are forwarded concurrently</td>
+          <td class="p-3">Analytics, logging, notifications &mdash; order doesn't matter</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    Serial mode prevents race conditions. If Stripe sends
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">invoice.paid</code> and
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">invoice.payment_failed</code> in quick
+    succession, serial delivery ensures you process them in the correct order.
+  </p>
+
+  <h2>Event replay</h2>
+  <p>
+    Every inbound event is stored with the full request &mdash; method, headers, body, source IP, and
+    timestamp. You can replay any event from the dashboard or via the API:
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">Replay an event</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500"># List recent events for an endpoint</span>
+curl https://runlater.eu/api/v1/endpoints/ENDPOINT_ID/events \
+  -H "Authorization: Bearer pk_xxx.sk_xxx"
+
+<span class="text-slate-500"># Replay a specific event</span>
+curl -X POST https://runlater.eu/api/v1/endpoints/ENDPOINT_ID/events/EVENT_ID/replay \
+  -H "Authorization: Bearer pk_xxx.sk_xxx"</pre>
+  </div>
+
+  <p>This is useful when:</p>
+  <ul>
+    <li>You deployed a bug and need to reprocess recent webhooks after fixing it</li>
+    <li>You want to test your webhook handler with real production payloads</li>
+    <li>An event failed all retries and you've fixed the underlying issue</li>
+  </ul>
+
+  <h2>Example: Stripe + Next.js</h2>
+  <p>
+    Set up reliable Stripe webhook processing for a Next.js app on Vercel in 3 steps:
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">scripts/setup-endpoints.sh</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500"># Create an endpoint for Stripe (serial delivery — order matters)</span>
+curl -X POST https://runlater.eu/api/v1/endpoints \
+  -H "Authorization: Bearer $RUNLATER_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Stripe",
+    "forward_url": "https://myapp.vercel.app/api/webhooks/stripe",
+    "retry_attempts": 10,
+    "use_queue": true
+  }'
+
+<span class="text-slate-500"># Create an endpoint for GitHub (parallel — order doesn't matter)</span>
+curl -X POST https://runlater.eu/api/v1/endpoints \
+  -H "Authorization: Bearer $RUNLATER_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "GitHub",
+    "forward_url": "https://myapp.vercel.app/api/webhooks/github",
+    "retry_attempts": 5,
+    "use_queue": false
+  }'</pre>
+  </div>
+
+  <p>
+    Copy each <code class="bg-slate-100 px-2 py-1 rounded text-sm">inbound_url</code> from the response
+    into the corresponding service's webhook settings. Done.
+  </p>
+
+  <h2>Example: GitHub + Cloudflare Workers</h2>
+  <p>
+    Process GitHub push events in a Cloudflare Worker, with Runlater handling the buffering:
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">src/index.ts (Worker handler)</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-purple-300">import</span> { createHmac } <span class="text-purple-300">from</span> <span class="text-green-300">"node:crypto"</span>
+
+<span class="text-purple-300">export default</span> {
+  <span class="text-purple-300">async</span> <span class="text-sky-300">fetch</span>(request: Request, env: Env) {
+    <span class="text-purple-300">const</span> url = <span class="text-purple-300">new</span> URL(request.url)
+
+    <span class="text-purple-300">if</span> (url.pathname === <span class="text-green-300">"/webhooks/github"</span> &amp;&amp; request.method === <span class="text-green-300">"POST"</span>) {
+      <span class="text-purple-300">const</span> body = <span class="text-purple-300">await</span> request.text()
+      <span class="text-purple-300">const</span> event = request.headers.get(<span class="text-green-300">"x-github-event"</span>)
+
+      <span class="text-purple-300">if</span> (event === <span class="text-green-300">"push"</span>) {
+        <span class="text-purple-300">const</span> payload = JSON.parse(body)
+        <span class="text-slate-500">// Trigger a build, notify a channel, update a dashboard, etc.</span>
+        console.log(<span class="text-green-300">`Push to ${payload.repository.full_name}`</span>)
+      }
+
+      <span class="text-purple-300">return</span> Response.json({ <span class="text-sky-300">ok</span>: <span class="text-orange-300">true</span> })
+    }
+
+    <span class="text-purple-300">return new</span> Response(<span class="text-green-300">"Not found"</span>, { <span class="text-sky-300">status</span>: <span class="text-orange-300">404</span> })
+  }
+}</pre>
+  </div>
+
+  <h2>Example: Shopify + Supabase</h2>
+  <p>
+    Receive Shopify order webhooks and store them in your Supabase database:
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">supabase/functions/shopify-webhook/index.ts</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-purple-300">import</span> { createClient } <span class="text-purple-300">from</span> <span class="text-green-300">"@supabase/supabase-js"</span>
+
+Deno.serve(<span class="text-purple-300">async</span> (req) => {
+  <span class="text-purple-300">const</span> supabase = createClient(
+    Deno.env.get(<span class="text-green-300">"SUPABASE_URL"</span>)!,
+    Deno.env.get(<span class="text-green-300">"SUPABASE_SERVICE_ROLE_KEY"</span>)!
+  )
+
+  <span class="text-purple-300">const</span> order = <span class="text-purple-300">await</span> req.json()
+  <span class="text-purple-300">const</span> topic = req.headers.get(<span class="text-green-300">"x-shopify-topic"</span>)
+
+  <span class="text-purple-300">if</span> (topic === <span class="text-green-300">"orders/create"</span>) {
+    <span class="text-purple-300">await</span> supabase.from(<span class="text-green-300">"orders"</span>).upsert({
+      <span class="text-sky-300">shopify_id</span>: order.id,
+      <span class="text-sky-300">email</span>: order.email,
+      <span class="text-sky-300">total</span>: order.total_price,
+      <span class="text-sky-300">status</span>: order.financial_status,
+    })
+  }
+
+  <span class="text-purple-300">return new</span> Response(<span class="text-green-300">"OK"</span>)
+})</pre>
+  </div>
+
+  <h2>API reference</h2>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm border border-slate-200 rounded-lg">
+      <thead class="bg-slate-50">
+        <tr>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Method</th>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Endpoint</th>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">POST</td>
+          <td class="p-3 border-b border-slate-100 font-mono text-sm">/api/v1/endpoints</td>
+          <td class="p-3 border-b border-slate-100">Create a new inbound endpoint</td>
+        </tr>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">GET</td>
+          <td class="p-3 border-b border-slate-100 font-mono text-sm">/api/v1/endpoints</td>
+          <td class="p-3 border-b border-slate-100">List all endpoints</td>
+        </tr>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">GET</td>
+          <td class="p-3 border-b border-slate-100 font-mono text-sm">/api/v1/endpoints/:id</td>
+          <td class="p-3 border-b border-slate-100">Get endpoint details</td>
+        </tr>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">PUT</td>
+          <td class="p-3 border-b border-slate-100 font-mono text-sm">/api/v1/endpoints/:id</td>
+          <td class="p-3 border-b border-slate-100">Update an endpoint</td>
+        </tr>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">DELETE</td>
+          <td class="p-3 border-b border-slate-100 font-mono text-sm">/api/v1/endpoints/:id</td>
+          <td class="p-3 border-b border-slate-100">Delete an endpoint and its events</td>
+        </tr>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">GET</td>
+          <td class="p-3 border-b border-slate-100 font-mono text-sm">/api/v1/endpoints/:id/events</td>
+          <td class="p-3 border-b border-slate-100">List recent inbound events</td>
+        </tr>
+        <tr>
+          <td class="p-3 font-mono text-emerald-700">POST</td>
+          <td class="p-3 font-mono text-sm">/api/v1/endpoints/:id/events/:event_id/replay</td>
+          <td class="p-3">Replay a specific event</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    All endpoints require an <code class="bg-slate-100 px-2 py-1 rounded text-sm">Authorization: Bearer</code>
+    header with your API key. See the
+    <a href="/api/v1/docs">interactive API docs</a> for full request/response schemas.
+  </p>
+
+  <h2>Best practices</h2>
+  <ul>
+    <li>
+      <strong>Use serial delivery for payment webhooks.</strong> Stripe, Shopify, and other payment
+      services can send events in rapid succession. Serial mode ensures you process them in order
+      and don't accidentally double-charge or double-refund.
+    </li>
+    <li>
+      <strong>Keep your webhook handler idempotent.</strong> Even with serial delivery, the same event
+      might be forwarded more than once (if your app returns an error and Runlater retries). Use
+      the event ID or a deduplication key to prevent double processing.
+    </li>
+    <li>
+      <strong>Verify signatures in your handler.</strong> Runlater forwards original headers
+      byte-for-byte. Stripe's <code class="bg-slate-100 px-2 py-1 rounded text-sm">stripe-signature</code>,
+      GitHub's <code class="bg-slate-100 px-2 py-1 rounded text-sm">x-hub-signature-256</code>, and
+      Shopify's <code class="bg-slate-100 px-2 py-1 rounded text-sm">x-shopify-hmac-sha256</code>
+      all work without changes.
+    </li>
+    <li>
+      <strong>Set up failure notifications.</strong> Configure email or Slack alerts in your
+      <a href="/organizations/notifications">organization settings</a> so you know immediately
+      when webhook forwarding fails.
+    </li>
+    <li>
+      <strong>Return quickly.</strong> Your handler should return 2xx within the timeout window.
+      If you need to do heavy processing, accept the webhook and queue the work separately using
+      <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.send()</code>.
+    </li>
+  </ul>
+
+  <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded-r-lg my-8">
+    <strong class="text-emerald-800">Ready to get started?</strong>
+    <span class="text-emerald-700">
+      <a href="/users/register" class="text-emerald-700 underline">Create a free account</a>
+      (3 endpoints on the free tier) and set up your first inbound endpoint in under 2 minutes.
+      See the <a href="/docs/endpoints" class="text-emerald-700 underline">endpoint documentation</a>
+      for the full API reference.
+    </span>
+  </div>
+
+  <p class="text-sm text-slate-500">
+    <a href="/guides">Back to all guides</a>
+  </p>
+</.docs_layout>
