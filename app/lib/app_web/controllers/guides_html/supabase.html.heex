@@ -79,7 +79,7 @@
       phx-no-curly-interpolation
       class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-slate-500">// No install needed — use the npm: specifier in your import:</span>
-import Runlater from "npm:runlater-js"</pre>
+import Runlater from "npm:runlater-js@0.2.0"</pre>
   </div>
 
   <p>
@@ -319,12 +319,13 @@ Deno.serve(<span class="text-purple-300">async</span> () => {
     Deno.env.get(<span class="text-green-300">"SUPABASE_SERVICE_ROLE_KEY"</span>)!
   )
 
-  <span class="text-purple-300">const</span> { count } = <span class="text-purple-300">await</span> supabase
+  <span class="text-purple-300">const</span> { data } = <span class="text-purple-300">await</span> supabase
     .from(<span class="text-green-300">"sessions"</span>)
-    .delete({ <span class="text-sky-300">count</span>: <span class="text-green-300">"exact"</span> })
+    .delete()
     .lt(<span class="text-green-300">"expires_at"</span>, <span class="text-purple-300">new</span> Date().toISOString())
+    .select(<span class="text-green-300">"id"</span>)
 
-  <span class="text-purple-300">return new</span> Response(JSON.stringify({ <span class="text-sky-300">deleted</span>: count }), {
+  <span class="text-purple-300">return new</span> Response(JSON.stringify({ <span class="text-sky-300">deleted</span>: data?.length ?? <span class="text-orange-300">0</span> }), {
     <span class="text-sky-300">headers</span>: { <span class="text-green-300">"Content-Type"</span>: <span class="text-green-300">"application/json"</span> },
   })
 })</pre>

@@ -128,17 +128,20 @@
 }
 
 <span class="text-purple-300">async function</span> <span class="text-sky-300">handleCleanup</span>(env: Env) {
-  <span class="text-slate-500">// KV list() returns up to 1000 keys per call.</span>
-  <span class="text-slate-500">// For namespaces with more keys, use cursor-based pagination.</span>
-  <span class="text-purple-300">const</span> keys = <span class="text-purple-300">await</span> env.SESSIONS.list()
-
   <span class="text-purple-300">let</span> deleted = <span class="text-orange-300">0</span>
-  <span class="text-purple-300">for</span> (<span class="text-purple-300">const</span> key <span class="text-purple-300">of</span> keys.keys) {
-    <span class="text-purple-300">if</span> (key.expiration &amp;&amp; key.expiration &lt; Date.now() / <span class="text-orange-300">1000</span>) {
-      <span class="text-purple-300">await</span> env.SESSIONS.delete(key.name)
-      deleted++
+  <span class="text-purple-300">let</span> cursor: string | <span class="text-orange-300">undefined</span>
+
+  <span class="text-slate-500">// KV list() returns max 1000 keys — paginate to get all</span>
+  <span class="text-purple-300">do</span> {
+    <span class="text-purple-300">const</span> result = <span class="text-purple-300">await</span> env.SESSIONS.list({ cursor })
+    <span class="text-purple-300">for</span> (<span class="text-purple-300">const</span> key <span class="text-purple-300">of</span> result.keys) {
+      <span class="text-purple-300">if</span> (key.expiration &amp;&amp; key.expiration &lt; Date.now() / <span class="text-orange-300">1000</span>) {
+        <span class="text-purple-300">await</span> env.SESSIONS.delete(key.name)
+        deleted++
+      }
     }
-  }
+    cursor = result.list_complete ? <span class="text-orange-300">undefined</span> : result.cursor
+  } <span class="text-purple-300">while</span> (cursor)
 
   <span class="text-purple-300">return</span> Response.json({ deleted })
 }</pre>
