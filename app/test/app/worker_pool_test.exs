@@ -72,6 +72,55 @@ defmodule Prikke.WorkerPoolTest do
     end
   end
 
+  describe "graceful shutdown" do
+    setup do
+      start_supervised!(WorkerSupervisor)
+      start_supervised!({WorkerPool, test_mode: true})
+      :ok
+    end
+
+    test "EXIT signal sets shutting_down flag" do
+      pid = Process.whereis(WorkerPool)
+
+      # Verify initial state is not shutting down
+      state = :sys.get_state(pid)
+      assert state.shutting_down == false
+
+      # Send an EXIT signal (simulates supervisor shutdown on SIGTERM)
+      send(pid, {:EXIT, self(), :shutdown})
+
+      # Sync to ensure the message is processed
+      _ = :sys.get_state(pid)
+
+      state = :sys.get_state(pid)
+      assert state.shutting_down == true
+    end
+
+    test "does not spawn new workers when shutting down" do
+      pid = Process.whereis(WorkerPool)
+
+      # Set shutting_down by sending EXIT
+      send(pid, {:EXIT, self(), :shutdown})
+      _ = :sys.get_state(pid)
+
+      # Send a :check message (simulates periodic scaling tick)
+      send(pid, :check)
+      _ = :sys.get_state(pid)
+
+      # No workers should have been spawned
+      assert WorkerSupervisor.worker_count() == 0
+    end
+
+    test "stops cleanly on shutdown" do
+      pid = Process.whereis(WorkerPool)
+      ref = Process.monitor(pid)
+
+      GenServer.stop(pid, :shutdown)
+
+      assert_receive {:DOWN, ^ref, :process, ^pid, :shutdown}
+    end
+  end
+
   describe "worker supervisor" do
     setup do
       start_supervised!(WorkerSupervisor)

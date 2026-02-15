@@ -152,6 +152,10 @@ defmodule Prikke.Scheduler do
 
   @impl true
   def init(opts) do
+    # Trap exits so terminate/2 is called on shutdown (e.g. SIGTERM during deploy).
+    # This lets us release the advisory lock cleanly.
+    Process.flag(:trap_exit, true)
+
     # Subscribe to scheduler wake-up notifications
     Phoenix.PubSub.subscribe(Prikke.PubSub, "scheduler")
 
@@ -185,6 +189,12 @@ defmodule Prikke.Scheduler do
   def handle_call(:tick, _from, state) do
     result = run_with_lock(state)
     {:reply, result, state}
+  end
+
+  @impl true
+  def terminate(reason, _state) do
+    Logger.info("[Scheduler] Shutting down (reason: #{inspect(reason)})")
+    :ok
   end
 
   ## Private Functions

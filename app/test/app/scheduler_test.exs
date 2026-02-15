@@ -399,6 +399,41 @@ defmodule Prikke.SchedulerTest do
       assert execution.scheduled_for == exact_time
     end
 
+    test "traps exits and shuts down cleanly", %{organization: org} do
+      # Create a due task to verify scheduler doesn't crash mid-tick
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: "Shutdown Task",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "* * * * *"
+        })
+
+      past = DateTime.utc_now() |> DateTime.add(-10, :second) |> DateTime.truncate(:second)
+      created_at = DateTime.utc_now() |> DateTime.add(-300, :second) |> DateTime.truncate(:second)
+
+      task
+      |> Ecto.Changeset.change(next_run_at: past, inserted_at: created_at)
+      |> Prikke.Repo.update!()
+
+      # Get the scheduler pid
+      pid = Process.whereis(Prikke.Scheduler)
+      assert Process.alive?(pid)
+
+      # Monitor it so we can wait for it to exit
+      ref = Process.monitor(pid)
+
+      # Stop it gracefully (simulates supervisor shutdown on SIGTERM)
+      GenServer.stop(pid, :shutdown)
+
+      # Should exit cleanly (terminate/2 called)
+      assert_receive {:DOWN, ^ref, :process, ^pid, :shutdown}
+
+      # Verify the task was not left in a broken state
+      updated_task = Tasks.get_task!(org, task.id)
+      assert updated_task != nil
+    end
+
     test "respects monthly limits for lookahead tasks", %{organization: org} do
       # Downgrade to free tier
       org

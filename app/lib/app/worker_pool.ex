@@ -77,6 +77,10 @@ defmodule Prikke.WorkerPool do
 
   @impl true
   def init(opts) do
+    # Trap exits so we can stop spawning new workers during shutdown.
+    # Existing workers finish their in-flight requests and exit naturally.
+    Process.flag(:trap_exit, true)
+
     test_mode = Keyword.get(opts, :test_mode, false)
 
     unless test_mode do
@@ -86,13 +90,26 @@ defmodule Prikke.WorkerPool do
       send(self(), :check)
     end
 
-    {:ok, %{test_mode: test_mode}}
+    {:ok, %{test_mode: test_mode, shutting_down: false}}
+  end
+
+  @impl true
+  def handle_info({:EXIT, _pid, _reason}, state) do
+    Logger.info("[WorkerPool] Received EXIT signal, stopping new worker spawns")
+    {:noreply, %{state | shutting_down: true}}
   end
 
   @impl true
   def handle_info(:init_workers, state) do
     # Start minimum workers on init
     spawn_workers(@min_workers)
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info(:check, %{shutting_down: true} = state) do
+    # During shutdown, don't scale or schedule further checks.
+    # Existing workers will finish their work and exit naturally.
     {:noreply, state}
   end
 
@@ -121,6 +138,12 @@ defmodule Prikke.WorkerPool do
     }
 
     {:reply, stats, state}
+  end
+
+  @impl true
+  def terminate(reason, _state) do
+    Logger.info("[WorkerPool] Shutting down (reason: #{inspect(reason)})")
+    :ok
   end
 
   ## Private Functions

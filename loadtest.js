@@ -17,6 +17,7 @@ const API_KEY = __ENV.API_KEY;
 const ENDPOINT_URL =
   __ENV.ENDPOINT_URL ||
   "https://runlater.eu/in/ep_NgIY3xmLF6Awbs46Ez4boYV-f2pS4lgl";
+const TARGET_URL = __ENV.TARGET_URL || "https://httpbin.org/get";
 
 // If no API_KEY, run endpoint-only mode
 const MODE = API_KEY ? "api" : "endpoint";
@@ -76,7 +77,7 @@ const apiHeaders = {
 function createImmediateTask() {
   const payload = JSON.stringify({
     name: `loadtest-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    url: "https://httpbin.org/get",
+    url: TARGET_URL,
     retry_attempts: 1,
     method: "GET",
     timeout_ms: 10000,
@@ -111,7 +112,7 @@ function createImmediateTask() {
 function createDelayedTask() {
   const payload = JSON.stringify({
     name: `loadtest-delayed-${Date.now()}`,
-    url: "https://httpbin.org/get",
+    url: TARGET_URL,
     method: "GET",
     delay: "5s",
   });
