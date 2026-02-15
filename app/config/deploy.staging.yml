@@ -6,7 +6,7 @@
 servers:
   web:
     hosts:
-      - 34.7.2.121
+      - 46.225.121.84
     options:
       ulimit: nofile=65536:65536
 
@@ -19,7 +19,7 @@ proxy:
 
 builder:
   arch: amd64
-  remote: ssh://root@34.7.2.121
+  remote: ssh://root@46.225.121.84
 
 registry:
   server: localhost:5555
@@ -46,7 +46,7 @@ env:
 accessories:
   db:
     image: postgres:18
-    host: 34.7.2.121
+    host: 46.225.121.84
     env:
       clear:
         POSTGRES_DB: runlater_staging
@@ -54,7 +54,7 @@ accessories:
         - POSTGRES_USER
         - POSTGRES_PASSWORD
     options:
-      shm-size: 18g
-    cmd: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c shared_buffers=16GB -c effective_cache_size=64GB -c work_mem=16MB -c max_parallel_workers_per_gather=4 -c max_connections=300
+      shm-size: 10g
+    cmd: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c shared_buffers=8GB -c effective_cache_size=24GB -c work_mem=8MB -c max_parallel_workers_per_gather=4 -c max_connections=300
     directories:
-      - /mnt/secure/postgresql-data:/var/lib/postgresql
+      - data:/var/lib/postgresql
