@@ -234,41 +234,55 @@ defmodule Prikke.Worker do
       :ok ->
         Logger.info("[Worker] Task succeeded with status #{response.status} in #{duration_ms}ms")
 
-        {:ok, updated_execution} =
-          Executions.complete_execution(execution, %{
-            status_code: response.status,
-            response_body: truncate_body(response.body),
-            duration_ms: duration_ms
-          })
+        case safe_update(fn ->
+               Executions.complete_execution(execution, %{
+                 status_code: response.status,
+                 response_body: truncate_body(response.body),
+                 duration_ms: duration_ms
+               })
+             end) do
+          {:ok, updated_execution} ->
+            # Reuse preloaded task to avoid redundant DB fetches
+            full_execution = %{updated_execution | task: execution.task}
 
-        # Reuse preloaded task to avoid redundant DB fetches
-        full_execution = %{updated_execution | task: execution.task}
+            # Send recovery notification if previous execution failed (async)
+            Notifications.notify_recovery(full_execution)
 
-        # Send recovery notification if previous execution failed (async)
-        Notifications.notify_recovery(full_execution)
+            # Send callback notification (async)
+            Callbacks.send_callback(full_execution)
 
-        # Send callback notification (async)
-        Callbacks.send_callback(full_execution)
+          {:error, reason} ->
+            Logger.error(
+              "[Worker] Failed to update execution #{execution.id} to success: #{inspect(reason)}"
+            )
+        end
 
       {:error, error_message} ->
         Logger.warning(
           "[Worker] Task assertion failed: #{error_message} (status #{response.status}) in #{duration_ms}ms"
         )
 
-        {:ok, updated_execution} =
-          Executions.fail_execution(execution, %{
-            status_code: response.status,
-            response_body: truncate_body(response.body),
-            error_message: error_message,
-            duration_ms: duration_ms
-          })
+        case safe_update(fn ->
+               Executions.fail_execution(execution, %{
+                 status_code: response.status,
+                 response_body: truncate_body(response.body),
+                 error_message: error_message,
+                 duration_ms: duration_ms
+               })
+             end) do
+          {:ok, updated_execution} ->
+            # Reuse preloaded task to avoid redundant DB fetches
+            full_execution = %{updated_execution | task: execution.task}
 
-        # Reuse preloaded task to avoid redundant DB fetches
-        full_execution = %{updated_execution | task: execution.task}
+            # Send failure notification and callback (async)
+            Notifications.notify_failure(full_execution)
+            Callbacks.send_callback(full_execution)
 
-        # Send failure notification and callback (async)
-        Notifications.notify_failure(full_execution)
-        Callbacks.send_callback(full_execution)
+          {:error, reason} ->
+            Logger.error(
+              "[Worker] Failed to update execution #{execution.id} to failed: #{inspect(reason)}"
+            )
+        end
 
         # Respect Retry-After header on 429 responses
         retry_after_ms =
@@ -321,14 +335,20 @@ defmodule Prikke.Worker do
   defp handle_timeout(execution, duration_ms) do
     Logger.warning("[Worker] Task timed out after #{duration_ms}ms")
 
-    {:ok, updated_execution} = Executions.timeout_execution(execution, duration_ms)
+    case safe_update(fn -> Executions.timeout_execution(execution, duration_ms) end) do
+      {:ok, updated_execution} ->
+        # Reuse preloaded task to avoid redundant DB fetches
+        full_execution = %{updated_execution | task: execution.task}
 
-    # Reuse preloaded task to avoid redundant DB fetches
-    full_execution = %{updated_execution | task: execution.task}
+        # Send failure notification and callback (async)
+        Notifications.notify_failure(full_execution)
+        Callbacks.send_callback(full_execution)
 
-    # Send failure notification and callback (async)
-    Notifications.notify_failure(full_execution)
-    Callbacks.send_callback(full_execution)
+      {:error, reason} ->
+        Logger.error(
+          "[Worker] Failed to update execution #{execution.id} to timeout: #{inspect(reason)}"
+        )
+    end
 
     maybe_retry(execution, nil)
   end
@@ -337,18 +357,25 @@ defmodule Prikke.Worker do
     error_message = format_error(error)
     Logger.warning("[Worker] Task failed: #{error_message} after #{duration_ms}ms")
 
-    {:ok, updated_execution} =
-      Executions.fail_execution(execution, %{
-        error_message: error_message,
-        duration_ms: duration_ms
-      })
+    case safe_update(fn ->
+           Executions.fail_execution(execution, %{
+             error_message: error_message,
+             duration_ms: duration_ms
+           })
+         end) do
+      {:ok, updated_execution} ->
+        # Reuse preloaded task to avoid redundant DB fetches
+        full_execution = %{updated_execution | task: execution.task}
 
-    # Reuse preloaded task to avoid redundant DB fetches
-    full_execution = %{updated_execution | task: execution.task}
+        # Send failure notification and callback (async)
+        Notifications.notify_failure(full_execution)
+        Callbacks.send_callback(full_execution)
 
-    # Send failure notification and callback (async)
-    Notifications.notify_failure(full_execution)
-    Callbacks.send_callback(full_execution)
+      {:error, reason} ->
+        Logger.error(
+          "[Worker] Failed to update execution #{execution.id} to failed: #{inspect(reason)}"
+        )
+    end
 
     maybe_retry(execution, nil)
   end
@@ -401,6 +428,15 @@ defmodule Prikke.Worker do
     else
       :no_retry
     end
+  end
+
+  # Wraps a DB update call with rescue to convert exceptions (pool exhaustion,
+  # stale entries, connection errors) into {:error, reason} tuples so the worker
+  # doesn't crash when the DB is temporarily unavailable.
+  defp safe_update(fun) do
+    fun.()
+  rescue
+    error -> {:error, Exception.message(error)}
   end
 
   # Max response body size: 256KB

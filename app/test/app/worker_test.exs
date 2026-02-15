@@ -120,6 +120,60 @@ defmodule Prikke.WorkerTest do
     end
   end
 
+  describe "DB error resilience" do
+    setup do
+      org = organization_fixture()
+      %{org: org}
+    end
+
+    test "worker survives when execution is deleted before status update", %{org: org} do
+      Process.flag(:trap_exit, true)
+
+      bypass = Bypass.open()
+
+      # The Bypass handler deletes the execution row from the DB before responding.
+      # This causes Ecto.StaleEntryError when the worker tries to Repo.update(),
+      # simulating a DB failure (pool exhaustion, stale entry, etc.).
+      Bypass.expect_once(bypass, "POST", "/webhook", fn conn ->
+        # Delete all executions for this org's tasks so the worker's update fails
+        Repo.delete_all(Prikke.Executions.Execution)
+        Plug.Conn.resp(conn, 200, "OK")
+      end)
+
+      task = insert_task_for_bypass(org, "http://localhost:#{bypass.port}/webhook")
+      {:ok, _execution} = Executions.create_execution_for_task(task, DateTime.utc_now())
+
+      {:ok, pid} = Worker.start_link()
+      Process.sleep(500)
+
+      # Worker should still be alive (didn't crash from the stale entry error)
+      assert Process.alive?(pid)
+
+      GenServer.stop(pid, :normal)
+    end
+
+    test "worker survives when execution is deleted before failure update", %{org: org} do
+      Process.flag(:trap_exit, true)
+
+      bypass = Bypass.open()
+
+      Bypass.expect_once(bypass, "POST", "/webhook", fn conn ->
+        Repo.delete_all(Prikke.Executions.Execution)
+        Plug.Conn.resp(conn, 500, "Server Error")
+      end)
+
+      task = insert_task_for_bypass(org, "http://localhost:#{bypass.port}/webhook")
+      {:ok, _execution} = Executions.create_execution_for_task(task, DateTime.utc_now())
+
+      {:ok, pid} = Worker.start_link()
+      Process.sleep(500)
+
+      assert Process.alive?(pid)
+
+      GenServer.stop(pid, :normal)
+    end
+  end
+
   describe "response assertions" do
     setup do
       org = organization_fixture()
