@@ -6,6 +6,7 @@ defmodule PrikkeWeb.DashboardLive do
   alias Prikke.Executions
   alias Prikke.Monitors
   alias Prikke.Endpoints
+  alias Prikke.StatusPages
   alias Prikke.Cron
 
   @impl true
@@ -46,6 +47,11 @@ defmodule PrikkeWeb.DashboardLive do
         false
       end
 
+    status_page =
+      if current_org do
+        StatusPages.get_status_page(current_org)
+      end
+
     socket =
       socket
       |> assign(:page_title, "Dashboard")
@@ -60,6 +66,7 @@ defmodule PrikkeWeb.DashboardLive do
       |> assign(:endpoints, endpoints)
       |> assign(:host, host)
       |> assign(:has_api_keys, has_api_keys)
+      |> assign(:status_page, status_page)
 
     {:ok, socket}
   end
@@ -414,14 +421,13 @@ defmodule PrikkeWeb.DashboardLive do
           <% end %>
         </div>
         
-    <!-- Monitors Section -->
+    <!-- Monitors Section (only shown when monitors exist) -->
+        <%= if @monitors != [] do %>
         <div class="glass-card rounded-2xl mb-4">
           <div class="px-4 sm:px-6 py-4 border-b border-white/50 flex justify-between items-center gap-2">
             <div class="flex items-center gap-3">
               <h2 class="text-lg font-semibold text-slate-900">Monitors</h2>
-              <%= if @monitors != [] do %>
-                <.monitor_summary monitors={@monitors} />
-              <% end %>
+              <.monitor_summary monitors={@monitors} />
             </div>
             <.link
               navigate={~p"/monitors/new"}
@@ -430,62 +436,81 @@ defmodule PrikkeWeb.DashboardLive do
               New Monitor
             </.link>
           </div>
-          <%= if @monitors == [] do %>
-            <div class="p-8 text-center">
-              <p class="text-slate-500 mb-2">No monitors yet.</p>
+          <!-- Monitor Uptime Trend -->
+          <.monitor_trend trend={@monitor_trend} />
+          <!-- Monitor List -->
+          <div class="divide-y divide-white/30">
+            <%= for monitor <- @monitors do %>
               <.link
-                navigate={~p"/monitors/new"}
-                class="text-emerald-600 text-sm font-medium hover:underline"
+                navigate={~p"/monitors/#{monitor.id}"}
+                class="block px-6 py-3 hover:bg-white/50 transition-colors"
               >
-                Set up heartbeat monitoring →
-              </.link>
-            </div>
-          <% else %>
-            <!-- Monitor Uptime Trend -->
-            <.monitor_trend trend={@monitor_trend} />
-            <!-- Monitor List -->
-            <div class="divide-y divide-white/30">
-              <%= for monitor <- @monitors do %>
-                <.link
-                  navigate={~p"/monitors/#{monitor.id}"}
-                  class="block px-6 py-3 hover:bg-white/50 transition-colors"
-                >
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2 min-w-0">
-                      <span class={[
-                        "w-2.5 h-2.5 rounded-full shrink-0",
-                        monitor_dot_color(monitor.status)
-                      ]} />
-                      <span class="text-sm text-slate-900 truncate">{monitor.name}</span>
-                      <span class={[
-                        "text-xs font-medium px-2 py-0.5 rounded",
-                        monitor.status == "down" && "bg-red-100 text-red-700",
-                        monitor.status == "up" && "bg-emerald-100 text-emerald-700",
-                        monitor.status == "new" && "bg-slate-100 text-slate-600",
-                        monitor.status == "paused" && "bg-amber-100 text-amber-700"
-                      ]}>
-                        {monitor_status_label(monitor.status)}
-                      </span>
-                    </div>
-                    <%= if monitor.last_ping_at do %>
-                      <span class="text-xs text-slate-400 shrink-0">
-                        <.local_time
-                          id={"dash-mon-#{monitor.id}-last-ping"}
-                          datetime={monitor.last_ping_at}
-                        />
-                      </span>
-                    <% end %>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class={[
+                      "w-2.5 h-2.5 rounded-full shrink-0",
+                      monitor_dot_color(monitor.status)
+                    ]} />
+                    <span class="text-sm text-slate-900 truncate">{monitor.name}</span>
+                    <span class={[
+                      "text-xs font-medium px-2 py-0.5 rounded",
+                      monitor.status == "down" && "bg-red-100 text-red-700",
+                      monitor.status == "up" && "bg-emerald-100 text-emerald-700",
+                      monitor.status == "new" && "bg-slate-100 text-slate-600",
+                      monitor.status == "paused" && "bg-amber-100 text-amber-700"
+                    ]}>
+                      {monitor_status_label(monitor.status)}
+                    </span>
                   </div>
-                </.link>
-              <% end %>
+                  <%= if monitor.last_ping_at do %>
+                    <span class="text-xs text-slate-400 shrink-0">
+                      <.local_time
+                        id={"dash-mon-#{monitor.id}-last-ping"}
+                        datetime={monitor.last_ping_at}
+                      />
+                    </span>
+                  <% end %>
+                </div>
+              </.link>
+            <% end %>
+          </div>
+          <div class="px-6 py-3 border-t border-slate-200 text-center">
+            <.link navigate={~p"/monitors"} class="text-sm text-emerald-600 hover:underline">
+              View all monitors →
+            </.link>
+          </div>
+        </div>
+        <% end %>
+
+    <!-- Status Page Section (only shown when enabled) -->
+        <%= if @status_page && @status_page.enabled do %>
+        <div class="glass-card rounded-2xl mb-4">
+          <div class="px-4 sm:px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <h2 class="text-lg font-semibold text-slate-900">Status Page</h2>
+              <span class="text-xs font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">Live</span>
             </div>
-            <div class="px-6 py-3 border-t border-slate-200 text-center">
-              <.link navigate={~p"/monitors"} class="text-sm text-emerald-600 hover:underline">
-                View all monitors →
+            <div class="flex items-center gap-3">
+              <.link
+                href={~p"/s/#{@status_page.slug}"}
+                target="_blank"
+                class="text-sm text-slate-500 hover:text-emerald-600 font-mono transition-colors"
+              >
+                /s/{@status_page.slug}
+                <.icon name="hero-arrow-top-right-on-square" class="w-3.5 h-3.5 inline ml-0.5" />
+              </.link>
+              <.link
+                navigate={~p"/status-page"}
+                class="text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
+              >
+                Manage →
               </.link>
             </div>
-          <% end %>
+          </div>
         </div>
+        <% end %>
+
       <% else %>
         <!-- No organization state -->
         <div class="glass-card rounded-2xl p-12 text-center">
