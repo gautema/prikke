@@ -49,4 +49,8 @@ defmodule PrikkeWeb.DocsController do
   def status_pages(conn, _params) do
     render(conn, :status_pages, page_title: "Status Pages")
   end
+
+  def local_dev(conn, _params) do
+    render(conn, :local_dev, page_title: "Local Development with the Dev Emulator")
+  end
 end
