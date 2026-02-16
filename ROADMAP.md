@@ -25,7 +25,7 @@ Runlater is a **task queue with cron built in**, not a cron scheduler with a que
 ## Priority 3 — Growth & Engagement
 
 - [x] **Per-job notification overrides** — Override org-level notification settings on individual tasks and monitors.
-- [ ] **Framework guide pages** — SEO-targeted docs for Next.js, Express, Remix, Cloudflare Workers (e.g. "Background jobs in Next.js").
+- [x] **Framework guide pages** — `/guides` with Next.js, Cloudflare Workers, Supabase, and Webhook Proxy guides. Linked from landing page and footer.
 - [ ] **Docs section grouping** — Reorganize docs into sections: Getting Started, Guides, Features, API Reference.
 - [ ] **Content marketing** — dev.to/Hashnode articles targeting "next.js cron", "vercel background jobs", etc. Link back to runlater.eu.
 
@@ -51,6 +51,7 @@ Runlater is a **task queue with cron built in**, not a cron scheduler with a que
 - [x] **Customer-facing status pages** — Public status pages per org with uptime bars, uptime percentages, and visibility controls.
 - [x] **Per-org worker fairness** — Max 3 concurrent executions per org so slow endpoints can't monopolize the pool.
 - [x] **Per-job notification overrides** — Override org-level notification settings on individual tasks and monitors.
+- [x] **Framework guide pages** — `/guides` with Next.js, Cloudflare Workers, Supabase, and Webhook Proxy guides. Linked from landing page and footer.
 
 ## Competitors
 

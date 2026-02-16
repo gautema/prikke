@@ -171,6 +171,10 @@ Simple, no dependencies, full control.
 - [x] Rate limiting per IP
 - [ ] Workflows (multi-step jobs)
 
+### Content & SEO
+- [x] Framework guides (`/guides`) — Next.js, Cloudflare Workers, Supabase, Webhook Proxy
+- [x] Guides linked from landing page and footer
+
 ### Ops & Monitoring
 - [x] Error tracking (ErrorTracker, built-in)
 - [x] Performance monitoring (response times, queue depth, duration percentiles)
@@ -370,13 +374,11 @@ kamal rollback              # Rollback to previous version
 - Sales/founder contacts upgraded users manually
 - No payment integration needed initially
 
-**Post-MVP (when ready to charge):**
-Using Lemon Squeezy (Merchant of Record):
+**Payment integration (live):**
+Using Creem (Merchant of Record):
 - They are the seller, handle EU VAT
-- No tax compliance headaches
-- Higher fees (~5-8%) but worth the simplicity
-- Simple checkout integration
-- Webhook for subscription status
+- Webhook at `/webhooks/creem` for subscription lifecycle events
+- Checkout flow: user clicks upgrade → redirected to Creem → webhook updates tier
 
 ## Architecture
 
@@ -488,11 +490,10 @@ The pre-commit hook automatically runs `mix compile --warnings-as-errors` and `m
 
 **HEEx Template Notes:**
 - Curly braces `{` and `}` in code blocks (e.g., JSON examples) must be escaped
-- Use HTML entities: `&#123;` for `{` and `&#125;` for `}`
-- This applies to all `<pre><code>` blocks containing JSON or JavaScript
+- Preferred: add `phx-no-curly-interpolation` attribute to the `<pre>` tag — then `{` and `}` work without escaping
+- Alternative: use HTML entities `&#123;` for `{` and `&#125;` for `}`
+- `<` in code comparisons must be written as `&lt;` and `&&` as `&amp;&amp;` (even inside `phx-no-curly-interpolation`)
 
-**Future Enhancement (Phase 9+):**
-- Swagger/OpenAPI docs - Generate API documentation from code
 
 ## Project Structure
 
@@ -524,7 +525,15 @@ prikke/
     │       │   └── layouts/
     │       ├── controllers/
     │       │   ├── page_html/home.html.heex  # Landing page
-    │       │   ├── docs_html/                # Documentation
+    │       │   ├── docs_html/                # Documentation pages
+    │       │   ├── guides_controller.ex      # Framework guides
+    │       │   ├── guides_html.ex
+    │       │   ├── guides_html/              # Guide templates
+    │       │   │   ├── index.html.heex
+    │       │   │   ├── nextjs.html.heex
+    │       │   │   ├── cloudflare_workers.html.heex
+    │       │   │   ├── supabase.html.heex
+    │       │   │   └── webhook_proxy.html.heex
     │       │   └── ...
     │       ├── live/
     │       │   ├── dashboard_live.ex
@@ -535,21 +544,13 @@ prikke/
     └── test/
 ```
 
-### Planned additions (not yet built)
-```
-lib/app/
-├── scheduler/          # Cron scheduler GenServer
-├── workers/            # Worker pool for job execution
-└── executions/         # Execution history
-```
-
 ## Key Decisions
 
 1. **Elixir over Kotlin/.NET** - Best fit for concurrent job execution
 2. **No Oban, custom GenServer pool** - Postgres SKIP LOCKED for queue, advisory locks for clustering, no dependencies
 3. **No Redis** - Postgres handles everything, simpler infra
 4. **Kamal on VPS** - Full control, simple deployment, EU-hosted server
-5. **Lemon Squeezy over Stripe** - MoR handles EU VAT, simpler for solo founder
+5. **Creem over Stripe** - MoR handles EU VAT, simpler for solo founder
 6. **Mailjet over Resend/Postmark** - French company, good free tier
 7. **Two pricing tiers** - Simple: Free and Pro (€29/mo)
 8. **API keys over OAuth** - Simpler for users, OAuth later if enterprise needs it
