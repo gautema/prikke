@@ -466,7 +466,7 @@ defmodule PrikkeWeb.TaskLive.Edit do
 
             <div>
               <label for="task_url" class="block text-sm font-medium text-slate-700 mb-1">
-                Webhook URL
+                Target URL
               </label>
               <.input field={@form[:url]} type="text" placeholder="https://example.com/webhook" />
             </div>

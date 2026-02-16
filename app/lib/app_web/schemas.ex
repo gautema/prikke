@@ -15,7 +15,7 @@ defmodule PrikkeWeb.Schemas do
       properties: %{
         id: %Schema{type: :string, format: :uuid, description: "Task ID"},
         name: %Schema{type: :string, description: "Task name"},
-        url: %Schema{type: :string, format: :uri, description: "Webhook URL to call"},
+        url: %Schema{type: :string, format: :uri, description: "Target URL to call"},
         method: %Schema{
           type: :string,
           enum: ["GET", "POST", "PUT", "PATCH", "DELETE"],
@@ -138,7 +138,7 @@ defmodule PrikkeWeb.Schemas do
       required: [:name, :url, :schedule_type],
       properties: %{
         name: %Schema{type: :string, description: "Task name"},
-        url: %Schema{type: :string, format: :uri, description: "Webhook URL to call"},
+        url: %Schema{type: :string, format: :uri, description: "Target URL to call"},
         method: %Schema{
           type: :string,
           enum: ["GET", "POST", "PUT", "PATCH", "DELETE"],
