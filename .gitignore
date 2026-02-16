@@ -16,6 +16,10 @@ erl_crash.dump
 .env.local
 .env.*.local
 
+# Dev emulator (separate repo: github.com/runlater-eu/dev)
+/dev-emulator
+/.github
+
 # IDE
 .idea
 .vscode
