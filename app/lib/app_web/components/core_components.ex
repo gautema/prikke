@@ -944,6 +944,7 @@ defmodule PrikkeWeb.CoreComponents do
           <a href="/docs/api" class="text-slate-600 no-underline hover:text-emerald-600">
             API Reference
           </a>
+          <a href="/guides" class="text-slate-600 no-underline hover:text-emerald-600">Guides</a>
           <a href="/status" class="text-slate-600 no-underline hover:text-emerald-600">Status</a>
           <a href="/legal/slo" class="text-slate-600 no-underline hover:text-emerald-600">SLO</a>
           <a
@@ -967,6 +968,7 @@ defmodule PrikkeWeb.CoreComponents do
             <div class="flex flex-wrap justify-center gap-4 sm:gap-6">
               <a href="/docs" class="hover:text-slate-700">Docs</a>
               <a href="/docs/api" class="hover:text-slate-700">API Reference</a>
+              <a href="/guides" class="hover:text-slate-700">Guides</a>
               <a href="/status" class="hover:text-slate-700">Status</a>
               <a href="/legal/slo" class="hover:text-slate-700">SLO</a>
               <a href="/terms" class="hover:text-slate-700">Terms</a>
