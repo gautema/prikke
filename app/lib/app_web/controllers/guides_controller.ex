@@ -29,4 +29,8 @@ defmodule PrikkeWeb.GuidesController do
   def webhook_proxy(conn, _params) do
     render(conn, :webhook_proxy, page_title: "Never Lose a Webhook Again")
   end
+
+  def local_dev(conn, _params) do
+    render(conn, :local_dev, page_title: "Local Development with the Dev Emulator")
+  end
 end

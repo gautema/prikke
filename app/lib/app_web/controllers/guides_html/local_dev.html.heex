@@ -1,0 +1,309 @@
+<.docs_layout current_scope={@current_scope}>
+  <h1>Local Development with the Dev Emulator</h1>
+  <p class="text-xl text-slate-600 mb-10">
+    Test your Runlater integration locally without deploying, ngrok, or tunnels.
+    The dev emulator mimics the Runlater API and executes tasks against localhost.
+  </p>
+
+  <h2>The problem</h2>
+  <p>
+    When you integrate Runlater into your app, the production service calls your public URL to execute tasks.
+    But during development your app runs on <code class="bg-slate-100 px-2 py-1 rounded text-sm">localhost:3000</code>
+    &mdash; which Runlater can't reach. You'd normally need ngrok or a similar tunnel.
+  </p>
+  <p>
+    The dev emulator solves this. It's a tiny server that runs on your machine, accepts the same API calls as
+    production, and immediately executes tasks against your local app. No tunnel, no deploy, no waiting.
+  </p>
+
+  <h2>Quick start</h2>
+  <p>Run the emulator with Docker:</p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >docker run -p 8080:8080 ghcr.io/runlater-eu/dev</pre>
+  </div>
+
+  <p>Or run from source if you have Go installed:</p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >git clone https://github.com/runlater-eu/dev.git
+cd dev
+go run .</pre>
+  </div>
+
+  <p>
+    The emulator starts on <code class="bg-slate-100 px-2 py-1 rounded text-sm">http://localhost:8080</code>
+    and shows colored logs in your terminal:
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >
+  ┌─────────────────────────────────────┐
+  │   runlater dev emulator             │
+  │   Local development server          │
+  └─────────────────────────────────────┘
+
+  Listening on http://0.0.0.0:8080
+  Inbound URL http://0.0.0.0:8080/in/{slug}
+  API key     any value accepted</pre>
+  </div>
+
+  <h2>Point the SDK at the emulator</h2>
+  <p>
+    The <code class="bg-slate-100 px-2 py-1 rounded text-sm">runlater-js</code> SDK supports a
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">baseUrl</code> option. Set it to the
+    emulator in development:
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">lib/runlater.ts</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-purple-300">import</span> <span class="text-sky-300">Runlater</span> <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
+
+<span class="text-purple-300">export const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>({
+  <span class="text-sky-300">apiKey</span>: process.env.<span class="text-sky-300">RUNLATER_KEY</span> ?? <span class="text-green-300">"dev"</span>,
+  <span class="text-sky-300">baseUrl</span>: process.env.<span class="text-sky-300">RUNLATER_URL</span>, <span class="text-slate-500">// optional, defaults to production</span>
+})</pre>
+  </div>
+
+  <p>
+    Then set the environment variable in development:
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">.env.local</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500"># Development — uses local emulator</span>
+RUNLATER_KEY=dev
+RUNLATER_URL=http://localhost:8080</pre>
+  </div>
+
+  <p>
+    In production, leave <code class="bg-slate-100 px-2 py-1 rounded text-sm">RUNLATER_URL</code> unset
+    and the SDK uses the default (<code class="bg-slate-100 px-2 py-1 rounded text-sm">https://runlater.eu</code>).
+  </p>
+
+  <h2>How it works</h2>
+  <p>
+    The emulator implements the same REST API as production. When you create a task, it immediately executes
+    an HTTP request to your URL &mdash; typically your local app running on
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">localhost:3000</code>.
+  </p>
+
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm border border-slate-200 rounded-lg">
+      <thead class="bg-slate-50">
+        <tr>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Task type</th>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Production</th>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Dev emulator</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.send()</td>
+          <td class="p-3 border-b border-slate-100">Queued, executed by worker pool</td>
+          <td class="p-3 border-b border-slate-100">Executed immediately (1s delay)</td>
+        </tr>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.delay()</td>
+          <td class="p-3 border-b border-slate-100">Held for the delay duration, then executed</td>
+          <td class="p-3 border-b border-slate-100">Executed immediately (1s delay)</td>
+        </tr>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.schedule()</td>
+          <td class="p-3 border-b border-slate-100">Executed at the specified time</td>
+          <td class="p-3 border-b border-slate-100">Executed immediately (1s delay)</td>
+        </tr>
+        <tr>
+          <td class="p-3 font-mono text-emerald-700">rl.cron()</td>
+          <td class="p-3">Runs on schedule</td>
+          <td class="p-3">Stored, trigger manually via <code class="bg-slate-100 px-1 rounded">/trigger</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    The 1-second simulated delay prevents your code from accidentally relying on instant execution,
+    which won't happen in production.
+  </p>
+
+  <h2>Example: Testing a webhook handler</h2>
+  <p>
+    Start your app and the emulator, then use the SDK as normal. Here's a Next.js example:
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">app/actions/signup.ts</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-green-300">"use server"</span>
+<span class="text-purple-300">import</span> { <span class="text-sky-300">rl</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/runlater"</span>
+
+<span class="text-purple-300">export async function</span> <span class="text-sky-300">onSignup</span>(userId: string) {
+  <span class="text-slate-500">// In dev: immediately calls localhost:3000/api/send-welcome</span>
+  <span class="text-slate-500">// In prod: Runlater holds it for 30 minutes, then calls your public URL</span>
+  <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">delay</span>(<span class="text-green-300">"http://localhost:3000/api/send-welcome"</span>, {
+    <span class="text-sky-300">delay</span>: <span class="text-green-300">"30m"</span>,
+    <span class="text-sky-300">body</span>: { <span class="text-sky-300">user_id</span>: userId },
+  })
+}</pre>
+  </div>
+
+  <p>In your terminal, you'll see the emulator execute the request:</p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">14:30:05 --> POST   /api/v1/tasks                    [t_a1b2c3 created, delayed 1800s]
+14:30:06  -> POST   http://localhost:3000/api/send-welcome
+14:30:06  &lt;- 200                                    [245ms]</pre>
+  </div>
+
+  <h2>Testing inbound webhooks</h2>
+  <p>
+    The emulator also supports <a href="/docs/endpoints">inbound webhooks</a>. Create an endpoint,
+    then send test payloads to it:
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">Terminal</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500"># Create an endpoint that forwards to your local app</span>
+curl -X POST http://localhost:8080/api/v1/endpoints \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Stripe", "slug": "stripe", "forward_url": "http://localhost:3000/webhooks/stripe"}'
+
+<span class="text-slate-500"># Simulate a Stripe webhook</span>
+curl -X POST http://localhost:8080/in/stripe \
+  -H "Content-Type: application/json" \
+  -d '{"type": "payment_intent.succeeded", "data": {"amount": 2000}}'</pre>
+  </div>
+
+  <p>
+    The emulator receives the payload and immediately forwards it to your local app, just like
+    production would. Events are stored in memory so you can list them via the API.
+  </p>
+
+  <h2>Testing cron tasks</h2>
+  <p>
+    Cron tasks are stored but not automatically scheduled &mdash; that would defeat the purpose of a
+    dev server you start and stop freely. Use the <code class="bg-slate-100 px-2 py-1 rounded text-sm">/trigger</code>
+    endpoint to run them on demand:
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">Terminal</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500"># Create a cron task</span>
+curl -X POST http://localhost:8080/api/v1/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"url": "http://localhost:3000/api/cleanup", "cron": "0 2 * * *", "name": "Nightly cleanup"}'
+<span class="text-slate-500"># Response: {"data": {"id": "t_abc123", ...}, "message": "Cron task created"}</span>
+
+<span class="text-slate-500"># Trigger it manually</span>
+curl -X POST http://localhost:8080/api/v1/tasks/t_abc123/trigger
+<span class="text-slate-500"># Your localhost:3000/api/cleanup gets called</span>
+
+<span class="text-slate-500"># Check execution history</span>
+curl http://localhost:8080/api/v1/tasks/t_abc123/executions</pre>
+  </div>
+
+  <h2>Docker networking</h2>
+  <p>
+    If you run the emulator in Docker and your app on the host, the emulator can't reach
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">localhost:3000</code> inside the container.
+    Use <code class="bg-slate-100 px-2 py-1 rounded text-sm">host.docker.internal</code> instead:
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500"># Your task URL when the emulator runs in Docker:</span>
+http://host.docker.internal:3000/api/webhook
+
+<span class="text-slate-500"># Or add --network=host to skip this entirely (Linux only):</span>
+docker run --network=host ghcr.io/runlater-eu/dev</pre>
+  </div>
+
+  <h2>What's different from production</h2>
+  <ul>
+    <li><strong>No authentication</strong> &mdash; any API key (or none) is accepted</li>
+    <li><strong>No persistence</strong> &mdash; all data resets when you restart</li>
+    <li><strong>No retries</strong> &mdash; tasks execute once, so you see failures immediately</li>
+    <li><strong>No scheduling</strong> &mdash; delays and run_at are ignored, tasks run immediately</li>
+    <li><strong>1-second simulated delay</strong> &mdash; mimics real-world network latency</li>
+    <li><strong>No rate limits, SSRF protection, or tier limits</strong></li>
+  </ul>
+
+  <h2>CLI flags</h2>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm border border-slate-200 rounded-lg">
+      <thead class="bg-slate-50">
+        <tr>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Flag</th>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Default</th>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">--port</td>
+          <td class="p-3 border-b border-slate-100">8080</td>
+          <td class="p-3 border-b border-slate-100">Port to listen on</td>
+        </tr>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">--host</td>
+          <td class="p-3 border-b border-slate-100">0.0.0.0</td>
+          <td class="p-3 border-b border-slate-100">Host to bind to</td>
+        </tr>
+        <tr>
+          <td class="p-3 font-mono text-emerald-700">--no-color</td>
+          <td class="p-3">false</td>
+          <td class="p-3">Disable colored output (also respects <code class="bg-slate-100 px-1 rounded">NO_COLOR</code> env var)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded-r-lg my-8">
+    <strong class="text-emerald-800">Source code</strong>
+    <span class="text-emerald-700">
+      The dev emulator is open source at
+      <a href="https://github.com/runlater-eu/dev" class="text-emerald-700 underline">github.com/runlater-eu/dev</a>.
+      Zero external dependencies, ~13MB Docker image. Contributions welcome.
+    </span>
+  </div>
+
+  <p class="text-sm text-slate-500">
+    <a href="/guides">Back to all guides</a>
+  </p>
+</.docs_layout>

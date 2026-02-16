@@ -43,6 +43,7 @@ defmodule PrikkeWeb.Router do
     get "/guides/cloudflare-workers-cron", GuidesController, :cloudflare_workers
     get "/guides/supabase-scheduled-tasks", GuidesController, :supabase
     get "/guides/webhook-proxy", GuidesController, :webhook_proxy
+    get "/guides/local-dev", GuidesController, :local_dev
 
     # Public status page
     get "/status", StatusController, :index
