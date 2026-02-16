@@ -26,7 +26,6 @@ Runlater is a **task queue with cron built in**, not a cron scheduler with a que
 ## Priority 2 — Growth
 
 - [ ] **Content marketing** — dev.to/Hashnode articles targeting "next.js cron", "vercel background jobs", etc. Link back to guides and landing page. Zero maintenance cost, compounds over time.
-- [ ] **Docs reorganization** — Group docs into clearer sections: Getting Started, Features, API Reference. Lower the barrier for new users.
 
 ## Parked
 
