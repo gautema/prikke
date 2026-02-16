@@ -1,16 +1,18 @@
 ---
-title: I built an async task API after implementing background jobs 3 times in 2 years
+title: I built background jobs 3 times in 2 years, so I turned it into an API
 published: false
 tags: webdev, productivity, opensource, showdev
 ---
 
-Last year I built background job systems for three different projects. Twice in Kotlin, once in a Next.js app where another developer on the team implemented it with my guidance.
+In the past two years I've built background job systems for three different projects. It was the third one that pushed me over the edge.
 
-That last one is what pushed me over the edge.
+## It started with Kotlin
 
-## 10 commits, 3 weeks, and a Kubernetes deployment for notifications
+The first two projects were Kotlin backends. Kotlin has excellent coroutine support, so the async parts felt natural — spin up a coroutine, make the HTTP call, done. But the actual job *infrastructure* was still a grind. You need a queue, a way to claim work, retry logic with backoff, failure tracking, alerting when something goes wrong. Each time it took weeks and produced code that someone now has to maintain.
 
-On that Next.js project, we needed async notifications for a B2B application in a highly regulated domain. Data couldn't leave the EU — using a US-hosted queue service was not an option. So we built it ourselves. What started as "just send an email when something happens" turned into this:
+## Then came Next.js and a Kubernetes deployment for notifications
+
+On the third project, another developer on the team built the system with my guidance. We needed async notifications for a B2B application in a highly regulated domain. Data couldn't leave the EU — using a US-hosted queue service was not an option. So we built it ourselves. What started as "just send an email when something happens" turned into this:
 
 - A **transactional outbox table** with status lifecycle (PENDING → PROCESSING → DONE → FAILED)
 - A **standalone Node.js worker** deployed as a Kubernetes pod via Terraform
@@ -22,7 +24,7 @@ On that Next.js project, we needed async notifications for a B2B application in 
 
 10 commits over 3 weeks. Infrastructure code, Terraform files, a generic worker framework with injectable callbacks. All to reliably call an API and send an email.
 
-And here's the thing — **it was well built**. The outbox pattern is solid. The idempotency guarantees are correct. The access-aware filtering respects permissions. She did a great job.
+And here's the thing — **the implementation was solid**. The outbox pattern is correct. The idempotency guarantees work. The access-aware filtering respects permissions. Great engineering.
 
 But it shouldn't have been necessary.
 
@@ -54,7 +56,7 @@ curl -X POST https://runlater.eu/api/v1/queue \
   -d '{
     "url": "https://your-app.com/api/send-notification",
     "method": "POST",
-    "body": "{\"user_id\": \"123\"}",
+    "body": "{\"user_id\": \"123\"}"
   }'
 ```
 
@@ -68,11 +70,13 @@ Since this is dev.to, here's what's under the hood:
 
 **Elixir + Phoenix + Postgres. No Redis. No external job library.**
 
+I have three years of Elixir experience from a previous job, and it felt like a perfect fit for this. The BEAM VM was literally designed for systems that run forever — supervisors restart crashed processes automatically, and lightweight processes make a worker pool trivial.
+
 The entire job queue runs on Postgres:
 
 - **`FOR UPDATE SKIP LOCKED`** — workers claim jobs without conflicts. Same pattern the Next.js project used, but you don't have to build it yourself.
 - **Advisory locks for leader election** — only one scheduler node creates executions, but any node can work them. Multi-server from day one.
-- **GenServer worker pool** — Elixir's lightweight processes scale from 2 to 20 workers based on queue depth. No idle resources, no thundering herd.
+- **No Redis** — Postgres handles the queue, the locks, and the execution history. One database, fewer things to break at 3am.
 
 ```
 Scheduler (1 leader)  →  creates pending executions
@@ -82,12 +86,6 @@ Worker pool (2-20)    →  claims via SKIP LOCKED  →  HTTP request  →  log r
                          PostgreSQL (the only dependency)
 ```
 
-**Why no Redis?** Postgres handles everything. Job queue, advisory locks, execution history. One database to back up, one connection to manage. Simpler infra means fewer things break at 3am.
-
-**Why Elixir?** The BEAM VM was designed for systems that run forever. Supervisors restart crashed workers automatically. A single node comfortably handles thousands of jobs per minute. And LiveView gives a real-time dashboard without writing JavaScript.
-
-**Priority queue:** Pro tier jobs run before free tier. Minute-interval crons before hourly ones. Within the same priority, oldest first. All in one SQL query with `ORDER BY`.
-
 ## The EU angle
 
 This is something I experienced firsthand. On that Next.js project, we couldn't use any US-hosted service for background jobs — the domain was too regulated. So we spent weeks building our own. That's a real cost teams pay when the only options are US-based.
@@ -96,27 +94,12 @@ Runlater is hosted in Europe. Your task payloads, execution logs, and webhook da
 
 ## Where it's at
 
-The core works:
-
-- Cron scheduling (expressions + simple intervals)
-- One-time scheduled jobs
-- Immediate queue via API
-- Execution history with status, duration, response
-- Team/org support with API keys
-- Webhook signatures (HMAC-SHA256)
-- Notifications (email, Slack, Discord)
-- HTTP uptime monitors
-- Public status pages per organization
-
-Free tier: 5 jobs, 10k requests/month, hourly minimum interval.
-Pro tier: unlimited jobs, 1M requests/month, 1-minute intervals.
+The core works: cron scheduling, one-time jobs, immediate queue via API, execution history, team support with API keys, and notifications to email, Slack, or Discord. Free tier available, pro at 29 EUR/month.
 
 ## What I'd love to hear
 
-I built this because I was tired of reimplementing the same infrastructure. But I'm curious:
+I'm a developer from Norway, building this solo. I built Runlater because I was tired of reimplementing the same infrastructure — and I figured other teams are too.
 
-**How do you handle background jobs in your projects today?** Self-hosted queue? Inngest? Cron on a VM? Something else?
-
-And honestly — **would you trust a small startup for your async tasks, or does that feel too risky?**
+**How do you handle background jobs in your projects today?** Self-hosted queue? Inngest? Cron on a VM? I'd genuinely love to hear what works and what doesn't.
 
 I'm at [runlater.eu](https://runlater.eu) if you want to try it. Free tier, no credit card.
