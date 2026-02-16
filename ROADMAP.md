@@ -13,34 +13,30 @@ Runlater is a **task queue with cron built in**, not a cron scheduler with a que
 
 **Positioning:** Async task infrastructure for Europe. Queue delayed tasks, schedule recurring jobs, receive inbound webhooks, and monitor everything. One API, zero infrastructure, fully GDPR-native.
 
-## Priority 1 — Next Up
+**Principles:**
+- Ship less, polish more. Be the best at one thing (EU task queue) rather than okay at five.
+- Only add features users are asking for. No speculative roadmap items.
+- Every new feature is code to maintain forever. The bar for inclusion is high.
 
-- [x] **Usage alerts** — Email at 80% and 100% of monthly execution limit, with dashboard warnings.
+## Priority 1 — Reliability
 
-## Priority 2 — Reliability
+- [ ] **Postgres backups** — Hourly backups with offsite sync. Non-negotiable before scaling.
+- [ ] **Multi-server** — Second app server behind Hetzner Load Balancer for redundancy. Architecture already supports it (SKIP LOCKED, advisory locks).
 
-- [ ] **Postgres high availability** — Dedicated PG server with hourly backups and offsite sync. Future: `pg_auto_failover` when downtime cost justifies complexity.
-- [ ] **Multi-server with load balancing** — HAProxy + Keepalived with Hetzner Floating IP, or Hetzner Load Balancer (~$5/mo).
+## Priority 2 — Growth
 
-## Priority 3 — Growth & Engagement
+- [ ] **Content marketing** — dev.to/Hashnode articles targeting "next.js cron", "vercel background jobs", etc. Link back to guides and landing page. Zero maintenance cost, compounds over time.
+- [ ] **Docs reorganization** — Group docs into clearer sections: Getting Started, Features, API Reference. Lower the barrier for new users.
 
-- [x] **Per-job notification overrides** — Override org-level notification settings on individual tasks and monitors.
-- [x] **Framework guide pages** — `/guides` with Next.js, Cloudflare Workers, Supabase, and Webhook Proxy guides. Linked from landing page and footer.
-- [ ] **Docs section grouping** — Reorganize docs into sections: Getting Started, Guides, Features, API Reference.
-- [ ] **Content marketing** — dev.to/Hashnode articles targeting "next.js cron", "vercel background jobs", etc. Link back to runlater.eu.
+## Parked
 
-## Priority 4 — Advanced Features
+These are ideas that might make sense later, but only if users ask for them. Not actively planned.
 
-- [ ] **Task chaining** — Lightweight alternative to workflows. Add `on_success` to any task: when it succeeds, automatically queue the next task with the previous response injected via `{{response}}`. No SDK, no new concepts — just tasks creating tasks. Chains can be unlimited depth (each `on_success` can have its own `on_success`). Later: `on_failure`, `{{response.field}}` JSON path extraction, dashboard chain visualization. Scope: one new JSON column + ~20 lines in worker + API params. Competitive edge vs QStash: no SDK required, pure HTTP config, no vendor lock-in.
-- [ ] **Bulk push API** — Queue multiple jobs in a single API call (transaction-safe).
-- [ ] **Bulk job export/import** (JSON/YAML) — Back up configs or move between orgs.
-- [ ] **Python SDK** (`runlater` on PyPI) — Django/FastAPI crowd.
-- [ ] **Go SDK** — For the infrastructure-minded.
-
-## Priority 5 — Later
-
-- [ ] **Scheduled email reports** — Weekly digest email with execution stats. Keeps users engaged.
-- [ ] **Encryption at rest (per-organization)** — Per-org field encryption with `cloak_ecto`. Disk encryption covers current needs; add this if enterprise customers require it or BYOK.
+- **Task chaining** (`on_success`) — Lightweight alternative to workflows. Only build if multiple users request multi-step task orchestration.
+- **Bulk push API** — Queue multiple jobs in one call. Only if high-volume users need it.
+- **Python/Go SDKs** — The REST API + curl works everywhere. Only build SDKs for languages where users are actively struggling.
+- **Scheduled email reports** — Weekly digest. Only if retention data shows users forgetting about their account.
+- **Encryption at rest** — Per-org field encryption. Only if enterprise customers require it or BYOK.
 
 ## Done
 

@@ -169,7 +169,6 @@ Simple, no dependencies, full control.
 - [x] Per-org worker fairness (max 5 concurrent executions per org, Postgres subquery filter)
 - [x] Cron monitoring (expect ping, alert if missing)
 - [x] Rate limiting per IP
-- [ ] Workflows (multi-step jobs)
 
 ### Content & SEO
 - [x] Framework guides (`/guides`) — Next.js, Cloudflare Workers, Supabase, Webhook Proxy
@@ -181,7 +180,6 @@ Simple, no dependencies, full control.
 - [x] System health dashboard (superadmin with CPU, memory, disk, BEAM metrics)
 - [x] Uptime monitoring (HTTP monitors with configurable intervals)
 - [x] Email logging (email_logs table, superadmin view)
-- [ ] Infrastructure alerts (external alerting)
 
 ## Database Schema (Core)
 
