@@ -362,7 +362,9 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
 
   <h3>Per-Task & Per-Monitor Overrides</h3>
   <p>
-    By default, notification settings are configured at the organization level. You can override these per task or monitor using <code>notify_on_failure</code> and <code>notify_on_recovery</code>:
+    By default, notification settings are configured at the organization level. You can override these per task or monitor using
+    <code>notify_on_failure</code>
+    and <code>notify_on_recovery</code>:
   </p>
   <ul class="list-disc pl-6 space-y-1 text-slate-600">
     <li><code>null</code> (default) — use organization setting</li>
@@ -370,7 +372,10 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
     <li><code>false</code> — never notify, even if org setting is on</li>
   </ul>
   <p class="mt-2">
-    Set both <code>notify_on_failure</code> and <code>notify_on_recovery</code> to <code>false</code> to silence all notifications for a specific resource.
+    Set both <code>notify_on_failure</code>
+    and <code>notify_on_recovery</code>
+    to <code>false</code>
+    to silence all notifications for a specific resource.
   </p>
 
   <h3>Notification Webhook Payloads</h3>
@@ -396,8 +401,18 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
   <div class="glass-card rounded-2xl overflow-hidden my-6">
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
       <pre
         data-tab-content="curl"

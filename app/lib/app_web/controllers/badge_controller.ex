@@ -88,7 +88,10 @@ defmodule PrikkeWeb.BadgeController do
   defp send_svg(conn, svg) do
     conn
     |> put_resp_header("content-type", "image/svg+xml; charset=utf-8")
-    |> put_resp_header("cache-control", "public, max-age=#{@cache_max_age}, s-maxage=#{@cache_max_age}")
+    |> put_resp_header(
+      "cache-control",
+      "public, max-age=#{@cache_max_age}, s-maxage=#{@cache_max_age}"
+    )
     |> send_resp(200, svg)
   end
 

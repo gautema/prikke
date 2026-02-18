@@ -12,7 +12,10 @@
   </ul>
 
   <h2>SDK overview</h2>
-  <p>The <code class="bg-slate-100 px-2 py-1 rounded text-sm">runlater-js</code> SDK methods used in this guide:</p>
+  <p>
+    The <code class="bg-slate-100 px-2 py-1 rounded text-sm">runlater-js</code>
+    SDK methods used in this guide:
+  </p>
   <div class="overflow-x-auto mb-6">
     <table class="w-full text-sm border border-slate-200 rounded-lg">
       <thead class="bg-slate-50">
@@ -23,24 +26,38 @@
       </thead>
       <tbody>
         <tr>
-          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.send(url, opts)</td>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">
+            rl.send(url, opts)
+          </td>
           <td class="p-3 border-b border-slate-100">Queue a task for immediate execution</td>
         </tr>
         <tr>
-          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.delay(url, opts)</td>
-          <td class="p-3 border-b border-slate-100">Execute after a delay (e.g. <code class="bg-slate-100 px-1 rounded">"30m"</code>, <code class="bg-slate-100 px-1 rounded">"2h"</code>)</td>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">
+            rl.delay(url, opts)
+          </td>
+          <td class="p-3 border-b border-slate-100">
+            Execute after a delay (e.g. <code class="bg-slate-100 px-1 rounded">"30m"</code>, <code class="bg-slate-100 px-1 rounded">"2h"</code>)
+          </td>
         </tr>
         <tr>
-          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.schedule(url, opts)</td>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">
+            rl.schedule(url, opts)
+          </td>
           <td class="p-3 border-b border-slate-100">Execute at a specific date/time</td>
         </tr>
         <tr>
-          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.cron(name, opts)</td>
-          <td class="p-3 border-b border-slate-100">Create or update a recurring cron job (idempotent)</td>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">
+            rl.cron(name, opts)
+          </td>
+          <td class="p-3 border-b border-slate-100">
+            Create or update a recurring cron job (idempotent)
+          </td>
         </tr>
         <tr>
           <td class="p-3 font-mono text-emerald-700">rl.sync(opts)</td>
-          <td class="p-3">Declare all tasks at once &mdash; creates, updates, and removes to match</td>
+          <td class="p-3">
+            Declare all tasks at once &mdash; creates, updates, and removes to match
+          </td>
         </tr>
       </tbody>
     </table>
@@ -100,7 +117,8 @@ APP_URL=https://myapp.vercel.app</pre>
   <h2>Example: Send a welcome email after signup</h2>
   <p>
     When a user signs up, you want to send a welcome email 30 minutes later. In a traditional server
-    you'd use a job queue. In Next.js, you can use <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.delay()</code>
+    you'd use a job queue. In Next.js, you can use
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.delay()</code>
     to schedule it from a server action:
   </p>
 
@@ -161,7 +179,8 @@ APP_URL=https://myapp.vercel.app</pre>
 
   <h2>Example: Sync data on a cron schedule</h2>
   <p>
-    Pull data from an external API every 5 minutes. Use <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.cron()</code>
+    Pull data from an external API every 5 minutes. Use
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.cron()</code>
     to create a recurring task &mdash; it's idempotent, so you can call it on every deploy without creating duplicates:
   </p>
 
@@ -232,7 +251,8 @@ APP_URL=https://myapp.vercel.app</pre>
   <h2>Example: Process uploads in the background</h2>
   <p>
     When a user uploads a file, you don't want them waiting while you resize images or parse CSVs.
-    Use <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.send()</code> to queue the work immediately
+    Use <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.send()</code>
+    to queue the work immediately
     and return a response right away:
   </p>
 
@@ -320,7 +340,8 @@ APP_URL=https://myapp.vercel.app</pre>
 
   <h2>Advanced: Declarative task management</h2>
   <p>
-    Instead of creating tasks individually, use <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.sync()</code>
+    Instead of creating tasks individually, use
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.sync()</code>
     to declare all your scheduled tasks in one place. Run this as part of your deploy process &mdash; it creates,
     updates, and optionally deletes tasks to match your spec:
   </p>
@@ -359,7 +380,8 @@ APP_URL=https://myapp.vercel.app</pre>
   </div>
 
   <p>
-    Add it to your <code class="bg-slate-100 px-2 py-1 rounded text-sm">package.json</code> build script so
+    Add it to your <code class="bg-slate-100 px-2 py-1 rounded text-sm">package.json</code>
+    build script so
     tasks stay in sync with your code:
   </p>
 
@@ -375,34 +397,41 @@ APP_URL=https://myapp.vercel.app</pre>
   <h2>Best practices</h2>
   <ul>
     <li>
-      <strong>Protect your handler endpoints.</strong> Your API routes are public URLs. Verify that requests
-      come from Runlater by checking the
-      <a href="/docs/webhooks">webhook signature</a> in the
-      <code class="bg-slate-100 px-2 py-1 rounded text-sm">x-runlater-signature</code> header, or check for a
+      <strong>Protect your handler endpoints.</strong>
+      Your API routes are public URLs. Verify that requests
+      come from Runlater by checking the <a href="/docs/webhooks">webhook signature</a>
+      in the <code class="bg-slate-100 px-2 py-1 rounded text-sm">x-runlater-signature</code>
+      header, or check for a
       shared secret you set in the task headers.
     </li>
     <li>
-      <strong>Keep handlers idempotent.</strong> Runlater retries failed tasks, so your API routes should
+      <strong>Keep handlers idempotent.</strong>
+      Runlater retries failed tasks, so your API routes should
       be safe to call more than once. Use database upserts instead of inserts, and check for duplicates
       before sending emails.
     </li>
     <li>
-      <strong>Return 2xx for success, 4xx/5xx for failure.</strong> Runlater uses the HTTP status code to
+      <strong>Return 2xx for success, 4xx/5xx for failure.</strong>
+      Runlater uses the HTTP status code to
       determine if the task succeeded. A non-2xx response triggers a retry (up to the configured limit).
       Retries use exponential backoff.
     </li>
     <li>
-      <strong>Return quickly.</strong> Your handler has up to 5 minutes (configurable via
-      <code class="bg-slate-100 px-2 py-1 rounded text-sm">timeout</code>), but faster is better. If processing
+      <strong>Return quickly.</strong>
+      Your handler has up to 5 minutes (configurable via <code class="bg-slate-100 px-2 py-1 rounded text-sm">timeout</code>), but faster is better. If processing
       takes longer, break it into smaller tasks.
     </li>
     <li>
-      <strong>Use the dashboard.</strong> Every execution is logged with status, duration, and response body.
-      When something breaks, check the <a href="/dashboard">execution history</a> before digging into logs.
+      <strong>Use the dashboard.</strong>
+      Every execution is logged with status, duration, and response body.
+      When something breaks, check the <a href="/dashboard">execution history</a>
+      before digging into logs.
     </li>
     <li>
-      <strong>Set up notifications.</strong> Configure email or Slack alerts in your
-      <a href="/organizations/notifications">organization settings</a> so you know immediately when a task fails.
+      <strong>Set up notifications.</strong>
+      Configure email or Slack alerts in your
+      <a href="/organizations/notifications">organization settings</a>
+      so you know immediately when a task fails.
     </li>
   </ul>
 

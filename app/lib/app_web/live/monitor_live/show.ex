@@ -455,7 +455,6 @@ defmodule PrikkeWeb.MonitorLive.Show do
           }
         }
       </script>
-
     </Layouts.app>
     """
   end

@@ -752,7 +752,9 @@ defmodule Prikke.NotificationsTest do
 
       {:ok, org} =
         org
-        |> Ecto.Changeset.change(notification_webhook_url: "http://localhost:#{bypass.port}/webhook")
+        |> Ecto.Changeset.change(
+          notification_webhook_url: "http://localhost:#{bypass.port}/webhook"
+        )
         |> Prikke.Repo.update()
 
       {:ok, task} =

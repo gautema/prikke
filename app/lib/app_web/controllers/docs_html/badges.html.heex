@@ -10,7 +10,10 @@
     When enabled, a unique token is generated and two SVG badge URLs become available:
   </p>
   <ul>
-    <li><strong>Status badge</strong> &mdash; a shields.io-style flat badge showing the current state</li>
+    <li>
+      <strong>Status badge</strong>
+      &mdash; a shields.io-style flat badge showing the current state
+    </li>
     <li><strong>Uptime bars</strong> &mdash; a bar chart of recent executions or daily status</li>
   </ul>
   <p>
@@ -28,7 +31,8 @@
 
   <h2>Badge URLs</h2>
   <p>
-    Once enabled, your badges are available at these URLs (replace <code>TOKEN</code> with the generated token):
+    Once enabled, your badges are available at these URLs (replace <code>TOKEN</code>
+    with the generated token):
   </p>
 
   <h3>Task badges (cron only)</h3>
@@ -50,13 +54,18 @@ https://runlater.eu/badge/endpoint/TOKEN/uptime.svg</pre>
 ![Uptime](https://runlater.eu/badge/task/TOKEN/uptime.svg)</pre>
 
   <h3>HTML</h3>
-  <pre phx-no-curly-interpolation class="bg-slate-900 text-slate-100 p-4 font-mono text-sm leading-relaxed overflow-x-auto rounded-lg">&lt;img src="https://runlater.eu/badge/task/TOKEN/status.svg" alt="Status" /&gt;
+  <pre
+    phx-no-curly-interpolation
+    class="bg-slate-900 text-slate-100 p-4 font-mono text-sm leading-relaxed overflow-x-auto rounded-lg"
+  >&lt;img src="https://runlater.eu/badge/task/TOKEN/status.svg" alt="Status" /&gt;
 &lt;img src="https://runlater.eu/badge/task/TOKEN/uptime.svg" alt="Uptime" /&gt;</pre>
 
   <h2>Badge Types</h2>
 
   <h3>Status badge</h3>
-  <p>A flat, shields.io-style badge with two sections: the resource name on the left and its current status on the right.</p>
+  <p>
+    A flat, shields.io-style badge with two sections: the resource name on the left and its current status on the right.
+  </p>
   <table class="w-full text-sm mb-6">
     <thead>
       <tr>
@@ -68,32 +77,21 @@ https://runlater.eu/badge/endpoint/TOKEN/uptime.svg</pre>
       <tr class="border-t border-slate-100">
         <td class="py-2 px-3">Task (cron)</td>
         <td class="py-2 px-3">
-          <span class="text-emerald-600">passing</span>,
-          <span class="text-red-600">failing</span>,
-          <span class="text-orange-500">timeout</span>,
-          <span class="text-blue-600">running</span>,
-          <span class="text-slate-500">paused</span>,
+          <span class="text-emerald-600">passing</span>, <span class="text-red-600">failing</span>, <span class="text-orange-500">timeout</span>, <span class="text-blue-600">running</span>, <span class="text-slate-500">paused</span>,
           <span class="text-slate-400">unknown</span>
         </td>
       </tr>
       <tr class="border-t border-slate-100">
         <td class="py-2 px-3">Monitor</td>
         <td class="py-2 px-3">
-          <span class="text-emerald-600">up</span>,
-          <span class="text-red-600">down</span>,
-          <span class="text-orange-500">degraded</span>,
-          <span class="text-slate-500">paused</span>,
+          <span class="text-emerald-600">up</span>, <span class="text-red-600">down</span>, <span class="text-orange-500">degraded</span>, <span class="text-slate-500">paused</span>,
           <span class="text-slate-400">new</span>
         </td>
       </tr>
       <tr class="border-t border-slate-100">
         <td class="py-2 px-3">Endpoint</td>
         <td class="py-2 px-3">
-          <span class="text-emerald-600">passing</span>,
-          <span class="text-red-600">failing</span>,
-          <span class="text-orange-500">timeout</span>,
-          <span class="text-blue-600">running</span>,
-          <span class="text-slate-500">disabled</span>,
+          <span class="text-emerald-600">passing</span>, <span class="text-red-600">failing</span>, <span class="text-orange-500">timeout</span>, <span class="text-blue-600">running</span>, <span class="text-slate-500">disabled</span>,
           <span class="text-slate-400">no data</span>
         </td>
       </tr>
@@ -103,9 +101,18 @@ https://runlater.eu/badge/endpoint/TOKEN/uptime.svg</pre>
   <h3>Uptime bars</h3>
   <p>A horizontal bar chart showing recent history. Each bar represents:</p>
   <ul>
-    <li><strong>Tasks (cron)</strong> &mdash; one bar per execution (last 50). Green = success, red = failed, orange = timeout.</li>
-    <li><strong>Monitors</strong> &mdash; one bar per day (last 30 days). Green = up, orange = degraded, red = down.</li>
-    <li><strong>Endpoints</strong> &mdash; one bar per inbound event (last 50). Color reflects forwarding execution status.</li>
+    <li>
+      <strong>Tasks (cron)</strong>
+      &mdash; one bar per execution (last 50). Green = success, red = failed, orange = timeout.
+    </li>
+    <li>
+      <strong>Monitors</strong>
+      &mdash; one bar per day (last 30 days). Green = up, orange = degraded, red = down.
+    </li>
+    <li>
+      <strong>Endpoints</strong>
+      &mdash; one bar per inbound event (last 50). Color reflects forwarding execution status.
+    </li>
   </ul>
 
   <h2>Caching</h2>
@@ -117,9 +124,14 @@ https://runlater.eu/badge/endpoint/TOKEN/uptime.svg</pre>
 
   <h2>Security</h2>
   <ul>
-    <li>Badges are <strong>opt-in</strong> &mdash; disabled by default, must be explicitly enabled per resource</li>
+    <li>
+      Badges are <strong>opt-in</strong>
+      &mdash; disabled by default, must be explicitly enabled per resource
+    </li>
     <li>Each badge uses a unique, unguessable token (24 hex characters)</li>
     <li>Disabling a badge clears the token &mdash; the old URL immediately returns a 404</li>
-    <li>Badges only expose the resource name and status &mdash; no URLs, headers, response bodies, or other sensitive data</li>
+    <li>
+      Badges only expose the resource name and status &mdash; no URLs, headers, response bodies, or other sensitive data
+    </li>
   </ul>
 </.docs_layout>

@@ -26,11 +26,38 @@ defmodule Prikke.ApiMetrics do
 
   # Histogram bucket edges in microseconds
   # [<1ms, 1-5ms, 5-10ms, 10-25ms, 25-50ms, 50-100ms, 100-250ms, 250-500ms, 500ms-1s, 1-2.5s, 2.5-5s, 5-10s, >10s]
-  @bucket_edges [1_000, 5_000, 10_000, 25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000, 2_500_000, 5_000_000, 10_000_000]
+  @bucket_edges [
+    1_000,
+    5_000,
+    10_000,
+    25_000,
+    50_000,
+    100_000,
+    250_000,
+    500_000,
+    1_000_000,
+    2_500_000,
+    5_000_000,
+    10_000_000
+  ]
   @num_buckets 13
 
   # Upper bound of each bucket for percentile computation (in microseconds)
-  @bucket_upper_bounds [1_000, 5_000, 10_000, 25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000, 2_500_000, 5_000_000, 10_000_000, 30_000_000]
+  @bucket_upper_bounds [
+    1_000,
+    5_000,
+    10_000,
+    25_000,
+    50_000,
+    100_000,
+    250_000,
+    500_000,
+    1_000_000,
+    2_500_000,
+    5_000_000,
+    10_000_000,
+    30_000_000
+  ]
 
   # Flush every 60 minutes
   @flush_interval :timer.minutes(60)
@@ -288,9 +315,21 @@ defmodule Prikke.ApiMetrics do
 
     # Update per-group and "all" group
     for g <- [group, "all"] do
-      :ets.update_counter(@table, {:hist, today, g, bucket_idx}, {2, 1}, {{:hist, today, g, bucket_idx}, 0})
+      :ets.update_counter(
+        @table,
+        {:hist, today, g, bucket_idx},
+        {2, 1},
+        {{:hist, today, g, bucket_idx}, 0}
+      )
+
       :ets.update_counter(@table, {:hist_count, today, g}, {2, 1}, {{:hist_count, today, g}, 0})
-      :ets.update_counter(@table, {:hist_duration, today, g}, {2, duration_us}, {{:hist_duration, today, g}, 0})
+
+      :ets.update_counter(
+        @table,
+        {:hist_duration, today, g},
+        {2, duration_us},
+        {{:hist_duration, today, g}, 0}
+      )
     end
 
     {:noreply, %{state | entry_index: state.entry_index + 1}}
@@ -411,14 +450,15 @@ defmodule Prikke.ApiMetrics do
 
     id = Ecto.UUID.bingenerate()
 
-    params = [
-      id,
-      date,
-      group,
-      count,
-      duration
-      | bucket_counts
-    ] ++ [now, now]
+    params =
+      [
+        id,
+        date,
+        group,
+        count,
+        duration
+        | bucket_counts
+      ] ++ [now, now]
 
     Repo.query!(sql, params)
   end
@@ -431,7 +471,13 @@ defmodule Prikke.ApiMetrics do
 
   defp find_percentile_bucket([], _bounds, _cumulative, _target, _idx), do: 0
 
-  defp find_percentile_bucket([count | rest_counts], [bound | rest_bounds], cumulative, target, idx) do
+  defp find_percentile_bucket(
+         [count | rest_counts],
+         [bound | rest_bounds],
+         cumulative,
+         target,
+         idx
+       ) do
     new_cumulative = cumulative + count
 
     if new_cumulative >= target do

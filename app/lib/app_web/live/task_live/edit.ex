@@ -752,7 +752,7 @@ defmodule PrikkeWeb.TaskLive.Edit do
             </div>
           </div>
         </div>
-
+        
     <!-- Actions -->
         <div class="flex justify-end gap-4">
           <.link

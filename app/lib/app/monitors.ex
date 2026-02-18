@@ -61,7 +61,11 @@ defmodule Prikke.Monitors do
     with :ok <- check_monitor_limit(org),
          {:ok, monitor} <- Repo.insert(changeset) do
       broadcast(org, {:monitor_created, monitor})
-      audit_log(opts, :created, :monitor, monitor.id, org.id, metadata: %{"monitor_name" => monitor.name})
+
+      audit_log(opts, :created, :monitor, monitor.id, org.id,
+        metadata: %{"monitor_name" => monitor.name}
+      )
+
       {:ok, monitor}
     else
       {:error, :monitor_limit_reached} ->
@@ -87,7 +91,18 @@ defmodule Prikke.Monitors do
     case Repo.update(changeset) do
       {:ok, updated} ->
         broadcast(org, {:monitor_updated, updated})
-        changes = Audit.compute_changes(monitor, updated, [:name, :url, :method, :interval_seconds, :grace_period_seconds, :timeout_ms, :expected_status_code])
+
+        changes =
+          Audit.compute_changes(monitor, updated, [
+            :name,
+            :url,
+            :method,
+            :interval_seconds,
+            :grace_period_seconds,
+            :timeout_ms,
+            :expected_status_code
+          ])
+
         audit_log(opts, :updated, :monitor, updated.id, org.id, changes: changes)
         {:ok, updated}
 
@@ -104,7 +119,11 @@ defmodule Prikke.Monitors do
     case Repo.delete(monitor) do
       {:ok, monitor} ->
         broadcast(org, {:monitor_deleted, monitor})
-        audit_log(opts, :deleted, :monitor, monitor.id, org.id, metadata: %{"monitor_name" => monitor.name})
+
+        audit_log(opts, :deleted, :monitor, monitor.id, org.id,
+          metadata: %{"monitor_name" => monitor.name}
+        )
+
         {:ok, monitor}
 
       error ->
@@ -134,7 +153,10 @@ defmodule Prikke.Monitors do
 
     case result do
       {:ok, updated} ->
-        audit_log(opts, action, :monitor, updated.id, org.id, metadata: %{"monitor_name" => updated.name})
+        audit_log(opts, action, :monitor, updated.id, org.id,
+          metadata: %{"monitor_name" => updated.name}
+        )
+
         result
 
       _ ->

@@ -69,13 +69,23 @@ defmodule PrikkeWeb.MonitorLive.Index do
   @impl true
   def handle_event("delete", %{"id" => id}, socket) do
     monitor = Monitors.get_monitor!(socket.assigns.organization, id)
-    {:ok, _} = Monitors.delete_monitor(socket.assigns.organization, monitor, scope: socket.assigns.current_scope)
+
+    {:ok, _} =
+      Monitors.delete_monitor(socket.assigns.organization, monitor,
+        scope: socket.assigns.current_scope
+      )
+
     {:noreply, put_flash(socket, :info, "Monitor deleted")}
   end
 
   def handle_event("toggle", %{"id" => id}, socket) do
     monitor = Monitors.get_monitor!(socket.assigns.organization, id)
-    {:ok, _} = Monitors.toggle_monitor(socket.assigns.organization, monitor, scope: socket.assigns.current_scope)
+
+    {:ok, _} =
+      Monitors.toggle_monitor(socket.assigns.organization, monitor,
+        scope: socket.assigns.current_scope
+      )
+
     {:noreply, socket}
   end
 

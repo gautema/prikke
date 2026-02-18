@@ -120,7 +120,7 @@ defmodule PrikkeWeb.StatusHTML do
     today = Date.utc_today()
     latency_by_date = Map.new(daily_latency, fn entry -> {entry.date, entry} end)
 
-    for offset <- (-(days - 1))..0 do
+    for offset <- -(days - 1)..0 do
       date = Date.add(today, offset)
       {date, Map.get(latency_by_date, date)}
     end
@@ -162,7 +162,7 @@ defmodule PrikkeWeb.StatusHTML do
     today = Date.utc_today()
     precision_by_date = Map.new(daily_precision, fn entry -> {entry.date, entry} end)
 
-    for offset <- (-(days - 1))..0 do
+    for offset <- -(days - 1)..0 do
       date = Date.add(today, offset)
       {date, Map.get(precision_by_date, date)}
     end

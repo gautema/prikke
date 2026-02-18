@@ -414,7 +414,13 @@ defmodule PrikkeWeb.Api.TaskControllerTest do
       task = task_fixture(org)
 
       now = DateTime.utc_now() |> DateTime.truncate(:second)
-      {:ok, _} = Prikke.Executions.create_execution(%{task_id: task.id, organization_id: task.organization_id, scheduled_for: now})
+
+      {:ok, _} =
+        Prikke.Executions.create_execution(%{
+          task_id: task.id,
+          organization_id: task.organization_id,
+          scheduled_for: now
+        })
 
       {:ok, _} =
         Prikke.Executions.create_execution(%{

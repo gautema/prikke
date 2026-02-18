@@ -506,7 +506,7 @@ defmodule PrikkeWeb.TaskLive.Show do
               <% end %>
             </div>
           </div>
-
+          
     <!-- Badge -->
           <%= if @task.schedule_type == "cron" do %>
             <div>
@@ -532,7 +532,7 @@ defmodule PrikkeWeb.TaskLive.Show do
               </div>
             </div>
           <% end %>
-
+          
     <!-- Stats (24h) -->
           <%= if @stats.total > 0 do %>
             <div>

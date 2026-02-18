@@ -15,8 +15,8 @@ defmodule Prikke.Repo.Migrations.AddQueueToExecutions do
     # Partial index for the blocked_queues query: quickly find running/pending
     # executions that have a queue, scoped by org+queue.
     create index(:executions, [:organization_id, :queue, :status],
-      where: "queue IS NOT NULL AND status IN ('running', 'pending')",
-      name: :executions_queue_blocking_idx
-    )
+             where: "queue IS NOT NULL AND status IN ('running', 'pending')",
+             name: :executions_queue_blocking_idx
+           )
   end
 end

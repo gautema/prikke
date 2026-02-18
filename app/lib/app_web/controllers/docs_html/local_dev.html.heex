@@ -8,7 +8,8 @@
   <h2>The problem</h2>
   <p>
     When you integrate Runlater into your app, the production service calls your public URL to execute tasks.
-    But during development your app runs on <code class="bg-slate-100 px-2 py-1 rounded text-sm">localhost:3000</code>
+    But during development your app runs on
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">localhost:3000</code>
     &mdash; which Runlater can't reach. You'd normally need ngrok or a similar tunnel.
   </p>
   <p>
@@ -38,7 +39,8 @@ go run .</pre>
   </div>
 
   <p>
-    The emulator starts on <code class="bg-slate-100 px-2 py-1 rounded text-sm">http://localhost:8080</code>
+    The emulator starts on
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">http://localhost:8080</code>
     and shows colored logs in your terminal:
   </p>
 
@@ -59,8 +61,9 @@ go run .</pre>
 
   <h2>Point the SDK at the emulator</h2>
   <p>
-    The <code class="bg-slate-100 px-2 py-1 rounded text-sm">runlater-js</code> SDK supports a
-    <code class="bg-slate-100 px-2 py-1 rounded text-sm">baseUrl</code> option. Set it to the
+    The <code class="bg-slate-100 px-2 py-1 rounded text-sm">runlater-js</code>
+    SDK supports a <code class="bg-slate-100 px-2 py-1 rounded text-sm">baseUrl</code>
+    option. Set it to the
     emulator in development:
   </p>
 
@@ -96,15 +99,15 @@ RUNLATER_URL=http://localhost:8080</pre>
   </div>
 
   <p>
-    In production, leave <code class="bg-slate-100 px-2 py-1 rounded text-sm">RUNLATER_URL</code> unset
+    In production, leave <code class="bg-slate-100 px-2 py-1 rounded text-sm">RUNLATER_URL</code>
+    unset
     and the SDK uses the default (<code class="bg-slate-100 px-2 py-1 rounded text-sm">https://runlater.eu</code>).
   </p>
 
   <h2>How it works</h2>
   <p>
     The emulator implements the same REST API as production. When you create a task, it immediately executes
-    an HTTP request to your URL &mdash; typically your local app running on
-    <code class="bg-slate-100 px-2 py-1 rounded text-sm">localhost:3000</code>.
+    an HTTP request to your URL &mdash; typically your local app running on <code class="bg-slate-100 px-2 py-1 rounded text-sm">localhost:3000</code>.
   </p>
 
   <div class="overflow-x-auto mb-6">
@@ -124,7 +127,9 @@ RUNLATER_URL=http://localhost:8080</pre>
         </tr>
         <tr>
           <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.delay()</td>
-          <td class="p-3 border-b border-slate-100">Held for the delay duration, then executed</td>
+          <td class="p-3 border-b border-slate-100">
+            Held for the delay duration, then executed
+          </td>
           <td class="p-3 border-b border-slate-100">Executed immediately (1s delay)</td>
         </tr>
         <tr>
@@ -135,7 +140,9 @@ RUNLATER_URL=http://localhost:8080</pre>
         <tr>
           <td class="p-3 font-mono text-emerald-700">rl.cron()</td>
           <td class="p-3">Runs on schedule</td>
-          <td class="p-3">Stored, trigger manually via <code class="bg-slate-100 px-1 rounded">/trigger</code></td>
+          <td class="p-3">
+            Stored, trigger manually via <code class="bg-slate-100 px-1 rounded">/trigger</code>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -211,7 +218,8 @@ curl -X POST http://localhost:8080/in/stripe \
   <h2>Testing cron tasks</h2>
   <p>
     Cron tasks are stored but not automatically scheduled &mdash; that would defeat the purpose of a
-    dev server you start and stop freely. Use the <code class="bg-slate-100 px-2 py-1 rounded text-sm">/trigger</code>
+    dev server you start and stop freely. Use the
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">/trigger</code>
     endpoint to run them on demand:
   </p>
 
@@ -239,8 +247,10 @@ curl http://localhost:8080/api/v1/tasks/t_abc123/executions</pre>
   <h2>Docker networking</h2>
   <p>
     If you run the emulator in Docker and your app on the host, the emulator can't reach
-    <code class="bg-slate-100 px-2 py-1 rounded text-sm">localhost:3000</code> inside the container.
-    Use <code class="bg-slate-100 px-2 py-1 rounded text-sm">host.docker.internal</code> instead:
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">localhost:3000</code>
+    inside the container.
+    Use <code class="bg-slate-100 px-2 py-1 rounded text-sm">host.docker.internal</code>
+    instead:
   </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
@@ -258,8 +268,12 @@ docker run --network=host ghcr.io/runlater-eu/dev</pre>
   <ul>
     <li><strong>No authentication</strong> &mdash; any API key (or none) is accepted</li>
     <li><strong>No persistence</strong> &mdash; all data resets when you restart</li>
-    <li><strong>No retries</strong> &mdash; tasks execute once, so you see failures immediately</li>
-    <li><strong>No scheduling</strong> &mdash; delays and run_at are ignored, tasks run immediately</li>
+    <li>
+      <strong>No retries</strong> &mdash; tasks execute once, so you see failures immediately
+    </li>
+    <li>
+      <strong>No scheduling</strong> &mdash; delays and run_at are ignored, tasks run immediately
+    </li>
     <li><strong>1-second simulated delay</strong> &mdash; mimics real-world network latency</li>
     <li><strong>No rate limits, SSRF protection, or tier limits</strong></li>
   </ul>
@@ -288,7 +302,11 @@ docker run --network=host ghcr.io/runlater-eu/dev</pre>
         <tr>
           <td class="p-3 font-mono text-emerald-700">--no-color</td>
           <td class="p-3">false</td>
-          <td class="p-3">Disable colored output (also respects <code class="bg-slate-100 px-1 rounded">NO_COLOR</code> env var)</td>
+          <td class="p-3">
+            Disable colored output (also respects
+            <code class="bg-slate-100 px-1 rounded">NO_COLOR</code>
+            env var)
+          </td>
         </tr>
       </tbody>
     </table>
@@ -297,8 +315,10 @@ docker run --network=host ghcr.io/runlater-eu/dev</pre>
   <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded-r-lg my-8">
     <strong class="text-emerald-800">Source code</strong>
     <span class="text-emerald-700">
-      The dev emulator is open source at
-      <a href="https://github.com/runlater-eu/dev" class="text-emerald-700 underline">github.com/runlater-eu/dev</a>.
+      The dev emulator is open source at <a
+        href="https://github.com/runlater-eu/dev"
+        class="text-emerald-700 underline"
+      >github.com/runlater-eu/dev</a>.
       Zero external dependencies, ~13MB Docker image. Contributions welcome.
     </span>
   </div>

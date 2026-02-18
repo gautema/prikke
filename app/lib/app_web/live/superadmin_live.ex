@@ -211,7 +211,7 @@ defmodule PrikkeWeb.SuperadminLive do
           </div>
         </div>
       <% end %>
-
+      
     <!-- Upcoming Tasks -->
       <%= if @upcoming_tasks != [] do %>
         <div class="glass-card rounded-2xl mb-8">
@@ -250,7 +250,7 @@ defmodule PrikkeWeb.SuperadminLive do
           </div>
         </div>
       <% end %>
-
+      
     <!-- Platform Stats -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <.stat_card
@@ -532,7 +532,7 @@ defmodule PrikkeWeb.SuperadminLive do
           <h2 class="text-lg font-semibold text-slate-900">API Response Times</h2>
           <span class="text-xs text-slate-400">Last {@api_percentiles.count} requests</span>
         </div>
-
+        
     <!-- Overall percentiles -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div>
@@ -558,7 +558,7 @@ defmodule PrikkeWeb.SuperadminLive do
             <div class="text-lg font-bold text-slate-900">{@api_percentiles.count}</div>
           </div>
         </div>
-
+        
     <!-- Per-group breakdown -->
         <%= if @api_by_group != [] do %>
           <div class="border-t border-white/50 pt-4 mb-4">
@@ -608,7 +608,7 @@ defmodule PrikkeWeb.SuperadminLive do
             </div>
           </div>
         <% end %>
-
+        
     <!-- Slowest requests -->
         <%= if @api_slowest != [] do %>
           <div class="border-t border-white/50 pt-4">
@@ -666,7 +666,7 @@ defmodule PrikkeWeb.SuperadminLive do
           </div>
         <% end %>
       </div>
-
+      
     <!-- Execution Trend Chart -->
       <div class="glass-card rounded-2xl p-6 mb-8">
         <h2 class="text-lg font-semibold text-slate-900 mb-4">Execution Trend (14 days)</h2>

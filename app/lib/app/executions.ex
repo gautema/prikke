@@ -459,8 +459,7 @@ defmodule Prikke.Executions do
       from(e in Execution,
         where: e.organization_id == ^organization.id and e.scheduled_for >= ^seven_days_ago,
         select: %{
-          today_total:
-            count(fragment("CASE WHEN ? >= ? THEN 1 END", e.scheduled_for, ^today)),
+          today_total: count(fragment("CASE WHEN ? >= ? THEN 1 END", e.scheduled_for, ^today)),
           today_success:
             count(
               fragment(
@@ -496,10 +495,8 @@ defmodule Prikke.Executions do
               e.duration_ms
             ),
           week_total: count(),
-          week_success:
-            count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status)),
-          week_failed:
-            count(fragment("CASE WHEN ? = 'failed' THEN 1 END", e.status))
+          week_success: count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status)),
+          week_failed: count(fragment("CASE WHEN ? = 'failed' THEN 1 END", e.status))
         }
       )
       |> Repo.one()
@@ -622,10 +619,8 @@ defmodule Prikke.Executions do
             e.started_at,
             e.scheduled_for
           ),
-        avg:
-          avg(fragment("EXTRACT(EPOCH FROM (? - ?)) * 1000", e.started_at, e.scheduled_for)),
-        max:
-          max(fragment("EXTRACT(EPOCH FROM (? - ?)) * 1000", e.started_at, e.scheduled_for)),
+        avg: avg(fragment("EXTRACT(EPOCH FROM (? - ?)) * 1000", e.started_at, e.scheduled_for)),
+        max: max(fragment("EXTRACT(EPOCH FROM (? - ?)) * 1000", e.started_at, e.scheduled_for)),
         count: count(e.id)
       }
     )
@@ -666,7 +661,8 @@ defmodule Prikke.Executions do
            p50: row.p50_ms,
            p95: row.p95_ms,
            p99: row.p99_ms,
-           avg: if(row.request_count > 0, do: div(row.total_delay_ms, row.request_count), else: 0),
+           avg:
+             if(row.request_count > 0, do: div(row.total_delay_ms, row.request_count), else: 0),
            max: row.max_ms,
            count: row.request_count
          }}
@@ -802,10 +798,8 @@ defmodule Prikke.Executions do
               e.started_at,
               e.scheduled_for
             ),
-          avg:
-            avg(fragment("EXTRACT(EPOCH FROM (? - ?)) * 1000", e.started_at, e.scheduled_for)),
-          max:
-            max(fragment("EXTRACT(EPOCH FROM (? - ?)) * 1000", e.started_at, e.scheduled_for)),
+          avg: avg(fragment("EXTRACT(EPOCH FROM (? - ?)) * 1000", e.started_at, e.scheduled_for)),
+          max: max(fragment("EXTRACT(EPOCH FROM (? - ?)) * 1000", e.started_at, e.scheduled_for)),
           count: count(e.id)
         }
       }

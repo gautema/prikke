@@ -43,7 +43,8 @@ defmodule PrikkeWeb.TaskLive.New do
     timing_mode = params["timing_mode"] || socket.assigns.timing_mode
     schedule_type = if timing_mode == "cron", do: "cron", else: "once"
 
-    task_params = task_params |> Map.put("schedule_type", schedule_type) |> cast_notification_overrides()
+    task_params =
+      task_params |> Map.put("schedule_type", schedule_type) |> cast_notification_overrides()
 
     task_params =
       case timing_mode do
@@ -788,7 +789,7 @@ defmodule PrikkeWeb.TaskLive.New do
               </div>
             </div>
           </div>
-
+          
     <!-- Notifications -->
           <div class="glass-card rounded-2xl p-6">
             <div class="mb-4">
@@ -854,7 +855,7 @@ defmodule PrikkeWeb.TaskLive.New do
               </div>
             </div>
           </div>
-
+          
     <!-- Actions -->
           <div class="flex justify-end gap-4">
             <.link navigate={~p"/tasks"} class="px-4 py-2.5 text-slate-600 hover:text-slate-800">

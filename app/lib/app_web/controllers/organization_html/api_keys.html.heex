@@ -147,7 +147,9 @@
       </p>
       <div class="flex flex-col sm:flex-row sm:items-center gap-3">
         <div class="flex items-center gap-2 flex-1 bg-white/50 border border-white/50 rounded-md p-3">
-          <code class="flex-1 font-mono text-sm break-all select-all">{@organization.webhook_secret}</code>
+          <code class="flex-1 font-mono text-sm break-all select-all">
+            {@organization.webhook_secret}
+          </code>
           <button
             type="button"
             data-copy={@organization.webhook_secret}

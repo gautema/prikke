@@ -38,7 +38,10 @@ defmodule PrikkeWeb.MonitorLive.New do
 
   def handle_event("save", %{"monitor" => params}, socket) do
     params = cast_notification_overrides(params)
-    case Monitors.create_monitor(socket.assigns.organization, params, scope: socket.assigns.current_scope) do
+
+    case Monitors.create_monitor(socket.assigns.organization, params,
+           scope: socket.assigns.current_scope
+         ) do
       {:ok, monitor} ->
         {:noreply,
          socket

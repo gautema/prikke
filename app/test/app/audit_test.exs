@@ -162,7 +162,12 @@ defmodule Prikke.AuditTest do
       {:ok, monitor} =
         Prikke.Monitors.create_monitor(
           org,
-          %{name: "Test Monitor", schedule_type: "interval", interval_seconds: 3600, grace_period_seconds: 300},
+          %{
+            name: "Test Monitor",
+            schedule_type: "interval",
+            interval_seconds: 3600,
+            grace_period_seconds: 300
+          },
           scope: scope
         )
 

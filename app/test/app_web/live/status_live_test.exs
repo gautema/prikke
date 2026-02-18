@@ -67,7 +67,9 @@ defmodule PrikkeWeb.StatusLiveTest do
       # Enable badge
       html =
         view
-        |> element(~s{button[phx-click="enable_badge"][phx-value-type="task"][phx-value-id="#{task.id}"]})
+        |> element(
+          ~s{button[phx-click="enable_badge"][phx-value-type="task"][phx-value-id="#{task.id}"]}
+        )
         |> render_click()
 
       assert html =~ "Visible"
@@ -85,7 +87,9 @@ defmodule PrikkeWeb.StatusLiveTest do
 
       html =
         view
-        |> element(~s{button[phx-click="enable_badge"][phx-value-type="monitor"][phx-value-id="#{monitor.id}"]})
+        |> element(
+          ~s{button[phx-click="enable_badge"][phx-value-type="monitor"][phx-value-id="#{monitor.id}"]}
+        )
         |> render_click()
 
       assert html =~ "Visible"

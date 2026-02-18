@@ -6,13 +6,22 @@
 
   <h2>Prerequisites</h2>
   <ul>
-    <li>A Cloudflare Workers project with <a href="https://developers.cloudflare.com/workers/wrangler/" class="text-emerald-700">Wrangler</a> configured</li>
+    <li>
+      A Cloudflare Workers project with
+      <a href="https://developers.cloudflare.com/workers/wrangler/" class="text-emerald-700">
+        Wrangler
+      </a>
+      configured
+    </li>
     <li>A <a href="/users/register">Runlater account</a> (free tier works)</li>
     <li>Your Worker deployed to a public URL</li>
   </ul>
 
   <h2>SDK overview</h2>
-  <p>The <code class="bg-slate-100 px-2 py-1 rounded text-sm">runlater-js</code> SDK methods used in this guide:</p>
+  <p>
+    The <code class="bg-slate-100 px-2 py-1 rounded text-sm">runlater-js</code>
+    SDK methods used in this guide:
+  </p>
   <div class="overflow-x-auto mb-6">
     <table class="w-full text-sm border border-slate-200 rounded-lg">
       <thead class="bg-slate-50">
@@ -23,20 +32,32 @@
       </thead>
       <tbody>
         <tr>
-          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.send(url, opts)</td>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">
+            rl.send(url, opts)
+          </td>
           <td class="p-3 border-b border-slate-100">Queue a task for immediate execution</td>
         </tr>
         <tr>
-          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.delay(url, opts)</td>
-          <td class="p-3 border-b border-slate-100">Execute after a delay (e.g. <code class="bg-slate-100 px-1 rounded">"5m"</code>, <code class="bg-slate-100 px-1 rounded">"1h"</code>)</td>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">
+            rl.delay(url, opts)
+          </td>
+          <td class="p-3 border-b border-slate-100">
+            Execute after a delay (e.g. <code class="bg-slate-100 px-1 rounded">"5m"</code>, <code class="bg-slate-100 px-1 rounded">"1h"</code>)
+          </td>
         </tr>
         <tr>
-          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">rl.cron(name, opts)</td>
-          <td class="p-3 border-b border-slate-100">Create or update a recurring cron job (idempotent)</td>
+          <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">
+            rl.cron(name, opts)
+          </td>
+          <td class="p-3 border-b border-slate-100">
+            Create or update a recurring cron job (idempotent)
+          </td>
         </tr>
         <tr>
           <td class="p-3 font-mono text-emerald-700">rl.sync(opts)</td>
-          <td class="p-3">Declare all tasks at once &mdash; creates, updates, and removes to match</td>
+          <td class="p-3">
+            Declare all tasks at once &mdash; creates, updates, and removes to match
+          </td>
         </tr>
       </tbody>
     </table>
@@ -66,7 +87,9 @@
   </div>
 
   <p>
-    Add your API key as a Worker secret (this makes it available via the <code class="bg-slate-100 px-2 py-1 rounded text-sm">env</code> parameter in your Worker):
+    Add your API key as a Worker secret (this makes it available via the
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">env</code>
+    parameter in your Worker):
   </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
@@ -78,8 +101,8 @@
 
   <p>
     For setup scripts that run locally (not inside a Worker), your API key should be in your shell
-    environment or a local <code class="bg-slate-100 px-2 py-1 rounded text-sm">.env</code> file as
-    <code class="bg-slate-100 px-2 py-1 rounded text-sm">RUNLATER_KEY</code>.
+    environment or a local <code class="bg-slate-100 px-2 py-1 rounded text-sm">.env</code>
+    file as <code class="bg-slate-100 px-2 py-1 rounded text-sm">RUNLATER_KEY</code>.
   </p>
 
   <h2>Example: Nightly KV cleanup</h2>
@@ -204,12 +227,14 @@
   </div>
 
   <p>
-    The <code class="bg-slate-100 px-2 py-1 rounded text-sm">queue: "inventory"</code> parameter ensures
+    The <code class="bg-slate-100 px-2 py-1 rounded text-sm">queue: "inventory"</code>
+    parameter ensures
     inventory updates run one at a time &mdash; no race conditions when multiple orders come in simultaneously.
   </p>
 
   <p>
-    Note: In Cloudflare Workers, secrets are accessed via the <code class="bg-slate-100 px-2 py-1 rounded text-sm">env</code>
+    Note: In Cloudflare Workers, secrets are accessed via the
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">env</code>
     parameter passed to your fetch handler (not <code class="bg-slate-100 px-2 py-1 rounded text-sm">process.env</code>).
     The SDK is instantiated per-request since each request receives its own <code class="bg-slate-100 px-2 py-1 rounded text-sm">env</code>.
   </p>
@@ -264,7 +289,8 @@
   <h2>Example: Queued webhook processing</h2>
   <p>
     When your Worker receives a webhook from a third party and needs to forward it to a downstream service,
-    use <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.send()</code> to queue the processing with retries:
+    use <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.send()</code>
+    to queue the processing with retries:
   </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
@@ -294,7 +320,8 @@
 
   <h2>Advanced: Declarative task management</h2>
   <p>
-    Use <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.sync()</code> to define all your cron
+    Use <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.sync()</code>
+    to define all your cron
     tasks in code. Run it on deploy to keep tasks in sync:
   </p>
 
@@ -337,7 +364,8 @@
   <h2>Best practices</h2>
   <ul>
     <li>
-      <strong>Authenticate your cron endpoints.</strong> Anyone can call a public Worker URL. Verify requests
+      <strong>Authenticate your cron endpoints.</strong>
+      Anyone can call a public Worker URL. Verify requests
       using Runlater's <a href="/docs/webhooks">webhook signatures</a>
       (<code class="bg-slate-100 px-2 py-1 rounded text-sm">x-runlater-signature</code> header), or set a shared
       secret in the task headers and check it in your Worker:
@@ -352,22 +380,29 @@
       </div>
     </li>
     <li>
-      <strong>Keep handlers idempotent.</strong> Retries mean your endpoint may be called more than once.
-      Use KV's <code class="bg-slate-100 px-2 py-1 rounded text-sm">put</code> (which overwrites) instead of
+      <strong>Keep handlers idempotent.</strong>
+      Retries mean your endpoint may be called more than once.
+      Use KV's <code class="bg-slate-100 px-2 py-1 rounded text-sm">put</code>
+      (which overwrites) instead of
       append-only patterns.
     </li>
     <li>
-      <strong>Return 2xx for success, 4xx/5xx for failure.</strong> Runlater uses the HTTP status code to
+      <strong>Return 2xx for success, 4xx/5xx for failure.</strong>
+      Runlater uses the HTTP status code to
       determine if the task succeeded. A non-2xx response triggers a retry (up to the configured limit).
       Retries use exponential backoff.
     </li>
     <li>
-      <strong>Use queues for serial work.</strong> If two tasks shouldn't run at the same time (e.g. inventory
-      updates), use the <code class="bg-slate-100 px-2 py-1 rounded text-sm">queue</code> parameter to serialize them.
+      <strong>Use queues for serial work.</strong>
+      If two tasks shouldn't run at the same time (e.g. inventory
+      updates), use the <code class="bg-slate-100 px-2 py-1 rounded text-sm">queue</code>
+      parameter to serialize them.
     </li>
     <li>
-      <strong>Set up notifications.</strong> Configure email or Slack alerts in your
-      <a href="/organizations/notifications">organization settings</a> so you know immediately when a task fails.
+      <strong>Set up notifications.</strong>
+      Configure email or Slack alerts in your
+      <a href="/organizations/notifications">organization settings</a>
+      so you know immediately when a task fails.
     </li>
   </ul>
 

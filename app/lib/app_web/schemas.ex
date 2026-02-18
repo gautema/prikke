@@ -182,14 +182,12 @@ defmodule PrikkeWeb.Schemas do
         notify_on_failure: %Schema{
           type: :boolean,
           nullable: true,
-          description:
-            "Override org-level failure notification setting. null = use org default."
+          description: "Override org-level failure notification setting. null = use org default."
         },
         notify_on_recovery: %Schema{
           type: :boolean,
           nullable: true,
-          description:
-            "Override org-level recovery notification setting. null = use org default."
+          description: "Override org-level recovery notification setting. null = use org default."
         }
       },
       example: %{
@@ -460,14 +458,12 @@ defmodule PrikkeWeb.Schemas do
         notify_on_failure: %Schema{
           type: :boolean,
           nullable: true,
-          description:
-            "Override org-level failure notification setting. null = use org default."
+          description: "Override org-level failure notification setting. null = use org default."
         },
         notify_on_recovery: %Schema{
           type: :boolean,
           nullable: true,
-          description:
-            "Override org-level recovery notification setting. null = use org default."
+          description: "Override org-level recovery notification setting. null = use org default."
         },
         last_ping_at: %Schema{
           type: :string,
@@ -540,14 +536,12 @@ defmodule PrikkeWeb.Schemas do
         notify_on_failure: %Schema{
           type: :boolean,
           nullable: true,
-          description:
-            "Override org-level failure notification setting. null = use org default."
+          description: "Override org-level failure notification setting. null = use org default."
         },
         notify_on_recovery: %Schema{
           type: :boolean,
           nullable: true,
-          description:
-            "Override org-level recovery notification setting. null = use org default."
+          description: "Override org-level recovery notification setting. null = use org default."
         }
       },
       example: %{

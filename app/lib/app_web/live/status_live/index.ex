@@ -81,28 +81,34 @@ defmodule PrikkeWeb.StatusLive.Index do
       "task" ->
         task = Tasks.get_task!(org, id)
         {:ok, _} = Tasks.enable_badge(org, task)
+
         Audit.log(scope, :enabled, :status_page_badge, id,
           organization_id: org.id,
           metadata: %{"resource_type" => "task", "resource_name" => task.name}
         )
+
         {:noreply, assign(socket, :tasks, Tasks.list_tasks(org, type: "cron"))}
 
       "monitor" ->
         monitor = Monitors.get_monitor!(org, id)
         {:ok, _} = Monitors.enable_badge(org, monitor)
+
         Audit.log(scope, :enabled, :status_page_badge, id,
           organization_id: org.id,
           metadata: %{"resource_type" => "monitor", "resource_name" => monitor.name}
         )
+
         {:noreply, assign(socket, :monitors, Monitors.list_monitors(org))}
 
       "endpoint" ->
         endpoint = Endpoints.get_endpoint!(org, id)
         {:ok, _} = Endpoints.enable_badge(org, endpoint)
+
         Audit.log(scope, :enabled, :status_page_badge, id,
           organization_id: org.id,
           metadata: %{"resource_type" => "endpoint", "resource_name" => endpoint.name}
         )
+
         {:noreply, assign(socket, :endpoints, Endpoints.list_endpoints(org))}
     end
   end
@@ -115,28 +121,34 @@ defmodule PrikkeWeb.StatusLive.Index do
       "task" ->
         task = Tasks.get_task!(org, id)
         {:ok, _} = Tasks.disable_badge(org, task)
+
         Audit.log(scope, :disabled, :status_page_badge, id,
           organization_id: org.id,
           metadata: %{"resource_type" => "task", "resource_name" => task.name}
         )
+
         {:noreply, assign(socket, :tasks, Tasks.list_tasks(org, type: "cron"))}
 
       "monitor" ->
         monitor = Monitors.get_monitor!(org, id)
         {:ok, _} = Monitors.disable_badge(org, monitor)
+
         Audit.log(scope, :disabled, :status_page_badge, id,
           organization_id: org.id,
           metadata: %{"resource_type" => "monitor", "resource_name" => monitor.name}
         )
+
         {:noreply, assign(socket, :monitors, Monitors.list_monitors(org))}
 
       "endpoint" ->
         endpoint = Endpoints.get_endpoint!(org, id)
         {:ok, _} = Endpoints.disable_badge(org, endpoint)
+
         Audit.log(scope, :disabled, :status_page_badge, id,
           organization_id: org.id,
           metadata: %{"resource_type" => "endpoint", "resource_name" => endpoint.name}
         )
+
         {:noreply, assign(socket, :endpoints, Endpoints.list_endpoints(org))}
     end
   end
@@ -347,8 +359,8 @@ defmodule PrikkeWeb.StatusLive.Index do
 
         <%!-- Embed Codes Card --%>
         <% visible_tasks = Enum.filter(@tasks, & &1.badge_token)
-           visible_monitors = Enum.filter(@monitors, & &1.badge_token)
-           visible_endpoints = Enum.filter(@endpoints, & &1.badge_token) %>
+        visible_monitors = Enum.filter(@monitors, & &1.badge_token)
+        visible_endpoints = Enum.filter(@endpoints, & &1.badge_token) %>
         <%= if visible_tasks != [] || visible_monitors != [] || visible_endpoints != [] do %>
           <div class="glass-card rounded-2xl p-6">
             <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">
@@ -365,7 +377,9 @@ defmodule PrikkeWeb.StatusLive.Index do
                     <div>
                       <p class="text-xs text-slate-400 mb-1">Status</p>
                       <div class="flex items-center gap-2 bg-slate-100 rounded p-2">
-                        <code class="flex-1 text-xs text-slate-700 break-all select-all">![{task.name}]({@base_url}/badge/task/{task.badge_token}/status.svg)</code>
+                        <code class="flex-1 text-xs text-slate-700 break-all select-all">
+                          ![{task.name}]({@base_url}/badge/task/{task.badge_token}/status.svg)
+                        </code>
                         <button
                           type="button"
                           id={"copy-task-status-#{task.id}"}
@@ -381,7 +395,9 @@ defmodule PrikkeWeb.StatusLive.Index do
                     <div>
                       <p class="text-xs text-slate-400 mb-1">Uptime</p>
                       <div class="flex items-center gap-2 bg-slate-100 rounded p-2">
-                        <code class="flex-1 text-xs text-slate-700 break-all select-all">![{task.name} uptime]({@base_url}/badge/task/{task.badge_token}/uptime.svg)</code>
+                        <code class="flex-1 text-xs text-slate-700 break-all select-all">
+                          ![{task.name} uptime]({@base_url}/badge/task/{task.badge_token}/uptime.svg)
+                        </code>
                         <button
                           type="button"
                           id={"copy-task-uptime-#{task.id}"}
@@ -404,7 +420,9 @@ defmodule PrikkeWeb.StatusLive.Index do
                     <div>
                       <p class="text-xs text-slate-400 mb-1">Status</p>
                       <div class="flex items-center gap-2 bg-slate-100 rounded p-2">
-                        <code class="flex-1 text-xs text-slate-700 break-all select-all">![{monitor.name}]({@base_url}/badge/monitor/{monitor.badge_token}/status.svg)</code>
+                        <code class="flex-1 text-xs text-slate-700 break-all select-all">
+                          ![{monitor.name}]({@base_url}/badge/monitor/{monitor.badge_token}/status.svg)
+                        </code>
                         <button
                           type="button"
                           id={"copy-monitor-status-#{monitor.id}"}
@@ -420,7 +438,9 @@ defmodule PrikkeWeb.StatusLive.Index do
                     <div>
                       <p class="text-xs text-slate-400 mb-1">Uptime</p>
                       <div class="flex items-center gap-2 bg-slate-100 rounded p-2">
-                        <code class="flex-1 text-xs text-slate-700 break-all select-all">![{monitor.name} uptime]({@base_url}/badge/monitor/{monitor.badge_token}/uptime.svg)</code>
+                        <code class="flex-1 text-xs text-slate-700 break-all select-all">
+                          ![{monitor.name} uptime]({@base_url}/badge/monitor/{monitor.badge_token}/uptime.svg)
+                        </code>
                         <button
                           type="button"
                           id={"copy-monitor-uptime-#{monitor.id}"}
@@ -443,7 +463,9 @@ defmodule PrikkeWeb.StatusLive.Index do
                     <div>
                       <p class="text-xs text-slate-400 mb-1">Status</p>
                       <div class="flex items-center gap-2 bg-slate-100 rounded p-2">
-                        <code class="flex-1 text-xs text-slate-700 break-all select-all">![{endpoint.name}]({@base_url}/badge/endpoint/{endpoint.badge_token}/status.svg)</code>
+                        <code class="flex-1 text-xs text-slate-700 break-all select-all">
+                          ![{endpoint.name}]({@base_url}/badge/endpoint/{endpoint.badge_token}/status.svg)
+                        </code>
                         <button
                           type="button"
                           id={"copy-endpoint-status-#{endpoint.id}"}
@@ -459,7 +481,9 @@ defmodule PrikkeWeb.StatusLive.Index do
                     <div>
                       <p class="text-xs text-slate-400 mb-1">Uptime</p>
                       <div class="flex items-center gap-2 bg-slate-100 rounded p-2">
-                        <code class="flex-1 text-xs text-slate-700 break-all select-all">![{endpoint.name} uptime]({@base_url}/badge/endpoint/{endpoint.badge_token}/uptime.svg)</code>
+                        <code class="flex-1 text-xs text-slate-700 break-all select-all">
+                          ![{endpoint.name} uptime]({@base_url}/badge/endpoint/{endpoint.badge_token}/uptime.svg)
+                        </code>
                         <button
                           type="button"
                           id={"copy-endpoint-uptime-#{endpoint.id}"}
@@ -479,7 +503,6 @@ defmodule PrikkeWeb.StatusLive.Index do
           </div>
         <% end %>
       </div>
-
     </Layouts.app>
     """
   end

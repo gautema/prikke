@@ -38,6 +38,7 @@ defmodule PrikkeWeb.EndpointLive.New do
 
   def handle_event("save", %{"endpoint" => params}, socket) do
     params = cast_notification_overrides(params)
+
     case Endpoints.create_endpoint(socket.assigns.organization, params,
            scope: socket.assigns.current_scope
          ) do

@@ -179,7 +179,10 @@
     </li>
     <li>
       <strong>Per-monitor overrides:</strong>
-      Override notification settings for individual monitors without affecting organization-wide settings. Set <code class="bg-slate-100 px-2 py-1 rounded text-sm">notify_on_failure</code> and <code class="bg-slate-100 px-2 py-1 rounded text-sm">notify_on_recovery</code> from the monitor edit page or via the API.
+      Override notification settings for individual monitors without affecting organization-wide settings. Set
+      <code class="bg-slate-100 px-2 py-1 rounded text-sm">notify_on_failure</code>
+      and <code class="bg-slate-100 px-2 py-1 rounded text-sm">notify_on_recovery</code>
+      from the monitor edit page or via the API.
     </li>
   </ul>
 
@@ -221,8 +224,18 @@
   <div class="glass-card rounded-2xl overflow-hidden my-6">
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
       <pre
         data-tab-content="curl"
@@ -233,7 +246,12 @@ curl <span class="text-green-300">https://runlater.eu/ping/pm_your_token_here</s
 
 <span class="text-slate-500"># POST request</span>
 curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">https://runlater.eu/ping/pm_your_token_here</span></pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">ping</span>(<span class="text-green-300">"pm_your_token_here"</span>)</pre>
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">ping</span>(<span class="text-green-300">"pm_your_token_here"</span>)</pre>
     </div>
   </div>
 
@@ -285,12 +303,30 @@ curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">h
   <div class="glass-card rounded-2xl overflow-hidden my-6">
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
-      <pre data-tab-content="curl" class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl <span class="text-green-300">https://runlater.eu/api/v1/monitors</span> \
+      <pre
+        data-tab-content="curl"
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl <span class="text-green-300">https://runlater.eu/api/v1/monitors</span> \
   -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span></pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
 
 <span class="text-purple-300">const</span> <span class="text-sky-300">monitors</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">list</span>()</pre>
@@ -301,10 +337,24 @@ curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">h
   <div class="glass-card rounded-2xl overflow-hidden my-6">
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
-      <pre data-tab-content="curl" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">https://runlater.eu/api/v1/monitors</span> \
+      <pre
+        data-tab-content="curl"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">https://runlater.eu/api/v1/monitors</span> \
   -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
@@ -313,7 +363,12 @@ curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">h
     "interval_seconds": 86400,
     "grace_period_seconds": 1800
   }'</pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
 
 <span class="text-purple-300">const</span> <span class="text-sky-300">monitor</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">create</span>({
@@ -328,12 +383,30 @@ curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">h
   <div class="glass-card rounded-2xl overflow-hidden my-6">
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
-      <pre data-tab-content="curl" class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl <span class="text-green-300">https://runlater.eu/api/v1/monitors/:id</span> \
+      <pre
+        data-tab-content="curl"
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl <span class="text-green-300">https://runlater.eu/api/v1/monitors/:id</span> \
   -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span></pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
 
 <span class="text-purple-300">const</span> <span class="text-sky-300">monitor</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">get</span>(<span class="text-green-300">"MONITOR_ID"</span>)</pre>
@@ -344,17 +417,36 @@ curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">h
   <div class="glass-card rounded-2xl overflow-hidden my-6">
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
-      <pre data-tab-content="curl" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X <span class="text-purple-300">PUT</span> <span class="text-green-300">https://runlater.eu/api/v1/monitors/:id</span> \
+      <pre
+        data-tab-content="curl"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl -X <span class="text-purple-300">PUT</span> <span class="text-green-300">https://runlater.eu/api/v1/monitors/:id</span> \
   -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
     "name": "Updated Name",
     "grace_period_seconds": 3600
   }'</pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">update</span>(<span class="text-green-300">"MONITOR_ID"</span>, {
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">update</span>(<span class="text-green-300">"MONITOR_ID"</span>, {
   <span class="text-sky-300">name</span>: <span class="text-green-300">"Updated Name"</span>,
   <span class="text-sky-300">grace_period_seconds</span>: <span class="text-orange-300">3600</span>
 })</pre>
@@ -365,12 +457,30 @@ curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">h
   <div class="glass-card rounded-2xl overflow-hidden my-6">
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
-      <pre data-tab-content="curl" class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X <span class="text-purple-300">DELETE</span> <span class="text-green-300">https://runlater.eu/api/v1/monitors/:id</span> \
+      <pre
+        data-tab-content="curl"
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl -X <span class="text-purple-300">DELETE</span> <span class="text-green-300">https://runlater.eu/api/v1/monitors/:id</span> \
   -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span></pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
 
 <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">delete</span>(<span class="text-green-300">"MONITOR_ID"</span>)</pre>
@@ -381,12 +491,30 @@ curl -X <span class="text-purple-300">POST</span> <span class="text-green-300">h
   <div class="glass-card rounded-2xl overflow-hidden my-6">
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
-      <pre data-tab-content="curl" class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl <span class="text-green-300">https://runlater.eu/api/v1/monitors/:id/pings?limit=20</span> \
+      <pre
+        data-tab-content="curl"
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl <span class="text-green-300">https://runlater.eu/api/v1/monitors/:id/pings?limit=20</span> \
   -H <span class="text-green-300">"Authorization: Bearer pk_xxx.sk_xxx"</span></pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">const</span> <span class="text-sky-300">pings</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">pings</span>(<span class="text-green-300">"MONITOR_ID"</span>, <span class="text-orange-300">20</span>)</pre>
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">const</span> <span class="text-sky-300">pings</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">pings</span>(<span class="text-green-300">"MONITOR_ID"</span>, <span class="text-orange-300">20</span>)</pre>
     </div>
   </div>
 

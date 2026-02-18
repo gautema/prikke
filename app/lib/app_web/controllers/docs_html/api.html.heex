@@ -36,12 +36,30 @@
     </div>
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
-      <pre data-tab-content="curl" class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://runlater.eu/api/v1/tasks \
+      <pre
+        data-tab-content="curl"
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl https://runlater.eu/api/v1/tasks \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
 
 <span class="text-purple-300">const</span> { <span class="text-sky-300">data</span> } = <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">tasks</span>.<span class="text-sky-300">list</span>()</pre>
@@ -60,12 +78,30 @@
     </div>
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
-      <pre data-tab-content="curl" class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://runlater.eu/api/v1/tasks/task_abc123 \
+      <pre
+        data-tab-content="curl"
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl https://runlater.eu/api/v1/tasks/task_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
 
 <span class="text-purple-300">const</span> <span class="text-sky-300">task</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">tasks</span>.<span class="text-sky-300">get</span>(<span class="text-green-300">"TASK_ID"</span>)</pre>
@@ -194,14 +230,20 @@
           <td class="py-2 pr-4"><code class="text-sky-600">notify_on_failure</code></td>
           <td class="py-2 pr-4 text-slate-500">boolean | null</td>
           <td class="py-2 text-slate-600">
-            Override org-level failure notification setting. <code>null</code> = use org default, <code>true</code> = always notify, <code>false</code> = never notify. (optional)
+            Override org-level failure notification setting. <code>null</code>
+            = use org default, <code>true</code>
+            = always notify, <code>false</code>
+            = never notify. (optional)
           </td>
         </tr>
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">notify_on_recovery</code></td>
           <td class="py-2 pr-4 text-slate-500">boolean | null</td>
           <td class="py-2 text-slate-600">
-            Override org-level recovery notification setting. <code>null</code> = use org default, <code>true</code> = always notify, <code>false</code> = never notify. (optional)
+            Override org-level recovery notification setting. <code>null</code>
+            = use org default, <code>true</code>
+            = always notify, <code>false</code>
+            = never notify. (optional)
           </td>
         </tr>
         <tr class="border-b border-slate-50">
@@ -223,8 +265,18 @@
     <div class="border-b border-slate-800">
       <div data-tab-group>
         <div class="flex border-b border-slate-700">
-          <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl — Immediate</button>
-          <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+          <button
+            data-tab="curl"
+            class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+          >
+            curl — Immediate
+          </button>
+          <button
+            data-tab="js"
+            class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+          >
+            Node.js
+          </button>
         </div>
         <pre
           data-tab-content="curl"
@@ -238,7 +290,12 @@
     <span class="text-sky-300">"method"</span>: <span class="text-green-300">"POST"</span>,
     <span class="text-sky-300">"body"</span>: <span class="text-green-300">"{\"event\": \"test\"}"</span>
   }'</pre>
-        <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">send</span>(<span class="text-green-300">"https://myapp.com/api/webhook"</span>, {
+        <pre
+          data-tab-content="js"
+          style="display:none"
+          phx-no-curly-interpolation
+          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">send</span>(<span class="text-green-300">"https://myapp.com/api/webhook"</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">"POST"</span>,
   <span class="text-sky-300">body</span>: { <span class="text-sky-300">event</span>: <span class="text-green-300">"test"</span> }
 })</pre>
@@ -247,8 +304,18 @@
     <div class="border-b border-slate-800">
       <div data-tab-group>
         <div class="flex border-b border-slate-700">
-          <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl — With named queue</button>
-          <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+          <button
+            data-tab="curl"
+            class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+          >
+            curl — With named queue
+          </button>
+          <button
+            data-tab="js"
+            class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+          >
+            Node.js
+          </button>
         </div>
         <pre
           data-tab-content="curl"
@@ -263,7 +330,12 @@
     <span class="text-sky-300">"body"</span>: <span class="text-green-300">"{\"user_id\": 42}"</span>,
     <span class="text-sky-300">"queue"</span>: <span class="text-green-300">"payments"</span>
   }'</pre>
-        <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">send</span>(<span class="text-green-300">"https://myapp.com/api/charge"</span>, {
+        <pre
+          data-tab-content="js"
+          style="display:none"
+          phx-no-curly-interpolation
+          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">send</span>(<span class="text-green-300">"https://myapp.com/api/charge"</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">"POST"</span>,
   <span class="text-sky-300">body</span>: { <span class="text-sky-300">user_id</span>: <span class="text-orange-300">42</span> },
   <span class="text-sky-300">queue</span>: <span class="text-green-300">"payments"</span>
@@ -273,8 +345,18 @@
     <div class="border-b border-slate-800">
       <div data-tab-group>
         <div class="flex border-b border-slate-700">
-          <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl — Delayed</button>
-          <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+          <button
+            data-tab="curl"
+            class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+          >
+            curl — Delayed
+          </button>
+          <button
+            data-tab="js"
+            class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+          >
+            Node.js
+          </button>
         </div>
         <pre
           data-tab-content="curl"
@@ -287,7 +369,12 @@
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/remind"</span>,
     <span class="text-sky-300">"delay"</span>: <span class="text-green-300">"15m"</span>
   }'</pre>
-        <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">delay</span>(<span class="text-green-300">"https://myapp.com/api/remind"</span>, {
+        <pre
+          data-tab-content="js"
+          style="display:none"
+          phx-no-curly-interpolation
+          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">delay</span>(<span class="text-green-300">"https://myapp.com/api/remind"</span>, {
   <span class="text-sky-300">delay</span>: <span class="text-green-300">"15m"</span>
 })</pre>
       </div>
@@ -295,8 +382,18 @@
     <div class="border-b border-slate-800">
       <div data-tab-group>
         <div class="flex border-b border-slate-700">
-          <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl — Scheduled</button>
-          <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+          <button
+            data-tab="curl"
+            class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+          >
+            curl — Scheduled
+          </button>
+          <button
+            data-tab="js"
+            class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+          >
+            Node.js
+          </button>
         </div>
         <pre
           data-tab-content="curl"
@@ -310,7 +407,12 @@
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/remind"</span>,
     <span class="text-sky-300">"scheduled_at"</span>: <span class="text-green-300">"2026-03-01T09:00:00Z"</span>
   }'</pre>
-        <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">schedule</span>(<span class="text-green-300">"https://myapp.com/api/remind"</span>, {
+        <pre
+          data-tab-content="js"
+          style="display:none"
+          phx-no-curly-interpolation
+          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">schedule</span>(<span class="text-green-300">"https://myapp.com/api/remind"</span>, {
   <span class="text-sky-300">at</span>: <span class="text-green-300">"2026-03-01T09:00:00Z"</span>
 })</pre>
       </div>
@@ -318,8 +420,18 @@
     <div>
       <div data-tab-group>
         <div class="flex border-b border-slate-700">
-          <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl — Recurring (cron)</button>
-          <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+          <button
+            data-tab="curl"
+            class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+          >
+            curl — Recurring (cron)
+          </button>
+          <button
+            data-tab="js"
+            class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+          >
+            Node.js
+          </button>
         </div>
         <pre
           data-tab-content="curl"
@@ -333,7 +445,12 @@
     <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/backup"</span>,
     <span class="text-sky-300">"cron_expression"</span>: <span class="text-green-300">"0 6 * * *"</span>
   }'</pre>
-        <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">cron</span>(<span class="text-green-300">"daily-backup"</span>, {
+        <pre
+          data-tab-content="js"
+          style="display:none"
+          phx-no-curly-interpolation
+          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">cron</span>(<span class="text-green-300">"daily-backup"</span>, {
   <span class="text-sky-300">url</span>: <span class="text-green-300">"https://myapp.com/api/backup"</span>,
   <span class="text-sky-300">schedule</span>: <span class="text-green-300">"0 6 * * *"</span>
 })</pre>
@@ -353,8 +470,18 @@
     </div>
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
       <pre
         data-tab-content="curl"
@@ -367,7 +494,12 @@
     <span class="text-sky-300">"cron_expression"</span>: <span class="text-green-300">"0 7 * * *"</span>,
     <span class="text-sky-300">"enabled"</span>: <span class="text-orange-300">false</span>
   }'</pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">tasks</span>.<span class="text-sky-300">update</span>(<span class="text-green-300">"TASK_ID"</span>, {
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">tasks</span>.<span class="text-sky-300">update</span>(<span class="text-green-300">"TASK_ID"</span>, {
   <span class="text-sky-300">cron_expression</span>: <span class="text-green-300">"0 7 * * *"</span>,
   <span class="text-sky-300">enabled</span>: <span class="text-orange-300">false</span>
 })</pre>
@@ -386,12 +518,30 @@
     </div>
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
-      <pre data-tab-content="curl" class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X DELETE https://runlater.eu/api/v1/tasks/task_abc123 \
+      <pre
+        data-tab-content="curl"
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl -X DELETE https://runlater.eu/api/v1/tasks/task_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">tasks</span>.<span class="text-sky-300">delete</span>(<span class="text-green-300">"TASK_ID"</span>)</pre>
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">tasks</span>.<span class="text-sky-300">delete</span>(<span class="text-green-300">"TASK_ID"</span>)</pre>
     </div>
   </div>
 
@@ -409,12 +559,30 @@
     </div>
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
-      <pre data-tab-content="curl" class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://runlater.eu/api/v1/tasks/task_abc123/trigger \
+      <pre
+        data-tab-content="curl"
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl -X POST https://runlater.eu/api/v1/tasks/task_abc123/trigger \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">tasks</span>.<span class="text-sky-300">trigger</span>(<span class="text-green-300">"TASK_ID"</span>)</pre>
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">tasks</span>.<span class="text-sky-300">trigger</span>(<span class="text-green-300">"TASK_ID"</span>)</pre>
     </div>
   </div>
 
@@ -481,12 +649,30 @@
     </div>
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
-      <pre data-tab-content="curl" class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://runlater.eu/api/v1/monitors \
+      <pre
+        data-tab-content="curl"
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl https://runlater.eu/api/v1/monitors \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
 
 <span class="text-purple-300">const</span> <span class="text-sky-300">monitors</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">list</span>()</pre>
@@ -507,12 +693,30 @@
     </div>
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
-      <pre data-tab-content="curl" class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://runlater.eu/api/v1/monitors/mon_abc123 \
+      <pre
+        data-tab-content="curl"
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl https://runlater.eu/api/v1/monitors/mon_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
 
 <span class="text-purple-300">const</span> <span class="text-sky-300">monitor</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">get</span>(<span class="text-green-300">"MONITOR_ID"</span>)</pre>
@@ -572,22 +776,34 @@
           <td class="py-2 pr-4"><code class="text-sky-600">notify_on_failure</code></td>
           <td class="py-2 pr-4 text-slate-500">boolean | null</td>
           <td class="py-2 text-slate-600">
-            Override org-level failure notification setting. <code>null</code> = use org default. (optional)
+            Override org-level failure notification setting. <code>null</code>
+            = use org default. (optional)
           </td>
         </tr>
         <tr>
           <td class="py-2 pr-4"><code class="text-sky-600">notify_on_recovery</code></td>
           <td class="py-2 pr-4 text-slate-500">boolean | null</td>
           <td class="py-2 text-slate-600">
-            Override org-level recovery notification setting. <code>null</code> = use org default. (optional)
+            Override org-level recovery notification setting. <code>null</code>
+            = use org default. (optional)
           </td>
         </tr>
       </table>
     </div>
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
       <pre
         data-tab-content="curl"
@@ -602,7 +818,12 @@
     <span class="text-sky-300">"interval_seconds"</span>: <span class="text-orange-300">86400</span>,
     <span class="text-sky-300">"grace_period_seconds"</span>: <span class="text-orange-300">1800</span>
   }'</pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">const</span> <span class="text-sky-300">monitor</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">create</span>({
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">const</span> <span class="text-sky-300">monitor</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">create</span>({
   <span class="text-sky-300">name</span>: <span class="text-green-300">"nightly-backup"</span>,
   <span class="text-sky-300">schedule</span>: <span class="text-green-300">"0 2 * * *"</span>,
   <span class="text-sky-300">grace</span>: <span class="text-orange-300">300</span>
@@ -624,8 +845,18 @@
     </div>
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
       <pre
         data-tab-content="curl"
@@ -637,7 +868,12 @@
   -d '{
     <span class="text-sky-300">"grace_period_seconds"</span>: <span class="text-orange-300">3600</span>
   }'</pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">update</span>(<span class="text-green-300">"MONITOR_ID"</span>, {
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">update</span>(<span class="text-green-300">"MONITOR_ID"</span>, {
   <span class="text-sky-300">grace_period_seconds</span>: <span class="text-orange-300">3600</span>
 })</pre>
     </div>
@@ -655,12 +891,30 @@
     </div>
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
-      <pre data-tab-content="curl" class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X DELETE https://runlater.eu/api/v1/monitors/mon_abc123 \
+      <pre
+        data-tab-content="curl"
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl -X DELETE https://runlater.eu/api/v1/monitors/mon_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
 
 <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">delete</span>(<span class="text-green-300">"MONITOR_ID"</span>)</pre>
@@ -746,18 +1000,37 @@
     </div>
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
-      <pre data-tab-content="curl" class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -fsS --retry 3 https://runlater.eu/ping/<span class="text-green-300">pm_your_token_here</span></pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">ping</span>(<span class="text-green-300">"pm_your_token_here"</span>)</pre>
+      <pre
+        data-tab-content="curl"
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl -fsS --retry 3 https://runlater.eu/ping/<span class="text-green-300">pm_your_token_here</span></pre>
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">ping</span>(<span class="text-green-300">"pm_your_token_here"</span>)</pre>
     </div>
   </div>
 
   <h2>Endpoints API</h2>
   <p>
     Inbound webhook endpoints receive events from external services and forward them to your app.
-    See the <a href="/docs/endpoints" class="text-emerald-600 hover:underline">Endpoints docs</a> for the full guide.
+    See the <a href="/docs/endpoints" class="text-emerald-600 hover:underline">Endpoints docs</a>
+    for the full guide.
   </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
@@ -772,12 +1045,30 @@
     </div>
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
-      <pre data-tab-content="curl" class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://runlater.eu/api/v1/endpoints \
+      <pre
+        data-tab-content="curl"
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl https://runlater.eu/api/v1/endpoints \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">const</span> <span class="text-sky-300">res</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints"</span>, {
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">const</span> <span class="text-sky-300">res</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints"</span>, {
   <span class="text-sky-300">headers</span>: { <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.<span class="text-sky-300">RUNLATER_KEY</span>}`</span> }
 })
 <span class="text-purple-300">const</span> { <span class="text-sky-300">data</span> } = <span class="text-purple-300">await</span> <span class="text-sky-300">res</span>.<span class="text-sky-300">json</span>()</pre>
@@ -798,12 +1089,30 @@
     </div>
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
-      <pre data-tab-content="curl" class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl https://runlater.eu/api/v1/endpoints/ep_abc123 \
+      <pre
+        data-tab-content="curl"
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl https://runlater.eu/api/v1/endpoints/ep_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">const</span> <span class="text-sky-300">res</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints/ENDPOINT_ID"</span>, {
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">const</span> <span class="text-sky-300">res</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints/ENDPOINT_ID"</span>, {
   <span class="text-sky-300">headers</span>: { <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.<span class="text-sky-300">RUNLATER_KEY</span>}`</span> }
 })
 <span class="text-purple-300">const</span> { <span class="text-sky-300">data</span> } = <span class="text-purple-300">await</span> <span class="text-sky-300">res</span>.<span class="text-sky-300">json</span>()</pre>
@@ -845,7 +1154,9 @@
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">use_queue</code></td>
           <td class="py-2 pr-4 text-slate-500">boolean</td>
-          <td class="py-2 text-slate-600">Serialized delivery (one at a time). false for parallel. (default: true)</td>
+          <td class="py-2 text-slate-600">
+            Serialized delivery (one at a time). false for parallel. (default: true)
+          </td>
         </tr>
         <tr>
           <td class="py-2 pr-4"><code class="text-sky-600">enabled</code></td>
@@ -856,8 +1167,18 @@
     </div>
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
       <pre
         data-tab-content="curl"
@@ -872,7 +1193,12 @@
     <span class="text-sky-300">"retry_attempts"</span>: <span class="text-orange-300">5</span>,
     <span class="text-sky-300">"use_queue"</span>: <span class="text-orange-300">true</span>
   }'</pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">const</span> <span class="text-sky-300">res</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints"</span>, {
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">const</span> <span class="text-sky-300">res</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints"</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">"POST"</span>,
   <span class="text-sky-300">headers</span>: {
     <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.<span class="text-sky-300">RUNLATER_KEY</span>}`</span>,
@@ -896,12 +1222,24 @@
         </span>
         <span class="font-mono text-sm">/endpoints/:id</span>
       </div>
-      <p class="text-slate-600 m-0">Update an endpoint. Only include the fields you want to change.</p>
+      <p class="text-slate-600 m-0">
+        Update an endpoint. Only include the fields you want to change.
+      </p>
     </div>
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
       <pre
         data-tab-content="curl"
@@ -914,7 +1252,12 @@
     <span class="text-sky-300">"retry_attempts"</span>: <span class="text-orange-300">0</span>,
     <span class="text-sky-300">"use_queue"</span>: <span class="text-orange-300">false</span>
   }'</pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints/ENDPOINT_ID"</span>, {
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints/ENDPOINT_ID"</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">"PUT"</span>,
   <span class="text-sky-300">headers</span>: {
     <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.<span class="text-sky-300">RUNLATER_KEY</span>}`</span>,
@@ -940,12 +1283,30 @@
     </div>
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
-      <pre data-tab-content="curl" class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X DELETE https://runlater.eu/api/v1/endpoints/ep_abc123 \
+      <pre
+        data-tab-content="curl"
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl -X DELETE https://runlater.eu/api/v1/endpoints/ep_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints/ENDPOINT_ID"</span>, {
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints/ENDPOINT_ID"</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">"DELETE"</span>,
   <span class="text-sky-300">headers</span>: { <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.<span class="text-sky-300">RUNLATER_KEY</span>}`</span> }
 })</pre>
@@ -1006,12 +1367,30 @@
     </div>
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
-      <pre data-tab-content="curl" class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">curl -X POST https://runlater.eu/api/v1/endpoints/ep_abc123/events/evt_456/replay \
+      <pre
+        data-tab-content="curl"
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl -X POST https://runlater.eu/api/v1/endpoints/ep_abc123/events/evt_456/replay \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints/ENDPOINT_ID/events/EVENT_ID/replay"</span>, {
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints/ENDPOINT_ID/events/EVENT_ID/replay"</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">"POST"</span>,
   <span class="text-sky-300">headers</span>: { <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.<span class="text-sky-300">RUNLATER_KEY</span>}`</span> }
 })</pre>
@@ -1138,8 +1517,18 @@
     </div>
     <div data-tab-group>
       <div class="flex border-b border-slate-700">
-        <button data-tab="curl" class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer">curl</button>
-        <button data-tab="js" class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer">Node.js</button>
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
       </div>
       <pre
         data-tab-content="curl"
@@ -1165,7 +1554,12 @@
     }],
     <span class="text-sky-300">"delete_removed"</span>: <span class="text-orange-300">true</span>
   }'</pre>
-      <pre data-tab-content="js" style="display:none" phx-no-curly-interpolation class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">sync</span>({
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">sync</span>({
   <span class="text-sky-300">tasks</span>: [{
     <span class="text-sky-300">key</span>: <span class="text-green-300">"daily-backup"</span>,
     <span class="text-sky-300">name</span>: <span class="text-green-300">"Daily backup"</span>,

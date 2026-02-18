@@ -7,7 +7,8 @@
 
   <h2>The problem</h2>
   <p>
-    When Stripe sends you a <code class="bg-slate-100 px-2 py-1 rounded text-sm">payment_intent.succeeded</code>
+    When Stripe sends you a
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">payment_intent.succeeded</code>
     webhook, your server has to be up, healthy, and fast enough to respond. If you're mid-deploy,
     scaling down, or having a bad minute &mdash; that webhook is gone. Stripe retries a few times over
     72 hours, but other services are less forgiving. Some don't retry at all.
@@ -39,15 +40,20 @@
   your-app.com/webhooks   &lt;-- can be down, slow, or mid-deploy</pre>
   </div>
 
-  <p>If your app is down when the webhook arrives, Runlater retries with exponential backoff &mdash;
+  <p>
+    If your app is down when the webhook arrives, Runlater retries with exponential backoff &mdash;
     up to 10 attempts. Every event is stored with full headers and body, so you can replay any
-    event from the dashboard or API.</p>
+    event from the dashboard or API.
+  </p>
 
   <h2>Quick start</h2>
 
   <h3>1. Create an endpoint</h3>
-  <p>Tell Runlater where to forward webhooks. You can do this from the
-    <a href="/endpoints">dashboard</a> or the API:</p>
+  <p>
+    Tell Runlater where to forward webhooks. You can do this from the
+    <a href="/endpoints">dashboard</a>
+    or the API:
+  </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
@@ -95,7 +101,8 @@ console.log(data.inbound_url)
 
   <h3>2. Point Stripe at the inbound URL</h3>
   <p>
-    Copy the <code class="bg-slate-100 px-2 py-1 rounded text-sm">inbound_url</code> from the response
+    Copy the <code class="bg-slate-100 px-2 py-1 rounded text-sm">inbound_url</code>
+    from the response
     and paste it into your Stripe webhook settings (or GitHub, Shopify, Twilio &mdash; any service that
     sends webhooks):
   </p>
@@ -111,13 +118,16 @@ console.log(data.inbound_url)
 
   <h3>3. Handle webhooks in your app</h3>
   <p>
-    Your app receives the forwarded webhook at the <code class="bg-slate-100 px-2 py-1 rounded text-sm">forward_url</code>
+    Your app receives the forwarded webhook at the
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">forward_url</code>
     you configured. The original method, headers, and body are preserved:
   </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">app/api/webhooks/stripe/route.ts (Next.js)</span>
+      <span class="text-xs text-slate-400 font-mono">
+        app/api/webhooks/stripe/route.ts (Next.js)
+      </span>
     </div>
     <pre
       phx-no-curly-interpolation
@@ -174,8 +184,12 @@ console.log(data.inbound_url)
       <tbody>
         <tr>
           <td class="p-3 border-b border-slate-100 font-semibold">Serial (default)</td>
-          <td class="p-3 border-b border-slate-100">Events are forwarded one at a time, in order</td>
-          <td class="p-3 border-b border-slate-100">Stripe, Shopify &mdash; order matters, duplicate processing is dangerous</td>
+          <td class="p-3 border-b border-slate-100">
+            Events are forwarded one at a time, in order
+          </td>
+          <td class="p-3 border-b border-slate-100">
+            Stripe, Shopify &mdash; order matters, duplicate processing is dangerous
+          </td>
         </tr>
         <tr>
           <td class="p-3 font-semibold">Parallel</td>
@@ -188,8 +202,9 @@ console.log(data.inbound_url)
 
   <p>
     Serial mode prevents race conditions. If Stripe sends
-    <code class="bg-slate-100 px-2 py-1 rounded text-sm">invoice.paid</code> and
-    <code class="bg-slate-100 px-2 py-1 rounded text-sm">invoice.payment_failed</code> in quick
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">invoice.paid</code>
+    and <code class="bg-slate-100 px-2 py-1 rounded text-sm">invoice.payment_failed</code>
+    in quick
     succession, serial delivery ensures you process them in the correct order.
   </p>
 
@@ -258,7 +273,8 @@ curl -X POST https://runlater.eu/api/v1/endpoints \
   </div>
 
   <p>
-    Copy each <code class="bg-slate-100 px-2 py-1 rounded text-sm">inbound_url</code> from the response
+    Copy each <code class="bg-slate-100 px-2 py-1 rounded text-sm">inbound_url</code>
+    from the response
     into the corresponding service's webhook settings. Done.
   </p>
 
@@ -305,7 +321,9 @@ curl -X POST https://runlater.eu/api/v1/endpoints \
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-      <span class="text-xs text-slate-400 font-mono">supabase/functions/shopify-webhook/index.ts</span>
+      <span class="text-xs text-slate-400 font-mono">
+        supabase/functions/shopify-webhook/index.ts
+      </span>
     </div>
     <pre
       phx-no-curly-interpolation
@@ -372,7 +390,9 @@ Deno.serve(<span class="text-purple-300">async</span> (req) => {
         </tr>
         <tr>
           <td class="p-3 border-b border-slate-100 font-mono text-emerald-700">GET</td>
-          <td class="p-3 border-b border-slate-100 font-mono text-sm">/api/v1/endpoints/:id/events</td>
+          <td class="p-3 border-b border-slate-100 font-mono text-sm">
+            /api/v1/endpoints/:id/events
+          </td>
           <td class="p-3 border-b border-slate-100">List recent inbound events</td>
         </tr>
         <tr>
@@ -385,39 +405,44 @@ Deno.serve(<span class="text-purple-300">async</span> (req) => {
   </div>
 
   <p>
-    All endpoints require an <code class="bg-slate-100 px-2 py-1 rounded text-sm">Authorization: Bearer</code>
-    header with your API key. See the
-    <a href="/api/v1/docs">interactive API docs</a> for full request/response schemas.
+    All endpoints require an
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">Authorization: Bearer</code>
+    header with your API key. See the <a href="/api/v1/docs">interactive API docs</a>
+    for full request/response schemas.
   </p>
 
   <h2>Best practices</h2>
   <ul>
     <li>
-      <strong>Use serial delivery for payment webhooks.</strong> Stripe, Shopify, and other payment
+      <strong>Use serial delivery for payment webhooks.</strong>
+      Stripe, Shopify, and other payment
       services can send events in rapid succession. Serial mode ensures you process them in order
       and don't accidentally double-charge or double-refund.
     </li>
     <li>
-      <strong>Keep your webhook handler idempotent.</strong> Even with serial delivery, the same event
+      <strong>Keep your webhook handler idempotent.</strong>
+      Even with serial delivery, the same event
       might be forwarded more than once (if your app returns an error and Runlater retries). Use
       the event ID or a deduplication key to prevent double processing.
     </li>
     <li>
-      <strong>Verify signatures in your handler.</strong> Runlater forwards original headers
+      <strong>Verify signatures in your handler.</strong>
+      Runlater forwards original headers
       byte-for-byte. Stripe's <code class="bg-slate-100 px-2 py-1 rounded text-sm">stripe-signature</code>,
       GitHub's <code class="bg-slate-100 px-2 py-1 rounded text-sm">x-hub-signature-256</code>, and
       Shopify's <code class="bg-slate-100 px-2 py-1 rounded text-sm">x-shopify-hmac-sha256</code>
       all work without changes.
     </li>
     <li>
-      <strong>Set up failure notifications.</strong> Configure email or Slack alerts in your
-      <a href="/organizations/notifications">organization settings</a> so you know immediately
+      <strong>Set up failure notifications.</strong>
+      Configure email or Slack alerts in your
+      <a href="/organizations/notifications">organization settings</a>
+      so you know immediately
       when webhook forwarding fails.
     </li>
     <li>
       <strong>Return quickly.</strong> Your handler should return 2xx within the timeout window.
-      If you need to do heavy processing, accept the webhook and queue the work separately using
-      <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.send()</code>.
+      If you need to do heavy processing, accept the webhook and queue the work separately using <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.send()</code>.
     </li>
   </ul>
 
@@ -426,7 +451,8 @@ Deno.serve(<span class="text-purple-300">async</span> (req) => {
     <span class="text-emerald-700">
       <a href="/users/register" class="text-emerald-700 underline">Create a free account</a>
       (3 endpoints on the free tier) and set up your first inbound endpoint in under 2 minutes.
-      See the <a href="/docs/endpoints" class="text-emerald-700 underline">endpoint documentation</a>
+      See the
+      <a href="/docs/endpoints" class="text-emerald-700 underline">endpoint documentation</a>
       for the full API reference.
     </span>
   </div>

@@ -263,7 +263,10 @@ defmodule PrikkeWeb.EndpointLive.Show do
               <dd class="text-sm font-medium mt-0.5">
                 <span class={[
                   "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium",
-                  if(@endpoint.notify_on_failure, do: "bg-emerald-100 text-emerald-700", else: "bg-slate-100 text-slate-600")
+                  if(@endpoint.notify_on_failure,
+                    do: "bg-emerald-100 text-emerald-700",
+                    else: "bg-slate-100 text-slate-600"
+                  )
                 ]}>
                   {if @endpoint.notify_on_failure, do: "On", else: "Off"}
                 </span>
@@ -276,7 +279,10 @@ defmodule PrikkeWeb.EndpointLive.Show do
               <dd class="text-sm font-medium mt-0.5">
                 <span class={[
                   "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium",
-                  if(@endpoint.notify_on_recovery, do: "bg-emerald-100 text-emerald-700", else: "bg-slate-100 text-slate-600")
+                  if(@endpoint.notify_on_recovery,
+                    do: "bg-emerald-100 text-emerald-700",
+                    else: "bg-slate-100 text-slate-600"
+                  )
                 ]}>
                   {if @endpoint.notify_on_recovery, do: "On", else: "Off"}
                 </span>
@@ -388,7 +394,6 @@ defmodule PrikkeWeb.EndpointLive.Show do
           }
         }
       </script>
-
     </Layouts.app>
     """
   end

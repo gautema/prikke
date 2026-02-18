@@ -39,16 +39,14 @@
         <div class="flex gap-0.5">
           <%= for {{date, status}, idx} <- Enum.with_index(@daily_uptime) do %>
             <div class="flex-1 bar-anchor" style={"anchor-name: --uptime-#{idx}"}>
-              <div
-                class={[
-                  "h-8 rounded-sm transition-opacity hover:opacity-80",
-                  case status do
-                    :up -> "bg-emerald-600"
-                    :down -> "bg-red-500"
-                    :unknown -> "bg-slate-200"
-                  end
-                ]}
-              />
+              <div class={[
+                "h-8 rounded-sm transition-opacity hover:opacity-80",
+                case status do
+                  :up -> "bg-emerald-600"
+                  :down -> "bg-red-500"
+                  :unknown -> "bg-slate-200"
+                end
+              ]} />
               <div
                 class="bar-tooltip px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap z-10"
                 style={"position-anchor: --uptime-#{idx}"}
@@ -87,10 +85,13 @@
         <div class="flex items-center gap-3 text-sm">
           <%= if @today_latency.request_count > 0 do %>
             <span class="text-slate-500">
-              p95: <span class={[
+              p95:
+              <span class={[
                 "font-semibold",
                 if(@today_latency.p95 <= 200_000, do: "text-emerald-600", else: "text-red-600")
-              ]}>{format_latency(@today_latency.p95)}</span>
+              ]}>
+                {format_latency(@today_latency.p95)}
+              </span>
             </span>
           <% else %>
             <span class="text-slate-400">No data yet today</span>
@@ -103,7 +104,10 @@
           <%= for {{date, entry}, idx} <- Enum.with_index(filled_days) do %>
             <% p95 = if(entry, do: entry.p95, else: 0) %>
             <% bar_height = if(p95 > 0, do: max(4, min(48, round(p95 / 10_000))), else: 4) %>
-            <div class="flex-1 flex items-end h-full bar-anchor" style={"anchor-name: --latency-#{idx}"}>
+            <div
+              class="flex-1 flex items-end h-full bar-anchor"
+              style={"anchor-name: --latency-#{idx}"}
+            >
               <div
                 class={[
                   "w-full rounded-sm transition-opacity hover:opacity-80",
@@ -152,28 +156,36 @@
           <div class="mt-4 pt-3 border-t border-white/30 grid grid-cols-4 gap-4 text-center">
             <div>
               <div class="text-xs text-slate-400">p50</div>
-              <div class="text-sm font-semibold text-slate-700">{format_latency(@today_latency.p50)}</div>
+              <div class="text-sm font-semibold text-slate-700">
+                {format_latency(@today_latency.p50)}
+              </div>
             </div>
             <div>
               <div class="text-xs text-slate-400">p95</div>
               <div class={[
                 "text-sm font-semibold",
                 if(@today_latency.p95 <= 200_000, do: "text-emerald-600", else: "text-red-600")
-              ]}>{format_latency(@today_latency.p95)}</div>
+              ]}>
+                {format_latency(@today_latency.p95)}
+              </div>
             </div>
             <div>
               <div class="text-xs text-slate-400">p99</div>
-              <div class="text-sm font-semibold text-slate-700">{format_latency(@today_latency.p99)}</div>
+              <div class="text-sm font-semibold text-slate-700">
+                {format_latency(@today_latency.p99)}
+              </div>
             </div>
             <div>
               <div class="text-xs text-slate-400">avg</div>
-              <div class="text-sm font-semibold text-slate-700">{format_latency(@today_latency.avg)}</div>
+              <div class="text-sm font-semibold text-slate-700">
+                {format_latency(@today_latency.avg)}
+              </div>
             </div>
           </div>
         <% end %>
       </div>
     </div>
-
+    
 <!-- Scheduling Precision -->
     <div class="glass-card rounded-2xl mb-8">
       <div class="px-4 py-3 border-b border-white/50 flex justify-between items-center">
@@ -181,10 +193,13 @@
         <div class="flex items-center gap-3 text-sm">
           <%= if @today_precision && @today_precision.count > 0 do %>
             <span class="text-slate-500">
-              p95: <span class={[
+              p95:
+              <span class={[
                 "font-semibold",
                 if(@today_precision.p95 <= 30_000, do: "text-emerald-600", else: "text-red-600")
-              ]}>{format_delay(@today_precision.p95)}</span>
+              ]}>
+                {format_delay(@today_precision.p95)}
+              </span>
             </span>
           <% else %>
             <span class="text-slate-400">No data yet today</span>
@@ -197,7 +212,10 @@
           <%= for {{date, entry}, idx} <- Enum.with_index(filled_precision) do %>
             <% p95 = if(entry, do: entry.p95, else: 0) %>
             <% bar_height = if(p95 > 0, do: max(4, min(48, round(p95 / 1_000))), else: 4) %>
-            <div class="flex-1 flex items-end h-full bar-anchor" style={"anchor-name: --precision-#{idx}"}>
+            <div
+              class="flex-1 flex items-end h-full bar-anchor"
+              style={"anchor-name: --precision-#{idx}"}
+            >
               <div
                 class={[
                   "w-full rounded-sm transition-opacity hover:opacity-80",
@@ -246,28 +264,36 @@
           <div class="mt-4 pt-3 border-t border-white/30 grid grid-cols-4 gap-4 text-center">
             <div>
               <div class="text-xs text-slate-400">p50</div>
-              <div class="text-sm font-semibold text-slate-700">{format_delay(@today_precision.p50)}</div>
+              <div class="text-sm font-semibold text-slate-700">
+                {format_delay(@today_precision.p50)}
+              </div>
             </div>
             <div>
               <div class="text-xs text-slate-400">p95</div>
               <div class={[
                 "text-sm font-semibold",
                 if(@today_precision.p95 <= 30_000, do: "text-emerald-600", else: "text-red-600")
-              ]}>{format_delay(@today_precision.p95)}</div>
+              ]}>
+                {format_delay(@today_precision.p95)}
+              </div>
             </div>
             <div>
               <div class="text-xs text-slate-400">p99</div>
-              <div class="text-sm font-semibold text-slate-700">{format_delay(@today_precision.p99)}</div>
+              <div class="text-sm font-semibold text-slate-700">
+                {format_delay(@today_precision.p99)}
+              </div>
             </div>
             <div>
               <div class="text-xs text-slate-400">avg</div>
-              <div class="text-sm font-semibold text-slate-700">{format_delay(@today_precision.avg)}</div>
+              <div class="text-sm font-semibold text-slate-700">
+                {format_delay(@today_precision.avg)}
+              </div>
             </div>
           </div>
         <% end %>
       </div>
     </div>
-
+    
 <!-- Open Incidents -->
     <%= if @open_incidents != [] do %>
       <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">

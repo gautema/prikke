@@ -361,17 +361,13 @@ defmodule Prikke.Notifications do
     {subject, email_log_type, title, message, detail} =
       case event_type do
         :failure ->
-          {"[Runlater] Multiple tasks failing",
-           "task_failure_throttled",
-           "Multiple Tasks Failing",
-           "Several tasks in your organization are failing.",
+          {"[Runlater] Multiple tasks failing", "task_failure_throttled",
+           "Multiple Tasks Failing", "Several tasks in your organization are failing.",
            "Latest failure: \"#{task.name}\""}
 
         :recovery ->
-          {"[Runlater] Multiple tasks recovered",
-           "task_recovery_throttled",
-           "Multiple Tasks Recovered",
-           "Several tasks in your organization have recovered.",
+          {"[Runlater] Multiple tasks recovered", "task_recovery_throttled",
+           "Multiple Tasks Recovered", "Several tasks in your organization have recovered.",
            "Latest recovery: \"#{task.name}\""}
       end
 
@@ -396,9 +392,7 @@ defmodule Prikke.Notifications do
       |> text_body(String.trim(text_body))
       |> html_body(html_body)
 
-    case Mailer.deliver_and_log(email, email_log_type,
-           organization_id: task.organization_id
-         ) do
+    case Mailer.deliver_and_log(email, email_log_type, organization_id: task.organization_id) do
       {:ok, _} ->
         Logger.info(
           "[Notifications] #{event_type} throttle notice sent to #{to_email} for org #{task.organization_id}"
