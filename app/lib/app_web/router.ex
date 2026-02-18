@@ -9,10 +9,12 @@ defmodule PrikkeWeb.Router do
     plug :fetch_live_flash
     plug :put_root_layout, html: {PrikkeWeb.Layouts, :root}
     plug :protect_from_forgery
+
     plug :put_secure_browser_headers, %{
       "strict-transport-security" => "max-age=31536000; includeSubDomains",
       "permissions-policy" => "camera=(), microphone=(), geolocation=()"
     }
+
     plug :fetch_current_scope_for_user
     plug :fetch_current_organization
     plug PrikkeWeb.Plugs.TrackPageview
@@ -27,6 +29,7 @@ defmodule PrikkeWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/llms.txt", LlmsController, :index
 
     # Documentation
     get "/docs", DocsController, :index

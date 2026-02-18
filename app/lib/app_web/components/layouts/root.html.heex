@@ -45,6 +45,7 @@
       {assigns[:page_title] || "Async Task Infrastructure for Europe"}
     </.live_title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="help" type="text/markdown" href="/llms.txt" />
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
     </script>
@@ -304,25 +305,46 @@
                   <p class="text-xs text-slate-400 uppercase tracking-wide py-2">
                     {@current_organization.name}
                   </p>
-                  <.link href={~p"/monitors"} class="block py-3 text-base text-slate-600 no-underline">
+                  <.link
+                    href={~p"/monitors"}
+                    class="block py-3 text-base text-slate-600 no-underline"
+                  >
                     Monitors
                   </.link>
-                  <.link href={~p"/status-page"} class="block py-3 text-base text-slate-600 no-underline">
+                  <.link
+                    href={~p"/status-page"}
+                    class="block py-3 text-base text-slate-600 no-underline"
+                  >
                     Status Page
                   </.link>
-                  <.link href={~p"/organizations/settings"} class="block py-3 text-base text-slate-600 no-underline">
+                  <.link
+                    href={~p"/organizations/settings"}
+                    class="block py-3 text-base text-slate-600 no-underline"
+                  >
                     Settings
                   </.link>
-                  <.link href={~p"/organizations/members"} class="block py-3 text-base text-slate-600 no-underline">
+                  <.link
+                    href={~p"/organizations/members"}
+                    class="block py-3 text-base text-slate-600 no-underline"
+                  >
                     Members
                   </.link>
-                  <.link href={~p"/organizations/notifications"} class="block py-3 text-base text-slate-600 no-underline">
+                  <.link
+                    href={~p"/organizations/notifications"}
+                    class="block py-3 text-base text-slate-600 no-underline"
+                  >
                     Notifications
                   </.link>
-                  <.link href={~p"/organizations/api-keys"} class="block py-3 text-base text-slate-600 no-underline">
+                  <.link
+                    href={~p"/organizations/api-keys"}
+                    class="block py-3 text-base text-slate-600 no-underline"
+                  >
                     API Keys
                   </.link>
-                  <.link href={~p"/organizations/audit"} class="block py-3 text-base text-slate-600 no-underline">
+                  <.link
+                    href={~p"/organizations/audit"}
+                    class="block py-3 text-base text-slate-600 no-underline"
+                  >
                     Audit Log
                   </.link>
                 </div>
@@ -330,7 +352,9 @@
               <%!-- Switch org section --%>
               <div class="py-2 border-t border-slate-100">
                 <%= if assigns[:organizations] && length(@organizations) > 1 do %>
-                  <p class="text-xs text-slate-400 uppercase tracking-wide py-2">Switch organization</p>
+                  <p class="text-xs text-slate-400 uppercase tracking-wide py-2">
+                    Switch organization
+                  </p>
                   <%= for org <- @organizations do %>
                     <%= if @current_organization && org.id == @current_organization.id do %>
                       <div class="flex items-center justify-between py-3 text-base text-slate-900">
