@@ -568,6 +568,7 @@ prikke/
 | Trigger.dev | Pivoted to AI | Same |
 | QStash | Basic, US-based | No cron UI, not EU |
 | Zeplo | UK, minimal | Very basic |
+| QuedUp (quedup.dev) | US, usage-based ($20/mo min) | Small, no established base |
 
 ## Go-to-Market
 
