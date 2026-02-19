@@ -662,7 +662,7 @@ defmodule PrikkeWeb.TaskLive.New do
                       const y = date.getUTCFullYear();
                       const h = String(date.getUTCHours()).padStart(2, "0");
                       const m = String(date.getUTCMinutes()).padStart(2, "0");
-                      label.textContent = "= " + d + " " + mon + " " + y + ", " + h + ":" + m + " UTC";
+                      label.textContent = d + " " + mon + " " + y + ", " + h + ":" + m + " UTC";
                     }
                   }
                 </script>
