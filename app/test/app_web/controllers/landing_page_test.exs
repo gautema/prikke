@@ -9,8 +9,7 @@ defmodule PrikkeWeb.LandingPageTest do
       # Check hero section
       assert html =~ "Async tasks without"
       assert html =~ "the infrastructure"
-      assert html =~ "owned and operated in Europe"
-      assert html =~ "forward webhooks"
+      assert html =~ "Owned and operated in Europe"
 
       # Check marketing header is present
       assert html =~ "runlater"
