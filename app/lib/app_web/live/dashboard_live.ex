@@ -783,14 +783,6 @@ defmodule PrikkeWeb.DashboardLive do
   end
 
   defp monitor_trend(assigns) do
-    total_monitors =
-      Enum.max_by(assigns.trend, fn {_, s} -> s.total end)
-      |> elem(1)
-      |> Map.get(:total)
-      |> max(1)
-
-    assigns = assign(assigns, :total_monitors, total_monitors)
-
     ~H"""
     <div class="px-6 py-4 border-b border-white/30">
       <div class="text-xs font-medium text-slate-500 mb-2">{length(@trend)}-day uptime</div>
@@ -805,13 +797,13 @@ defmodule PrikkeWeb.DashboardLive do
                 <%= if stats.down > 0 do %>
                   <div
                     class="bg-red-400 rounded-t-sm"
-                    style={"height: #{round(stats.down / @total_monitors * 100)}%"}
+                    style={"height: #{round(stats.down / stats.total * 100)}%"}
                   />
                 <% end %>
                 <%= if stats.degraded > 0 do %>
                   <div
                     class={["bg-amber-400", if(stats.down == 0, do: "rounded-t-sm", else: "")]}
-                    style={"height: #{round(stats.degraded / @total_monitors * 100)}%"}
+                    style={"height: #{round(stats.degraded / stats.total * 100)}%"}
                   />
                 <% end %>
                 <%= if stats.up > 0 do %>
