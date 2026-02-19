@@ -42,7 +42,10 @@
       </p>
     </div>
     <p class="text-slate-600 mb-4">
-      The scheduler ticks every 5 seconds with a 10-second lookahead window. Under normal conditions, tasks are claimed and started within seconds of their scheduled time. Higher latency may occur during traffic spikes.
+      The scheduler ticks every 5 seconds with a 10-second lookahead window. Under normal conditions, scheduled tasks are claimed and started within seconds of their scheduled time. Higher latency may occur during traffic spikes.
+    </p>
+    <p class="text-slate-600 mb-4">
+      Queued (immediate) tasks bypass the scheduler and are picked up by the next available worker, typically within 1–2 seconds.
     </p>
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">Webhook Delivery</h2>
