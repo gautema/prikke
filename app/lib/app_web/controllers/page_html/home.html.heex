@@ -17,7 +17,7 @@
         Async tasks without<br />the infrastructure.
       </h1>
       <p class="text-lg sm:text-xl text-slate-600 mb-8 max-w-[560px] mx-auto">
-        Queue delayed tasks, schedule recurring jobs, forward webhooks, and monitor everything. One API, zero infrastructure, owned and operated in Europe.
+        One API call to delay a task, schedule a cron, or queue a webhook. Retries, callbacks, and monitoring included. Owned and operated in Europe.
       </p>
       <div class="flex flex-col sm:flex-row gap-3 justify-center mb-10">
         <a
@@ -132,20 +132,9 @@
             <.icon name="hero-key" class="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 class="text-base font-semibold mb-1 text-slate-900">Idempotency</h3>
+            <h3 class="text-base font-semibold mb-1 text-slate-900">Idempotency & deduplication</h3>
             <p class="text-[15px] text-slate-600 m-0">
-              Pass an idempotency key and we guarantee exactly-once task creation. Safe to retry from your client without duplicates.
-            </p>
-          </div>
-        </div>
-        <div class="flex gap-4">
-          <div class="flex-shrink-0 w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
-            <.icon name="hero-funnel" class="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <h3 class="text-base font-semibold mb-1 text-slate-900">Deduplication</h3>
-            <p class="text-[15px] text-slate-600 m-0">
-              Idempotency keys prevent duplicate tasks. Retry the same request safely — we'll return the original result, not create a new task.
+              Pass an idempotency key and we guarantee exactly-once task creation. Retry the same request safely — we return the original result, never a duplicate.
             </p>
           </div>
         </div>
@@ -498,9 +487,12 @@
     
 <!-- Pricing -->
     <section class="py-14 border-t border-slate-200 text-center">
-      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-8">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3">
         Simple pricing
       </h2>
+      <p class="text-[15px] text-slate-500 mb-8">
+        Flat monthly price. No per-execution fees, no bill shock.
+      </p>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto text-left">
         <div class="glass-card rounded-2xl p-6">
           <h3 class="text-base font-semibold mb-2 text-slate-900">Free</h3>
