@@ -635,7 +635,8 @@ defmodule PrikkeWeb.TaskLive.New do
 
                       // If hidden has existing UTC value, convert to local for display
                       if (hidden.value && !input.value) {
-                        const utcDate = new Date(hidden.value + "Z");
+                        const raw = hidden.value.replace(/Z$/, "");
+                        const utcDate = new Date(raw + "Z");
                         const localDate = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
                         input.value = localDate.toISOString().slice(0, 16);
                         this.updateUtcLabel(utcDate, label);
