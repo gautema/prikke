@@ -20,6 +20,8 @@ defmodule Prikke.Application do
          pools: %{default: [size: 25, count: 4, conn_opts: [transport_opts: [timeout: 10_000]]]}},
         # Buffered execution counter (flushes to DB every 5s)
         Prikke.ExecutionCounter,
+        # Host blocker for rate-limited and down APIs (ETS-based, no DB)
+        Prikke.HostBlocker,
         # Task supervisor for async notifications
         {Task.Supervisor, name: Prikke.TaskSupervisor},
         # Start to serve requests, typically the last entry

@@ -41,6 +41,7 @@ defmodule Prikke.Worker do
 
   alias Prikke.Callbacks
   alias Prikke.Executions
+  alias Prikke.HostBlocker
   alias Prikke.Tasks
   alias Prikke.Notifications
   alias Prikke.WebhookSignature
@@ -163,28 +164,86 @@ defmodule Prikke.Worker do
       return_error(execution)
     else
       task = execution.task
-      Logger.info("[Worker] Executing task #{task.name} (#{task.id})")
+      host = parse_host(task.url)
+      org_id = task.organization_id
 
-      # Track start time with millisecond precision for accurate duration
-      start_time = System.monotonic_time(:millisecond)
-
-      result = make_request(task, execution)
-
-      # Calculate duration from monotonic clock (more accurate than timestamps)
-      duration_ms = System.monotonic_time(:millisecond) - start_time
-
-      case result do
-        {:ok, response} ->
-          handle_success(execution, response, duration_ms)
-
-        {:error, %Req.TransportError{reason: :timeout}} ->
-          handle_timeout(execution, duration_ms)
-
-        {:error, error} ->
-          handle_failure(execution, error, duration_ms)
+      if host && HostBlocker.blocked?(org_id, host) do
+        handle_blocked_host(execution, org_id, host)
+      else
+        execute_request(execution, task, host, org_id)
       end
     end
   end
+
+  defp handle_blocked_host(execution, org_id, host) do
+    blocked_until = HostBlocker.blocked_until(org_id, host)
+
+    reschedule_to =
+      blocked_until || DateTime.add(DateTime.utc_now(), 60, :second)
+
+    Logger.info(
+      "[Worker] Host #{host} is blocked for org #{String.slice(org_id, 0, 8)}, rescheduling execution #{execution.id}"
+    )
+
+    case Executions.reschedule_execution(execution, reschedule_to) do
+      {:ok, _} ->
+        :ok
+
+      {:error, reason} ->
+        Logger.error(
+          "[Worker] Failed to reschedule execution #{execution.id}: #{inspect(reason)}"
+        )
+    end
+  end
+
+  defp execute_request(execution, task, host, org_id) do
+    Logger.info("[Worker] Executing task #{task.name} (#{task.id})")
+
+    # Track start time with millisecond precision for accurate duration
+    start_time = System.monotonic_time(:millisecond)
+
+    result = make_request(task, execution)
+
+    # Calculate duration from monotonic clock (more accurate than timestamps)
+    duration_ms = System.monotonic_time(:millisecond) - start_time
+
+    case result do
+      {:ok, response} ->
+        if host, do: record_host_result(org_id, host, response)
+        handle_success(execution, response, duration_ms)
+
+      {:error, %Req.TransportError{reason: :timeout}} ->
+        if host, do: HostBlocker.record_failure(org_id, host)
+        handle_timeout(execution, duration_ms)
+
+      {:error, error} ->
+        if host, do: HostBlocker.record_failure(org_id, host)
+        handle_failure(execution, error, duration_ms)
+    end
+  end
+
+  defp record_host_result(org_id, host, response) do
+    cond do
+      response.status == 429 ->
+        retry_after_ms = parse_retry_after(response.headers)
+        HostBlocker.block_rate_limited(org_id, host, retry_after_ms)
+
+      response.status >= 500 ->
+        HostBlocker.record_failure(org_id, host)
+
+      true ->
+        HostBlocker.record_success(org_id, host)
+    end
+  end
+
+  defp parse_host(url) when is_binary(url) do
+    case URI.parse(url) do
+      %URI{host: host} when is_binary(host) and host != "" -> host
+      _ -> nil
+    end
+  end
+
+  defp parse_host(_), do: nil
 
   defp make_request(task, execution) do
     body = if task.method in ["POST", "PUT", "PATCH"], do: task.body || "", else: ""

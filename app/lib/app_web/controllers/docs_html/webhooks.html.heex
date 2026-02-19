@@ -126,9 +126,21 @@ app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; {
           <td class="py-3 px-4">Task marked failed (no retry)</td>
         </tr>
         <tr class="border-b border-slate-100">
+          <td class="py-3 px-4"><code class="text-orange-600">429</code></td>
+          <td class="py-3 px-4">Rate limited</td>
+          <td class="py-3 px-4">
+            Host blocked, all tasks to that host paused (see <a
+              href="#host-backoff"
+              class="text-emerald-600 hover:text-emerald-700"
+            >Smart Host Backoff</a>)
+          </td>
+        </tr>
+        <tr class="border-b border-slate-100">
           <td class="py-3 px-4"><code class="text-red-600">5xx</code></td>
           <td class="py-3 px-4">Server error</td>
-          <td class="py-3 px-4">Task retried with backoff</td>
+          <td class="py-3 px-4">
+            Task retried with backoff; host blocked after 3 consecutive failures
+          </td>
         </tr>
         <tr>
           <td class="py-3 px-4"><code class="text-slate-500">Timeout</code></td>
@@ -210,6 +222,65 @@ app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; {
     <strong class="text-emerald-800">Why no retries for cron?</strong>
     <span class="text-emerald-700">
       A minute-interval cron with 5 retries would create chaos - by the time retries finish, hundreds of scheduled runs would have stacked up. The next scheduled run is effectively your retry.
+    </span>
+  </div>
+
+  <h2 id="host-backoff">Smart Host Backoff</h2>
+  <p>
+    When a target API is rate-limiting or down, Runlater automatically pauses <strong>all</strong>
+    deliveries to that host for your organization. This prevents hammering a struggling API and respects rate limits across all your tasks.
+  </p>
+
+  <h3>429 Rate Limiting</h3>
+  <p>
+    When your target returns a <code class="text-orange-600">429 Too Many Requests</code>
+    response, Runlater blocks all deliveries to that host immediately. If a
+    <code>Retry-After</code>
+    header is present, we use that duration. Otherwise, we wait 60 seconds before retrying.
+  </p>
+  <p>
+    Any pending executions targeting the same host are automatically rescheduled to run after the backoff expires. Tasks targeting other hosts are not affected.
+  </p>
+
+  <h3>Down APIs (5xx / Connection Errors)</h3>
+  <p>
+    When a host returns 5xx errors or connection failures repeatedly, Runlater detects the pattern and backs off automatically:
+  </p>
+  <div class="overflow-x-auto my-6">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-white/50">
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Consecutive Failures</th>
+          <th class="text-left py-3 px-4 font-semibold text-slate-700">Action</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600">
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4">1&ndash;2</td>
+          <td class="py-3 px-4">Normal retry behavior (per-task retries still apply)</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4">3</td>
+          <td class="py-3 px-4">Host blocked for 30 seconds</td>
+        </tr>
+        <tr class="border-b border-slate-100">
+          <td class="py-3 px-4">Continued failures</td>
+          <td class="py-3 px-4">
+            Escalating backoff: 60s &rarr; 120s &rarr; 300s (max 5 minutes)
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    A single successful response resets the failure counter immediately.
+  </p>
+
+  <div class="bg-sky-50 border-l-4 border-sky-500 p-4 rounded-r-lg my-6">
+    <strong class="text-sky-800">Per-organization isolation:</strong>
+    <span class="text-sky-700">
+      Host blocking is scoped to your organization. If your tasks to <code>api.example.com</code>
+      are rate-limited, other organizations' tasks to the same host are not affected.
     </span>
   </div>
 

@@ -335,4 +335,133 @@ defmodule Prikke.WorkerTest do
       GenServer.stop(pid, :normal)
     end
   end
+
+  describe "host blocking" do
+    setup do
+      org = organization_fixture()
+      %{org: org}
+    end
+
+    test "worker reschedules execution when host is blocked", %{org: org} do
+      Process.flag(:trap_exit, true)
+
+      bypass = Bypass.open()
+      host = "localhost"
+
+      # Pre-block the host
+      Prikke.HostBlocker.block(org.id, host, 60_000, :rate_limited)
+
+      task = insert_task_for_bypass(org, "http://localhost:#{bypass.port}/webhook")
+      {:ok, execution} = Executions.create_execution_for_task(task, DateTime.utc_now())
+
+      {:ok, pid} = Worker.start_link()
+      Process.sleep(500)
+
+      # Execution should be rescheduled back to pending (not failed/success)
+      updated = Executions.get_execution(execution.id)
+      assert updated.status == "pending"
+      # scheduled_for should be in the future
+      assert DateTime.compare(updated.scheduled_for, DateTime.utc_now()) == :gt
+
+      # Clean up block
+      :ets.delete(:blocked_hosts, {org.id, host})
+
+      GenServer.stop(pid, :normal)
+    end
+
+    test "worker blocks host on 429 response", %{org: org} do
+      Process.flag(:trap_exit, true)
+
+      bypass = Bypass.open()
+
+      Bypass.expect_once(bypass, "POST", "/webhook", fn conn ->
+        conn
+        |> Plug.Conn.put_resp_header("retry-after", "120")
+        |> Plug.Conn.resp(429, "Too Many Requests")
+      end)
+
+      task = insert_task_for_bypass(org, "http://localhost:#{bypass.port}/webhook")
+      {:ok, _execution} = Executions.create_execution_for_task(task, DateTime.utc_now())
+
+      {:ok, pid} = Worker.start_link()
+      Process.sleep(500)
+
+      # Host should now be blocked
+      assert Prikke.HostBlocker.blocked?(org.id, "localhost")
+
+      # Clean up
+      :ets.delete(:blocked_hosts, {org.id, "localhost"})
+      :ets.delete(:host_failures, {org.id, "localhost"})
+
+      GenServer.stop(pid, :normal)
+    end
+
+    test "worker records failure on 5xx and blocks after threshold", %{org: org} do
+      Process.flag(:trap_exit, true)
+
+      bypass = Bypass.open()
+
+      # Allow 3 requests to trigger the failure threshold
+      Bypass.expect(bypass, "POST", "/webhook", fn conn ->
+        Plug.Conn.resp(conn, 503, "Service Unavailable")
+      end)
+
+      task = insert_task_for_bypass(org, "http://localhost:#{bypass.port}/webhook")
+
+      # Create 3 executions to trigger threshold
+      for _ <- 1..3 do
+        {:ok, _} = Executions.create_execution_for_task(task, DateTime.utc_now())
+      end
+
+      {:ok, pid} = Worker.start_link()
+      Process.sleep(1_500)
+
+      # After 3 consecutive 5xx responses, host should be blocked
+      assert Prikke.HostBlocker.blocked?(org.id, "localhost")
+
+      # Clean up
+      :ets.delete(:blocked_hosts, {org.id, "localhost"})
+      :ets.delete(:host_failures, {org.id, "localhost"})
+
+      GenServer.stop(pid, :normal)
+    end
+
+    test "worker resets failure count on success", %{org: org} do
+      Process.flag(:trap_exit, true)
+
+      bypass = Bypass.open()
+
+      # First request fails, second succeeds
+      call_count = :counters.new(1, [:atomics])
+
+      Bypass.expect(bypass, "POST", "/webhook", fn conn ->
+        count = :counters.get(call_count, 1) + 1
+        :counters.put(call_count, 1, count)
+
+        if count <= 2 do
+          Plug.Conn.resp(conn, 503, "Service Unavailable")
+        else
+          Plug.Conn.resp(conn, 200, "OK")
+        end
+      end)
+
+      task = insert_task_for_bypass(org, "http://localhost:#{bypass.port}/webhook")
+
+      # Create 3 executions: 2 will fail, then 1 will succeed and reset counter
+      for _ <- 1..3 do
+        {:ok, _} = Executions.create_execution_for_task(task, DateTime.utc_now())
+      end
+
+      {:ok, pid} = Worker.start_link()
+      Process.sleep(1_500)
+
+      # After success, host should NOT be blocked (counter was reset by the success)
+      refute Prikke.HostBlocker.blocked?(org.id, "localhost")
+
+      # Clean up
+      :ets.delete(:host_failures, {org.id, "localhost"})
+
+      GenServer.stop(pid, :normal)
+    end
+  end
 end

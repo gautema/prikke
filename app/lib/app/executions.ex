@@ -528,6 +528,21 @@ defmodule Prikke.Executions do
     |> Repo.delete_all()
   end
 
+  @doc """
+  Reschedule a running execution back to pending with a new scheduled_for time.
+  Used by the worker when a host is blocked (429/repeated failures).
+  Clears started_at so it can be claimed again when the block expires.
+  """
+  def reschedule_execution(execution, scheduled_for) do
+    execution
+    |> Ecto.Changeset.change(%{
+      status: "pending",
+      scheduled_for: DateTime.truncate(scheduled_for, :second),
+      started_at: nil
+    })
+    |> Repo.update()
+  end
+
   def recover_stale_executions(stale_threshold_minutes \\ 5) do
     cutoff = DateTime.add(DateTime.utc_now(), -stale_threshold_minutes, :minute)
 
