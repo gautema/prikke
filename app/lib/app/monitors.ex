@@ -407,9 +407,10 @@ defmodule Prikke.Monitors do
 
     # Use SQL window function to find gaps efficiently.
     # Each ping stores the expected_interval_seconds at the time it was recorded,
-    # so we use that per-ping threshold to avoid retroactive false downtime when
-    # the monitor interval is changed. Falls back to the current threshold for
-    # old pings that don't have the field set.
+    # so we use per-ping thresholds to avoid retroactive false downtime when the
+    # monitor interval is changed. Uses GREATEST of both sides of each gap so
+    # that transitions between intervals (e.g. 15min→1min) don't create false
+    # downtime at the boundary. Falls back to current interval for old pings.
     gaps =
       Repo.all(
         from(
@@ -421,13 +422,17 @@ defmodule Prikke.Monitors do
                 lag(received_at) OVER (ORDER BY received_at) AS gap_start,
                 received_at AS gap_end,
                 EXTRACT(EPOCH FROM (received_at - lag(received_at) OVER (ORDER BY received_at))) AS gap_seconds,
-                COALESCE(expected_interval_seconds, ?) + ? AS ping_threshold
+                GREATEST(
+                  COALESCE(expected_interval_seconds, ?),
+                  COALESCE(lag(expected_interval_seconds) OVER (ORDER BY received_at), ?)
+                ) + ? AS ping_threshold
               FROM monitor_pings
               WHERE monitor_id = ?
             ) sub
             WHERE gap_seconds > ping_threshold
             ORDER BY gap_end DESC
             """,
+            ^expected_interval,
             ^expected_interval,
             ^grace,
             ^monitor_id_binary
