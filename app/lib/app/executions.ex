@@ -518,6 +518,18 @@ defmodule Prikke.Executions do
     {today_stats, stats_7d}
   end
 
+  @doc """
+  Deletes all pending executions for a task.
+  Called when a task is soft-deleted to prevent queued work from running.
+  """
+  def cancel_pending_executions_for_task(%Task{} = task) do
+    from(e in Execution,
+      where: e.task_id == ^task.id,
+      where: e.status == "pending"
+    )
+    |> Repo.delete_all()
+  end
+
   def cleanup_old_executions(organization, retention_days) do
     cutoff = DateTime.add(DateTime.utc_now(), -retention_days, :day)
 

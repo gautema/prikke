@@ -452,12 +452,46 @@ defmodule Prikke.TasksTest do
   end
 
   describe "delete_task/2" do
-    test "deletes the task" do
+    test "soft-deletes the task (sets deleted_at, not visible in queries)" do
       org = organization_fixture()
       task = task_fixture(org)
 
-      assert {:ok, %Task{}} = Tasks.delete_task(org, task)
+      assert {:ok, %Task{} = deleted} = Tasks.delete_task(org, task)
+      assert deleted.deleted_at != nil
+      assert deleted.enabled == false
+      assert deleted.next_run_at == nil
+
+      # Not visible in normal queries
       assert_raise Ecto.NoResultsError, fn -> Tasks.get_task!(org, task.id) end
+      assert Tasks.get_task(org, task.id) == nil
+      assert Tasks.list_tasks(org) == []
+      assert Tasks.count_tasks(org) == 0
+    end
+
+    test "soft-deleted task still exists in database" do
+      org = organization_fixture()
+      task = task_fixture(org)
+
+      {:ok, _deleted} = Tasks.delete_task(org, task)
+
+      # Direct DB query confirms it still exists
+      assert Prikke.Repo.get(Task, task.id) != nil
+    end
+
+    test "cancels pending executions on delete" do
+      org = organization_fixture()
+      task = task_fixture(org)
+
+      # Create a pending execution
+      {:ok, _exec} =
+        Prikke.Executions.create_execution_for_task(task, DateTime.utc_now())
+
+      assert Prikke.Executions.count_task_executions(task) == 1
+
+      {:ok, _deleted} = Tasks.delete_task(org, task)
+
+      # Pending execution should be removed
+      assert Prikke.Executions.count_task_executions(task) == 0
     end
 
     test "with wrong organization raises" do
@@ -468,6 +502,91 @@ defmodule Prikke.TasksTest do
       assert_raise ArgumentError, "task does not belong to organization", fn ->
         Tasks.delete_task(other_org, task)
       end
+    end
+
+    test "soft-deleted tasks are excluded from list_queues" do
+      org = organization_fixture()
+      task = task_fixture(org, %{name: "Queued", queue: "payments"})
+
+      assert Tasks.list_queues(org) == ["payments"]
+
+      Tasks.delete_task(org, task)
+      assert Tasks.list_queues(org) == []
+    end
+
+    test "soft-deleted tasks are excluded from count_tasks_summary" do
+      org = organization_fixture()
+      task_fixture(org)
+
+      summary = Tasks.count_tasks_summary(org)
+      assert summary.total == 1
+
+      [task] = Tasks.list_tasks(org)
+      Tasks.delete_task(org, task)
+
+      summary = Tasks.count_tasks_summary(org)
+      assert summary.total == 0
+    end
+
+    test "soft-deleted tasks are excluded from list_upcoming_tasks" do
+      org = organization_fixture()
+      task = task_fixture(org)
+
+      assert Enum.any?(Tasks.list_upcoming_tasks(), &(&1.id == task.id))
+
+      Tasks.delete_task(org, task)
+
+      refute Enum.any?(Tasks.list_upcoming_tasks(), &(&1.id == task.id))
+    end
+  end
+
+  describe "purge_deleted_tasks/2" do
+    test "permanently deletes soft-deleted tasks older than retention" do
+      org = organization_fixture()
+      task = task_fixture(org)
+
+      # Soft-delete the task
+      {:ok, deleted} = Tasks.delete_task(org, task)
+
+      # Set deleted_at to 10 days ago
+      old_deleted_at =
+        DateTime.utc_now()
+        |> DateTime.add(-10, :day)
+        |> DateTime.truncate(:second)
+
+      {:ok, _} =
+        deleted
+        |> Ecto.Changeset.change(deleted_at: old_deleted_at)
+        |> Prikke.Repo.update()
+
+      # Purge with 7-day retention
+      {purged, _} = Tasks.purge_deleted_tasks(org, 7)
+      assert purged == 1
+
+      # Task should be gone from DB
+      assert Prikke.Repo.get(Task, task.id) == nil
+    end
+
+    test "does not purge recently deleted tasks" do
+      org = organization_fixture()
+      task = task_fixture(org)
+
+      {:ok, _deleted} = Tasks.delete_task(org, task)
+
+      # Purge with 7-day retention (task was just deleted)
+      {purged, _} = Tasks.purge_deleted_tasks(org, 7)
+      assert purged == 0
+
+      # Task should still exist
+      assert Prikke.Repo.get(Task, task.id) != nil
+    end
+
+    test "does not purge non-deleted tasks" do
+      org = organization_fixture()
+      _task = task_fixture(org)
+
+      {purged, _} = Tasks.purge_deleted_tasks(org, 0)
+      assert purged == 0
     end
   end
 

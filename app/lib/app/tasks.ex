@@ -92,6 +92,7 @@ defmodule Prikke.Tasks do
         order_by: [desc_nulls_last: t.last_execution_at, desc: t.inserted_at],
         select: t
       )
+      |> not_deleted()
 
     query =
       case queue do
@@ -128,7 +129,7 @@ defmodule Prikke.Tasks do
     type = Keyword.get(opts, :type)
     status = Keyword.get(opts, :status)
 
-    query = from(t in Task, where: t.organization_id == ^org.id)
+    query = from(t in Task, where: t.organization_id == ^org.id) |> not_deleted()
 
     query =
       case queue do
@@ -155,6 +156,7 @@ defmodule Prikke.Tasks do
     from(t in Task,
       where: t.organization_id == ^org.id,
       where: not is_nil(t.queue),
+      where: is_nil(t.deleted_at),
       distinct: true,
       select: t.queue,
       order_by: t.queue
@@ -169,6 +171,7 @@ defmodule Prikke.Tasks do
     Task
     |> where(organization_id: ^org.id)
     |> where([t], t.schedule_type == "cron")
+    |> not_deleted()
     |> order_by([t], desc: t.inserted_at)
     |> Repo.all()
   end
@@ -183,6 +186,7 @@ defmodule Prikke.Tasks do
       Task
       |> where(organization_id: ^org.id)
       |> where([t], t.schedule_type == "once")
+      |> not_deleted()
       |> order_by([t], desc: t.inserted_at)
 
     query =
@@ -202,6 +206,7 @@ defmodule Prikke.Tasks do
     Task
     |> where(organization_id: ^org.id)
     |> where(enabled: true)
+    |> not_deleted()
     |> order_by([t], desc: t.inserted_at)
     |> Repo.all()
   end
@@ -212,6 +217,7 @@ defmodule Prikke.Tasks do
   def get_task!(%Organization{} = org, id) do
     Task
     |> where(organization_id: ^org.id)
+    |> not_deleted()
     |> Repo.get!(id)
   end
 
@@ -221,6 +227,7 @@ defmodule Prikke.Tasks do
   def get_task(%Organization{} = org, id) do
     Task
     |> where(organization_id: ^org.id)
+    |> not_deleted()
     |> Repo.get(id)
   end
 
@@ -348,14 +355,20 @@ defmodule Prikke.Tasks do
   end
 
   @doc """
-  Deletes a task.
+  Soft-deletes a task by setting deleted_at, disabling it, and cancelling pending executions.
   """
   def delete_task(%Organization{} = org, %Task{} = task, opts \\ []) do
     if task.organization_id != org.id do
       raise ArgumentError, "task does not belong to organization"
     end
 
-    with {:ok, task} <- Repo.delete(task) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    changeset =
+      Ecto.Changeset.change(task, deleted_at: now, enabled: false, next_run_at: nil)
+
+    with {:ok, task} <- Repo.update(changeset) do
+      Prikke.Executions.cancel_pending_executions_for_task(task)
       broadcast(org, {:deleted, task})
 
       if task.schedule_type == "cron" do
@@ -453,6 +466,7 @@ defmodule Prikke.Tasks do
   def count_tasks(%Organization{} = org) do
     Task
     |> where(organization_id: ^org.id)
+    |> not_deleted()
     |> Repo.aggregate(:count)
   end
 
@@ -464,6 +478,7 @@ defmodule Prikke.Tasks do
     |> where(organization_id: ^org.id)
     |> where(enabled: true)
     |> where([t], t.schedule_type == "cron" or not is_nil(t.next_run_at))
+    |> not_deleted()
     |> Repo.aggregate(:count)
   end
 
@@ -474,6 +489,7 @@ defmodule Prikke.Tasks do
   def count_tasks_summary(%Organization{} = org) do
     from(t in Task,
       where: t.organization_id == ^org.id,
+      where: is_nil(t.deleted_at),
       select: %{
         total: count(),
         active:
@@ -509,6 +525,7 @@ defmodule Prikke.Tasks do
       where: t.organization_id == ^org.id,
       where: t.schedule_type == "once",
       where: is_nil(t.next_run_at),
+      where: is_nil(t.deleted_at),
       where: t.updated_at < ^cutoff
     )
     |> Repo.delete_all()
@@ -656,7 +673,7 @@ defmodule Prikke.Tasks do
   def get_task_by_badge_token(nil), do: nil
 
   def get_task_by_badge_token(token) do
-    from(t in Task, where: t.badge_token == ^token)
+    from(t in Task, where: t.badge_token == ^token, where: is_nil(t.deleted_at))
     |> Repo.one()
   end
 
@@ -697,6 +714,7 @@ defmodule Prikke.Tasks do
       where: t.organization_id == ^org.id,
       where: not is_nil(t.badge_token),
       where: t.schedule_type == "cron",
+      where: is_nil(t.deleted_at),
       order_by: [asc: t.name]
     )
     |> Repo.all()
@@ -715,6 +733,7 @@ defmodule Prikke.Tasks do
     from(t in Task,
       where: not is_nil(t.next_run_at),
       where: t.next_run_at > ^now,
+      where: is_nil(t.deleted_at),
       order_by: [asc: t.next_run_at],
       limit: ^limit,
       preload: [:organization]
@@ -726,14 +745,15 @@ defmodule Prikke.Tasks do
   Counts total tasks across all organizations.
   """
   def count_all_tasks do
-    Repo.aggregate(Task, :count)
+    from(t in Task, where: is_nil(t.deleted_at))
+    |> Repo.aggregate(:count)
   end
 
   @doc """
   Counts enabled tasks across all organizations.
   """
   def count_all_enabled_tasks do
-    from(t in Task, where: t.enabled == true)
+    from(t in Task, where: t.enabled == true, where: is_nil(t.deleted_at))
     |> Repo.aggregate(:count)
   end
 
@@ -744,6 +764,7 @@ defmodule Prikke.Tasks do
     limit = Keyword.get(opts, :limit, 10)
 
     from(t in Task,
+      where: is_nil(t.deleted_at),
       order_by: [desc: t.inserted_at],
       limit: ^limit,
       preload: [:organization]
@@ -774,6 +795,25 @@ defmodule Prikke.Tasks do
   end
 
   defp apply_status_filter(query, _unknown), do: query
+
+  @doc """
+  Permanently deletes soft-deleted tasks older than retention_days.
+  Called by cleanup to purge old soft-deleted tasks and their executions.
+  """
+  def purge_deleted_tasks(%Organization{} = org, retention_days) do
+    cutoff = DateTime.utc_now() |> DateTime.add(-retention_days, :day)
+
+    from(t in Task,
+      where: t.organization_id == ^org.id,
+      where: not is_nil(t.deleted_at),
+      where: t.deleted_at < ^cutoff
+    )
+    |> Repo.delete_all()
+  end
+
+  defp not_deleted(query) do
+    from(t in query, where: is_nil(t.deleted_at))
+  end
 
   ## Private: Audit Logging
 

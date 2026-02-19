@@ -156,10 +156,13 @@ defmodule Prikke.Cleanup do
         # Clean completed one-time tasks
         {tasks_deleted, _} = Tasks.cleanup_completed_once_tasks(org, retention_days)
 
+        # Permanently purge soft-deleted tasks past retention
+        {purged, _} = Tasks.purge_deleted_tasks(org, retention_days)
+
         # Clean old monitor pings (respects tier retention)
         {pings_deleted, _} = Monitors.cleanup_old_pings(org, retention_days)
 
-        {exec_acc + exec_deleted, task_acc + tasks_deleted, ping_acc + pings_deleted}
+        {exec_acc + exec_deleted, task_acc + tasks_deleted + purged, ping_acc + pings_deleted}
       end)
 
     # Clean expired idempotency keys (24-hour TTL)

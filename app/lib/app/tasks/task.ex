@@ -27,6 +27,7 @@ defmodule Prikke.Tasks.Task do
     field :badge_token, :string
     field :notify_on_failure, :boolean
     field :notify_on_recovery, :boolean
+    field :deleted_at, :utc_datetime
 
     # Virtual field for form editing
     field :headers_json, :string, virtual: true

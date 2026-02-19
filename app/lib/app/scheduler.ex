@@ -240,6 +240,7 @@ defmodule Prikke.Scheduler do
     due_tasks =
       from(t in Task,
         where: t.enabled == true and t.next_run_at <= ^lookahead_time,
+        where: is_nil(t.deleted_at),
         preload: [:organization]
       )
       |> Repo.all()
