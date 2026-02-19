@@ -268,7 +268,7 @@ defmodule Prikke.Endpoints do
     InboundEvent
     |> where(endpoint_id: ^endpoint.id)
     |> Repo.get!(id)
-    |> Repo.preload(:execution)
+    |> Repo.preload(execution: :task)
   end
 
   def count_inbound_events(%Endpoint{} = endpoint) do
@@ -354,20 +354,25 @@ defmodule Prikke.Endpoints do
 
     execution = event.execution || Repo.preload(event, :execution).execution
 
-    if is_nil(execution) do
-      {:error, :no_execution}
-    else
-      task = Repo.preload(execution, :task).task
-      now = DateTime.utc_now() |> DateTime.truncate(:second)
+    cond do
+      is_nil(execution) ->
+        {:error, :no_execution}
 
-      case Executions.create_execution_for_task(task, now) do
-        {:ok, new_execution} ->
-          Tasks.notify_workers()
-          {:ok, new_execution}
+      is_nil(Repo.preload(execution, :task).task) ->
+        {:error, :task_deleted}
 
-        error ->
-          error
-      end
+      true ->
+        task = Repo.preload(execution, :task).task
+        now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+        case Executions.create_execution_for_task(task, now) do
+          {:ok, new_execution} ->
+            Tasks.notify_workers()
+            {:ok, new_execution}
+
+          error ->
+            error
+        end
     end
   end
 

@@ -60,6 +60,9 @@ defmodule PrikkeWeb.EndpointLive.EventShow do
 
       {:error, :no_execution} ->
         {:noreply, put_flash(socket, :error, "Cannot replay: no linked execution")}
+
+      {:error, :task_deleted} ->
+        {:noreply, put_flash(socket, :error, "Cannot replay: linked task has been deleted")}
     end
   end
 
@@ -244,20 +247,24 @@ defmodule PrikkeWeb.EndpointLive.EventShow do
               </div>
             </div>
 
-            <div class="flex items-center gap-3">
-              <.link
-                navigate={~p"/tasks/#{@event.execution.task_id}"}
-                class="text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
-              >
-                <.icon name="hero-arrow-top-right-on-square" class="w-4 h-4" /> View Task
-              </.link>
-              <.link
-                navigate={~p"/tasks/#{@event.execution.task_id}/executions/#{@event.execution.id}"}
-                class="text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
-              >
-                <.icon name="hero-arrow-top-right-on-square" class="w-4 h-4" /> View Execution
-              </.link>
-            </div>
+            <%= if @event.execution.task do %>
+              <div class="flex items-center gap-3">
+                <.link
+                  navigate={~p"/tasks/#{@event.execution.task_id}"}
+                  class="text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
+                >
+                  <.icon name="hero-arrow-top-right-on-square" class="w-4 h-4" /> View Task
+                </.link>
+                <.link
+                  navigate={~p"/tasks/#{@event.execution.task_id}/executions/#{@event.execution.id}"}
+                  class="text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
+                >
+                  <.icon name="hero-arrow-top-right-on-square" class="w-4 h-4" /> View Execution
+                </.link>
+              </div>
+            <% else %>
+              <p class="text-sm text-slate-400 italic">Linked task has been deleted</p>
+            <% end %>
           </div>
         <% else %>
           <p class="text-sm text-slate-400 italic">No forwarding execution linked to this event</p>
