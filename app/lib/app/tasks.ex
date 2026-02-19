@@ -484,6 +484,13 @@ defmodule Prikke.Tasks do
               t.schedule_type,
               t.next_run_at
             )
+          ),
+        failed:
+          count(
+            fragment(
+              "CASE WHEN ? = 'failed' THEN 1 END",
+              t.last_execution_status
+            )
           )
       }
     )

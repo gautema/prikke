@@ -568,7 +568,7 @@ defmodule PrikkeWeb.DashboardLive do
       active_tasks: task_counts.active,
       total_tasks: task_counts.total,
       executions_today: exec_stats.total,
-      today_failed: exec_stats.failed,
+      today_failed: task_counts.failed,
       success_rate: success_rate,
       success_rate_7d: success_rate_7d,
       avg_duration_ms: exec_stats.avg_duration_ms,
