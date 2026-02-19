@@ -363,7 +363,7 @@ defmodule PrikkeWeb.TaskLiveTest do
         |> form("#task-form", timing_mode: "schedule")
         |> render_change()
 
-      assert html =~ "Scheduled Time (UTC)"
+      assert html =~ "Scheduled Time"
     end
 
     test "switching cron preset updates the preview", %{conn: conn, user: user} do

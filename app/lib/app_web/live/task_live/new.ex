@@ -592,32 +592,76 @@ defmodule PrikkeWeb.TaskLive.New do
               <%= if @timing_mode == "schedule" do %>
                 <div phx-feedback-for={@form[:scheduled_at].name}>
                   <label for="task_scheduled_at" class="block text-sm font-medium text-slate-700 mb-1">
-                    Scheduled Time (UTC)
+                    Scheduled Time
                   </label>
                   <input
                     type="datetime-local"
-                    name={@form[:scheduled_at].name}
                     id="task_scheduled_at"
-                    value={@form[:scheduled_at].value}
-                    phx-hook=".UtcDatetimePicker"
+                    phx-hook=".LocalDatetimePicker"
                     class={[
                       "w-full px-4 py-2.5 border rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600",
                       @form[:scheduled_at].errors != [] && "border-red-500",
                       @form[:scheduled_at].errors == [] && "border-slate-300"
                     ]}
                   />
+                  <input
+                    type="hidden"
+                    name={@form[:scheduled_at].name}
+                    id="task_scheduled_at_utc"
+                    value={@form[:scheduled_at].value}
+                  />
+                  <p id="task_scheduled_at_utc_label" class="mt-1 text-xs text-slate-500"></p>
                   <%= for msg <- Enum.map(@form[:scheduled_at].errors, &translate_error/1) do %>
                     <p class="mt-1 text-sm text-red-600 phx-no-feedback:hidden">{msg}</p>
                   <% end %>
                 </div>
-                <script :type={Phoenix.LiveView.ColocatedHook} name=".UtcDatetimePicker">
+                <script :type={Phoenix.LiveView.ColocatedHook} name=".LocalDatetimePicker">
                   export default {
                     mounted() {
+                      this.setupPicker();
+                    },
+                    updated() {
+                      this.setupPicker();
+                    },
+                    setupPicker() {
                       const input = this.el;
-                      // Set min to current UTC time
+                      const hidden = document.getElementById("task_scheduled_at_utc");
+                      const label = document.getElementById("task_scheduled_at_utc_label");
+
+                      // Set min to current local time
                       const now = new Date();
-                      const utcString = now.toISOString().slice(0, 16);
-                      input.min = utcString;
+                      const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+                      input.min = localNow.toISOString().slice(0, 16);
+
+                      // If hidden has existing UTC value, convert to local for display
+                      if (hidden.value &amp;&amp; !input.value) {
+                        const utcDate = new Date(hidden.value + "Z");
+                        const localDate = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
+                        input.value = localDate.toISOString().slice(0, 16);
+                        this.updateUtcLabel(utcDate, label);
+                      }
+
+                      input.addEventListener("input", () => {
+                        if (!input.value) {
+                          hidden.value = "";
+                          label.textContent = "";
+                          return;
+                        }
+                        const localDate = new Date(input.value);
+                        const utcISO = localDate.toISOString().slice(0, 16);
+                        hidden.value = utcISO;
+                        hidden.dispatchEvent(new Event("input", { bubbles: true }));
+                        this.updateUtcLabel(localDate, label);
+                      });
+                    },
+                    updateUtcLabel(date, label) {
+                      const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+                      const d = date.getUTCDate();
+                      const mon = months[date.getUTCMonth()];
+                      const y = date.getUTCFullYear();
+                      const h = String(date.getUTCHours()).padStart(2, "0");
+                      const m = String(date.getUTCMinutes()).padStart(2, "0");
+                      label.textContent = "= " + d + " " + mon + " " + y + ", " + h + ":" + m + " UTC";
                     }
                   }
                 </script>

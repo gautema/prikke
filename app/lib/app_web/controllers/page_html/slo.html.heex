@@ -42,10 +42,12 @@
       </p>
     </div>
     <p class="text-slate-600 mb-4">
-      <strong>Scheduled tasks</strong> (cron and one-time): the scheduler ticks every 5 seconds with a 10-second lookahead window. Workers claim pending executions within seconds. p95 latency is under 5 seconds.
+      <strong>Scheduled tasks</strong>
+      (cron and one-time): the scheduler ticks every 5 seconds with a 10-second lookahead window. Workers claim pending executions within seconds. p95 latency is under 5 seconds.
     </p>
     <p class="text-slate-600 mb-4">
-      <strong>Queued tasks</strong> (immediate): bypass the scheduler entirely and are picked up by the next available worker, typically within 1–2 seconds.
+      <strong>Queued tasks</strong>
+      (immediate): bypass the scheduler entirely and are picked up by the next available worker, typically within 1–2 seconds.
     </p>
 
     <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-4">Webhook Delivery</h2>

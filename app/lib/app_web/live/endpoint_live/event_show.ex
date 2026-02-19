@@ -192,7 +192,10 @@ defmodule PrikkeWeb.EndpointLive.EventShow do
                   <span class="text-slate-400 normal-case ml-1">(JSON)</span>
                 <% end %>
               </span>
-              <pre class="text-xs bg-slate-50 p-3 rounded-lg mt-1 overflow-x-auto whitespace-pre-wrap max-h-96 overflow-y-auto font-mono" phx-no-curly-interpolation><%= format_body(@event.body) %></pre>
+              <pre
+                class="text-xs bg-slate-50 p-3 rounded-lg mt-1 overflow-x-auto whitespace-pre-wrap max-h-96 overflow-y-auto font-mono"
+                phx-no-curly-interpolation
+              ><%= format_body(@event.body) %></pre>
             </div>
           <% else %>
             <div>
