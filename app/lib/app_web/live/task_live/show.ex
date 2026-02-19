@@ -11,7 +11,7 @@ defmodule PrikkeWeb.TaskLive.Show do
     org = get_organization(socket, session)
 
     if org do
-      case Tasks.get_task(org, id) do
+      case Tasks.get_task_including_deleted(org, id) do
         nil ->
           {:ok,
            socket
@@ -39,6 +39,7 @@ defmodule PrikkeWeb.TaskLive.Show do
            socket
            |> assign(:organization, org)
            |> assign(:task, task)
+           |> assign(:deleted, task.deleted_at != nil)
            |> assign(:executions, executions)
            |> assign(:stats, stats)
            |> assign(:latest_info, latest_info)
@@ -299,96 +300,113 @@ defmodule PrikkeWeb.TaskLive.Show do
       </div>
 
       <div class="glass-card rounded-2xl">
+        <%= if @deleted do %>
+          <div class="px-4 sm:px-6 py-3 bg-red-50 border-b border-red-100 flex items-center gap-2 rounded-t-2xl">
+            <.icon name="hero-trash" class="w-4 h-4 text-red-500" />
+            <span class="text-sm text-red-700 font-medium">
+              This task was deleted. Execution history is preserved below.
+            </span>
+          </div>
+        <% end %>
         <div class="px-4 sm:px-6 py-4 border-b border-white/50">
           <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
             <div>
               <div class="flex items-center gap-3 flex-wrap">
                 <h1 class="text-lg sm:text-xl font-bold text-slate-900">{@task.name}</h1>
-                <.task_status_badge task={@task} latest_info={@latest_info} />
+                <%= if @deleted do %>
+                  <span class="text-xs font-medium px-2 py-0.5 rounded bg-red-100 text-red-700">
+                    Deleted
+                  </span>
+                <% else %>
+                  <.task_status_badge task={@task} latest_info={@latest_info} />
+                <% end %>
               </div>
               <p class="text-sm text-slate-500 mt-1">
                 Created <.local_time id="task-created" datetime={@task.inserted_at} format="date" />
               </p>
             </div>
-            <div class="flex items-center gap-2">
-              <button
-                type="button"
-                id="test-url-btn"
-                phx-click="test_url"
-                disabled={@testing}
-                class={[
-                  "px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 cursor-pointer",
-                  !@testing && "text-slate-700 bg-white border border-slate-200 hover:bg-slate-50",
-                  @testing && "text-slate-400 bg-slate-50 border border-slate-100 cursor-not-allowed"
-                ]}
-              >
-                <%= if @testing do %>
-                  <.icon name="hero-arrow-path" class="w-4 h-4 animate-spin" /> Testing...
-                <% else %>
-                  <.icon name="hero-signal" class="w-4 h-4" /> Test
-                <% end %>
-              </button>
-              <button
-                type="button"
-                phx-click="run_now"
-                class="px-3 py-1.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition-colors cursor-pointer flex items-center gap-1.5"
-              >
-                <%= if get_status(@latest_info) in ["failed", "timeout"] do %>
-                  <.icon name="hero-arrow-path" class="w-4 h-4" /> Retry
-                <% else %>
-                  <.icon name="hero-play" class="w-4 h-4" /> Run Now
-                <% end %>
-              </button>
-              <div class="relative" id="task-actions-menu" phx-hook=".ClickOutside">
+            <%= unless @deleted do %>
+              <div class="flex items-center gap-2">
                 <button
                   type="button"
-                  phx-click="toggle_menu"
-                  class="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors cursor-pointer"
-                  aria-label="More actions"
+                  id="test-url-btn"
+                  phx-click="test_url"
+                  disabled={@testing}
+                  class={[
+                    "px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 cursor-pointer",
+                    !@testing && "text-slate-700 bg-white border border-slate-200 hover:bg-slate-50",
+                    @testing &&
+                      "text-slate-400 bg-slate-50 border border-slate-100 cursor-not-allowed"
+                  ]}
                 >
-                  <.icon name="hero-ellipsis-vertical" class="w-5 h-5" />
+                  <%= if @testing do %>
+                    <.icon name="hero-arrow-path" class="w-4 h-4 animate-spin" /> Testing...
+                  <% else %>
+                    <.icon name="hero-signal" class="w-4 h-4" /> Test
+                  <% end %>
                 </button>
-                <%= if @menu_open do %>
-                  <div class="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
-                    <%= if @task.schedule_type == "cron" do %>
+                <button
+                  type="button"
+                  phx-click="run_now"
+                  class="px-3 py-1.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                  <%= if get_status(@latest_info) in ["failed", "timeout"] do %>
+                    <.icon name="hero-arrow-path" class="w-4 h-4" /> Retry
+                  <% else %>
+                    <.icon name="hero-play" class="w-4 h-4" /> Run Now
+                  <% end %>
+                </button>
+                <div class="relative" id="task-actions-menu" phx-hook=".ClickOutside">
+                  <button
+                    type="button"
+                    phx-click="toggle_menu"
+                    class="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors cursor-pointer"
+                    aria-label="More actions"
+                  >
+                    <.icon name="hero-ellipsis-vertical" class="w-5 h-5" />
+                  </button>
+                  <%= if @menu_open do %>
+                    <div class="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
+                      <%= if @task.schedule_type == "cron" do %>
+                        <button
+                          type="button"
+                          phx-click="toggle"
+                          class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
+                        >
+                          <%= if @task.enabled do %>
+                            <.icon name="hero-pause" class="w-4 h-4 text-slate-400" /> Pause
+                          <% else %>
+                            <.icon name="hero-play" class="w-4 h-4 text-slate-400" /> Enable
+                          <% end %>
+                        </button>
+                      <% end %>
+                      <.link
+                        navigate={~p"/tasks/#{@task.id}/edit"}
+                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                      >
+                        <.icon name="hero-pencil" class="w-4 h-4 text-slate-400" /> Edit
+                      </.link>
                       <button
                         type="button"
-                        phx-click="toggle"
+                        phx-click="clone"
                         class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
                       >
-                        <%= if @task.enabled do %>
-                          <.icon name="hero-pause" class="w-4 h-4 text-slate-400" /> Pause
-                        <% else %>
-                          <.icon name="hero-play" class="w-4 h-4 text-slate-400" /> Enable
-                        <% end %>
+                        <.icon name="hero-document-duplicate" class="w-4 h-4 text-slate-400" /> Clone
                       </button>
-                    <% end %>
-                    <.link
-                      navigate={~p"/tasks/#{@task.id}/edit"}
-                      class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                    >
-                      <.icon name="hero-pencil" class="w-4 h-4 text-slate-400" /> Edit
-                    </.link>
-                    <button
-                      type="button"
-                      phx-click="clone"
-                      class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
-                    >
-                      <.icon name="hero-document-duplicate" class="w-4 h-4 text-slate-400" /> Clone
-                    </button>
-                    <div class="border-t border-slate-100 my-1"></div>
-                    <button
-                      type="button"
-                      phx-click="delete"
-                      data-confirm="Are you sure you want to delete this task? This cannot be undone."
-                      class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer"
-                    >
-                      <.icon name="hero-trash" class="w-4 h-4" /> Delete
-                    </button>
-                  </div>
-                <% end %>
+                      <div class="border-t border-slate-100 my-1"></div>
+                      <button
+                        type="button"
+                        phx-click="delete"
+                        data-confirm="Are you sure you want to delete this task? This cannot be undone."
+                        class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer"
+                      >
+                        <.icon name="hero-trash" class="w-4 h-4" /> Delete
+                      </button>
+                    </div>
+                  <% end %>
+                </div>
               </div>
-            </div>
+            <% end %>
           </div>
         </div>
 

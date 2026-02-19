@@ -9,7 +9,7 @@ defmodule PrikkeWeb.TaskLive.ExecutionShow do
     org = get_organization(socket, session)
 
     if org do
-      case Tasks.get_task(org, task_id) do
+      case Tasks.get_task_including_deleted(org, task_id) do
         nil ->
           {:ok,
            socket
@@ -24,6 +24,7 @@ defmodule PrikkeWeb.TaskLive.ExecutionShow do
              socket
              |> assign(:organization, org)
              |> assign(:task, task)
+             |> assign(:deleted, task.deleted_at != nil)
              |> assign(:execution, execution)
              |> assign(:page_title, "Execution Details")}
           else
@@ -88,6 +89,14 @@ defmodule PrikkeWeb.TaskLive.ExecutionShow do
       </div>
 
       <div class="glass-card rounded-2xl">
+        <%= if @deleted do %>
+          <div class="px-4 sm:px-6 py-3 bg-red-50 border-b border-red-100 flex items-center gap-2 rounded-t-2xl">
+            <.icon name="hero-trash" class="w-4 h-4 text-red-500" />
+            <span class="text-sm text-red-700 font-medium">
+              This task has been deleted. Execution history is preserved.
+            </span>
+          </div>
+        <% end %>
         <div class="px-4 sm:px-6 py-4 border-b border-white/50">
           <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
             <div>
@@ -100,7 +109,7 @@ defmodule PrikkeWeb.TaskLive.ExecutionShow do
                 <.local_time id="exec-scheduled" datetime={@execution.scheduled_for} format="full" />
               </p>
             </div>
-            <%= if @execution.status in ["failed", "timeout", "missed"] do %>
+            <%= if !@deleted and @execution.status in ["failed", "timeout", "missed"] do %>
               <button
                 phx-click="retry"
                 class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-600 transition-colors flex items-center gap-2"

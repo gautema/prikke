@@ -232,6 +232,16 @@ defmodule Prikke.Tasks do
   end
 
   @doc """
+  Gets a single task including soft-deleted ones.
+  Used for direct links (task show page, execution pages) so history stays accessible.
+  """
+  def get_task_including_deleted(%Organization{} = org, id) do
+    Task
+    |> where(organization_id: ^org.id)
+    |> Repo.get(id)
+  end
+
+  @doc """
   Creates a task for an organization.
 
   Enforces tier limits on cron intervals.
