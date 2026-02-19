@@ -551,7 +551,7 @@ defmodule PrikkeWeb.TaskLive.Edit do
                     input.min = localNow.toISOString().slice(0, 16);
 
                     // Convert existing UTC value to local for display
-                    if (hidden.value &amp;&amp; !input.value) {
+                    if (hidden.value && !input.value) {
                       const utcDate = new Date(hidden.value + "Z");
                       const localDate = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
                       input.value = localDate.toISOString().slice(0, 16);
