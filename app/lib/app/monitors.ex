@@ -597,16 +597,25 @@ defmodule Prikke.Monitors do
     since = DateTime.utc_now() |> DateTime.add(-days, :day)
     today = Date.utc_today()
 
-    # Query actual ping counts per day per monitor
-    ping_counts =
+    # Query actual ping counts AND dominant expected interval per day per monitor.
+    # Uses MODE() to find the most common expected_interval_seconds for each day,
+    # so historical days use the interval that was active then, not the current one.
+    ping_data =
       from(p in MonitorPing,
         where: p.monitor_id in ^monitor_ids and p.received_at >= ^since,
         group_by: [p.monitor_id, fragment("DATE(?)", p.received_at)],
-        select: {p.monitor_id, fragment("DATE(?)", p.received_at), count(p.id)}
+        select:
+          {p.monitor_id, fragment("DATE(?)", p.received_at), count(p.id),
+           fragment("MODE() WITHIN GROUP (ORDER BY ?)", p.expected_interval_seconds)}
       )
       |> Repo.all()
-      |> Enum.reduce(%{}, fn {monitor_id, date, count}, acc ->
-        Map.update(acc, monitor_id, %{date => count}, &Map.put(&1, date, count))
+      |> Enum.reduce(%{}, fn {monitor_id, date, count, interval}, acc ->
+        Map.update(
+          acc,
+          monitor_id,
+          %{date => {count, interval}},
+          &Map.put(&1, date, {count, interval})
+        )
       end)
 
     # Build status per day per monitor
@@ -614,13 +623,19 @@ defmodule Prikke.Monitors do
 
     monitors
     |> Map.new(fn monitor ->
-      full_day_expected = expected_daily_pings(monitor)
+      fallback_expected = expected_daily_pings(monitor)
       created_date = DateTime.to_date(monitor.inserted_at)
 
       days_list =
         Enum.map(0..(days - 1), fn offset ->
           date = Date.add(today, -days + 1 + offset)
-          actual = get_in(ping_counts, [monitor.id, date]) || 0
+          {actual, day_interval} = get_in(ping_data, [monitor.id, date]) || {0, nil}
+
+          # Use the interval that was active on that day, fall back to current
+          full_day_expected =
+            if is_integer(day_interval) and day_interval > 0,
+              do: div(86400, day_interval),
+              else: fallback_expected
 
           # Scale expected pings for partial days (today and creation date)
           expected =
