@@ -332,6 +332,70 @@ defmodule Prikke.MonitorsTest do
     end
   end
 
+  describe "build_event_timeline/2" do
+    test "changing interval does not create false downtime for old pings" do
+      user = user_fixture()
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org"})
+      # Start with 15 minute interval
+      monitor = monitor_fixture(org, %{interval_seconds: 900, grace_period_seconds: 60})
+
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+      # Insert pings at 15-minute intervals (normal under the old config)
+      for i <- [30, 15, 0] do
+        Repo.insert!(%Prikke.Monitors.MonitorPing{
+          monitor_id: monitor.id,
+          received_at: DateTime.add(now, -i * 60, :second),
+          expected_interval_seconds: 900
+        })
+      end
+
+      # Change interval to 1 minute
+      {:ok, updated} = Monitors.update_monitor(org, monitor, %{interval_seconds: 60})
+
+      timeline = Monitors.build_event_timeline(updated)
+
+      # Should show only uptime — the 15-min gaps were normal under the old interval
+      down_periods = Enum.filter(timeline, &(&1.type == :down))
+      assert down_periods == [], "Expected no downtime but got: #{inspect(down_periods)}"
+    end
+
+    test "detects real downtime based on per-ping interval" do
+      user = user_fixture()
+      {:ok, org} = Accounts.create_organization(user, %{name: "Test Org"})
+      monitor = monitor_fixture(org, %{interval_seconds: 60, grace_period_seconds: 60})
+
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+      # Insert pings: normal, then a 10-min gap, then normal again
+      Repo.insert!(%Prikke.Monitors.MonitorPing{
+        monitor_id: monitor.id,
+        received_at: DateTime.add(now, -12 * 60, :second),
+        expected_interval_seconds: 60
+      })
+
+      # 10-min gap here (should be detected as downtime with 60+60=120s threshold)
+      Repo.insert!(%Prikke.Monitors.MonitorPing{
+        monitor_id: monitor.id,
+        received_at: DateTime.add(now, -2 * 60, :second),
+        expected_interval_seconds: 60
+      })
+
+      # 1-min gap (within threshold, not downtime)
+      Repo.insert!(%Prikke.Monitors.MonitorPing{
+        monitor_id: monitor.id,
+        received_at: DateTime.add(now, -1 * 60, :second),
+        expected_interval_seconds: 60
+      })
+
+      timeline = Monitors.build_event_timeline(monitor)
+
+      down_periods = Enum.filter(timeline, &(&1.type == :down))
+      assert length(down_periods) == 1
+      assert hd(down_periods).duration_minutes == 10
+    end
+  end
+
   describe "mark_down!/1" do
     test "sets status to down" do
       user = user_fixture()

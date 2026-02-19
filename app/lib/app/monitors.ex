@@ -303,8 +303,14 @@ defmodule Prikke.Monitors do
           now = DateTime.utc_now() |> DateTime.truncate(:second)
           was_down = monitor.status == "down"
 
+          expected_interval = get_expected_interval_seconds(monitor)
+
           %MonitorPing{}
-          |> MonitorPing.changeset(%{monitor_id: monitor.id, received_at: now})
+          |> MonitorPing.changeset(%{
+            monitor_id: monitor.id,
+            received_at: now,
+            expected_interval_seconds: expected_interval
+          })
           |> Repo.insert!()
 
           next_expected = Monitor.compute_next_expected_at(monitor, now)
@@ -395,10 +401,15 @@ defmodule Prikke.Monitors do
     if expected_interval == 0, do: throw(:no_interval)
 
     threshold = expected_interval + monitor.grace_period_seconds
+    grace = monitor.grace_period_seconds
 
     {:ok, monitor_id_binary} = Ecto.UUID.dump(monitor.id)
 
-    # Use SQL window function to find gaps efficiently
+    # Use SQL window function to find gaps efficiently.
+    # Each ping stores the expected_interval_seconds at the time it was recorded,
+    # so we use that per-ping threshold to avoid retroactive false downtime when
+    # the monitor interval is changed. Falls back to the current threshold for
+    # old pings that don't have the field set.
     gaps =
       Repo.all(
         from(
@@ -409,15 +420,17 @@ defmodule Prikke.Monitors do
               SELECT
                 lag(received_at) OVER (ORDER BY received_at) AS gap_start,
                 received_at AS gap_end,
-                EXTRACT(EPOCH FROM (received_at - lag(received_at) OVER (ORDER BY received_at))) AS gap_seconds
+                EXTRACT(EPOCH FROM (received_at - lag(received_at) OVER (ORDER BY received_at))) AS gap_seconds,
+                COALESCE(expected_interval_seconds, ?) + ? AS ping_threshold
               FROM monitor_pings
               WHERE monitor_id = ?
             ) sub
-            WHERE gap_seconds > ?
+            WHERE gap_seconds > ping_threshold
             ORDER BY gap_end DESC
             """,
-            ^monitor_id_binary,
-            ^threshold
+            ^expected_interval,
+            ^grace,
+            ^monitor_id_binary
           ),
           select: %{
             gap_start: g.gap_start,
