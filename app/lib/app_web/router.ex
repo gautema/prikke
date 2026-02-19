@@ -204,6 +204,7 @@ defmodule PrikkeWeb.Router do
       live "/endpoints/new", EndpointLive.New, :new
       live "/endpoints/:id", EndpointLive.Show, :show
       live "/endpoints/:id/edit", EndpointLive.Edit, :edit
+      live "/endpoints/:endpoint_id/events/:event_id", EndpointLive.EventShow, :show
 
       live "/status-page", StatusLive.Index, :index
     end

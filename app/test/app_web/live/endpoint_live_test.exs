@@ -111,7 +111,7 @@ defmodule PrikkeWeb.EndpointLiveTest do
       {:ok, view, _html} = live(conn, ~p"/endpoints/#{endpoint.id}")
 
       assert render(view) =~ "POST"
-      assert has_element?(view, "button", "Replay")
+      assert has_element?(view, ~s{a[href*="/events/"]})
     end
   end
 

@@ -302,7 +302,10 @@ defmodule PrikkeWeb.EndpointLive.Show do
         <% else %>
           <div class="divide-y divide-slate-100">
             <%= for event <- @events do %>
-              <div class="py-3 flex items-center gap-3">
+              <.link
+                navigate={~p"/endpoints/#{@endpoint.id}/events/#{event.id}"}
+                class="py-3 flex items-center gap-3 hover:bg-slate-50 -mx-2 px-2 rounded-lg transition-colors cursor-pointer"
+              >
                 <span class="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded font-mono shrink-0">
                   {event.method}
                 </span>
@@ -319,24 +322,9 @@ defmodule PrikkeWeb.EndpointLive.Show do
                   ]}>
                     {event.execution.status}
                   </span>
-                  <.link
-                    navigate={~p"/tasks/#{event.execution.task_id}"}
-                    class="text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-100 font-medium shrink-0 px-2 py-1 rounded transition-colors"
-                    title="View forwarding task"
-                  >
-                    View Task
-                  </.link>
                 <% end %>
-                <button
-                  type="button"
-                  phx-click="replay"
-                  phx-value-id={event.id}
-                  class="text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-medium shrink-0 px-2 py-1 rounded transition-colors"
-                  title="Replay this event"
-                >
-                  Replay
-                </button>
-              </div>
+                <.icon name="hero-chevron-right" class="w-4 h-4 text-slate-400 shrink-0" />
+              </.link>
             <% end %>
           </div>
 
