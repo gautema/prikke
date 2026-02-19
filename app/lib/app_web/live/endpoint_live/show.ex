@@ -292,28 +292,6 @@ defmodule PrikkeWeb.EndpointLive.Show do
         </dl>
       </div>
 
-      <%!-- Public Badge --%>
-      <div class="glass-card rounded-2xl p-6 mb-6">
-        <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-3">
-          Public Badge
-        </h2>
-        <div class="flex items-center justify-between">
-          <p class="text-sm text-slate-500">
-            <%= if @endpoint.badge_token do %>
-              Badge is enabled and publicly visible.
-            <% else %>
-              Enable badges and manage your public status page.
-            <% end %>
-          </p>
-          <.link
-            navigate={~p"/status-page"}
-            class="text-sm font-medium text-emerald-600 hover:text-emerald-700"
-          >
-            Manage in Status page
-          </.link>
-        </div>
-      </div>
-
       <%!-- Recent Events --%>
       <div class="glass-card rounded-2xl p-6">
         <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">

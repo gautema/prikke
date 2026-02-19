@@ -507,32 +507,6 @@ defmodule PrikkeWeb.TaskLive.Show do
             </div>
           </div>
           
-    <!-- Badge -->
-          <%= if @task.schedule_type == "cron" do %>
-            <div>
-              <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">
-                Public Badge
-              </h3>
-              <div class="bg-white/30 rounded-xl p-3 sm:p-4">
-                <div class="flex items-center justify-between">
-                  <p class="text-sm text-slate-500">
-                    <%= if @task.badge_token do %>
-                      Badge is enabled and publicly visible.
-                    <% else %>
-                      Enable badges and manage your public status page.
-                    <% end %>
-                  </p>
-                  <.link
-                    navigate={~p"/status-page"}
-                    class="text-sm font-medium text-emerald-600 hover:text-emerald-700"
-                  >
-                    Manage in Status page
-                  </.link>
-                </div>
-              </div>
-            </div>
-          <% end %>
-          
     <!-- Stats (24h) -->
           <%= if @stats.total > 0 do %>
             <div>
