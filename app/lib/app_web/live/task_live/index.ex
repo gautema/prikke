@@ -284,8 +284,8 @@ defmodule PrikkeWeb.TaskLive.Index do
     assigns = assign(assigns, :total, total)
 
     ~H"""
-    <div class="flex items-center gap-0.5 mt-2 pl-5">
-      <div class="flex items-center gap-px flex-1">
+    <div class="flex items-end gap-0.5 mt-2 pl-5">
+      <div class="flex items-end gap-px flex-1">
         <%= for status <- @reversed do %>
           <div
             class={["h-3 flex-1 first:rounded-l-sm last:rounded-r-sm", run_status_color(status)]}

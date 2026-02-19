@@ -118,8 +118,8 @@ defmodule PrikkeWeb.MonitorLive.Index do
     assigns = assign(assigns, :uptime_pct, uptime_pct)
 
     ~H"""
-    <div class="flex items-center gap-0.5 pl-5">
-      <div class="flex items-center gap-px flex-1">
+    <div class="flex items-end gap-0.5 pl-5">
+      <div class="flex items-end gap-px flex-1">
         <%= for {{date, %{status: status, actual: actual, expected: expected}}, idx} <- Enum.with_index(@days) do %>
           <div class="flex-1 group relative">
             <div class={["h-3 first:rounded-l-sm last:rounded-r-sm", day_status_color(status)]} />
