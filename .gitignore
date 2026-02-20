@@ -18,7 +18,6 @@ erl_crash.dump
 
 # Dev emulator (separate repo: github.com/runlater-eu/dev)
 /dev-emulator
-/.github
 
 # IDE
 .idea
