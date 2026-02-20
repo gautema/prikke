@@ -821,6 +821,247 @@ defmodule Prikke.Tasks do
     |> Repo.delete_all()
   end
 
+  @doc """
+  Creates multiple tasks and their executions in a single transaction.
+
+  Takes shared attributes (url, method, headers, etc.) and a list of item maps
+  that become individual task bodies. Returns `{:ok, %{queue, created, scheduled_for}}`
+  or `{:error, reason}`.
+
+  ## Options
+
+    * `:api_key_name` - name of the API key for audit logging
+
+  ## Limits
+
+    * Max 1000 items per batch
+    * Respects monthly execution limits
+  """
+  def create_batch(%Organization{} = org, shared_attrs, items, opts \\ [])
+      when is_list(items) do
+    cond do
+      length(items) == 0 ->
+        {:error, :empty_items}
+
+      length(items) > 1000 ->
+        {:error, :too_many_items}
+
+      true ->
+        do_create_batch(org, shared_attrs, items, opts)
+    end
+  end
+
+  defp do_create_batch(org, shared_attrs, items, _opts) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+    item_count = length(items)
+
+    # Check monthly execution limit
+    limits = get_tier_limits(org.tier)
+
+    case limits.max_monthly_executions do
+      :unlimited ->
+        :ok
+
+      max when is_integer(max) ->
+        current = Prikke.Executions.count_current_month_executions(org)
+
+        if current + item_count > max and org.tier != "pro" do
+          {:error, :monthly_limit_exceeded}
+        else
+          :ok
+        end
+    end
+    |> case do
+      {:error, _} = error ->
+        error
+
+      :ok ->
+        # Parse scheduling
+        scheduled_at = parse_batch_scheduled_at(shared_attrs)
+
+        # Validate shared params once using changeset
+        url = shared_attrs["url"] || shared_attrs[:url]
+        queue = shared_attrs["queue"] || shared_attrs[:queue]
+
+        if is_nil(url) or url == "" do
+          {:error, :url_required}
+        else
+          if is_nil(queue) or queue == "" do
+            {:error, :queue_required}
+          else
+            do_insert_batch(org, shared_attrs, items, scheduled_at, now)
+          end
+        end
+    end
+  end
+
+  defp parse_batch_scheduled_at(attrs) do
+    run_at = attrs["run_at"] || attrs[:run_at]
+    delay = attrs["delay"] || attrs[:delay]
+
+    cond do
+      run_at ->
+        case DateTime.from_iso8601(run_at) do
+          {:ok, dt, _} -> DateTime.truncate(dt, :second)
+          _ -> DateTime.utc_now() |> DateTime.add(1, :second) |> DateTime.truncate(:second)
+        end
+
+      delay ->
+        seconds = parse_batch_delay(delay)
+        DateTime.utc_now() |> DateTime.add(seconds, :second) |> DateTime.truncate(:second)
+
+      true ->
+        DateTime.utc_now() |> DateTime.add(1, :second) |> DateTime.truncate(:second)
+    end
+  end
+
+  defp parse_batch_delay(value) when is_integer(value), do: value
+
+  defp parse_batch_delay(value) when is_binary(value) do
+    case Regex.run(~r/^(\d+)(s|m|h|d)$/, value) do
+      [_, amount, "s"] -> String.to_integer(amount)
+      [_, amount, "m"] -> String.to_integer(amount) * 60
+      [_, amount, "h"] -> String.to_integer(amount) * 3600
+      [_, amount, "d"] -> String.to_integer(amount) * 86400
+      _ -> 1
+    end
+  end
+
+  defp parse_batch_delay(_), do: 1
+
+  defp do_insert_batch(org, shared_attrs, items, scheduled_at, now) do
+    url = shared_attrs["url"] || shared_attrs[:url]
+    method = shared_attrs["method"] || shared_attrs[:method] || "POST"
+    headers = shared_attrs["headers"] || shared_attrs[:headers] || %{}
+    queue = shared_attrs["queue"] || shared_attrs[:queue]
+    timeout_ms = shared_attrs["timeout_ms"] || shared_attrs[:timeout_ms] || 30_000
+    retry_attempts = shared_attrs["retry_attempts"] || shared_attrs[:retry_attempts] || 5
+    callback_url = shared_attrs["callback_url"] || shared_attrs[:callback_url]
+
+    pretty_time = Calendar.strftime(scheduled_at, "%d %b, %H:%M")
+
+    # Validate URL format
+    case URI.parse(url) do
+      %URI{scheme: scheme, host: host} when scheme in ["http", "https"] and not is_nil(host) ->
+        :ok
+
+      _ ->
+        {:error, :invalid_url}
+    end
+    |> case do
+      {:error, _} = error ->
+        error
+
+      :ok ->
+        # Build task rows
+        task_rows =
+          Enum.map(items, fn item ->
+            body = if is_binary(item), do: item, else: Jason.encode!(item)
+            id = Prikke.UUID7.generate()
+
+            %{
+              id: id,
+              organization_id: org.id,
+              name: "#{url} · #{pretty_time}",
+              url: url,
+              method: method,
+              headers: headers,
+              body: body,
+              schedule_type: "once",
+              scheduled_at: scheduled_at,
+              enabled: true,
+              timeout_ms: timeout_ms,
+              retry_attempts: retry_attempts,
+              callback_url: callback_url,
+              queue: queue,
+              next_run_at: nil,
+              inserted_at: now,
+              updated_at: now
+            }
+          end)
+
+        # Build execution rows
+        execution_rows =
+          Enum.map(task_rows, fn task_row ->
+            %{
+              id: Prikke.UUID7.generate(),
+              task_id: task_row.id,
+              organization_id: org.id,
+              scheduled_for: scheduled_at,
+              status: "pending",
+              attempt: 1,
+              queue: queue,
+              callback_url: callback_url,
+              inserted_at: now,
+              updated_at: now
+            }
+          end)
+
+        result =
+          Repo.transaction(fn ->
+            {task_count, _} = Repo.insert_all(Task, task_rows)
+
+            {exec_count, _} =
+              Repo.insert_all(Prikke.Executions.Execution, execution_rows)
+
+            {task_count, exec_count}
+          end)
+
+        case result do
+          {:ok, {count, _exec_count}} ->
+            notify_workers()
+
+            {:ok,
+             %{
+               queue: queue,
+               created: count,
+               scheduled_for: scheduled_at
+             }}
+
+          {:error, reason} ->
+            {:error, reason}
+        end
+    end
+  end
+
+  @doc """
+  Soft-deletes all tasks in a queue and cancels their pending executions.
+
+  Returns `{:ok, %{cancelled: count}}` or `{:error, reason}`.
+  """
+  def cancel_tasks_by_queue(%Organization{} = org, queue_name) when is_binary(queue_name) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    result =
+      Repo.transaction(fn ->
+        # Soft-delete tasks
+        {task_count, _} =
+          from(t in Task,
+            where: t.organization_id == ^org.id,
+            where: t.queue == ^queue_name,
+            where: is_nil(t.deleted_at)
+          )
+          |> Repo.update_all(
+            set: [deleted_at: now, enabled: false, next_run_at: nil, updated_at: now]
+          )
+
+        # Delete pending executions
+        from(e in Prikke.Executions.Execution,
+          where: e.organization_id == ^org.id,
+          where: e.queue == ^queue_name,
+          where: e.status == "pending"
+        )
+        |> Repo.delete_all()
+
+        task_count
+      end)
+
+    case result do
+      {:ok, count} -> {:ok, %{cancelled: count}}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   defp not_deleted(query) do
     from(t in query, where: is_nil(t.deleted_at))
   end

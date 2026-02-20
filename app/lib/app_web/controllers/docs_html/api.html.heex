@@ -586,6 +586,225 @@
     </div>
   </div>
 
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="p-6 border-b border-slate-100">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-emerald-600 text-white">
+          POST
+        </span>
+        <span class="font-mono text-sm">/tasks/batch</span>
+      </div>
+      <p class="text-slate-600 m-0 mb-4">
+        Create many tasks at once with shared configuration. Each item in the <code>items</code>
+        array becomes the request body for an individual task. All tasks share the same URL, method, headers, timing, and queue.
+        Use the queue name with <code>DELETE /tasks?queue=name</code> to cancel them as a group.
+      </p>
+
+      <h4 class="text-sm font-semibold mt-4 mb-2 text-slate-900">Request Body</h4>
+      <table class="text-sm w-full">
+        <tr class="border-b border-slate-100">
+          <th class="text-left py-2 pr-4 text-slate-700">Field</th>
+          <th class="text-left py-2 pr-4 text-slate-700">Type</th>
+          <th class="text-left py-2 text-slate-700">Description</th>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">url</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">The URL to call for every task (required)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">queue</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">Queue name that groups the batch &mdash; used for bulk cancel (required)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">items</code></td>
+          <td class="py-2 pr-4 text-slate-500">array</td>
+          <td class="py-2 text-slate-600">
+            Array of objects, each JSON-encoded as the body of one task. Max 1000 items. (required)
+          </td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">method</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">HTTP method for all tasks (default: POST)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">headers</code></td>
+          <td class="py-2 pr-4 text-slate-500">object</td>
+          <td class="py-2 text-slate-600">Custom headers sent with every task (optional)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">run_at</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            ISO 8601 timestamp &mdash; schedule all tasks for this time (optional)
+          </td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">delay</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            Delay before execution: <code>"30s"</code>, <code>"5m"</code>, <code>"2h"</code>, <code>"1d"</code> (optional)
+          </td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">timeout_ms</code></td>
+          <td class="py-2 pr-4 text-slate-500">integer</td>
+          <td class="py-2 text-slate-600">Request timeout in milliseconds (default: 30000)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">retry_attempts</code></td>
+          <td class="py-2 pr-4 text-slate-500">integer</td>
+          <td class="py-2 text-slate-600">Retry attempts per task (default: 5)</td>
+        </tr>
+        <tr>
+          <td class="py-2 pr-4"><code class="text-sky-600">callback_url</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">URL to receive a POST callback per task on completion (optional)</td>
+        </tr>
+      </table>
+    </div>
+    <div class="border-b border-slate-800">
+      <div data-tab-group>
+        <div class="flex border-b border-slate-700">
+          <button
+            data-tab="curl"
+            class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+          >
+            curl
+          </button>
+          <button
+            data-tab="js"
+            class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+          >
+            Node.js
+          </button>
+        </div>
+        <pre
+          data-tab-content="curl"
+          phx-no-curly-interpolation
+          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        >curl -X POST https://runlater.eu/api/v1/tasks/batch \
+  -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
+  -H <span class="text-green-300">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="text-sky-300">"url"</span>: <span class="text-green-300">"https://myapp.com/api/send-email"</span>,
+    <span class="text-sky-300">"method"</span>: <span class="text-green-300">"POST"</span>,
+    <span class="text-sky-300">"headers"</span>: { <span class="text-sky-300">"Authorization"</span>: <span class="text-green-300">"Bearer xxx"</span> },
+    <span class="text-sky-300">"queue"</span>: <span class="text-green-300">"march-newsletter"</span>,
+    <span class="text-sky-300">"run_at"</span>: <span class="text-green-300">"2026-03-01T09:00:00Z"</span>,
+    <span class="text-sky-300">"items"</span>: [
+      { <span class="text-sky-300">"to"</span>: <span class="text-green-300">"user1@example.com"</span>, <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Alice"</span> },
+      { <span class="text-sky-300">"to"</span>: <span class="text-green-300">"user2@example.com"</span>, <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Bob"</span> }
+    ]
+  }'</pre>
+        <pre
+          data-tab-content="js"
+          style="display:none"
+          phx-no-curly-interpolation
+          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        ><span class="text-purple-300">const</span> <span class="text-sky-300">res</span> = <span class="text-purple-300">await</span> fetch(<span class="text-green-300">"https://runlater.eu/api/v1/tasks/batch"</span>, {
+  <span class="text-sky-300">method</span>: <span class="text-green-300">"POST"</span>,
+  <span class="text-sky-300">headers</span>: {
+    <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.RUNLATER_KEY}`</span>,
+    <span class="text-green-300">"Content-Type"</span>: <span class="text-green-300">"application/json"</span>
+  },
+  <span class="text-sky-300">body</span>: JSON.stringify({
+    <span class="text-sky-300">url</span>: <span class="text-green-300">"https://myapp.com/api/send-email"</span>,
+    <span class="text-sky-300">method</span>: <span class="text-green-300">"POST"</span>,
+    <span class="text-sky-300">queue</span>: <span class="text-green-300">"march-newsletter"</span>,
+    <span class="text-sky-300">run_at</span>: <span class="text-green-300">"2026-03-01T09:00:00Z"</span>,
+    <span class="text-sky-300">items</span>: [
+      { <span class="text-sky-300">to</span>: <span class="text-green-300">"user1@example.com"</span>, <span class="text-sky-300">name</span>: <span class="text-green-300">"Alice"</span> },
+      { <span class="text-sky-300">to</span>: <span class="text-green-300">"user2@example.com"</span>, <span class="text-sky-300">name</span>: <span class="text-green-300">"Bob"</span> }
+    ]
+  })
+})</pre>
+      </div>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500"># Response (201 Created)</span>
+{
+  <span class="text-sky-300">"data"</span>: {
+    <span class="text-sky-300">"queue"</span>: <span class="text-green-300">"march-newsletter"</span>,
+    <span class="text-sky-300">"created"</span>: <span class="text-orange-300">2</span>,
+    <span class="text-sky-300">"scheduled_for"</span>: <span class="text-green-300">"2026-03-01T09:00:00Z"</span>
+  },
+  <span class="text-sky-300">"message"</span>: <span class="text-green-300">"2 tasks created"</span>
+}</pre>
+  </div>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="p-6 border-b border-slate-100">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="px-2.5 py-1 rounded text-xs font-semibold uppercase bg-red-500 text-white">
+          DELETE
+        </span>
+        <span class="font-mono text-sm">/tasks?queue=name</span>
+      </div>
+      <p class="text-slate-600 m-0 mb-4">
+        Cancel all tasks in a queue. Soft-deletes every non-deleted task matching the queue name and removes their pending executions. Use this to cancel a batch you created earlier.
+      </p>
+
+      <h4 class="text-sm font-semibold mt-4 mb-2 text-slate-900">Query Parameters</h4>
+      <table class="text-sm w-full">
+        <tr class="border-b border-slate-100">
+          <th class="text-left py-2 pr-4 text-slate-700">Field</th>
+          <th class="text-left py-2 pr-4 text-slate-700">Type</th>
+          <th class="text-left py-2 text-slate-700">Description</th>
+        </tr>
+        <tr>
+          <td class="py-2 pr-4"><code class="text-sky-600">queue</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">The queue name to cancel (required)</td>
+        </tr>
+      </table>
+    </div>
+    <div data-tab-group>
+      <div class="flex border-b border-slate-700">
+        <button
+          data-tab="curl"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-emerald-400 border-emerald-400 cursor-pointer"
+        >
+          curl
+        </button>
+        <button
+          data-tab="js"
+          class="px-4 py-2 text-xs font-medium border-b-2 text-slate-500 border-transparent cursor-pointer"
+        >
+          Node.js
+        </button>
+      </div>
+      <pre
+        data-tab-content="curl"
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      >curl -X DELETE <span class="text-green-300">"https://runlater.eu/api/v1/tasks?queue=march-newsletter"</span> \
+  -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
+      <pre
+        data-tab-content="js"
+        style="display:none"
+        phx-no-curly-interpolation
+        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      ><span class="text-purple-300">const</span> <span class="text-sky-300">res</span> = <span class="text-purple-300">await</span> fetch(<span class="text-green-300">"https://runlater.eu/api/v1/tasks?queue=march-newsletter"</span>, {
+  <span class="text-sky-300">method</span>: <span class="text-green-300">"DELETE"</span>,
+  <span class="text-sky-300">headers</span>: { <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.RUNLATER_KEY}`</span> }
+})</pre>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500"># Response (200 OK)</span>
+{
+  <span class="text-sky-300">"data"</span>: {
+    <span class="text-sky-300">"cancelled"</span>: <span class="text-orange-300">1000</span>
+  },
+  <span class="text-sky-300">"message"</span>: <span class="text-green-300">"1000 tasks cancelled"</span>
+}</pre>
+  </div>
+
   <h2>Executions</h2>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">

@@ -134,6 +134,12 @@ defmodule PrikkeWeb.Router do
   scope "/api/v1", PrikkeWeb.Api do
     pipe_through [:api, :api_auth]
 
+    # Batch task creation
+    post "/tasks/batch", BatchController, :create
+
+    # Bulk cancel tasks by queue
+    delete "/tasks", TaskController, :delete_by_queue
+
     # Tasks CRUD (unified: cron, delayed, scheduled, immediate)
     resources "/tasks", TaskController, except: [:new, :edit] do
       get "/executions", TaskController, :executions

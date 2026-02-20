@@ -1137,6 +1137,223 @@ defmodule Prikke.TasksTest do
     end
   end
 
+  describe "create_batch/3" do
+    test "creates N tasks and N executions" do
+      org = organization_fixture()
+
+      shared = %{
+        "url" => "https://example.com/send-email",
+        "method" => "POST",
+        "queue" => "newsletter",
+        "headers" => %{"Authorization" => "Bearer xxx"}
+      }
+
+      items = [
+        %{"to" => "user1@example.com"},
+        %{"to" => "user2@example.com"},
+        %{"to" => "user3@example.com"}
+      ]
+
+      assert {:ok, result} = Tasks.create_batch(org, shared, items)
+      assert result.created == 3
+      assert result.queue == "newsletter"
+      assert result.scheduled_for != nil
+
+      # Verify tasks were created
+      tasks = Tasks.list_tasks(org, queue: "newsletter")
+      assert length(tasks) == 3
+
+      # Verify executions were created
+      for task <- tasks do
+        execs = Prikke.Executions.list_task_executions(task)
+        assert length(execs) == 1
+        assert hd(execs).status == "pending"
+      end
+    end
+
+    test "each task body is the JSON-encoded item" do
+      org = organization_fixture()
+
+      shared = %{
+        "url" => "https://example.com/api",
+        "queue" => "batch-test"
+      }
+
+      items = [%{"email" => "alice@example.com", "name" => "Alice"}]
+
+      assert {:ok, _result} = Tasks.create_batch(org, shared, items)
+
+      [task] = Tasks.list_tasks(org, queue: "batch-test")
+      assert Jason.decode!(task.body) == %{"email" => "alice@example.com", "name" => "Alice"}
+    end
+
+    test "rejects empty items list" do
+      org = organization_fixture()
+
+      shared = %{"url" => "https://example.com/api", "queue" => "test"}
+
+      assert {:error, :empty_items} = Tasks.create_batch(org, shared, [])
+    end
+
+    test "rejects more than 1000 items" do
+      org = organization_fixture()
+
+      shared = %{"url" => "https://example.com/api", "queue" => "test"}
+      items = for i <- 1..1001, do: %{"id" => i}
+
+      assert {:error, :too_many_items} = Tasks.create_batch(org, shared, items)
+    end
+
+    test "requires url" do
+      org = organization_fixture()
+
+      shared = %{"queue" => "test"}
+      items = [%{"data" => "value"}]
+
+      assert {:error, :url_required} = Tasks.create_batch(org, shared, items)
+    end
+
+    test "requires queue" do
+      org = organization_fixture()
+
+      shared = %{"url" => "https://example.com/api"}
+      items = [%{"data" => "value"}]
+
+      assert {:error, :queue_required} = Tasks.create_batch(org, shared, items)
+    end
+
+    test "validates URL format" do
+      org = organization_fixture()
+
+      shared = %{"url" => "not-a-url", "queue" => "test"}
+      items = [%{"data" => "value"}]
+
+      assert {:error, :invalid_url} = Tasks.create_batch(org, shared, items)
+    end
+
+    test "respects run_at scheduling" do
+      org = organization_fixture()
+
+      future = DateTime.utc_now() |> DateTime.add(3600, :second) |> DateTime.truncate(:second)
+
+      shared = %{
+        "url" => "https://example.com/api",
+        "queue" => "scheduled-batch",
+        "run_at" => DateTime.to_iso8601(future)
+      }
+
+      items = [%{"data" => "value"}]
+
+      assert {:ok, result} = Tasks.create_batch(org, shared, items)
+      assert DateTime.compare(result.scheduled_for, DateTime.utc_now()) == :gt
+    end
+
+    test "respects delay scheduling" do
+      org = organization_fixture()
+
+      shared = %{
+        "url" => "https://example.com/api",
+        "queue" => "delayed-batch",
+        "delay" => "5m"
+      }
+
+      items = [%{"data" => "value"}]
+
+      assert {:ok, result} = Tasks.create_batch(org, shared, items)
+
+      # Should be scheduled ~5 minutes from now
+      diff = DateTime.diff(result.scheduled_for, DateTime.utc_now())
+      assert diff >= 290 and diff <= 310
+    end
+
+    test "respects monthly execution limit for free tier" do
+      org = organization_fixture(tier: "free")
+
+      # Set monthly count close to limit (10_000)
+      Prikke.Repo.update_all(
+        Ecto.Query.from(o in Prikke.Accounts.Organization, where: o.id == ^org.id),
+        set: [monthly_execution_count: 9_999]
+      )
+
+      org = Prikke.Repo.reload!(org)
+
+      shared = %{"url" => "https://example.com/api", "queue" => "test"}
+      items = [%{"a" => 1}, %{"b" => 2}]
+
+      assert {:error, :monthly_limit_exceeded} = Tasks.create_batch(org, shared, items)
+    end
+  end
+
+  describe "cancel_tasks_by_queue/2" do
+    test "soft-deletes all tasks in queue and cancels pending executions" do
+      org = organization_fixture()
+
+      shared = %{
+        "url" => "https://example.com/api",
+        "queue" => "cancel-test"
+      }
+
+      items = [%{"a" => 1}, %{"b" => 2}, %{"c" => 3}]
+
+      {:ok, _result} = Tasks.create_batch(org, shared, items)
+      assert length(Tasks.list_tasks(org, queue: "cancel-test")) == 3
+
+      assert {:ok, result} = Tasks.cancel_tasks_by_queue(org, "cancel-test")
+      assert result.cancelled == 3
+
+      # Tasks should no longer be visible
+      assert Tasks.list_tasks(org, queue: "cancel-test") == []
+    end
+
+    test "doesn't touch tasks in other queues" do
+      org = organization_fixture()
+
+      {:ok, _} =
+        Tasks.create_batch(org, %{"url" => "https://example.com/api", "queue" => "keep"}, [
+          %{"a" => 1}
+        ])
+
+      {:ok, _} =
+        Tasks.create_batch(org, %{"url" => "https://example.com/api", "queue" => "cancel"}, [
+          %{"a" => 1}
+        ])
+
+      {:ok, result} = Tasks.cancel_tasks_by_queue(org, "cancel")
+      assert result.cancelled == 1
+
+      # "keep" queue should be untouched
+      assert length(Tasks.list_tasks(org, queue: "keep")) == 1
+    end
+
+    test "doesn't touch other orgs' tasks" do
+      org1 = organization_fixture()
+      org2 = organization_fixture()
+
+      {:ok, _} =
+        Tasks.create_batch(org1, %{"url" => "https://example.com/api", "queue" => "shared-name"}, [
+          %{"a" => 1}
+        ])
+
+      {:ok, _} =
+        Tasks.create_batch(org2, %{"url" => "https://example.com/api", "queue" => "shared-name"}, [
+          %{"a" => 1}
+        ])
+
+      {:ok, result} = Tasks.cancel_tasks_by_queue(org1, "shared-name")
+      assert result.cancelled == 1
+
+      # org2's tasks should be untouched
+      assert length(Tasks.list_tasks(org2, queue: "shared-name")) == 1
+    end
+
+    test "returns zero when no matching tasks" do
+      org = organization_fixture()
+
+      assert {:ok, result} = Tasks.cancel_tasks_by_queue(org, "nonexistent")
+      assert result.cancelled == 0
+    end
+  end
+
   describe "parse_status_codes/1" do
     test "returns empty list for nil" do
       assert Tasks.parse_status_codes(nil) == []

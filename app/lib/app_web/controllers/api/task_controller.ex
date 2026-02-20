@@ -178,6 +178,47 @@ defmodule PrikkeWeb.Api.TaskController do
     end
   end
 
+  operation(:delete_by_queue,
+    summary: "Cancel all tasks in a queue",
+    description:
+      "Soft-deletes all non-deleted tasks in the given queue and cancels their pending executions.",
+    parameters: [
+      queue: [
+        in: :query,
+        type: :string,
+        description: "Queue name to cancel",
+        required: true
+      ]
+    ],
+    responses: [
+      ok: {"Cancelled tasks", "application/json", Schemas.BulkCancelResponse},
+      bad_request: {"Missing queue", "application/json", Schemas.ErrorResponse}
+    ]
+  )
+
+  def delete_by_queue(conn, %{"queue" => queue}) when is_binary(queue) and queue != "" do
+    org = conn.assigns.current_organization
+
+    case Tasks.cancel_tasks_by_queue(org, queue) do
+      {:ok, result} ->
+        json(conn, %{
+          data: %{cancelled: result.cancelled},
+          message: "#{result.cancelled} tasks cancelled"
+        })
+
+      {:error, reason} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: %{code: "error", message: inspect(reason)}})
+    end
+  end
+
+  def delete_by_queue(conn, _params) do
+    conn
+    |> put_status(:bad_request)
+    |> json(%{error: %{code: "invalid_params", message: "queue parameter is required"}})
+  end
+
   operation(:delete,
     summary: "Delete a task",
     description: "Deletes a task and all its execution history",

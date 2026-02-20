@@ -830,6 +830,110 @@ defmodule PrikkeWeb.Schemas do
     })
   end
 
+  defmodule BatchRequest do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "BatchRequest",
+      description: "Request body for creating tasks in batch",
+      type: :object,
+      required: [:url, :queue, :items],
+      properties: %{
+        url: %Schema{type: :string, format: :uri, description: "Target URL for all tasks"},
+        method: %Schema{
+          type: :string,
+          enum: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+          default: "POST"
+        },
+        headers: %Schema{
+          type: :object,
+          additionalProperties: %Schema{type: :string},
+          description: "HTTP headers for all tasks"
+        },
+        queue: %Schema{type: :string, description: "Queue name for grouping"},
+        run_at: %Schema{
+          type: :string,
+          format: :"date-time",
+          nullable: true,
+          description: "Schedule all tasks for this time"
+        },
+        delay: %Schema{
+          type: :string,
+          nullable: true,
+          description: "Delay before execution (e.g. \"5m\", \"1h\")"
+        },
+        retry_attempts: %Schema{type: :integer, default: 5},
+        timeout_ms: %Schema{type: :integer, default: 30000},
+        callback_url: %Schema{
+          type: :string,
+          format: :uri,
+          nullable: true,
+          description: "URL to receive POST with execution results"
+        },
+        items: %Schema{
+          type: :array,
+          items: %Schema{type: :object},
+          description: "List of item objects, each becomes the body of one task (max 1000)"
+        }
+      },
+      example: %{
+        url: "https://myapp.com/api/send-email",
+        method: "POST",
+        headers: %{"Authorization" => "Bearer xxx"},
+        queue: "march-newsletter",
+        run_at: "2026-03-01T09:00:00Z",
+        items: [
+          %{"to" => "user1@example.com", "name" => "Alice"},
+          %{"to" => "user2@example.com", "name" => "Bob"}
+        ]
+      }
+    })
+  end
+
+  defmodule BatchResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "BatchResponse",
+      description: "Response from batch task creation",
+      type: :object,
+      properties: %{
+        data: %Schema{
+          type: :object,
+          properties: %{
+            queue: %Schema{type: :string, description: "Queue name"},
+            created: %Schema{type: :integer, description: "Number of tasks created"},
+            scheduled_for: %Schema{
+              type: :string,
+              format: :"date-time",
+              description: "Scheduled execution time"
+            }
+          }
+        },
+        message: %Schema{type: :string}
+      }
+    })
+  end
+
+  defmodule BulkCancelResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "BulkCancelResponse",
+      description: "Response from bulk cancel operation",
+      type: :object,
+      properties: %{
+        data: %Schema{
+          type: :object,
+          properties: %{
+            cancelled: %Schema{type: :integer, description: "Number of tasks cancelled"}
+          }
+        },
+        message: %Schema{type: :string}
+      }
+    })
+  end
+
   defmodule ErrorResponse do
     require OpenApiSpex
 
