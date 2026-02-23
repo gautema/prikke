@@ -60,33 +60,27 @@ defmodule PrikkeWeb.EndpointLive.Edit do
   end
 
   def handle_event("add_url", _params, socket) do
-    form = socket.assigns.form
-    current_urls = get_forward_urls_from_form(form)
+    changeset = socket.assigns.form.source
+    current_urls = Ecto.Changeset.get_field(changeset, :forward_urls) || []
+    current_urls = if current_urls == [], do: [""], else: current_urls
 
     if length(current_urls) < 10 do
-      changeset =
-        socket.assigns.endpoint
-        |> Endpoints.change_endpoint(%{"forward_urls" => current_urls ++ [""]})
-
-      {:noreply, assign_form(socket, changeset)}
+      new_changeset = Ecto.Changeset.put_change(changeset, :forward_urls, current_urls ++ [""])
+      {:noreply, assign_form(socket, new_changeset)}
     else
       {:noreply, socket}
     end
   end
 
   def handle_event("remove_url", %{"index" => index}, socket) do
-    form = socket.assigns.form
-    current_urls = get_forward_urls_from_form(form)
+    changeset = socket.assigns.form.source
+    current_urls = Ecto.Changeset.get_field(changeset, :forward_urls) || [""]
     idx = String.to_integer(index)
 
     if length(current_urls) > 1 do
       new_urls = List.delete_at(current_urls, idx)
-
-      changeset =
-        socket.assigns.endpoint
-        |> Endpoints.change_endpoint(%{"forward_urls" => new_urls})
-
-      {:noreply, assign_form(socket, changeset)}
+      new_changeset = Ecto.Changeset.put_change(changeset, :forward_urls, new_urls)
+      {:noreply, assign_form(socket, new_changeset)}
     else
       {:noreply, socket}
     end
@@ -175,7 +169,7 @@ defmodule PrikkeWeb.EndpointLive.Edit do
 
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">
-              Forward URL(s)
+              Forward URLs
             </label>
             <div class="space-y-2">
               <%= for {url, idx} <- Enum.with_index(get_forward_urls_from_form(@form)) do %>

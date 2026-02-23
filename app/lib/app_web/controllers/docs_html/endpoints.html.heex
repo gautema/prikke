@@ -9,7 +9,7 @@
     Create an endpoint and you get a unique URL. Point external services (Stripe, GitHub, etc.) at that URL. When a webhook arrives, Runlater stores the raw payload and forwards it to your app — with automatic retries if your server is down.
   </p>
   <ol>
-    <li>Create an endpoint with a name and forward URL</li>
+    <li>Create an endpoint with a name and forward URLs</li>
     <li>Copy the inbound URL and paste it into Stripe, GitHub, or any service</li>
     <li>Runlater receives the webhook, stores the full payload, and forwards it to your app</li>
     <li>If forwarding fails, we retry with exponential backoff (configurable, 0-10 attempts)</li>

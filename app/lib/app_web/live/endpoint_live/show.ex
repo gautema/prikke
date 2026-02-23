@@ -250,7 +250,7 @@ defmodule PrikkeWeb.EndpointLive.Show do
         <dl class="grid grid-cols-2 gap-4">
           <div>
             <dt class="text-sm text-slate-500">
-              {if length(@endpoint.forward_urls) == 1, do: "Forward URL", else: "Forward URLs"}
+              Forward URLs
             </dt>
             <dd class="text-sm font-medium text-slate-900 mt-0.5 break-all">
               <%= for url <- @endpoint.forward_urls do %>
