@@ -130,6 +130,12 @@
                 >
                   Endpoints
                 </.link>
+                <.link
+                  href={~p"/failures"}
+                  class="text-sm font-medium text-slate-600 hover:text-emerald-600 px-3 py-1.5 rounded-md hover:bg-slate-100 transition-colors"
+                >
+                  Failures
+                </.link>
                 <!-- Unified dropdown -->
                 <div class="relative ml-1" data-dropdown>
                   <button
@@ -298,6 +304,9 @@
               </.link>
               <.link href={~p"/endpoints"} class="block py-3 text-base font-medium text-slate-700">
                 Endpoints
+              </.link>
+              <.link href={~p"/failures"} class="block py-3 text-base font-medium text-slate-700">
+                Failures
               </.link>
               <%!-- Org section --%>
               <%= if @current_organization do %>

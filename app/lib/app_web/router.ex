@@ -157,6 +157,11 @@ defmodule PrikkeWeb.Router do
       post "/events/:event_id/replay", EndpointController, :replay
     end
 
+    # Queues
+    get "/queues", QueueController, :index
+    post "/queues/:name/pause", QueueController, :pause
+    post "/queues/:name/resume", QueueController, :resume
+
     # Declarative sync
     put "/sync", SyncController, :sync
   end
@@ -211,6 +216,8 @@ defmodule PrikkeWeb.Router do
       live "/endpoints/:id", EndpointLive.Show, :show
       live "/endpoints/:id/edit", EndpointLive.Edit, :edit
       live "/endpoints/:endpoint_id/events/:event_id", EndpointLive.EventShow, :show
+
+      live "/failures", FailuresLive, :index
 
       live "/status-page", StatusLive.Index, :index
     end

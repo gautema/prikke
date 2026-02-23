@@ -27,6 +27,16 @@ Runlater is a **task queue with cron built in**, not a cron scheduler with a que
 
 - [ ] **Content marketing** — dev.to/Hashnode articles targeting "next.js cron", "vercel background jobs", etc. Link back to guides and landing page. Zero maintenance cost, compounds over time.
 
+## Priority 3 — Queue Power Features
+
+Inspired by QStash/Inngest gaps. High value, low effort.
+
+- [ ] **Pause/Resume queues** — Stop processing a queue without losing pending work. Useful during maintenance or downstream outages. Workers skip paused queues.
+- [ ] **Failed events dashboard** — Cross-cutting view of all failed executions across tasks and endpoints, with bulk retry. DLQ-style ops view.
+- [ ] **Per-queue rate limiting** — Max executions per minute per queue. Prevents blowing past downstream API rate limits (e.g., Stripe 100 req/s).
+- [ ] **Debounce** — If the same debounce key fires multiple times within a window, only execute the last one. Avoids redundant processing on webhook bursts.
+- [ ] **Webhook event filtering** — For endpoints, only forward events matching a condition (header match or body JSONPath). Reduces noise.
+
 ## Parked
 
 These are ideas that might make sense later, but only if users ask for them. Not actively planned.

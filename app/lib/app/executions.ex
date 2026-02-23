@@ -126,6 +126,7 @@ defmodule Prikke.Executions do
         where: e.status == "pending" and e.scheduled_for <= ^now,
         where: ^claimable_queue_filter(now),
         where: ^org_fairness_filter(),
+        where: ^paused_queue_filter(),
         order_by: [asc: e.scheduled_for],
         limit: 1,
         lock: "FOR UPDATE SKIP LOCKED"
@@ -361,6 +362,7 @@ defmodule Prikke.Executions do
       where: e.status == "pending" and e.scheduled_for <= ^now,
       where: ^claimable_queue_filter(now),
       where: ^org_fairness_filter(),
+      where: ^paused_queue_filter(),
       limit: ^limit,
       select: e.id
     )
@@ -1077,6 +1079,20 @@ defmodule Prikke.Executions do
     )
   end
 
+  # Dynamic filter: skip executions whose (org, queue) is paused in the queues table.
+  # Allows nil/empty queues through (they can't be paused).
+  defp paused_queue_filter do
+    dynamic(
+      [e],
+      is_nil(e.queue) or e.queue == "" or
+        fragment(
+          "(?, ?) NOT IN (SELECT organization_id, name FROM queues WHERE paused = true)",
+          e.organization_id,
+          e.queue
+        )
+    )
+  end
+
   # Dynamic filter: skip orgs that already have their tier's max concurrent running.
   # Subquery scans only running executions (tiny set, max ~20 rows) via partial index.
   # JOINs organizations to check tier — still fast since only running rows are scanned.
@@ -1091,5 +1107,111 @@ defmodule Prikke.Executions do
         ^max
       )
     )
+  end
+
+  ## Failed events dashboard queries
+
+  @doc """
+  Lists failed and timed-out executions for an organization.
+
+  Options:
+    * `:limit` - max results (default 50)
+    * `:offset` - pagination offset (default 0)
+    * `:queue` - filter by queue name
+  """
+  def list_failed_executions(%Organization{} = org, opts \\ []) do
+    limit = Keyword.get(opts, :limit, 50)
+    offset = Keyword.get(opts, :offset, 0)
+    queue = Keyword.get(opts, :queue)
+
+    query =
+      from(e in Execution,
+        where: e.organization_id == ^org.id,
+        where: e.status in ["failed", "timeout"],
+        order_by: [desc: e.scheduled_for],
+        limit: ^limit,
+        offset: ^offset,
+        preload: [:task]
+      )
+
+    query =
+      if queue && queue != "" do
+        from(e in query, where: e.queue == ^queue)
+      else
+        query
+      end
+
+    Repo.all(query)
+  end
+
+  @doc """
+  Counts failed and timed-out executions for an organization.
+  """
+  def count_failed_executions(%Organization{} = org, opts \\ []) do
+    queue = Keyword.get(opts, :queue)
+
+    query =
+      from(e in Execution,
+        where: e.organization_id == ^org.id,
+        where: e.status in ["failed", "timeout"]
+      )
+
+    query =
+      if queue && queue != "" do
+        from(e in query, where: e.queue == ^queue)
+      else
+        query
+      end
+
+    Repo.aggregate(query, :count)
+  end
+
+  @doc """
+  Creates a new pending execution to retry a failed one.
+  Reuses the same task, scheduling for immediate execution.
+  """
+  def retry_execution(%Execution{} = execution) do
+    execution = Repo.preload(execution, :task)
+
+    if is_nil(execution.task) do
+      {:error, :task_not_found}
+    else
+      create_execution_for_task(
+        execution.task,
+        DateTime.utc_now() |> DateTime.truncate(:second),
+        attempt: 1
+      )
+    end
+  end
+
+  @doc """
+  Retries multiple failed executions at once.
+  Returns `{:ok, count}` with the number of retries created.
+  """
+  def bulk_retry_executions(%Organization{} = org, execution_ids) when is_list(execution_ids) do
+    executions =
+      from(e in Execution,
+        where: e.organization_id == ^org.id,
+        where: e.id in ^execution_ids,
+        where: e.status in ["failed", "timeout"],
+        preload: [:task]
+      )
+      |> Repo.all()
+
+    results =
+      Enum.map(executions, fn execution ->
+        if execution.task do
+          create_execution_for_task(
+            execution.task,
+            DateTime.utc_now() |> DateTime.truncate(:second),
+            attempt: 1
+          )
+        else
+          {:error, :task_not_found}
+        end
+      end)
+
+    created = Enum.count(results, &match?({:ok, _}, &1))
+    {:ok, created}
   end
 end

@@ -564,4 +564,206 @@ defmodule Prikke.ExecutionsTest do
       assert org.monthly_execution_reset_at != nil
     end
   end
+
+  describe "paused queue filter" do
+    setup do
+      user = user_fixture()
+      {:ok, org} = Accounts.create_organization(user, %{name: "Pause Test Org"})
+
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: "Queued Task",
+          url: "https://example.com/webhook",
+          schedule_type: "once",
+          scheduled_at: DateTime.add(DateTime.utc_now(), 3600, :second),
+          queue: "my-queue"
+        })
+
+      %{organization: org, task: task}
+    end
+
+    test "claim_next_execution skips paused queue executions", %{
+      organization: org,
+      task: task
+    } do
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+      {:ok, _exec} = Executions.create_execution_for_task(task, now)
+
+      # Pause the queue
+      Prikke.Queues.pause_queue(org, "my-queue")
+
+      # Should NOT claim the execution (queue is paused)
+      assert {:ok, nil} = Executions.claim_next_execution()
+
+      # Resume the queue
+      Prikke.Queues.resume_queue(org, "my-queue")
+
+      # Should NOW claim the execution
+      assert {:ok, execution} = Executions.claim_next_execution()
+      assert execution != nil
+      assert execution.queue == "my-queue"
+    end
+
+    test "claim_next_execution still claims executions without a queue when queues are paused", %{
+      organization: org
+    } do
+      {:ok, no_queue_task} =
+        Tasks.create_task(org, %{
+          name: "No Queue Task",
+          url: "https://example.com/webhook",
+          schedule_type: "once",
+          scheduled_at: DateTime.add(DateTime.utc_now(), 3600, :second)
+        })
+
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+      {:ok, _exec} = Executions.create_execution_for_task(no_queue_task, now)
+
+      # Pause some queue
+      Prikke.Queues.pause_queue(org, "some-other-queue")
+
+      # Should still claim the queueless execution
+      assert {:ok, execution} = Executions.claim_next_execution()
+      assert execution != nil
+    end
+  end
+
+  describe "list_failed_executions/2" do
+    setup do
+      user = user_fixture()
+      {:ok, org} = Accounts.create_organization(user, %{name: "Failures Org"})
+
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: "Failure Task",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *"
+        })
+
+      %{organization: org, task: task}
+    end
+
+    test "returns failed and timeout executions", %{organization: org, task: task} do
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+      # Create executions with different statuses
+      {:ok, exec1} = Executions.create_execution_for_task(task, now)
+      {:ok, _} = Executions.fail_execution(exec1, %{error_message: "Connection refused"})
+
+      {:ok, exec2} = Executions.create_execution_for_task(task, DateTime.add(now, 60, :second))
+      {:ok, _} = Executions.timeout_execution(exec2)
+
+      {:ok, exec3} = Executions.create_execution_for_task(task, DateTime.add(now, 120, :second))
+      {:ok, _} = Executions.complete_execution(exec3, %{status_code: 200})
+
+      failed = Executions.list_failed_executions(org)
+      assert length(failed) == 2
+      statuses = Enum.map(failed, & &1.status)
+      assert "failed" in statuses
+      assert "timeout" in statuses
+    end
+
+    test "filters by queue", %{organization: org} do
+      {:ok, queued_task} =
+        Tasks.create_task(org, %{
+          name: "Queued Failure",
+          url: "https://example.com/webhook",
+          schedule_type: "once",
+          scheduled_at: DateTime.add(DateTime.utc_now(), 3600, :second),
+          queue: "email-queue"
+        })
+
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+      {:ok, exec} = Executions.create_execution_for_task(queued_task, now)
+      {:ok, _} = Executions.fail_execution(exec, %{error_message: "Failed"})
+
+      assert length(Executions.list_failed_executions(org, queue: "email-queue")) == 1
+      assert length(Executions.list_failed_executions(org, queue: "other-queue")) == 0
+    end
+
+    test "preloads task", %{organization: org, task: task} do
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+      {:ok, exec} = Executions.create_execution_for_task(task, now)
+      {:ok, _} = Executions.fail_execution(exec, %{error_message: "Error"})
+
+      [failed] = Executions.list_failed_executions(org)
+      assert failed.task.name == "Failure Task"
+    end
+  end
+
+  describe "retry_execution/1" do
+    setup do
+      user = user_fixture()
+      {:ok, org} = Accounts.create_organization(user, %{name: "Retry Org"})
+
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: "Retry Task",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *"
+        })
+
+      %{organization: org, task: task}
+    end
+
+    test "creates a new pending execution for the same task", %{task: task} do
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+      {:ok, exec} = Executions.create_execution_for_task(task, now)
+      {:ok, failed} = Executions.fail_execution(exec, %{error_message: "Error"})
+
+      assert {:ok, new_exec} = Executions.retry_execution(failed)
+      assert new_exec.task_id == task.id
+      assert new_exec.status == "pending"
+      assert new_exec.attempt == 1
+    end
+  end
+
+  describe "bulk_retry_executions/2" do
+    setup do
+      user = user_fixture()
+      {:ok, org} = Accounts.create_organization(user, %{name: "Bulk Retry Org"})
+
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: "Bulk Task",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *"
+        })
+
+      %{organization: org, task: task}
+    end
+
+    test "retries multiple failed executions", %{organization: org, task: task} do
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+      {:ok, exec1} = Executions.create_execution_for_task(task, now)
+      {:ok, failed1} = Executions.fail_execution(exec1, %{error_message: "Error 1"})
+
+      {:ok, exec2} = Executions.create_execution_for_task(task, DateTime.add(now, 60, :second))
+      {:ok, failed2} = Executions.fail_execution(exec2, %{error_message: "Error 2"})
+
+      assert {:ok, 2} = Executions.bulk_retry_executions(org, [failed1.id, failed2.id])
+    end
+
+    test "ignores non-failed executions", %{organization: org, task: task} do
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+      {:ok, exec} = Executions.create_execution_for_task(task, now)
+      {:ok, success} = Executions.complete_execution(exec, %{status_code: 200})
+
+      assert {:ok, 0} = Executions.bulk_retry_executions(org, [success.id])
+    end
+
+    test "ignores IDs from other orgs", %{task: task} do
+      other_org = organization_fixture()
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+      {:ok, exec} = Executions.create_execution_for_task(task, now)
+      {:ok, failed} = Executions.fail_execution(exec, %{error_message: "Error"})
+
+      assert {:ok, 0} = Executions.bulk_retry_executions(other_org, [failed.id])
+    end
+  end
 end

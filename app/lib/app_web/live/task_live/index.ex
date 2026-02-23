@@ -3,6 +3,7 @@ defmodule PrikkeWeb.TaskLive.Index do
 
   alias Prikke.Tasks
   alias Prikke.Executions
+  alias Prikke.Queues
 
   @per_page 20
 
@@ -17,6 +18,7 @@ defmodule PrikkeWeb.TaskLive.Index do
       end
 
       queues = Tasks.list_queues(org)
+      paused_queues = Queues.list_paused_queues(org)
       tasks = Tasks.list_tasks(org, limit: @per_page)
       total_count = Tasks.count_tasks(org, [])
       task_ids = Enum.map(tasks, & &1.id)
@@ -30,6 +32,7 @@ defmodule PrikkeWeb.TaskLive.Index do
        |> assign(:tasks, tasks)
        |> assign(:total_count, total_count)
        |> assign(:queues, queues)
+       |> assign(:paused_queues, MapSet.new(paused_queues))
        |> assign(:queue_filter, nil)
        |> assign(:type_filter, nil)
        |> assign(:status_filter, nil)
@@ -65,6 +68,7 @@ defmodule PrikkeWeb.TaskLive.Index do
     opts = build_filter_opts(socket.assigns)
 
     queues = Tasks.list_queues(org)
+    paused_queues = Queues.list_paused_queues(org)
     # Reload up to however many the user has already loaded
     current_loaded = max(length(socket.assigns.tasks), @per_page)
     tasks = Tasks.list_tasks(org, [{:limit, current_loaded} | opts])
@@ -74,6 +78,7 @@ defmodule PrikkeWeb.TaskLive.Index do
 
     socket
     |> assign(:queues, queues)
+    |> assign(:paused_queues, MapSet.new(paused_queues))
     |> assign(:tasks, tasks)
     |> assign(:total_count, total_count)
     |> assign(:latest_statuses, latest_statuses)
@@ -158,6 +163,18 @@ defmodule PrikkeWeb.TaskLive.Index do
       Tasks.toggle_task(socket.assigns.organization, task, scope: socket.assigns.current_scope)
 
     {:noreply, socket}
+  end
+
+  def handle_event("pause_queue", %{"queue" => queue_name}, socket) do
+    Queues.pause_queue(socket.assigns.organization, queue_name)
+    paused_queues = Queues.list_paused_queues(socket.assigns.organization)
+    {:noreply, assign(socket, :paused_queues, MapSet.new(paused_queues))}
+  end
+
+  def handle_event("resume_queue", %{"queue" => queue_name}, socket) do
+    Queues.resume_queue(socket.assigns.organization, queue_name)
+    paused_queues = Queues.list_paused_queues(socket.assigns.organization)
+    {:noreply, assign(socket, :paused_queues, MapSet.new(paused_queues))}
   end
 
   defp get_organization(socket, session) do
@@ -348,7 +365,12 @@ defmodule PrikkeWeb.TaskLive.Index do
               <option value="" selected={@queue_filter == nil}>All queues</option>
               <option value="none" selected={@queue_filter == "none"}>No queue</option>
               <%= for queue <- @queues do %>
-                <option value={queue} selected={@queue_filter == queue}>{queue}</option>
+                <option value={queue} selected={@queue_filter == queue}>
+                  {queue}
+                  <%= if MapSet.member?(@paused_queues, queue) do %>
+                    (paused)
+                  <% end %>
+                </option>
               <% end %>
             </select>
           <% end %>
@@ -375,6 +397,41 @@ defmodule PrikkeWeb.TaskLive.Index do
           </select>
         </form>
       </div>
+
+      <%= if @queues != [] do %>
+        <div class="mb-4 flex flex-wrap gap-2 items-center" id="queue-controls">
+          <%= for queue <- @queues do %>
+            <%= if MapSet.member?(@paused_queues, queue) do %>
+              <span class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                <.icon name="hero-pause-circle" class="w-3.5 h-3.5" />
+                {queue}
+                <button
+                  type="button"
+                  phx-click="resume_queue"
+                  phx-value-queue={queue}
+                  class="ml-0.5 text-amber-600 hover:text-amber-800"
+                  title={"Resume queue \"#{queue}\""}
+                >
+                  <.icon name="hero-play" class="w-3.5 h-3.5" />
+                </button>
+              </span>
+            <% else %>
+              <span class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-slate-50 text-slate-600 border border-slate-200">
+                {queue}
+                <button
+                  type="button"
+                  phx-click="pause_queue"
+                  phx-value-queue={queue}
+                  class="ml-0.5 text-slate-400 hover:text-amber-600"
+                  title={"Pause queue \"#{queue}\""}
+                >
+                  <.icon name="hero-pause" class="w-3.5 h-3.5" />
+                </button>
+              </span>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
 
       <%= if @tasks == [] do %>
         <div class="glass-card rounded-2xl p-8 sm:p-12 text-center">

@@ -957,6 +957,52 @@ defmodule PrikkeWeb.Schemas do
     })
   end
 
+  defmodule QueueSchema do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "Queue",
+      description: "A named queue with pause status",
+      type: :object,
+      required: [:name, :paused],
+      properties: %{
+        name: %Schema{type: :string, description: "Queue name"},
+        paused: %Schema{type: :boolean, description: "Whether the queue is paused"}
+      },
+      example: %{
+        name: "emails",
+        paused: false
+      }
+    })
+  end
+
+  defmodule QueueResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "QueueResponse",
+      description: "Response containing a queue",
+      type: :object,
+      properties: %{
+        data: QueueSchema,
+        message: %Schema{type: :string}
+      }
+    })
+  end
+
+  defmodule QueuesResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      title: "QueuesResponse",
+      description: "Response containing a list of queues",
+      type: :object,
+      properties: %{
+        data: %Schema{type: :array, items: QueueSchema}
+      }
+    })
+  end
+
   defmodule ErrorResponse do
     require OpenApiSpex
 
