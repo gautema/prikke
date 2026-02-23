@@ -493,4 +493,147 @@ defmodule Prikke.EndpointsTest do
       assert exec_count == 2
     end
   end
+
+  describe "aggregate_task_statuses/1" do
+    test "returns nil for empty list" do
+      assert Endpoints.aggregate_task_statuses([]) == nil
+    end
+
+    test "returns success when all executions succeeded" do
+      tasks = [
+        %{latest_execution: %{status: "success"}},
+        %{latest_execution: %{status: "success"}}
+      ]
+
+      assert Endpoints.aggregate_task_statuses(tasks) == "success"
+    end
+
+    test "returns failed when any execution failed" do
+      tasks = [
+        %{latest_execution: %{status: "success"}},
+        %{latest_execution: %{status: "failed"}}
+      ]
+
+      assert Endpoints.aggregate_task_statuses(tasks) == "failed"
+    end
+
+    test "returns failed when any execution timed out" do
+      tasks = [
+        %{latest_execution: %{status: "success"}},
+        %{latest_execution: %{status: "timeout"}}
+      ]
+
+      assert Endpoints.aggregate_task_statuses(tasks) == "failed"
+    end
+
+    test "returns pending when any execution is pending" do
+      tasks = [
+        %{latest_execution: %{status: "success"}},
+        %{latest_execution: %{status: "pending"}}
+      ]
+
+      assert Endpoints.aggregate_task_statuses(tasks) == "pending"
+    end
+
+    test "returns pending when task has no execution" do
+      tasks = [%{latest_execution: nil}]
+
+      assert Endpoints.aggregate_task_statuses(tasks) == "pending"
+    end
+  end
+
+  describe "get_last_event_status/1" do
+    test "returns nil when no events" do
+      org = organization_fixture()
+      endpoint = endpoint_fixture(org)
+
+      assert Endpoints.get_last_event_status(endpoint) == nil
+    end
+
+    test "returns pending when latest event has pending executions" do
+      org = organization_fixture()
+      endpoint = endpoint_fixture(org)
+
+      {:ok, _event} =
+        Endpoints.receive_event(endpoint, %{
+          method: "POST",
+          headers: %{},
+          body: "test",
+          source_ip: "1.2.3.4"
+        })
+
+      assert Endpoints.get_last_event_status(endpoint) == "pending"
+    end
+
+    test "returns success when latest event executions all succeeded" do
+      org = organization_fixture()
+      endpoint = endpoint_fixture(org)
+
+      {:ok, event} =
+        Endpoints.receive_event(endpoint, %{
+          method: "POST",
+          headers: %{},
+          body: "test",
+          source_ip: "1.2.3.4"
+        })
+
+      # Complete the execution
+      [task_id] = event.task_ids
+      task = Prikke.Repo.get!(Prikke.Tasks.Task, task_id)
+
+      [execution] =
+        Prikke.Repo.all(Ecto.Query.where(Prikke.Executions.Execution, task_id: ^task.id))
+
+      Prikke.Executions.complete_execution(execution, %{status_code: 200, response_body: "ok"})
+
+      assert Endpoints.get_last_event_status(endpoint) == "success"
+    end
+  end
+
+  describe "get_inbound_event!/2" do
+    test "returns event with tasks and latest_execution" do
+      org = organization_fixture()
+      endpoint = endpoint_fixture(org)
+
+      {:ok, event} =
+        Endpoints.receive_event(endpoint, %{
+          method: "POST",
+          headers: %{},
+          body: "test",
+          source_ip: "1.2.3.4"
+        })
+
+      fetched = Endpoints.get_inbound_event!(endpoint, event.id)
+      assert fetched.id == event.id
+      assert is_list(Map.get(fetched, :tasks))
+      assert length(Map.get(fetched, :tasks)) == 1
+
+      task = hd(fetched.tasks)
+      assert task.url == hd(endpoint.forward_urls)
+      assert Map.has_key?(task, :latest_execution)
+    end
+
+    test "returns event with multiple tasks for fan-out" do
+      org = organization_fixture()
+
+      endpoint =
+        endpoint_fixture(org, %{
+          forward_urls: ["https://a.com/hook", "https://b.com/hook"]
+        })
+
+      {:ok, event} =
+        Endpoints.receive_event(endpoint, %{
+          method: "POST",
+          headers: %{},
+          body: "test",
+          source_ip: "1.2.3.4"
+        })
+
+      fetched = Endpoints.get_inbound_event!(endpoint, event.id)
+      assert length(Map.get(fetched, :tasks)) == 2
+
+      urls = Enum.map(fetched.tasks, & &1.url) |> Enum.sort()
+      assert urls == ["https://a.com/hook", "https://b.com/hook"]
+    end
+  end
 end
