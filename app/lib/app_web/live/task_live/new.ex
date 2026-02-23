@@ -21,6 +21,8 @@ defmodule PrikkeWeb.TaskLive.New do
        |> assign(:page_title, "New Task")
        |> assign(:timing_mode, "immediate")
        |> assign(:selected_delay, "5m")
+       |> assign(:custom_delay_amount, "30")
+       |> assign(:custom_delay_unit, "m")
        |> assign(:cron_mode, :simple)
        |> assign(:cron_preset, "every_hour")
        |> assign(:cron_minute, "0")
@@ -49,7 +51,7 @@ defmodule PrikkeWeb.TaskLive.New do
     task_params =
       case timing_mode do
         mode when mode in ["immediate", "delay"] ->
-          delay = if mode == "delay", do: delay_to_seconds(socket.assigns.selected_delay), else: 0
+          delay = if mode == "delay", do: resolve_delay(socket.assigns), else: 0
 
           scheduled_at =
             DateTime.utc_now()
@@ -97,7 +99,7 @@ defmodule PrikkeWeb.TaskLive.New do
         "delay" ->
           scheduled_at =
             DateTime.utc_now()
-            |> DateTime.add(delay_to_seconds(socket.assigns.selected_delay))
+            |> DateTime.add(resolve_delay(socket.assigns))
             |> Calendar.strftime("%Y-%m-%dT%H:%M")
 
           task_params
@@ -170,6 +172,16 @@ defmodule PrikkeWeb.TaskLive.New do
 
   def handle_event("set_delay", %{"delay" => delay}, socket) do
     {:noreply, assign(socket, :selected_delay, delay)}
+  end
+
+  def handle_event("update_custom_delay", params, socket) do
+    amount = params["amount"] || socket.assigns.custom_delay_amount
+    unit = params["unit"] || socket.assigns.custom_delay_unit
+
+    {:noreply,
+     socket
+     |> assign(:custom_delay_amount, amount)
+     |> assign(:custom_delay_unit, unit)}
   end
 
   def handle_event("set_cron_mode", %{"mode" => mode}, socket) do
@@ -336,6 +348,23 @@ defmodule PrikkeWeb.TaskLive.New do
 
   def handle_info(_msg, socket), do: {:noreply, socket}
 
+  defp resolve_delay(%{selected_delay: "custom"} = assigns) do
+    delay_to_seconds("custom", assigns.custom_delay_amount, assigns.custom_delay_unit)
+  end
+
+  defp resolve_delay(%{selected_delay: preset}), do: delay_to_seconds(preset)
+
+  defp delay_to_seconds("custom", amount, unit) do
+    n = parse_pos_int(amount, 1)
+
+    case unit do
+      "m" -> n * 60
+      "h" -> n * 3600
+      "d" -> n * 86_400
+      _ -> n * 60
+    end
+  end
+
   defp delay_to_seconds("5m"), do: 5 * 60
   defp delay_to_seconds("10m"), do: 10 * 60
   defp delay_to_seconds("15m"), do: 15 * 60
@@ -346,6 +375,15 @@ defmodule PrikkeWeb.TaskLive.New do
   defp delay_to_seconds("7d"), do: 7 * 86_400
   defp delay_to_seconds("30d"), do: 30 * 86_400
   defp delay_to_seconds(_), do: 5 * 60
+
+  defp parse_pos_int(val, default) when is_binary(val) do
+    case Integer.parse(val) do
+      {n, _} when n > 0 -> n
+      _ -> default
+    end
+  end
+
+  defp parse_pos_int(_, default), do: default
 
   defp parse_timeout(val) when is_integer(val), do: val
 
@@ -570,7 +608,7 @@ defmodule PrikkeWeb.TaskLive.New do
                 <div>
                   <label class="block text-sm font-medium text-slate-700 mb-2">Run after</label>
                   <div class="flex flex-wrap gap-2">
-                    <%= for {label, value} <- [{"5 min", "5m"}, {"10 min", "10m"}, {"15 min", "15m"}, {"1 hour", "1h"}, {"6 hours", "6h"}, {"12 hours", "12h"}, {"1 day", "1d"}, {"7 days", "7d"}, {"30 days", "30d"}] do %>
+                    <%= for {label, value} <- [{"5 min", "5m"}, {"10 min", "10m"}, {"15 min", "15m"}, {"1 hour", "1h"}, {"6 hours", "6h"}, {"12 hours", "12h"}, {"1 day", "1d"}, {"7 days", "7d"}, {"30 days", "30d"}, {"Custom", "custom"}] do %>
                       <button
                         type="button"
                         phx-click="set_delay"
@@ -586,6 +624,27 @@ defmodule PrikkeWeb.TaskLive.New do
                       </button>
                     <% end %>
                   </div>
+                  <%= if @selected_delay == "custom" do %>
+                    <div class="flex items-center gap-2 mt-3">
+                      <input
+                        type="number"
+                        min="1"
+                        value={@custom_delay_amount}
+                        phx-change="update_custom_delay"
+                        name="amount"
+                        class="w-24 px-3 py-1.5 text-sm border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
+                      />
+                      <select
+                        name="unit"
+                        phx-change="update_custom_delay"
+                        class="px-3 py-1.5 text-sm border border-slate-300 rounded-md text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
+                      >
+                        <option value="m" selected={@custom_delay_unit == "m"}>minutes</option>
+                        <option value="h" selected={@custom_delay_unit == "h"}>hours</option>
+                        <option value="d" selected={@custom_delay_unit == "d"}>days</option>
+                      </select>
+                    </div>
+                  <% end %>
                 </div>
               <% end %>
 
