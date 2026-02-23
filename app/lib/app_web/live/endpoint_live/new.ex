@@ -119,6 +119,7 @@ defmodule PrikkeWeb.EndpointLive.New do
       %{"forward_urls" => urls} when is_map(urls) ->
         url_list =
           urls
+          |> Enum.reject(fn {k, _v} -> String.starts_with?(k, "_") end)
           |> Enum.sort_by(fn {k, _v} -> String.to_integer(k) end)
           |> Enum.map(fn {_k, v} -> v end)
 
