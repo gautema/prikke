@@ -128,11 +128,11 @@ defmodule PrikkeWeb.StatusHTML do
 
   @doc """
   Returns a Tailwind color class based on scheduling precision SLO compliance.
-  Green: p95 < 30s, Yellow: 30-60s, Red: > 60s, Gray: no data.
+  Green: p95 < 15s, Yellow: 15-30s, Red: > 30s, Gray: no data.
   """
   def precision_bar_color(0), do: "bg-slate-200"
-  def precision_bar_color(p95_ms) when p95_ms <= 30_000, do: "bg-emerald-600"
-  def precision_bar_color(p95_ms) when p95_ms <= 60_000, do: "bg-amber-500"
+  def precision_bar_color(p95_ms) when p95_ms <= 15_000, do: "bg-emerald-600"
+  def precision_bar_color(p95_ms) when p95_ms <= 30_000, do: "bg-amber-500"
   def precision_bar_color(_p95_ms), do: "bg-red-500"
 
   @doc """

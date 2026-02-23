@@ -196,7 +196,7 @@
               p95:
               <span class={[
                 "font-semibold",
-                if(@today_precision.p95 <= 30_000, do: "text-emerald-600", else: "text-red-600")
+                if(@today_precision.p95 <= 15_000, do: "text-emerald-600", else: "text-red-600")
               ]}>
                 {format_delay(@today_precision.p95)}
               </span>
@@ -245,15 +245,15 @@
         <div class="flex items-center gap-4 mt-3 text-xs text-slate-500">
           <div class="flex items-center gap-1.5">
             <div class="w-3 h-3 rounded-sm bg-emerald-600"></div>
-            <span>p95 &lt; 30s</span>
+            <span>p95 &lt; 15s</span>
           </div>
           <div class="flex items-center gap-1.5">
             <div class="w-3 h-3 rounded-sm bg-amber-500"></div>
-            <span>p95 30-60s</span>
+            <span>p95 15-30s</span>
           </div>
           <div class="flex items-center gap-1.5">
             <div class="w-3 h-3 rounded-sm bg-red-500"></div>
-            <span>p95 &gt; 60s</span>
+            <span>p95 &gt; 30s</span>
           </div>
           <div class="flex items-center gap-1.5">
             <div class="w-3 h-3 rounded-sm bg-slate-200"></div>
@@ -272,7 +272,7 @@
               <div class="text-xs text-slate-400">p95</div>
               <div class={[
                 "text-sm font-semibold",
-                if(@today_precision.p95 <= 30_000, do: "text-emerald-600", else: "text-red-600")
+                if(@today_precision.p95 <= 15_000, do: "text-emerald-600", else: "text-red-600")
               ]}>
                 {format_delay(@today_precision.p95)}
               </div>
