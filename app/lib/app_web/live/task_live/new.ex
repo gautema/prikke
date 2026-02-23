@@ -653,16 +653,18 @@ defmodule PrikkeWeb.TaskLive.New do
                   <label for="task_scheduled_at" class="block text-sm font-medium text-slate-700 mb-1">
                     Scheduled Time
                   </label>
-                  <input
-                    type="datetime-local"
-                    id="task_scheduled_at"
-                    phx-hook=".LocalDatetimePicker"
-                    class={[
-                      "w-full px-4 py-2.5 border rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600",
-                      @form[:scheduled_at].errors != [] && "border-red-500",
-                      @form[:scheduled_at].errors == [] && "border-slate-300"
-                    ]}
-                  />
+                  <div id="task_scheduled_at_wrapper" phx-update="ignore">
+                    <input
+                      type="datetime-local"
+                      id="task_scheduled_at"
+                      phx-hook=".LocalDatetimePicker"
+                      class={[
+                        "w-full px-4 py-2.5 border rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600",
+                        @form[:scheduled_at].errors != [] && "border-red-500",
+                        @form[:scheduled_at].errors == [] && "border-slate-300"
+                      ]}
+                    />
+                  </div>
                   <input
                     type="hidden"
                     name={@form[:scheduled_at].name}
@@ -677,12 +679,6 @@ defmodule PrikkeWeb.TaskLive.New do
                 <script :type={Phoenix.LiveView.ColocatedHook} name=".LocalDatetimePicker">
                   export default {
                     mounted() {
-                      this.setupPicker();
-                    },
-                    updated() {
-                      this.setupPicker();
-                    },
-                    setupPicker() {
                       const input = this.el;
                       const hidden = document.getElementById("task_scheduled_at_utc");
                       const label = document.getElementById("task_scheduled_at_utc_label");

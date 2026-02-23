@@ -515,12 +515,14 @@ defmodule PrikkeWeb.TaskLive.Edit do
                     val when is_binary(val) and val != "" -> val
                     _ -> nil
                   end %>
-                <input
-                  type="datetime-local"
-                  id="task_scheduled_at_edit"
-                  phx-hook=".LocalDatetimePickerEdit"
-                  class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
-                />
+                <div id="task_scheduled_at_edit_wrapper" phx-update="ignore">
+                  <input
+                    type="datetime-local"
+                    id="task_scheduled_at_edit"
+                    phx-hook=".LocalDatetimePickerEdit"
+                    class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
+                  />
+                </div>
                 <input
                   type="hidden"
                   name={@form[:scheduled_at].name}
@@ -535,12 +537,6 @@ defmodule PrikkeWeb.TaskLive.Edit do
               <script :type={Phoenix.LiveView.ColocatedHook} name=".LocalDatetimePickerEdit">
                 export default {
                   mounted() {
-                    this.setupPicker();
-                  },
-                  updated() {
-                    this.setupPicker();
-                  },
-                  setupPicker() {
                     const input = this.el;
                     const hidden = document.getElementById("task_scheduled_at_edit_utc");
                     const label = document.getElementById("task_scheduled_at_edit_utc_label");
