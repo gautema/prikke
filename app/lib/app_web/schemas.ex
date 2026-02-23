@@ -338,7 +338,7 @@ defmodule PrikkeWeb.Schemas do
         endpoints: [
           %{
             name: "Stripe webhooks",
-            forward_url: "https://myapp.com/webhooks/stripe"
+            forward_urls: ["https://myapp.com/webhooks/stripe"]
           }
         ],
         delete_removed: false
@@ -635,13 +635,17 @@ defmodule PrikkeWeb.Schemas do
       title: "Endpoint",
       description: "An inbound webhook endpoint",
       type: :object,
-      required: [:id, :name, :slug, :forward_url],
+      required: [:id, :name, :slug, :forward_urls],
       properties: %{
         id: %Schema{type: :string, format: :uuid, description: "Endpoint ID"},
         name: %Schema{type: :string, description: "Endpoint name"},
         slug: %Schema{type: :string, description: "Unique slug for inbound URL"},
         inbound_url: %Schema{type: :string, format: :uri, description: "Full inbound URL"},
-        forward_url: %Schema{type: :string, format: :uri, description: "URL to forward events to"},
+        forward_urls: %Schema{
+          type: :array,
+          items: %Schema{type: :string, format: :uri},
+          description: "URLs to forward events to (fan-out to multiple destinations)"
+        },
         enabled: %Schema{
           type: :boolean,
           default: true,
@@ -685,7 +689,7 @@ defmodule PrikkeWeb.Schemas do
         name: "Stripe webhooks",
         slug: "ep_abc123def456ghi789jkl012mno345",
         inbound_url: "https://runlater.eu/in/ep_abc123def456ghi789jkl012mno345",
-        forward_url: "https://myapp.com/webhooks/stripe",
+        forward_urls: ["https://myapp.com/webhooks/stripe"],
         enabled: true,
         retry_attempts: 5,
         use_queue: true,
@@ -702,10 +706,20 @@ defmodule PrikkeWeb.Schemas do
       title: "EndpointRequest",
       description: "Request body for creating or updating an endpoint",
       type: :object,
-      required: [:name, :forward_url],
+      required: [:name, :forward_urls],
       properties: %{
         name: %Schema{type: :string, description: "Endpoint name"},
-        forward_url: %Schema{type: :string, format: :uri, description: "URL to forward events to"},
+        forward_urls: %Schema{
+          type: :array,
+          items: %Schema{type: :string, format: :uri},
+          description:
+            "URLs to forward events to (1-10). For backward compatibility, a single `forward_url` string is also accepted."
+        },
+        forward_url: %Schema{
+          type: :string,
+          format: :uri,
+          description: "Deprecated: use forward_urls. Single URL to forward events to."
+        },
         enabled: %Schema{type: :boolean, default: true},
         retry_attempts: %Schema{
           type: :integer,
@@ -732,7 +746,7 @@ defmodule PrikkeWeb.Schemas do
       },
       example: %{
         name: "Stripe webhooks",
-        forward_url: "https://myapp.com/webhooks/stripe",
+        forward_urls: ["https://myapp.com/webhooks/stripe"],
         retry_attempts: 5,
         use_queue: true
       }
@@ -781,16 +795,16 @@ defmodule PrikkeWeb.Schemas do
           format: :"date-time",
           description: "When the event was received"
         },
-        execution_id: %Schema{
-          type: :string,
-          format: :uuid,
-          nullable: true,
-          description: "Forwarding execution ID"
+        task_ids: %Schema{
+          type: :array,
+          items: %Schema{type: :string, format: :uuid},
+          description: "IDs of tasks created for forwarding (one per destination URL)"
         },
-        execution_status: %Schema{
+        status: %Schema{
           type: :string,
           nullable: true,
-          description: "Forwarding execution status"
+          description:
+            "Aggregated forwarding status: success (all succeeded), failed (any failed), pending (any pending)"
         }
       }
     })
@@ -820,9 +834,18 @@ defmodule PrikkeWeb.Schemas do
         data: %Schema{
           type: :object,
           properties: %{
-            execution_id: %Schema{type: :string, format: :uuid},
-            status: %Schema{type: :string},
-            scheduled_for: %Schema{type: :string, format: :"date-time"}
+            executions: %Schema{
+              type: :array,
+              items: %Schema{
+                type: :object,
+                properties: %{
+                  execution_id: %Schema{type: :string, format: :uuid},
+                  status: %Schema{type: :string},
+                  scheduled_for: %Schema{type: :string, format: :"date-time"}
+                }
+              },
+              description: "New executions created for each destination"
+            }
           }
         },
         message: %Schema{type: :string}

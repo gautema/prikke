@@ -70,7 +70,7 @@
   },
   <span class="text-sky-300">body</span>: JSON.stringify({
     <span class="text-sky-300">name</span>: <span class="text-green-300">"Stripe webhooks"</span>,
-    <span class="text-sky-300">forward_url</span>: <span class="text-green-300">"https://myapp.com/webhooks/stripe"</span>,
+    <span class="text-sky-300">forward_urls</span>: [<span class="text-green-300">"https://myapp.com/webhooks/stripe"</span>],
     <span class="text-sky-300">retry_attempts</span>: <span class="text-orange-300">5</span>,
     <span class="text-sky-300">use_queue</span>: <span class="text-orange-300">true</span>,  <span class="text-slate-500">// Forward events one at a time (preserves order)</span>
   }),
@@ -93,7 +93,7 @@ console.log(data.inbound_url)
   -H "Content-Type: application/json" \
   -d '{
     "name": "Stripe webhooks",
-    "forward_url": "https://myapp.com/webhooks/stripe",
+    "forward_urls": ["https://myapp.com/webhooks/stripe"],
     "retry_attempts": 5,
     "use_queue": true
   }'</pre>
@@ -119,7 +119,7 @@ console.log(data.inbound_url)
   <h3>3. Handle webhooks in your app</h3>
   <p>
     Your app receives the forwarded webhook at the
-    <code class="bg-slate-100 px-2 py-1 rounded text-sm">forward_url</code>
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">forward_urls</code>
     you configured. The original method, headers, and body are preserved:
   </p>
 
@@ -255,7 +255,7 @@ curl -X POST https://runlater.eu/api/v1/endpoints \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Stripe",
-    "forward_url": "https://myapp.vercel.app/api/webhooks/stripe",
+    "forward_urls": ["https://myapp.vercel.app/api/webhooks/stripe"],
     "retry_attempts": 10,
     "use_queue": true
   }'
@@ -266,7 +266,7 @@ curl -X POST https://runlater.eu/api/v1/endpoints \
   -H "Content-Type: application/json" \
   -d '{
     "name": "GitHub",
-    "forward_url": "https://myapp.vercel.app/api/webhooks/github",
+    "forward_urls": ["https://myapp.vercel.app/api/webhooks/github"],
     "retry_attempts": 5,
     "use_queue": false
   }'</pre>

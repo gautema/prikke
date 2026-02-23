@@ -26,6 +26,7 @@ defmodule PrikkeWeb.EndpointLive.New do
 
   @impl true
   def handle_event("validate", %{"endpoint" => params}, socket) do
+    params = normalize_forward_urls(params)
     params = cast_notification_overrides(params)
 
     changeset =
@@ -37,6 +38,7 @@ defmodule PrikkeWeb.EndpointLive.New do
   end
 
   def handle_event("save", %{"endpoint" => params}, socket) do
+    params = normalize_forward_urls(params)
     params = cast_notification_overrides(params)
 
     case Endpoints.create_endpoint(socket.assigns.organization, params,
@@ -53,6 +55,39 @@ defmodule PrikkeWeb.EndpointLive.New do
          socket
          |> put_flash(:error, "Could not create endpoint")
          |> assign_form(Map.put(changeset, :action, :validate))}
+    end
+  end
+
+  def handle_event("add_url", _params, socket) do
+    form = socket.assigns.form
+    current_urls = get_forward_urls_from_form(form)
+
+    if length(current_urls) < 10 do
+      changeset =
+        %Endpoint{}
+        |> Endpoints.change_endpoint(%{"forward_urls" => current_urls ++ [""]})
+
+      {:noreply, assign_form(socket, changeset)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("remove_url", %{"index" => index}, socket) do
+    form = socket.assigns.form
+    current_urls = get_forward_urls_from_form(form)
+    idx = String.to_integer(index)
+
+    if length(current_urls) > 1 do
+      new_urls = List.delete_at(current_urls, idx)
+
+      changeset =
+        %Endpoint{}
+        |> Endpoints.change_endpoint(%{"forward_urls" => new_urls})
+
+      {:noreply, assign_form(socket, changeset)}
+    else
+      {:noreply, socket}
     end
   end
 
@@ -82,6 +117,29 @@ defmodule PrikkeWeb.EndpointLive.New do
         [org | _] -> org
         [] -> nil
       end
+    end
+  end
+
+  defp normalize_forward_urls(params) do
+    case params do
+      %{"forward_urls" => urls} when is_map(urls) ->
+        url_list =
+          urls
+          |> Enum.sort_by(fn {k, _v} -> String.to_integer(k) end)
+          |> Enum.map(fn {_k, v} -> v end)
+
+        Map.put(params, "forward_urls", url_list)
+
+      _ ->
+        params
+    end
+  end
+
+  defp get_forward_urls_from_form(form) do
+    case Ecto.Changeset.get_field(form.source, :forward_urls) do
+      nil -> [""]
+      [] -> [""]
+      urls -> urls
     end
   end
 
@@ -119,15 +177,52 @@ defmodule PrikkeWeb.EndpointLive.New do
             placeholder="Stripe webhooks"
           />
 
-          <.input
-            field={@form[:forward_url]}
-            type="text"
-            label="Forward URL"
-            placeholder="https://myapp.com/webhooks/stripe"
-          />
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">
+              Forward URL(s)
+            </label>
+            <div class="space-y-2">
+              <%= for {url, idx} <- Enum.with_index(get_forward_urls_from_form(@form)) do %>
+                <div class="flex items-center gap-2">
+                  <input
+                    type="text"
+                    name={"endpoint[forward_urls][#{idx}]"}
+                    value={url}
+                    placeholder="https://myapp.com/webhooks/stripe"
+                    class="flex-1 px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
+                  />
+                  <%= if length(get_forward_urls_from_form(@form)) > 1 do %>
+                    <button
+                      type="button"
+                      phx-click="remove_url"
+                      phx-value-index={idx}
+                      class="p-2 text-slate-400 hover:text-red-600 transition-colors"
+                      title="Remove URL"
+                    >
+                      <.icon name="hero-x-mark" class="w-5 h-5" />
+                    </button>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+            <%= if length(get_forward_urls_from_form(@form)) < 10 do %>
+              <button
+                type="button"
+                phx-click="add_url"
+                class="mt-2 text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
+              >
+                <.icon name="hero-plus" class="w-4 h-4" /> Add URL
+              </button>
+            <% end %>
+            <%= if @form.errors[:forward_urls] do %>
+              <p class="text-sm text-red-600 mt-1">
+                {elem(hd(List.wrap(@form.errors[:forward_urls])), 0)}
+              </p>
+            <% end %>
+          </div>
 
           <p class="text-sm text-slate-500">
-            Incoming webhooks will be forwarded to this URL with the original method, headers, and body.
+            Incoming webhooks will be forwarded to these URLs with the original method, headers, and body. Add multiple URLs to fan out the same webhook to multiple destinations.
           </p>
 
           <.input

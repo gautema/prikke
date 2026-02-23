@@ -124,15 +124,17 @@ defmodule PrikkeWeb.BadgeControllerTest do
         source_ip: "127.0.0.1"
       })
 
-      # Get the event and complete its execution
+      # Get the event and complete its executions via tasks
       [event] = Endpoints.list_inbound_events(endpoint, limit: 1)
 
-      if event.execution do
-        Prikke.Executions.complete_execution(event.execution, %{
-          status_code: 200,
-          response_body: "ok",
-          duration_ms: 50
-        })
+      for task <- Map.get(event, :tasks, []) do
+        if Map.get(task, :latest_execution) do
+          Prikke.Executions.complete_execution(task.latest_execution, %{
+            status_code: 200,
+            response_body: "ok",
+            duration_ms: 50
+          })
+        end
       end
 
       conn = get(conn, "/badge/endpoint/#{endpoint.badge_token}/status.svg")

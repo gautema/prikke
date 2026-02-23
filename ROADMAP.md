@@ -32,13 +32,13 @@ Runlater is a **task queue with cron built in**, not a cron scheduler with a que
 These are ideas that might make sense later, but only if users ask for them. Not actively planned.
 
 - **Task chaining** (`on_success`) — Lightweight alternative to workflows. Only build if multiple users request multi-step task orchestration.
-- **Bulk push API** — Queue multiple jobs in one call. Only if high-volume users need it.
 - **Python/Go SDKs** — The REST API + curl works everywhere. Only build SDKs for languages where users are actively struggling.
 - **Scheduled email reports** — Weekly digest. Only if retention data shows users forgetting about their account.
 - **Encryption at rest** — Per-org field encryption. Only if enterprise customers require it or BYOK.
 
 ## Done
 
+- [x] **Bulk push API** — Queue multiple jobs in one call. Only if high-volume users need it.
 - [x] **Usage alerts** — Email at 80% and 100% of monthly execution limit, with dashboard warnings.
 - [x] **Job versioning / change history** — Covered by audit logging (tracks who changed what fields, when).
 - [x] **Payment integration** (Creem) — Checkout with EU VAT handled as Merchant of Record.

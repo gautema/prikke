@@ -1330,14 +1330,22 @@ defmodule Prikke.TasksTest do
       org2 = organization_fixture()
 
       {:ok, _} =
-        Tasks.create_batch(org1, %{"url" => "https://example.com/api", "queue" => "shared-name"}, [
-          %{"a" => 1}
-        ])
+        Tasks.create_batch(
+          org1,
+          %{"url" => "https://example.com/api", "queue" => "shared-name"},
+          [
+            %{"a" => 1}
+          ]
+        )
 
       {:ok, _} =
-        Tasks.create_batch(org2, %{"url" => "https://example.com/api", "queue" => "shared-name"}, [
-          %{"a" => 1}
-        ])
+        Tasks.create_batch(
+          org2,
+          %{"url" => "https://example.com/api", "queue" => "shared-name"},
+          [
+            %{"a" => 1}
+          ]
+        )
 
       {:ok, result} = Tasks.cancel_tasks_by_queue(org1, "shared-name")
       assert result.cancelled == 1

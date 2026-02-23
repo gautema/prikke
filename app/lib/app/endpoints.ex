@@ -3,7 +3,8 @@ defmodule Prikke.Endpoints do
   The Endpoints context for inbound webhook receivers.
 
   Endpoints receive webhooks from external services, store the raw payload,
-  and forward it to the user's endpoint with retries and in-order delivery.
+  and forward it to the user's endpoint(s) with retries and in-order delivery.
+  Fan-out: each forward URL gets its own task + execution with independent retries.
   """
 
   import Ecto.Query, warn: false
@@ -13,6 +14,7 @@ defmodule Prikke.Endpoints do
   alias Prikke.Accounts.Organization
   alias Prikke.Audit
   alias Prikke.Tasks
+  alias Prikke.Tasks.Task, as: TaskSchema
   alias Prikke.Executions
 
   @tier_limits %{
@@ -101,7 +103,7 @@ defmodule Prikke.Endpoints do
         changes =
           Audit.compute_changes(old_endpoint, Map.from_struct(updated), [
             :name,
-            :forward_url,
+            :forward_urls,
             :enabled,
             :retry_attempts,
             :use_queue
@@ -234,17 +236,24 @@ defmodule Prikke.Endpoints do
   end
 
   def get_last_event_status(%Endpoint{} = endpoint) do
-    from(e in InboundEvent,
-      where: e.endpoint_id == ^endpoint.id,
-      order_by: [desc: e.received_at],
-      limit: 1,
-      preload: [:execution]
-    )
-    |> Repo.one()
-    |> case do
-      nil -> nil
-      %{execution: nil} -> "pending"
-      %{execution: execution} -> execution.status
+    event =
+      from(e in InboundEvent,
+        where: e.endpoint_id == ^endpoint.id,
+        order_by: [desc: e.received_at],
+        limit: 1
+      )
+      |> Repo.one()
+
+    case event do
+      nil ->
+        nil
+
+      %{task_ids: []} ->
+        "pending"
+
+      %{task_ids: task_ids} ->
+        tasks = load_tasks_with_latest_execution(task_ids)
+        aggregate_task_statuses(tasks)
     end
   end
 
@@ -254,21 +263,43 @@ defmodule Prikke.Endpoints do
     limit = Keyword.get(opts, :limit, 50)
     offset = Keyword.get(opts, :offset, 0)
 
-    from(e in InboundEvent,
-      where: e.endpoint_id == ^endpoint.id,
-      order_by: [desc: e.received_at],
-      limit: ^limit,
-      offset: ^offset,
-      preload: [:execution]
-    )
-    |> Repo.all()
+    events =
+      from(e in InboundEvent,
+        where: e.endpoint_id == ^endpoint.id,
+        order_by: [desc: e.received_at],
+        limit: ^limit,
+        offset: ^offset
+      )
+      |> Repo.all()
+
+    # Batch-load tasks for all events to compute aggregated status
+    all_task_ids =
+      events
+      |> Enum.flat_map(& &1.task_ids)
+      |> Enum.uniq()
+
+    tasks_by_id =
+      if all_task_ids == [] do
+        %{}
+      else
+        load_tasks_with_latest_execution(all_task_ids)
+        |> Map.new(&{&1.id, &1})
+      end
+
+    Enum.map(events, fn event ->
+      tasks = Enum.map(event.task_ids, &Map.get(tasks_by_id, &1)) |> Enum.reject(&is_nil/1)
+      Map.put(event, :tasks, tasks)
+    end)
   end
 
   def get_inbound_event!(%Endpoint{} = endpoint, id) do
-    InboundEvent
-    |> where(endpoint_id: ^endpoint.id)
-    |> Repo.get!(id)
-    |> Repo.preload(execution: :task)
+    event =
+      InboundEvent
+      |> where(endpoint_id: ^endpoint.id)
+      |> Repo.get!(id)
+
+    tasks = load_tasks_with_latest_execution(event.task_ids)
+    Map.put(event, :tasks, tasks)
   end
 
   def count_inbound_events(%Endpoint{} = endpoint) do
@@ -278,13 +309,12 @@ defmodule Prikke.Endpoints do
   end
 
   @doc """
-  Receives an inbound webhook event.
+  Receives an inbound webhook event with fan-out.
 
   1. Insert inbound_event record
-  2. Create a task (schedule_type: "once", url: endpoint.forward_url, skip_next_run: true)
-  3. Create execution for that task (scheduled_for: now)
-  4. Notify workers
-  5. Update inbound_event with execution_id
+  2. For each forward URL: create a task + execution
+  3. Update event with task_ids
+  4. Notify workers once
   """
   def receive_event(%Endpoint{} = endpoint, attrs) do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
@@ -296,7 +326,7 @@ defmodule Prikke.Endpoints do
 
     result =
       Repo.transaction(fn ->
-        # 1. Create inbound event
+        # 1. Create inbound event (task_ids populated after)
         {:ok, event} =
           %InboundEvent{}
           |> InboundEvent.create_changeset(%{
@@ -309,32 +339,49 @@ defmodule Prikke.Endpoints do
           })
           |> Repo.insert()
 
-        # 2. Create a task for forwarding
-        task_attrs = %{
-          "name" => "#{endpoint.name} · event #{String.slice(event.id, 0..7)}",
-          "url" => endpoint.forward_url,
-          "method" => to_string(attrs.method),
-          "headers" => forward_headers,
-          "body" => attrs.body || "",
-          "schedule_type" => "once",
-          "scheduled_at" => now,
-          "enabled" => true,
-          "timeout_ms" => 30_000,
-          "retry_attempts" => endpoint.retry_attempts,
-          "queue" => if(endpoint.use_queue, do: slugify_name(endpoint.name), else: nil),
-          "notify_on_failure" => endpoint.notify_on_failure,
-          "notify_on_recovery" => endpoint.notify_on_recovery
-        }
+        url_count = length(endpoint.forward_urls)
+        event_short_id = String.slice(event.id, 0..7)
 
-        # skip_next_run: task is created with next_run_at=nil, no UPDATE needed
-        {:ok, task} = Tasks.create_task(org, task_attrs, skip_next_run: true)
+        # 2. For each forward URL, create task + execution
+        task_ids =
+          endpoint.forward_urls
+          |> Enum.with_index(1)
+          |> Enum.map(fn {url, idx} ->
+            task_name =
+              if url_count == 1 do
+                "#{endpoint.name} \u00b7 event #{event_short_id}"
+              else
+                "#{endpoint.name} \u00b7 event #{event_short_id} \u2192 #{idx}/#{url_count}"
+              end
 
-        # 3. Create execution
-        {:ok, execution} = Executions.create_execution_for_task(task, now)
+            task_attrs = %{
+              "name" => task_name,
+              "url" => url,
+              "method" => to_string(attrs.method),
+              "headers" => forward_headers,
+              "body" => attrs.body || "",
+              "schedule_type" => "once",
+              "scheduled_at" => now,
+              "enabled" => true,
+              "timeout_ms" => 30_000,
+              "retry_attempts" => endpoint.retry_attempts,
+              "queue" => if(endpoint.use_queue, do: slugify_name(endpoint.name), else: nil),
+              "notify_on_failure" => endpoint.notify_on_failure,
+              "notify_on_recovery" => endpoint.notify_on_recovery
+            }
 
-        # 4. Update event with execution_id
+            # skip_next_run: task is created with next_run_at=nil, no UPDATE needed
+            {:ok, task} = Tasks.create_task(org, task_attrs, skip_next_run: true)
+
+            # 3. Create execution
+            {:ok, _execution} = Executions.create_execution_for_task(task, now)
+
+            task.id
+          end)
+
+        # 4. Update event with task_ids
         event
-        |> Ecto.Changeset.change(execution_id: execution.id)
+        |> Ecto.Changeset.change(task_ids: task_ids)
         |> Repo.update!()
       end)
 
@@ -345,34 +392,85 @@ defmodule Prikke.Endpoints do
   end
 
   @doc """
-  Replays an inbound event by creating a new execution for its linked task.
+  Replays an inbound event by creating new executions for all linked tasks.
   """
   def replay_event(%Endpoint{} = endpoint, %InboundEvent{} = event) do
     if event.endpoint_id != endpoint.id do
       raise ArgumentError, "event does not belong to endpoint"
     end
 
-    execution = event.execution || Repo.preload(event, :execution).execution
+    task_ids = event.task_ids
 
-    cond do
-      is_nil(execution) ->
-        {:error, :no_execution}
+    if task_ids == [] do
+      {:error, :no_tasks}
+    else
+      tasks = load_tasks_by_ids(task_ids)
 
-      is_nil(Repo.preload(execution, :task).task) ->
+      if Enum.empty?(tasks) do
         {:error, :task_deleted}
-
-      true ->
-        task = Repo.preload(execution, :task).task
+      else
         now = DateTime.utc_now() |> DateTime.truncate(:second)
 
-        case Executions.create_execution_for_task(task, now) do
-          {:ok, new_execution} ->
-            Tasks.notify_workers()
-            {:ok, new_execution}
+        executions =
+          Enum.map(tasks, fn task ->
+            {:ok, exec} = Executions.create_execution_for_task(task, now)
+            exec
+          end)
 
-          error ->
-            error
+        Tasks.notify_workers()
+        {:ok, executions}
+      end
+    end
+  end
+
+  ## Private: Task loading helpers
+
+  defp load_tasks_by_ids([]), do: []
+
+  defp load_tasks_by_ids(task_ids) do
+    from(t in TaskSchema, where: t.id in ^task_ids)
+    |> Repo.all()
+  end
+
+  defp load_tasks_with_latest_execution([]), do: []
+
+  defp load_tasks_with_latest_execution(task_ids) do
+    tasks = load_tasks_by_ids(task_ids)
+
+    # Get latest execution for each task
+    latest_executions =
+      from(e in Prikke.Executions.Execution,
+        where: e.task_id in ^task_ids,
+        distinct: e.task_id,
+        order_by: [e.task_id, desc: e.inserted_at]
+      )
+      |> Repo.all()
+      |> Map.new(&{&1.task_id, &1})
+
+    Enum.map(tasks, fn task ->
+      Map.put(task, :latest_execution, Map.get(latest_executions, task.id))
+    end)
+  end
+
+  @doc """
+  Computes an aggregated status from a list of tasks with latest_execution.
+  """
+  def aggregate_task_statuses([]), do: nil
+
+  def aggregate_task_statuses(tasks) do
+    statuses =
+      Enum.map(tasks, fn task ->
+        case Map.get(task, :latest_execution) do
+          nil -> "pending"
+          exec -> exec.status
         end
+      end)
+
+    cond do
+      Enum.any?(statuses, &(&1 in ["failed", "timeout"])) -> "failed"
+      Enum.any?(statuses, &(&1 in ["pending", "running"])) -> "pending"
+      Enum.all?(statuses, &(&1 == "success")) -> "success"
+      true -> "pending"
     end
   end
 

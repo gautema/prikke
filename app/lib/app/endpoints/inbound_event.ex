@@ -10,9 +10,9 @@ defmodule Prikke.Endpoints.InboundEvent do
     field :body, :string
     field :source_ip, :string
     field :received_at, :utc_datetime
+    field :task_ids, {:array, Ecto.UUID}, default: []
 
     belongs_to :endpoint, Prikke.Endpoints.Endpoint
-    belongs_to :execution, Prikke.Executions.Execution
 
     timestamps(type: :utc_datetime)
   end
@@ -26,7 +26,7 @@ defmodule Prikke.Endpoints.InboundEvent do
       :body,
       :source_ip,
       :received_at,
-      :execution_id
+      :task_ids
     ])
     |> validate_required([:endpoint_id, :method, :received_at])
   end

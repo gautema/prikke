@@ -15,7 +15,7 @@ defmodule Prikke.EndpointsFixtures do
     attrs =
       Enum.into(attrs, %{
         name: "Test Endpoint #{System.unique_integer([:positive])}",
-        forward_url: "https://example.com/webhooks/test",
+        forward_urls: ["https://example.com/webhooks/test"],
         enabled: true
       })
 

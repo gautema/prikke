@@ -58,7 +58,7 @@ defmodule PrikkeWeb.Api.EndpointControllerTest do
   end
 
   describe "GET /api/v1/endpoints/:id" do
-    test "returns the endpoint with inbound_url", %{conn: conn, org: org} do
+    test "returns the endpoint with inbound_url and forward_urls", %{conn: conn, org: org} do
       endpoint = endpoint_fixture(org, %{name: "Test Endpoint"})
 
       conn = get(conn, ~p"/api/v1/endpoints/#{endpoint.id}")
@@ -68,7 +68,7 @@ defmodule PrikkeWeb.Api.EndpointControllerTest do
       assert response["data"]["name"] == "Test Endpoint"
       assert response["data"]["slug"] == endpoint.slug
       assert response["data"]["inbound_url"] =~ "/in/#{endpoint.slug}"
-      assert response["data"]["forward_url"] == "https://example.com/webhooks/test"
+      assert response["data"]["forward_urls"] == ["https://example.com/webhooks/test"]
     end
 
     test "returns 404 for non-existent endpoint", %{conn: conn} do
@@ -78,24 +78,54 @@ defmodule PrikkeWeb.Api.EndpointControllerTest do
   end
 
   describe "POST /api/v1/endpoints" do
-    test "creates an endpoint", %{conn: conn} do
+    test "creates an endpoint with forward_urls array", %{conn: conn} do
       conn =
         post(conn, ~p"/api/v1/endpoints", %{
           name: "Stripe",
-          forward_url: "https://myapp.com/webhooks/stripe"
+          forward_urls: ["https://myapp.com/webhooks/stripe"]
         })
 
       response = json_response(conn, 201)
       assert response["data"]["name"] == "Stripe"
+      assert response["data"]["forward_urls"] == ["https://myapp.com/webhooks/stripe"]
       assert response["data"]["slug"] =~ "ep_"
       assert response["data"]["inbound_url"] =~ "/in/ep_"
+    end
+
+    test "creates endpoint with forward_url string (backward compat)", %{conn: conn} do
+      conn =
+        post(conn, ~p"/api/v1/endpoints", %{
+          name: "Legacy",
+          forward_url: "https://myapp.com/webhooks/legacy"
+        })
+
+      response = json_response(conn, 201)
+      assert response["data"]["forward_urls"] == ["https://myapp.com/webhooks/legacy"]
+    end
+
+    test "creates endpoint with multiple forward_urls", %{conn: conn} do
+      conn =
+        post(conn, ~p"/api/v1/endpoints", %{
+          name: "Fan-out",
+          forward_urls: [
+            "https://old-system.com/hook",
+            "https://new-system.com/hook"
+          ]
+        })
+
+      response = json_response(conn, 201)
+
+      assert response["data"]["forward_urls"] == [
+               "https://old-system.com/hook",
+               "https://new-system.com/hook"
+             ]
     end
 
     test "creates endpoint with custom retry_attempts and use_queue", %{conn: conn} do
       conn =
         post(conn, ~p"/api/v1/endpoints", %{
           name: "Custom Config",
-          forward_url: "https://myapp.com/webhooks/stripe",
+          forward_urls: ["https://myapp.com/webhooks/stripe"],
           retry_attempts: 3,
           use_queue: false
         })
@@ -109,7 +139,7 @@ defmodule PrikkeWeb.Api.EndpointControllerTest do
       conn =
         post(conn, ~p"/api/v1/endpoints", %{
           name: "Defaults",
-          forward_url: "https://myapp.com/webhooks/stripe"
+          forward_urls: ["https://myapp.com/webhooks/stripe"]
         })
 
       response = json_response(conn, 201)
@@ -172,7 +202,7 @@ defmodule PrikkeWeb.Api.EndpointControllerTest do
   end
 
   describe "GET /api/v1/endpoints/:endpoint_id/events" do
-    test "lists events for an endpoint", %{conn: conn, org: org} do
+    test "lists events with task_ids and status", %{conn: conn, org: org} do
       endpoint = endpoint_fixture(org)
 
       {:ok, _} =
@@ -190,11 +220,13 @@ defmodule PrikkeWeb.Api.EndpointControllerTest do
       event = hd(response["data"])
       assert event["method"] == "POST"
       assert event["source_ip"] == "1.2.3.4"
+      assert is_list(event["task_ids"])
+      assert length(event["task_ids"]) == 1
     end
   end
 
   describe "POST /api/v1/endpoints/:endpoint_id/events/:event_id/replay" do
-    test "replays an event", %{conn: conn, org: org} do
+    test "replays an event and returns executions array", %{conn: conn, org: org} do
       endpoint = endpoint_fixture(org)
 
       {:ok, event} =
@@ -208,9 +240,10 @@ defmodule PrikkeWeb.Api.EndpointControllerTest do
       conn = post(conn, ~p"/api/v1/endpoints/#{endpoint.id}/events/#{event.id}/replay")
       response = json_response(conn, 202)
 
-      assert response["data"]["execution_id"]
-      assert response["data"]["status"] == "pending"
-      assert response["message"] == "Event replayed"
+      assert is_list(response["data"]["executions"])
+      assert length(response["data"]["executions"]) == 1
+      assert hd(response["data"]["executions"])["status"] == "pending"
+      assert response["message"] =~ "Event replayed"
     end
   end
 end

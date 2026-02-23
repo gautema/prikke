@@ -202,7 +202,7 @@ RUNLATER_URL=http://localhost:8080</pre>
     ><span class="text-slate-500"># Create an endpoint that forwards to your local app</span>
 curl -X POST http://localhost:8080/api/v1/endpoints \
   -H "Content-Type: application/json" \
-  -d '{"name": "Stripe", "slug": "stripe", "forward_url": "http://localhost:3000/webhooks/stripe"}'
+  -d '{"name": "Stripe", "slug": "stripe", "forward_urls": ["http://localhost:3000/webhooks/stripe"]}'
 
 <span class="text-slate-500"># Simulate a Stripe webhook</span>
 curl -X POST http://localhost:8080/in/stripe \

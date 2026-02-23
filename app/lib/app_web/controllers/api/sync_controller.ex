@@ -277,6 +277,7 @@ defmodule PrikkeWeb.Api.SyncController do
     {created, updated, errors} =
       Enum.reduce(endpoints_params, {[], [], []}, fn endpoint_params,
                                                      {created, updated, errors} ->
+        endpoint_params = normalize_forward_urls(endpoint_params)
         name = endpoint_params["name"]
 
         if is_nil(name) or name == "" do
@@ -333,6 +334,14 @@ defmodule PrikkeWeb.Api.SyncController do
         updated_count: length(updated),
         deleted_count: length(deleted)
       }
+    end
+  end
+
+  defp normalize_forward_urls(params) do
+    cond do
+      is_list(params["forward_urls"]) -> params
+      is_binary(params["forward_url"]) -> Map.put(params, "forward_urls", [params["forward_url"]])
+      true -> params
     end
   end
 

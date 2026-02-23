@@ -49,8 +49,8 @@ defmodule PrikkeWeb.EndpointLive.EventShow do
     event = socket.assigns.event
 
     case Endpoints.replay_event(endpoint, event) do
-      {:ok, _execution} ->
-        # Re-fetch event to get updated execution
+      {:ok, _executions} ->
+        # Re-fetch event to get updated tasks
         event = Endpoints.get_inbound_event!(endpoint, event.id)
 
         {:noreply,
@@ -58,11 +58,11 @@ defmodule PrikkeWeb.EndpointLive.EventShow do
          |> assign(:event, event)
          |> put_flash(:info, "Event replayed")}
 
-      {:error, :no_execution} ->
-        {:noreply, put_flash(socket, :error, "Cannot replay: no linked execution")}
+      {:error, :no_tasks} ->
+        {:noreply, put_flash(socket, :error, "Cannot replay: no linked tasks")}
 
       {:error, :task_deleted} ->
-        {:noreply, put_flash(socket, :error, "Cannot replay: linked task has been deleted")}
+        {:noreply, put_flash(socket, :error, "Cannot replay: linked tasks have been deleted")}
     end
   end
 
@@ -112,7 +112,7 @@ defmodule PrikkeWeb.EndpointLive.EventShow do
   defp status_code_color(code) when code >= 400 and code < 500, do: "text-amber-600"
   defp status_code_color(_), do: "text-red-600"
 
-  defp format_duration(nil), do: "—"
+  defp format_duration(nil), do: "\u2014"
   defp format_duration(ms) when ms < 1000, do: "#{ms}ms"
   defp format_duration(ms) when ms < 60_000, do: "#{Float.round(ms / 1000, 2)}s"
   defp format_duration(ms), do: "#{Float.round(ms / 60_000, 2)}m"
@@ -212,62 +212,72 @@ defmodule PrikkeWeb.EndpointLive.EventShow do
       <%!-- Forwarding Details --%>
       <div class="glass-card rounded-2xl p-6">
         <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">
-          Forwarding
+          <%= cond do %>
+            <% length(Map.get(@event, :tasks, [])) > 1 -> %>
+              Forwarding ({length(@event.tasks)} destinations)
+            <% true -> %>
+              Forwarding
+          <% end %>
         </h2>
-        <%= if @event.execution do %>
-          <div class="space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <span class="text-xs text-slate-500 uppercase">Status</span>
-                <div class="mt-1">
-                  <span class={[
-                    "text-xs font-medium px-2 py-0.5 rounded",
-                    execution_status_badge(@event.execution.status)
-                  ]}>
-                    {@event.execution.status}
-                  </span>
-                </div>
-              </div>
-              <%= if @event.execution.status_code do %>
-                <div>
-                  <span class="text-xs text-slate-500 uppercase">Status Code</span>
-                  <p class={[
-                    "text-lg font-mono font-bold mt-0.5",
-                    status_code_color(@event.execution.status_code)
-                  ]}>
-                    {@event.execution.status_code}
-                  </p>
+        <%= cond do %>
+          <% Map.get(@event, :tasks, []) == [] -> %>
+            <p class="text-sm text-slate-400 italic">No forwarding data available</p>
+          <% true -> %>
+            <div class="space-y-4">
+              <%= for task <- @event.tasks do %>
+                <div class="border border-slate-100 rounded-lg p-4">
+                  <div class="text-xs text-slate-500 font-mono mb-3 break-all">{task.url}</div>
+                  <%= if Map.get(task, :latest_execution) do %>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
+                      <div>
+                        <span class="text-xs text-slate-500 uppercase">Status</span>
+                        <div class="mt-1">
+                          <span class={[
+                            "text-xs font-medium px-2 py-0.5 rounded",
+                            execution_status_badge(task.latest_execution.status)
+                          ]}>
+                            {task.latest_execution.status}
+                          </span>
+                        </div>
+                      </div>
+                      <%= if task.latest_execution.status_code do %>
+                        <div>
+                          <span class="text-xs text-slate-500 uppercase">Status Code</span>
+                          <p class={[
+                            "text-lg font-mono font-bold mt-0.5",
+                            status_code_color(task.latest_execution.status_code)
+                          ]}>
+                            {task.latest_execution.status_code}
+                          </p>
+                        </div>
+                      <% end %>
+                      <div>
+                        <span class="text-xs text-slate-500 uppercase">Duration</span>
+                        <p class="text-sm font-medium text-slate-900 mt-0.5">
+                          {format_duration(task.latest_execution.duration_ms)}
+                        </p>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <.link
+                        navigate={~p"/tasks/#{task.id}"}
+                        class="text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
+                      >
+                        <.icon name="hero-arrow-top-right-on-square" class="w-4 h-4" /> View Task
+                      </.link>
+                      <.link
+                        navigate={~p"/tasks/#{task.id}/executions/#{task.latest_execution.id}"}
+                        class="text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
+                      >
+                        <.icon name="hero-arrow-top-right-on-square" class="w-4 h-4" /> View Execution
+                      </.link>
+                    </div>
+                  <% else %>
+                    <p class="text-sm text-slate-400 italic">Execution pending</p>
+                  <% end %>
                 </div>
               <% end %>
-              <div>
-                <span class="text-xs text-slate-500 uppercase">Duration</span>
-                <p class="text-sm font-medium text-slate-900 mt-0.5">
-                  {format_duration(@event.execution.duration_ms)}
-                </p>
-              </div>
             </div>
-
-            <%= if @event.execution.task do %>
-              <div class="flex items-center gap-3">
-                <.link
-                  navigate={~p"/tasks/#{@event.execution.task_id}"}
-                  class="text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
-                >
-                  <.icon name="hero-arrow-top-right-on-square" class="w-4 h-4" /> View Task
-                </.link>
-                <.link
-                  navigate={~p"/tasks/#{@event.execution.task_id}/executions/#{@event.execution.id}"}
-                  class="text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
-                >
-                  <.icon name="hero-arrow-top-right-on-square" class="w-4 h-4" /> View Execution
-                </.link>
-              </div>
-            <% else %>
-              <p class="text-sm text-slate-400 italic">Linked task has been deleted</p>
-            <% end %>
-          </div>
-        <% else %>
-          <p class="text-sm text-slate-400 italic">No forwarding execution linked to this event</p>
         <% end %>
       </div>
     </Layouts.app>

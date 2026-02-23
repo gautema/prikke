@@ -56,12 +56,12 @@ defmodule PrikkeWeb.EndpointLiveTest do
       assert has_element?(view, "#endpoint-form")
 
       view
-      |> form("#endpoint-form",
-        endpoint: %{
-          name: "GitHub webhooks",
-          forward_url: "https://myapp.com/webhooks/github"
+      |> form("#endpoint-form", %{
+        "endpoint" => %{
+          "name" => "GitHub webhooks",
+          "forward_urls" => %{"0" => "https://myapp.com/webhooks/github"}
         }
-      )
+      })
       |> render_submit()
 
       assert_redirect(view)
@@ -71,7 +71,7 @@ defmodule PrikkeWeb.EndpointLiveTest do
       {:ok, view, _html} = live(conn, ~p"/endpoints/new")
 
       view
-      |> form("#endpoint-form", endpoint: %{name: "", forward_url: ""})
+      |> form("#endpoint-form", endpoint: %{name: ""})
       |> render_change()
 
       assert has_element?(view, "#endpoint-form")
@@ -79,14 +79,14 @@ defmodule PrikkeWeb.EndpointLiveTest do
   end
 
   describe "Show" do
-    test "displays endpoint details", %{conn: conn, org: org} do
+    test "displays endpoint details with forward URLs", %{conn: conn, org: org} do
       endpoint = endpoint_fixture(org, %{name: "Stripe webhooks"})
 
       {:ok, view, _html} = live(conn, ~p"/endpoints/#{endpoint.id}")
 
       assert has_element?(view, "h1", "Stripe webhooks")
       assert render(view) =~ endpoint.slug
-      assert render(view) =~ endpoint.forward_url
+      assert render(view) =~ hd(endpoint.forward_urls)
     end
 
     test "shows no events message", %{conn: conn, org: org} do

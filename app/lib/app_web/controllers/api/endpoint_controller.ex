@@ -59,6 +59,7 @@ defmodule PrikkeWeb.Api.EndpointController do
 
   def create(conn, params) do
     endpoint_params = params["endpoint"] || params
+    endpoint_params = normalize_forward_urls(endpoint_params)
     org = conn.assigns.current_organization
 
     api_key_name = conn.assigns[:api_key_name]
@@ -90,6 +91,7 @@ defmodule PrikkeWeb.Api.EndpointController do
 
   def update(conn, %{"id" => id} = params) do
     endpoint_params = params["endpoint"] || Map.drop(params, ["id"])
+    endpoint_params = normalize_forward_urls(endpoint_params)
     org = conn.assigns.current_organization
     api_key_name = conn.assigns[:api_key_name]
 
@@ -163,7 +165,7 @@ defmodule PrikkeWeb.Api.EndpointController do
 
   operation(:replay,
     summary: "Replay an inbound event",
-    description: "Creates a new forwarding execution for an existing inbound event",
+    description: "Creates new forwarding executions for an existing inbound event",
     parameters: [
       endpoint_id: [in: :path, type: :string, description: "Endpoint ID", required: true],
       event_id: [in: :path, type: :string, description: "Event ID", required: true]
@@ -185,23 +187,41 @@ defmodule PrikkeWeb.Api.EndpointController do
         event = Endpoints.get_inbound_event!(endpoint, event_id)
 
         case Endpoints.replay_event(endpoint, event) do
-          {:ok, execution} ->
+          {:ok, executions} ->
             conn
             |> put_status(:accepted)
             |> json(%{
               data: %{
-                execution_id: execution.id,
-                status: execution.status,
-                scheduled_for: execution.scheduled_for
+                executions:
+                  Enum.map(executions, fn exec ->
+                    %{
+                      execution_id: exec.id,
+                      status: exec.status,
+                      scheduled_for: exec.scheduled_for
+                    }
+                  end)
               },
-              message: "Event replayed"
+              message: "Event replayed to #{length(executions)} destination(s)"
             })
 
-          {:error, :no_execution} ->
+          {:error, :no_tasks} ->
             conn
             |> put_status(:unprocessable_entity)
             |> json(%{
-              error: %{code: "no_execution", message: "Event has no linked execution to replay"}
+              error: %{
+                code: "no_tasks",
+                message: "Event has no linked tasks to replay"
+              }
+            })
+
+          {:error, :task_deleted} ->
+            conn
+            |> put_status(:unprocessable_entity)
+            |> json(%{
+              error: %{
+                code: "task_deleted",
+                message: "All linked tasks have been deleted"
+              }
             })
         end
     end
@@ -217,7 +237,7 @@ defmodule PrikkeWeb.Api.EndpointController do
       name: e.name,
       slug: e.slug,
       inbound_url: "https://#{host}/in/#{e.slug}",
-      forward_url: e.forward_url,
+      forward_urls: e.forward_urls,
       enabled: e.enabled,
       retry_attempts: e.retry_attempts,
       use_queue: e.use_queue,
@@ -229,11 +249,10 @@ defmodule PrikkeWeb.Api.EndpointController do
   end
 
   defp event_json(event) do
-    execution_status =
-      if event.execution do
-        event.execution.status
-      else
-        nil
+    status =
+      case Map.get(event, :tasks, []) do
+        [] -> nil
+        tasks -> Endpoints.aggregate_task_statuses(tasks)
       end
 
     %{
@@ -241,9 +260,17 @@ defmodule PrikkeWeb.Api.EndpointController do
       method: event.method,
       source_ip: event.source_ip,
       received_at: event.received_at,
-      execution_id: event.execution_id,
-      execution_status: execution_status
+      task_ids: event.task_ids,
+      status: status
     }
+  end
+
+  defp normalize_forward_urls(params) do
+    cond do
+      is_list(params["forward_urls"]) -> params
+      is_binary(params["forward_url"]) -> Map.put(params, "forward_urls", [params["forward_url"]])
+      true -> params
+    end
   end
 
   defp parse_limit(nil, default), do: default

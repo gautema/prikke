@@ -496,7 +496,7 @@ defmodule PrikkeWeb.Api.SyncControllerTest do
       assert "Existing Endpoint" in response["data"]["endpoints"]["updated"]
 
       [endpoint] = Endpoints.list_endpoints(org)
-      assert endpoint.forward_url == "https://new-url.com/hooks"
+      assert endpoint.forward_urls == ["https://new-url.com/hooks"]
     end
 
     test "deletes removed endpoints when delete_removed is true", %{conn: conn, org: org} do

@@ -597,7 +597,8 @@
       <p class="text-slate-600 m-0 mb-4">
         Create many tasks at once with shared configuration. Each item in the <code>items</code>
         array becomes the request body for an individual task. All tasks share the same URL, method, headers, timing, and queue.
-        Use the queue name with <code>DELETE /tasks?queue=name</code> to cancel them as a group.
+        Use the queue name with <code>DELETE /tasks?queue=name</code>
+        to cancel them as a group.
       </p>
 
       <h4 class="text-sm font-semibold mt-4 mb-2 text-slate-900">Request Body</h4>
@@ -615,7 +616,9 @@
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">queue</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
-          <td class="py-2 text-slate-600">Queue name that groups the batch &mdash; used for bulk cancel (required)</td>
+          <td class="py-2 text-slate-600">
+            Queue name that groups the batch &mdash; used for bulk cancel (required)
+          </td>
         </tr>
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">items</code></td>
@@ -645,7 +648,9 @@
           <td class="py-2 pr-4"><code class="text-sky-600">delay</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
           <td class="py-2 text-slate-600">
-            Delay before execution: <code>"30s"</code>, <code>"5m"</code>, <code>"2h"</code>, <code>"1d"</code> (optional)
+            Delay before execution: <code>"30s"</code>, <code>"5m"</code>, <code>"2h"</code>,
+            <code>"1d"</code>
+            (optional)
           </td>
         </tr>
         <tr class="border-b border-slate-50">
@@ -661,7 +666,9 @@
         <tr>
           <td class="py-2 pr-4"><code class="text-sky-600">callback_url</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
-          <td class="py-2 text-slate-600">URL to receive a POST callback per task on completion (optional)</td>
+          <td class="py-2 text-slate-600">
+            URL to receive a POST callback per task on completion (optional)
+          </td>
         </tr>
       </table>
     </div>
@@ -1361,9 +1368,11 @@
           <td class="py-2 text-slate-600">Display name (required)</td>
         </tr>
         <tr class="border-b border-slate-50">
-          <td class="py-2 pr-4"><code class="text-sky-600">forward_url</code></td>
-          <td class="py-2 pr-4 text-slate-500">string</td>
-          <td class="py-2 text-slate-600">URL to forward events to (required)</td>
+          <td class="py-2 pr-4"><code class="text-sky-600">forward_urls</code></td>
+          <td class="py-2 pr-4 text-slate-500">array</td>
+          <td class="py-2 text-slate-600">
+            List of URLs to forward events to (required, at least one)
+          </td>
         </tr>
         <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">retry_attempts</code></td>
@@ -1408,7 +1417,7 @@
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
   -d '{
     <span class="text-sky-300">"name"</span>: <span class="text-green-300">"Stripe webhooks"</span>,
-    <span class="text-sky-300">"forward_url"</span>: <span class="text-green-300">"https://myapp.com/webhooks/stripe"</span>,
+    <span class="text-sky-300">"forward_urls"</span>: [<span class="text-green-300">"https://myapp.com/webhooks/stripe"</span>],
     <span class="text-sky-300">"retry_attempts"</span>: <span class="text-orange-300">5</span>,
     <span class="text-sky-300">"use_queue"</span>: <span class="text-orange-300">true</span>
   }'</pre>
@@ -1425,7 +1434,7 @@
   },
   <span class="text-sky-300">body</span>: JSON.<span class="text-sky-300">stringify</span>({
     <span class="text-sky-300">name</span>: <span class="text-green-300">"Stripe webhooks"</span>,
-    <span class="text-sky-300">forward_url</span>: <span class="text-green-300">"https://myapp.com/webhooks/stripe"</span>,
+    <span class="text-sky-300">forward_urls</span>: [<span class="text-green-300">"https://myapp.com/webhooks/stripe"</span>],
     <span class="text-sky-300">retry_attempts</span>: <span class="text-orange-300">5</span>,
     <span class="text-sky-300">use_queue</span>: <span class="text-orange-300">true</span>
   })

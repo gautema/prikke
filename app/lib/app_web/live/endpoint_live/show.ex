@@ -105,7 +105,7 @@ defmodule PrikkeWeb.EndpointLive.Show do
     event = Endpoints.get_inbound_event!(endpoint, event_id)
 
     case Endpoints.replay_event(endpoint, event) do
-      {:ok, _execution} ->
+      {:ok, _executions} ->
         current_loaded = max(length(socket.assigns.events), @per_page)
         events = Endpoints.list_inbound_events(endpoint, limit: current_loaded)
         total_events = Endpoints.count_inbound_events(endpoint)
@@ -116,8 +116,11 @@ defmodule PrikkeWeb.EndpointLive.Show do
          |> assign(:total_events, total_events)
          |> put_flash(:info, "Event replayed")}
 
-      {:error, :no_execution} ->
-        {:noreply, put_flash(socket, :error, "Cannot replay: no linked execution")}
+      {:error, :no_tasks} ->
+        {:noreply, put_flash(socket, :error, "Cannot replay: no linked tasks")}
+
+      {:error, :task_deleted} ->
+        {:noreply, put_flash(socket, :error, "Cannot replay: linked tasks have been deleted")}
     end
   end
 
@@ -237,7 +240,7 @@ defmodule PrikkeWeb.EndpointLive.Show do
           </button>
         </div>
         <p class="mt-3 text-sm text-slate-500">
-          Point your external service (Stripe, GitHub, etc.) to this URL. All incoming requests will be forwarded to <code class="text-slate-700 bg-slate-100 px-1 py-0.5 rounded text-xs">{@endpoint.forward_url}</code>.
+          Point your external service (Stripe, GitHub, etc.) to this URL. All incoming requests will be forwarded to your configured destination(s).
         </p>
       </div>
 
@@ -246,9 +249,13 @@ defmodule PrikkeWeb.EndpointLive.Show do
         <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Details</h2>
         <dl class="grid grid-cols-2 gap-4">
           <div>
-            <dt class="text-sm text-slate-500">Forward URL</dt>
+            <dt class="text-sm text-slate-500">
+              {if length(@endpoint.forward_urls) == 1, do: "Forward URL", else: "Forward URLs"}
+            </dt>
             <dd class="text-sm font-medium text-slate-900 mt-0.5 break-all">
-              {@endpoint.forward_url}
+              <%= for url <- @endpoint.forward_urls do %>
+                <div>{url}</div>
+              <% end %>
             </dd>
           </div>
           <div>
@@ -315,12 +322,12 @@ defmodule PrikkeWeb.EndpointLive.Show do
                     <span class="text-slate-400 text-xs ml-1">from {event.source_ip}</span>
                   <% end %>
                 </span>
-                <%= if event.execution do %>
+                <%= if Map.get(event, :tasks, []) != [] do %>
                   <span class={[
                     "text-xs font-medium px-2 py-0.5 rounded shrink-0",
-                    execution_status_badge(event.execution.status)
+                    execution_status_badge(Prikke.Endpoints.aggregate_task_statuses(event.tasks))
                   ]}>
-                    {event.execution.status}
+                    {Prikke.Endpoints.aggregate_task_statuses(event.tasks)}
                   </span>
                 <% end %>
                 <.icon name="hero-chevron-right" class="w-4 h-4 text-slate-400 shrink-0" />

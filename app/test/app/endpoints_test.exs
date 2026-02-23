@@ -13,11 +13,11 @@ defmodule Prikke.EndpointsTest do
       {:ok, endpoint} =
         Endpoints.create_endpoint(org, %{
           name: "Stripe webhooks",
-          forward_url: "https://myapp.com/webhooks/stripe"
+          forward_urls: ["https://myapp.com/webhooks/stripe"]
         })
 
       assert endpoint.name == "Stripe webhooks"
-      assert endpoint.forward_url == "https://myapp.com/webhooks/stripe"
+      assert endpoint.forward_urls == ["https://myapp.com/webhooks/stripe"]
       assert endpoint.enabled == true
       assert String.starts_with?(endpoint.slug, "ep_")
       assert String.length(endpoint.slug) == 35
@@ -29,19 +29,19 @@ defmodule Prikke.EndpointsTest do
 
       assert {:error, changeset} = Endpoints.create_endpoint(org, %{})
       assert "can't be blank" in errors_on(changeset).name
-      assert "can't be blank" in errors_on(changeset).forward_url
+      assert "can't be blank" in errors_on(changeset).forward_urls
     end
 
-    test "create_endpoint/2 validates forward_url is HTTP(S)" do
+    test "create_endpoint/2 validates forward_urls contains valid HTTP(S) URLs" do
       org = organization_fixture()
 
       assert {:error, changeset} =
                Endpoints.create_endpoint(org, %{
                  name: "Bad URL",
-                 forward_url: "ftp://invalid.com"
+                 forward_urls: ["ftp://invalid.com"]
                })
 
-      assert "must be a valid HTTP or HTTPS URL" in errors_on(changeset).forward_url
+      assert "contains an invalid URL: ftp://invalid.com" in errors_on(changeset).forward_urls
     end
 
     test "create_endpoint/2 enforces tier limits" do
@@ -55,7 +55,7 @@ defmodule Prikke.EndpointsTest do
       assert {:error, changeset} =
                Endpoints.create_endpoint(org, %{
                  name: "One too many",
-                 forward_url: "https://example.com/hook"
+                 forward_urls: ["https://example.com/hook"]
                })
 
       assert errors_on(changeset).base != []
@@ -71,8 +71,34 @@ defmodule Prikke.EndpointsTest do
       assert {:ok, _} =
                Endpoints.create_endpoint(org, %{
                  name: "Another one",
-                 forward_url: "https://example.com/hook"
+                 forward_urls: ["https://example.com/hook"]
                })
+    end
+
+    test "create_endpoint/2 rejects more than 10 forward URLs" do
+      org = organization_fixture()
+
+      urls = for i <- 1..11, do: "https://example.com/hook/#{i}"
+
+      assert {:error, changeset} =
+               Endpoints.create_endpoint(org, %{
+                 name: "Too many URLs",
+                 forward_urls: urls
+               })
+
+      assert errors_on(changeset).forward_urls != []
+    end
+
+    test "create_endpoint/2 rejects empty forward_urls array" do
+      org = organization_fixture()
+
+      assert {:error, changeset} =
+               Endpoints.create_endpoint(org, %{
+                 name: "No URLs",
+                 forward_urls: []
+               })
+
+      assert errors_on(changeset).forward_urls != []
     end
 
     test "update_endpoint/4 updates fields" do
@@ -82,11 +108,11 @@ defmodule Prikke.EndpointsTest do
       {:ok, updated} =
         Endpoints.update_endpoint(org, endpoint, %{
           name: "Updated Name",
-          forward_url: "https://new-url.com/hook"
+          forward_urls: ["https://new-url.com/hook"]
         })
 
       assert updated.name == "Updated Name"
-      assert updated.forward_url == "https://new-url.com/hook"
+      assert updated.forward_urls == ["https://new-url.com/hook"]
     end
 
     test "delete_endpoint/3 deletes endpoint" do
@@ -147,7 +173,7 @@ defmodule Prikke.EndpointsTest do
       {:ok, endpoint} =
         Endpoints.create_endpoint(org, %{
           name: "Defaults",
-          forward_url: "https://example.com/hook"
+          forward_urls: ["https://example.com/hook"]
         })
 
       assert endpoint.retry_attempts == 5
@@ -160,7 +186,7 @@ defmodule Prikke.EndpointsTest do
       {:ok, endpoint} =
         Endpoints.create_endpoint(org, %{
           name: "Custom",
-          forward_url: "https://example.com/hook",
+          forward_urls: ["https://example.com/hook"],
           retry_attempts: 2,
           use_queue: false
         })
@@ -175,7 +201,7 @@ defmodule Prikke.EndpointsTest do
       assert {:error, changeset} =
                Endpoints.create_endpoint(org, %{
                  name: "Bad retries",
-                 forward_url: "https://example.com/hook",
+                 forward_urls: ["https://example.com/hook"],
                  retry_attempts: 11
                })
 
@@ -184,7 +210,7 @@ defmodule Prikke.EndpointsTest do
       assert {:error, changeset} =
                Endpoints.create_endpoint(org, %{
                  name: "Bad retries",
-                 forward_url: "https://example.com/hook",
+                 forward_urls: ["https://example.com/hook"],
                  retry_attempts: -1
                })
 
@@ -207,7 +233,7 @@ defmodule Prikke.EndpointsTest do
   end
 
   describe "receive_event/2" do
-    test "creates inbound event, task, and execution" do
+    test "creates inbound event, task, and execution with 1 URL" do
       org = organization_fixture()
       endpoint = endpoint_fixture(org)
 
@@ -223,7 +249,38 @@ defmodule Prikke.EndpointsTest do
       assert event.body == ~s({"test": true})
       assert event.source_ip == "1.2.3.4"
       assert event.endpoint_id == endpoint.id
-      assert event.execution_id != nil
+      assert length(event.task_ids) == 1
+    end
+
+    test "creates 2 tasks and 2 executions with 2 URLs" do
+      org = organization_fixture()
+
+      endpoint =
+        endpoint_fixture(org, %{
+          forward_urls: [
+            "https://old-system.com/hook",
+            "https://new-system.com/hook"
+          ]
+        })
+
+      {:ok, event} =
+        Endpoints.receive_event(endpoint, %{
+          method: "POST",
+          headers: %{},
+          body: "test",
+          source_ip: "1.2.3.4"
+        })
+
+      assert length(event.task_ids) == 2
+
+      # Verify both tasks exist with correct URLs
+      tasks =
+        Enum.map(event.task_ids, fn id ->
+          Prikke.Repo.get!(Prikke.Tasks.Task, id)
+        end)
+
+      urls = Enum.map(tasks, & &1.url) |> Enum.sort()
+      assert urls == ["https://new-system.com/hook", "https://old-system.com/hook"]
     end
 
     test "creates task with slugified endpoint name as queue" do
@@ -238,10 +295,10 @@ defmodule Prikke.EndpointsTest do
           source_ip: "1.2.3.4"
         })
 
-      execution = Prikke.Repo.preload(event, execution: :task).execution
-      assert execution.task.queue == "stripe-webhooks"
-      assert execution.task.url == endpoint.forward_url
-      assert execution.task.method == "POST"
+      task = Prikke.Repo.get!(Prikke.Tasks.Task, hd(event.task_ids))
+      assert task.queue == "stripe-webhooks"
+      assert task.url == hd(endpoint.forward_urls)
+      assert task.method == "POST"
     end
 
     test "uses endpoint retry_attempts on created task" do
@@ -256,8 +313,8 @@ defmodule Prikke.EndpointsTest do
           source_ip: "1.2.3.4"
         })
 
-      execution = Prikke.Repo.preload(event, execution: :task).execution
-      assert execution.task.retry_attempts == 2
+      task = Prikke.Repo.get!(Prikke.Tasks.Task, hd(event.task_ids))
+      assert task.retry_attempts == 2
     end
 
     test "sets queue to nil when use_queue is false" do
@@ -272,8 +329,8 @@ defmodule Prikke.EndpointsTest do
           source_ip: "1.2.3.4"
         })
 
-      execution = Prikke.Repo.preload(event, execution: :task).execution
-      assert execution.task.queue == nil
+      task = Prikke.Repo.get!(Prikke.Tasks.Task, hd(event.task_ids))
+      assert task.queue == nil
     end
 
     test "sets queue name when use_queue is true" do
@@ -288,15 +345,20 @@ defmodule Prikke.EndpointsTest do
           source_ip: "1.2.3.4"
         })
 
-      execution = Prikke.Repo.preload(event, execution: :task).execution
-      assert execution.task.queue == "serial-hook"
+      task = Prikke.Repo.get!(Prikke.Tasks.Task, hd(event.task_ids))
+      assert task.queue == "serial-hook"
     end
-  end
 
-  describe "replay_event/2" do
-    test "creates new execution for existing event" do
+    test "stores task_ids on event" do
       org = organization_fixture()
-      endpoint = endpoint_fixture(org)
+
+      endpoint =
+        endpoint_fixture(org, %{
+          forward_urls: [
+            "https://a.com/hook",
+            "https://b.com/hook"
+          ]
+        })
 
       {:ok, event} =
         Endpoints.receive_event(endpoint, %{
@@ -306,16 +368,58 @@ defmodule Prikke.EndpointsTest do
           source_ip: "1.2.3.4"
         })
 
-      event = Prikke.Repo.preload(event, :execution)
-      {:ok, new_execution} = Endpoints.replay_event(endpoint, event)
+      # Re-fetch to verify persistence
+      refetched = Prikke.Repo.get!(Prikke.Endpoints.InboundEvent, event.id)
+      assert length(refetched.task_ids) == 2
+    end
+  end
 
-      assert new_execution.id != event.execution_id
-      assert new_execution.status == "pending"
+  describe "replay_event/2" do
+    test "creates new executions for all linked tasks" do
+      org = organization_fixture()
+
+      endpoint =
+        endpoint_fixture(org, %{
+          forward_urls: [
+            "https://a.com/hook",
+            "https://b.com/hook"
+          ]
+        })
+
+      {:ok, event} =
+        Endpoints.receive_event(endpoint, %{
+          method: "POST",
+          headers: %{},
+          body: "test",
+          source_ip: "1.2.3.4"
+        })
+
+      {:ok, executions} = Endpoints.replay_event(endpoint, event)
+      assert length(executions) == 2
+      assert Enum.all?(executions, &(&1.status == "pending"))
+    end
+
+    test "returns error for event with no task_ids" do
+      org = organization_fixture()
+      endpoint = endpoint_fixture(org)
+
+      # Create an event manually with empty task_ids
+      {:ok, event} =
+        %Prikke.Endpoints.InboundEvent{}
+        |> Prikke.Endpoints.InboundEvent.create_changeset(%{
+          endpoint_id: endpoint.id,
+          method: "POST",
+          received_at: DateTime.utc_now() |> DateTime.truncate(:second),
+          task_ids: []
+        })
+        |> Prikke.Repo.insert()
+
+      assert {:error, :no_tasks} = Endpoints.replay_event(endpoint, event)
     end
   end
 
   describe "inbound events" do
-    test "list_inbound_events/2 returns events" do
+    test "list_inbound_events/2 returns events with tasks" do
       org = organization_fixture()
       endpoint = endpoint_fixture(org)
 
@@ -337,6 +441,7 @@ defmodule Prikke.EndpointsTest do
 
       events = Endpoints.list_inbound_events(endpoint)
       assert length(events) == 2
+      assert Enum.all?(events, fn e -> is_list(Map.get(e, :tasks)) end)
     end
 
     test "count_inbound_events/1 returns count" do
@@ -354,6 +459,38 @@ defmodule Prikke.EndpointsTest do
         })
 
       assert Endpoints.count_inbound_events(endpoint) == 1
+    end
+  end
+
+  describe "fan-out execution counting" do
+    test "fan-out with 2 URLs creates 2 executions" do
+      org = organization_fixture()
+
+      endpoint =
+        endpoint_fixture(org, %{
+          forward_urls: [
+            "https://a.com/hook",
+            "https://b.com/hook"
+          ]
+        })
+
+      {:ok, event} =
+        Endpoints.receive_event(endpoint, %{
+          method: "POST",
+          headers: %{},
+          body: "test",
+          source_ip: "1.2.3.4"
+        })
+
+      # Count executions for these tasks
+      exec_count =
+        Prikke.Repo.aggregate(
+          Prikke.Executions.Execution
+          |> Ecto.Query.where([e], e.task_id in ^event.task_ids),
+          :count
+        )
+
+      assert exec_count == 2
     end
   end
 end
