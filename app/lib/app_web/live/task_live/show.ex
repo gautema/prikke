@@ -3,6 +3,7 @@ defmodule PrikkeWeb.TaskLive.Show do
 
   alias Prikke.Tasks
   alias Prikke.Executions
+  alias Prikke.Queues
 
   @per_page 20
 
@@ -49,7 +50,8 @@ defmodule PrikkeWeb.TaskLive.Show do
            |> assign(:menu_open, false)
            |> assign(:test_result, nil)
            |> assign(:testing, false)
-           |> assign(:host, host)}
+           |> assign(:host, host)
+           |> assign(:queue_paused, task.queue && Queues.queue_paused?(org, task.queue))}
       end
     else
       {:ok,
@@ -477,7 +479,19 @@ defmodule PrikkeWeb.TaskLive.Show do
               <%= if @task.queue do %>
                 <div>
                   <span class="text-xs text-slate-500 uppercase">Queue</span>
-                  <p class="text-slate-900 font-mono text-sm">{@task.queue}</p>
+                  <div class="flex items-center gap-2">
+                    <p class="text-slate-900 font-mono text-sm">{@task.queue}</p>
+                    <%= if @queue_paused do %>
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">
+                        <.icon name="hero-pause-circle-mini" class="w-3.5 h-3.5" /> Paused
+                      </span>
+                    <% end %>
+                  </div>
+                  <%= if @queue_paused do %>
+                    <p class="text-xs text-amber-600 mt-1">
+                      Pending executions in this queue are paused and won't run until resumed.
+                    </p>
+                  <% end %>
                 </div>
               <% end %>
               <%= if @task.callback_url do %>
