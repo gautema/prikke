@@ -56,6 +56,7 @@ go run .</pre>
 
   Listening on http://0.0.0.0:8080
   Inbound URL http://0.0.0.0:8080/in/{slug}
+  Ping URL    http://0.0.0.0:8080/ping/{token}
   API key     any value accepted</pre>
   </div>
 
@@ -244,6 +245,70 @@ curl -X POST http://localhost:8080/api/v1/tasks/t_abc123/trigger
 curl http://localhost:8080/api/v1/tasks/t_abc123/executions</pre>
   </div>
 
+  <h2>Testing monitors (heartbeats)</h2>
+  <p>
+    The emulator supports <a href="/docs/monitors">heartbeat monitors</a>. Create a monitor, then ping it
+    from your cron jobs or background tasks to verify the integration works:
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">Terminal</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500"># Create a monitor</span>
+curl -X POST http://localhost:8080/api/v1/monitors \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Nightly backup", "schedule_type": "interval", "interval_seconds": 86400}'
+<span class="text-slate-500"># Response includes ping_url: http://localhost:8080/ping/{token}</span>
+
+<span class="text-slate-500"># Ping it (using the token from the response)</span>
+curl http://localhost:8080/ping/abc123...</pre>
+  </div>
+
+  <h2>Queue management</h2>
+  <p>
+    You can pause and resume queues in the emulator, just like in production.
+    This is useful for testing how your app behaves when queue processing is paused:
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">Terminal</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500"># List queues</span>
+curl http://localhost:8080/api/v1/queues
+
+<span class="text-slate-500"># Pause a queue</span>
+curl -X POST http://localhost:8080/api/v1/queues/emails/pause
+
+<span class="text-slate-500"># Resume a queue</span>
+curl -X POST http://localhost:8080/api/v1/queues/emails/resume</pre>
+  </div>
+
+  <h2>Batch task creation</h2>
+  <p>
+    Send up to 1000 tasks in a single request. Each item in the array becomes the request body for one task,
+    all sharing the same URL, method, and queue:
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">Terminal</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X POST http://localhost:8080/api/v1/tasks/batch \
+  -H "Content-Type: application/json" \
+  -d '{"url": "http://localhost:3000/api/process", "queue": "emails", "items": [{"to": "a@b.com"}, {"to": "c@d.com"}]}'</pre>
+  </div>
+
   <h2>Docker networking</h2>
   <p>
     If you run the emulator in Docker and your app on the host, the emulator can't reach
@@ -275,6 +340,10 @@ docker run --network=host ghcr.io/runlater-eu/dev</pre>
       <strong>No scheduling</strong> &mdash; delays and run_at are ignored, tasks run immediately
     </li>
     <li><strong>1-second simulated delay</strong> &mdash; mimics real-world network latency</li>
+    <li>
+      <strong>No monitor alerting</strong> &mdash; pings update status but monitors never fire alerts
+    </li>
+    <li><strong>No declarative sync</strong> &mdash; the <code class="bg-slate-100 px-1 rounded">PUT /api/v1/sync</code> endpoint is not emulated</li>
     <li><strong>No rate limits, SSRF protection, or tier limits</strong></li>
   </ul>
 
