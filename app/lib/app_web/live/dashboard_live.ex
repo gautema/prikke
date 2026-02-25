@@ -142,7 +142,7 @@ defmodule PrikkeWeb.DashboardLive do
         <div>
           <h1 class="text-2xl font-bold text-slate-900">Dashboard</h1>
           <%= if @current_organization do %>
-            <div class="flex items-center gap-2 mt-1">
+            <div class="flex flex-wrap items-center gap-2 mt-1">
               <span class="text-slate-500">{@current_organization.name}</span>
               <span class="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
                 {String.capitalize(@current_organization.tier)}
@@ -281,7 +281,7 @@ defmodule PrikkeWeb.DashboardLive do
         
     <!-- Tasks Section -->
         <div class="glass-card rounded-2xl mb-4">
-          <div class="px-4 sm:px-6 py-4 border-b border-white/50 flex justify-between items-center gap-2">
+          <div class="px-4 sm:px-6 py-4 border-b border-white/50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
             <div class="flex items-center gap-3">
               <h2 class="text-lg font-semibold text-slate-900">Tasks</h2>
               <.task_summary stats={@stats} />
@@ -289,7 +289,7 @@ defmodule PrikkeWeb.DashboardLive do
             <div class="flex gap-1.5 sm:gap-2">
               <.link
                 navigate={~p"/tasks/new"}
-                class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md transition-colors no-underline"
+                class="self-start text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md transition-colors no-underline"
               >
                 New Task
               </.link>
@@ -358,7 +358,7 @@ defmodule PrikkeWeb.DashboardLive do
         
     <!-- Endpoints Section -->
         <div class="glass-card rounded-2xl mb-4">
-          <div class="px-4 sm:px-6 py-4 border-b border-white/50 flex justify-between items-center gap-2">
+          <div class="px-4 sm:px-6 py-4 border-b border-white/50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
             <div class="flex items-center gap-3">
               <h2 class="text-lg font-semibold text-slate-900">Endpoints</h2>
               <%= if @endpoints != [] do %>
@@ -367,7 +367,7 @@ defmodule PrikkeWeb.DashboardLive do
             </div>
             <.link
               navigate={~p"/endpoints/new"}
-              class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md transition-colors no-underline"
+              class="self-start text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md transition-colors no-underline"
             >
               New Endpoint
             </.link>
@@ -424,14 +424,14 @@ defmodule PrikkeWeb.DashboardLive do
     <!-- Monitors Section (only shown when monitors exist) -->
         <%= if @monitors != [] do %>
           <div class="glass-card rounded-2xl mb-4">
-            <div class="px-4 sm:px-6 py-4 border-b border-white/50 flex justify-between items-center gap-2">
+            <div class="px-4 sm:px-6 py-4 border-b border-white/50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
               <div class="flex items-center gap-3">
                 <h2 class="text-lg font-semibold text-slate-900">Monitors</h2>
                 <.monitor_summary monitors={@monitors} />
               </div>
               <.link
                 navigate={~p"/monitors/new"}
-                class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md transition-colors no-underline"
+                class="self-start text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md transition-colors no-underline"
               >
                 New Monitor
               </.link>

@@ -23,7 +23,7 @@
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     >docker run -p 8080:8080 ghcr.io/runlater-eu/dev</pre>
   </div>
 
@@ -32,7 +32,7 @@
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     >git clone https://github.com/runlater-eu/dev.git
 cd dev
 go run .</pre>
@@ -47,7 +47,7 @@ go run .</pre>
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     >
   ┌─────────────────────────────────────┐
   │   runlater dev emulator             │
@@ -74,7 +74,7 @@ go run .</pre>
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Runlater</span> <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 
 <span class="text-purple-300">export const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>({
@@ -93,7 +93,7 @@ go run .</pre>
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-slate-500"># Development — uses local emulator</span>
 RUNLATER_KEY=dev
 RUNLATER_URL=http://localhost:8080</pre>
@@ -165,7 +165,7 @@ RUNLATER_URL=http://localhost:8080</pre>
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-green-300">"use server"</span>
 <span class="text-purple-300">import</span> { <span class="text-sky-300">rl</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/runlater"</span>
 
@@ -182,7 +182,7 @@ RUNLATER_URL=http://localhost:8080</pre>
   <p>In your terminal, you'll see the emulator execute the request:</p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">14:30:05 --> POST   /api/v1/tasks                    [t_a1b2c3 created, delayed 1800s]
+    <pre class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto">14:30:05 --> POST   /api/v1/tasks                    [t_a1b2c3 created, delayed 1800s]
 14:30:06  -> POST   http://localhost:3000/api/send-welcome
 14:30:06  &lt;- 200                                    [245ms]</pre>
   </div>
@@ -199,7 +199,7 @@ RUNLATER_URL=http://localhost:8080</pre>
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-slate-500"># Create an endpoint that forwards to your local app</span>
 curl -X POST http://localhost:8080/api/v1/endpoints \
   -H "Content-Type: application/json" \
@@ -230,7 +230,7 @@ curl -X POST http://localhost:8080/in/stripe \
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-slate-500"># Create a cron task</span>
 curl -X POST http://localhost:8080/api/v1/tasks \
   -H "Content-Type: application/json" \
@@ -257,7 +257,7 @@ curl http://localhost:8080/api/v1/tasks/t_abc123/executions</pre>
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-slate-500"># Create a monitor</span>
 curl -X POST http://localhost:8080/api/v1/monitors \
   -H "Content-Type: application/json" \
@@ -280,7 +280,7 @@ curl http://localhost:8080/ping/abc123...</pre>
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-slate-500"># List queues</span>
 curl http://localhost:8080/api/v1/queues
 
@@ -303,7 +303,7 @@ curl -X POST http://localhost:8080/api/v1/queues/emails/resume</pre>
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     >curl -X POST http://localhost:8080/api/v1/tasks/batch \
   -H "Content-Type: application/json" \
   -d '{"url": "http://localhost:3000/api/process", "queue": "emails", "items": [{"to": "a@b.com"}, {"to": "c@d.com"}]}'</pre>
@@ -321,7 +321,7 @@ curl -X POST http://localhost:8080/api/v1/queues/emails/resume</pre>
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-slate-500"># Your task URL when the emulator runs in Docker:</span>
 http://host.docker.internal:3000/api/webhook
 

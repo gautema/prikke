@@ -82,7 +82,7 @@
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     >npm install runlater-js</pre>
   </div>
 
@@ -93,7 +93,7 @@
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     >RUNLATER_KEY=pk_live_your_api_key
 APP_URL=https://myapp.vercel.app</pre>
   </div>
@@ -108,7 +108,7 @@ APP_URL=https://myapp.vercel.app</pre>
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Runlater</span> <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 
 <span class="text-purple-300">export const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>!)</pre>
@@ -128,7 +128,7 @@ APP_URL=https://myapp.vercel.app</pre>
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-green-300">"use server"</span>
 <span class="text-purple-300">import</span> { <span class="text-sky-300">rl</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/runlater"</span>
 
@@ -150,7 +150,7 @@ APP_URL=https://myapp.vercel.app</pre>
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> { <span class="text-sky-300">sendEmail</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/email"</span>
 <span class="text-purple-300">import</span> { <span class="text-sky-300">prisma</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/db"</span> <span class="text-slate-500">// Your Prisma client</span>
 
@@ -190,7 +190,7 @@ APP_URL=https://myapp.vercel.app</pre>
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> { <span class="text-sky-300">rl</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/runlater"</span>
 
 <span class="text-purple-300">const</span> <span class="text-sky-300">BASE</span> = process.env.<span class="text-sky-300">APP_URL</span>!
@@ -223,7 +223,7 @@ APP_URL=https://myapp.vercel.app</pre>
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Stripe</span> <span class="text-purple-300">from</span> <span class="text-green-300">"stripe"</span>
 <span class="text-purple-300">import</span> { <span class="text-sky-300">prisma</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/db"</span>
 
@@ -262,7 +262,7 @@ APP_URL=https://myapp.vercel.app</pre>
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> { <span class="text-sky-300">rl</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/runlater"</span>
 
 <span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(request: Request) {
@@ -285,7 +285,7 @@ APP_URL=https://myapp.vercel.app</pre>
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">sharp</span> <span class="text-purple-300">from</span> <span class="text-green-300">"sharp"</span>
 <span class="text-purple-300">import</span> { <span class="text-sky-300">prisma</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/db"</span>
 
@@ -322,7 +322,7 @@ APP_URL=https://myapp.vercel.app</pre>
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-green-300">"use server"</span>
 <span class="text-purple-300">import</span> { <span class="text-sky-300">rl</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/runlater"</span>
 
@@ -352,7 +352,7 @@ APP_URL=https://myapp.vercel.app</pre>
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> { <span class="text-sky-300">rl</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"@/lib/runlater"</span>
 
 <span class="text-purple-300">const</span> <span class="text-sky-300">BASE</span> = process.env.<span class="text-sky-300">APP_URL</span>!
@@ -388,7 +388,7 @@ APP_URL=https://myapp.vercel.app</pre>
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-sky-300">"scripts"</span>: {
   <span class="text-sky-300">"build"</span>: <span class="text-green-300">"next build && npx tsx scripts/sync-tasks.ts"</span>
 }</pre>

@@ -51,14 +51,14 @@
       </div>
       <pre
         data-tab-content="curl"
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl https://runlater.eu/api/v1/tasks \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
       <pre
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
 
@@ -93,14 +93,14 @@
       </div>
       <pre
         data-tab-content="curl"
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl https://runlater.eu/api/v1/tasks/task_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
       <pre
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
 
@@ -281,7 +281,7 @@
         <pre
           data-tab-content="curl"
           phx-no-curly-interpolation
-          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+          class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
         >curl -X POST https://runlater.eu/api/v1/tasks \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
@@ -294,7 +294,7 @@
           data-tab-content="js"
           style="display:none"
           phx-no-curly-interpolation
-          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+          class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
         ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">send</span>(<span class="text-green-300">"https://myapp.com/api/webhook"</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">"POST"</span>,
   <span class="text-sky-300">body</span>: { <span class="text-sky-300">event</span>: <span class="text-green-300">"test"</span> }
@@ -320,7 +320,7 @@
         <pre
           data-tab-content="curl"
           phx-no-curly-interpolation
-          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+          class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
         >curl -X POST https://runlater.eu/api/v1/tasks \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
@@ -334,7 +334,7 @@
           data-tab-content="js"
           style="display:none"
           phx-no-curly-interpolation
-          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+          class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
         ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">send</span>(<span class="text-green-300">"https://myapp.com/api/charge"</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">"POST"</span>,
   <span class="text-sky-300">body</span>: { <span class="text-sky-300">user_id</span>: <span class="text-orange-300">42</span> },
@@ -361,7 +361,7 @@
         <pre
           data-tab-content="curl"
           phx-no-curly-interpolation
-          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+          class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
         >curl -X POST https://runlater.eu/api/v1/tasks \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
@@ -373,7 +373,7 @@
           data-tab-content="js"
           style="display:none"
           phx-no-curly-interpolation
-          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+          class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
         ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">delay</span>(<span class="text-green-300">"https://myapp.com/api/remind"</span>, {
   <span class="text-sky-300">delay</span>: <span class="text-green-300">"15m"</span>
 })</pre>
@@ -398,7 +398,7 @@
         <pre
           data-tab-content="curl"
           phx-no-curly-interpolation
-          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+          class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
         >curl -X POST https://runlater.eu/api/v1/tasks \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
@@ -411,7 +411,7 @@
           data-tab-content="js"
           style="display:none"
           phx-no-curly-interpolation
-          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+          class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
         ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">schedule</span>(<span class="text-green-300">"https://myapp.com/api/remind"</span>, {
   <span class="text-sky-300">at</span>: <span class="text-green-300">"2026-03-01T09:00:00Z"</span>
 })</pre>
@@ -436,7 +436,7 @@
         <pre
           data-tab-content="curl"
           phx-no-curly-interpolation
-          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+          class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
         >curl -X POST https://runlater.eu/api/v1/tasks \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
@@ -449,7 +449,7 @@
           data-tab-content="js"
           style="display:none"
           phx-no-curly-interpolation
-          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+          class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
         ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">cron</span>(<span class="text-green-300">"daily-backup"</span>, {
   <span class="text-sky-300">url</span>: <span class="text-green-300">"https://myapp.com/api/backup"</span>,
   <span class="text-sky-300">schedule</span>: <span class="text-green-300">"0 6 * * *"</span>
@@ -486,7 +486,7 @@
       <pre
         data-tab-content="curl"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl -X PUT https://runlater.eu/api/v1/tasks/task_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
@@ -498,7 +498,7 @@
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">tasks</span>.<span class="text-sky-300">update</span>(<span class="text-green-300">"TASK_ID"</span>, {
   <span class="text-sky-300">cron_expression</span>: <span class="text-green-300">"0 7 * * *"</span>,
   <span class="text-sky-300">enabled</span>: <span class="text-orange-300">false</span>
@@ -533,14 +533,14 @@
       </div>
       <pre
         data-tab-content="curl"
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl -X DELETE https://runlater.eu/api/v1/tasks/task_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
       <pre
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">tasks</span>.<span class="text-sky-300">delete</span>(<span class="text-green-300">"TASK_ID"</span>)</pre>
     </div>
   </div>
@@ -574,14 +574,14 @@
       </div>
       <pre
         data-tab-content="curl"
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl -X POST https://runlater.eu/api/v1/tasks/task_abc123/trigger \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
       <pre
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">tasks</span>.<span class="text-sky-300">trigger</span>(<span class="text-green-300">"TASK_ID"</span>)</pre>
     </div>
   </div>
@@ -691,7 +691,7 @@
         <pre
           data-tab-content="curl"
           phx-no-curly-interpolation
-          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+          class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
         >curl -X POST https://runlater.eu/api/v1/tasks/batch \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
@@ -710,7 +710,7 @@
           data-tab-content="js"
           style="display:none"
           phx-no-curly-interpolation
-          class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+          class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
         ><span class="text-purple-300">const</span> <span class="text-sky-300">res</span> = <span class="text-purple-300">await</span> fetch(<span class="text-green-300">"https://runlater.eu/api/v1/tasks/batch"</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">"POST"</span>,
   <span class="text-sky-300">headers</span>: {
@@ -732,7 +732,7 @@
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-slate-500"># Response (201 Created)</span>
 {
   <span class="text-sky-300">"data"</span>: {
@@ -787,14 +787,14 @@
       </div>
       <pre
         data-tab-content="curl"
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl -X DELETE <span class="text-green-300">"https://runlater.eu/api/v1/tasks?queue=march-newsletter"</span> \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
       <pre
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">const</span> <span class="text-sky-300">res</span> = <span class="text-purple-300">await</span> fetch(<span class="text-green-300">"https://runlater.eu/api/v1/tasks?queue=march-newsletter"</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">"DELETE"</span>,
   <span class="text-sky-300">headers</span>: { <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.RUNLATER_KEY}`</span> }
@@ -802,7 +802,7 @@
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-slate-500"># Response (200 OK)</span>
 {
   <span class="text-sky-300">"data"</span>: {
@@ -840,7 +840,7 @@
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-slate-500"># Response</span>
 {
   <span class="text-sky-300">"data"</span>: [{
@@ -890,14 +890,14 @@
       </div>
       <pre
         data-tab-content="curl"
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl https://runlater.eu/api/v1/monitors \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
       <pre
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
 
@@ -934,14 +934,14 @@
       </div>
       <pre
         data-tab-content="curl"
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl https://runlater.eu/api/v1/monitors/mon_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
       <pre
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
 
@@ -1034,7 +1034,7 @@
       <pre
         data-tab-content="curl"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl -X POST https://runlater.eu/api/v1/monitors \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
@@ -1048,7 +1048,7 @@
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">const</span> <span class="text-sky-300">monitor</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">create</span>({
   <span class="text-sky-300">name</span>: <span class="text-green-300">"nightly-backup"</span>,
   <span class="text-sky-300">schedule</span>: <span class="text-green-300">"0 2 * * *"</span>,
@@ -1087,7 +1087,7 @@
       <pre
         data-tab-content="curl"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl -X PUT https://runlater.eu/api/v1/monitors/mon_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
@@ -1098,7 +1098,7 @@
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">update</span>(<span class="text-green-300">"MONITOR_ID"</span>, {
   <span class="text-sky-300">grace_period_seconds</span>: <span class="text-orange-300">3600</span>
 })</pre>
@@ -1132,14 +1132,14 @@
       </div>
       <pre
         data-tab-content="curl"
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl -X DELETE https://runlater.eu/api/v1/monitors/mon_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
       <pre
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
 
@@ -1173,7 +1173,7 @@
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-slate-500"># Response</span>
 {
   <span class="text-sky-300">"data"</span>: [{
@@ -1241,13 +1241,13 @@
       </div>
       <pre
         data-tab-content="curl"
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl -fsS --retry 3 https://runlater.eu/ping/<span class="text-green-300">pm_your_token_here</span></pre>
       <pre
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">monitors</span>.<span class="text-sky-300">ping</span>(<span class="text-green-300">"pm_your_token_here"</span>)</pre>
     </div>
   </div>
@@ -1286,14 +1286,14 @@
       </div>
       <pre
         data-tab-content="curl"
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl https://runlater.eu/api/v1/endpoints \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
       <pre
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">const</span> <span class="text-sky-300">res</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints"</span>, {
   <span class="text-sky-300">headers</span>: { <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.<span class="text-sky-300">RUNLATER_KEY</span>}`</span> }
 })
@@ -1330,14 +1330,14 @@
       </div>
       <pre
         data-tab-content="curl"
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl https://runlater.eu/api/v1/endpoints/ep_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
       <pre
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">const</span> <span class="text-sky-300">res</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints/ENDPOINT_ID"</span>, {
   <span class="text-sky-300">headers</span>: { <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.<span class="text-sky-300">RUNLATER_KEY</span>}`</span> }
 })
@@ -1411,7 +1411,7 @@
       <pre
         data-tab-content="curl"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl -X POST https://runlater.eu/api/v1/endpoints \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
@@ -1425,7 +1425,7 @@
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">const</span> <span class="text-sky-300">res</span> = <span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints"</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">"POST"</span>,
   <span class="text-sky-300">headers</span>: {
@@ -1472,7 +1472,7 @@
       <pre
         data-tab-content="curl"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl -X PUT https://runlater.eu/api/v1/endpoints/ep_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
@@ -1484,7 +1484,7 @@
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints/ENDPOINT_ID"</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">"PUT"</span>,
   <span class="text-sky-300">headers</span>: {
@@ -1526,14 +1526,14 @@
       </div>
       <pre
         data-tab-content="curl"
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl -X DELETE https://runlater.eu/api/v1/endpoints/ep_abc123 \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
       <pre
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints/ENDPOINT_ID"</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">"DELETE"</span>,
   <span class="text-sky-300">headers</span>: { <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.<span class="text-sky-300">RUNLATER_KEY</span>}`</span> }
@@ -1567,7 +1567,7 @@
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-slate-500"># Response</span>
 {
   <span class="text-sky-300">"data"</span>: [{
@@ -1610,14 +1610,14 @@
       </div>
       <pre
         data-tab-content="curl"
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl -X POST https://runlater.eu/api/v1/endpoints/ep_abc123/events/evt_456/replay \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span></pre>
       <pre
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">await</span> <span class="text-sky-300">fetch</span>(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints/ENDPOINT_ID/events/EVENT_ID/replay"</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">"POST"</span>,
   <span class="text-sky-300">headers</span>: { <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.<span class="text-sky-300">RUNLATER_KEY</span>}`</span> }
@@ -1761,7 +1761,7 @@
       <pre
         data-tab-content="curl"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl -X PUT https://runlater.eu/api/v1/sync \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
@@ -1786,7 +1786,7 @@
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">sync</span>({
   <span class="text-sky-300">tasks</span>: [{
     <span class="text-sky-300">key</span>: <span class="text-green-300">"daily-backup"</span>,

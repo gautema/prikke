@@ -82,7 +82,7 @@
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     >npm install runlater-js</pre>
   </div>
 
@@ -95,7 +95,7 @@
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     >npx wrangler secret put RUNLATER_KEY</pre>
   </div>
 
@@ -117,7 +117,7 @@
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Runlater</span> <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 
 <span class="text-slate-500">// Setup script runs locally — uses process.env</span>
@@ -137,7 +137,7 @@
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">export default</span> {
   <span class="text-purple-300">async</span> <span class="text-sky-300">fetch</span>(request: Request, env: Env) {
     <span class="text-purple-300">const</span> url = <span class="text-purple-300">new</span> URL(request.url)
@@ -188,7 +188,7 @@
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Runlater</span> <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 
 <span class="text-purple-300">export default</span> {
@@ -250,7 +250,7 @@
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">cron</span>(<span class="text-green-300">"hourly-usage-report"</span>, {
   <span class="text-sky-300">url</span>: <span class="text-green-300">"https://my-worker.username.workers.dev/reports/usage"</span>,
   <span class="text-sky-300">schedule</span>: <span class="text-green-300">"0 * * * *"</span>,
@@ -266,7 +266,7 @@
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-slate-500">// In your main fetch handler, add a route for this:</span>
 <span class="text-slate-500">// if (url.pathname === "/reports/usage") return handleUsageReport(env)</span>
 
@@ -299,7 +299,7 @@
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Runlater</span> <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 
 <span class="text-purple-300">async function</span> <span class="text-sky-300">handleWebhook</span>(request: Request, env: Env) {
@@ -331,7 +331,7 @@
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Runlater</span> <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 
 <span class="text-slate-500">// Setup script runs locally — uses process.env</span>

@@ -29,7 +29,7 @@
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     >Stripe/GitHub/Shopify
         |
         v
@@ -61,7 +61,7 @@
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">const</span> res = <span class="text-purple-300">await</span> fetch(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints"</span>, {
   <span class="text-sky-300">method</span>: <span class="text-green-300">"POST"</span>,
   <span class="text-sky-300">headers</span>: {
@@ -87,7 +87,7 @@ console.log(data.inbound_url)
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     >curl -X POST https://runlater.eu/api/v1/endpoints \
   -H "Authorization: Bearer pk_xxx.sk_xxx" \
   -H "Content-Type: application/json" \
@@ -108,7 +108,7 @@ console.log(data.inbound_url)
   </p>
 
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
-    <pre class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto">https://runlater.eu/in/ep_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</pre>
+    <pre class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto">https://runlater.eu/in/ep_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</pre>
   </div>
 
   <p>
@@ -131,7 +131,7 @@ console.log(data.inbound_url)
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Stripe</span> <span class="text-purple-300">from</span> <span class="text-green-300">"stripe"</span>
 
 <span class="text-purple-300">const</span> stripe = <span class="text-purple-300">new</span> <span class="text-sky-300">Stripe</span>(process.env.<span class="text-sky-300">STRIPE_SECRET_KEY</span>!)
@@ -220,7 +220,7 @@ console.log(data.inbound_url)
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-slate-500"># List recent events for an endpoint</span>
 curl https://runlater.eu/api/v1/endpoints/ENDPOINT_ID/events \
   -H "Authorization: Bearer pk_xxx.sk_xxx"
@@ -248,7 +248,7 @@ curl -X POST https://runlater.eu/api/v1/endpoints/ENDPOINT_ID/events/EVENT_ID/re
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-slate-500"># Create an endpoint for Stripe (serial delivery — order matters)</span>
 curl -X POST https://runlater.eu/api/v1/endpoints \
   -H "Authorization: Bearer $RUNLATER_KEY" \
@@ -289,7 +289,7 @@ curl -X POST https://runlater.eu/api/v1/endpoints \
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> { createHmac } <span class="text-purple-300">from</span> <span class="text-green-300">"node:crypto"</span>
 
 <span class="text-purple-300">export default</span> {
@@ -327,7 +327,7 @@ curl -X POST https://runlater.eu/api/v1/endpoints \
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> { createClient } <span class="text-purple-300">from</span> <span class="text-green-300">"@supabase/supabase-js"</span>
 
 Deno.serve(<span class="text-purple-300">async</span> (req) => {

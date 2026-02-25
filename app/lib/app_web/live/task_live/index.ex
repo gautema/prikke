@@ -341,14 +341,14 @@ defmodule PrikkeWeb.TaskLive.Index do
         </.link>
       </div>
 
-      <div class="flex justify-between items-center mb-6 sm:mb-8 pl-1 sm:pl-0">
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 mb-6 sm:mb-8 pl-1 sm:pl-0">
         <div>
           <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Tasks</h1>
           <p class="text-slate-500 mt-1 text-sm">Scheduled webhooks and background tasks</p>
         </div>
         <.link
           navigate={~p"/tasks/new"}
-          class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-3 sm:px-4 py-2 rounded-md transition-colors no-underline whitespace-nowrap"
+          class="self-start text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-3 sm:px-4 py-2 rounded-md transition-colors no-underline whitespace-nowrap"
         >
           New Task
         </.link>

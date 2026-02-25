@@ -74,7 +74,7 @@
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">const</span> crypto = <span class="text-purple-300">require</span>(<span class="text-green-300">'crypto'</span>);
 
 <span class="text-purple-300">function</span> <span class="text-sky-300">verifySignature</span>(body, signature, secret) {
@@ -305,7 +305,7 @@ app.post(<span class="text-green-300">'/webhook'</span>, (req, res) =&gt; {
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-slate-500">// Track processed executions</span>
 <span class="text-purple-300">const</span> processed = <span class="text-purple-300">new</span> Set(); <span class="text-slate-500">// Use Redis in production</span>
 
@@ -488,7 +488,7 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
       <pre
         data-tab-content="curl"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       >curl -X POST https://runlater.eu/api/v1/tasks \
   -H <span class="text-green-300">"Authorization: Bearer pk_live_xxx"</span> \
   -H <span class="text-green-300">"Content-Type: application/json"</span> \
@@ -506,7 +506,7 @@ app.post(<span class="text-green-300">'/webhook'</span>, <span class="text-purpl
         data-tab-content="js"
         style="display:none"
         phx-no-curly-interpolation
-        class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+        class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
       ><span class="text-purple-300">await</span> rl.<span class="text-sky-300">cron</span>(<span class="text-green-300">"my-task"</span>, {
   <span class="text-sky-300">url</span>: <span class="text-green-300">"https://myapp.com/webhook"</span>,
   <span class="text-sky-300">schedule</span>: <span class="text-green-300">"0 * * * *"</span>,

@@ -40,7 +40,7 @@
           data-tab-content="curl"
           style="display:none"
           phx-no-curly-interpolation
-          class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+          class="m-0 rounded-none bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm overflow-x-auto font-mono leading-relaxed"
         ><span class="text-slate-500"># Schedule welcome email 24 hours after signup</span>
 <span class="text-purple-300">curl</span> -X POST https://runlater.eu/api/v1/tasks \
   -H <span class="text-green-300">"Authorization: Bearer YOUR_API_KEY"</span> \
@@ -53,7 +53,7 @@
         <pre
           data-tab-content="js"
           phx-no-curly-interpolation
-          class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+          class="m-0 rounded-none bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm overflow-x-auto font-mono leading-relaxed"
         ><span class="text-slate-500">// Schedule welcome email 24 hours after signup</span>
 <span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } from <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
@@ -95,7 +95,7 @@
           data-tab-content="curl"
           style="display:none"
           phx-no-curly-interpolation
-          class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+          class="m-0 rounded-none bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm overflow-x-auto font-mono leading-relaxed"
         ><span class="text-slate-500"># Delay report generation by 1 hour</span>
 <span class="text-purple-300">curl</span> -X POST https://runlater.eu/api/v1/tasks \
   -H <span class="text-green-300">"Authorization: Bearer YOUR_API_KEY"</span> \
@@ -108,7 +108,7 @@
         <pre
           data-tab-content="js"
           phx-no-curly-interpolation
-          class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+          class="m-0 rounded-none bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm overflow-x-auto font-mono leading-relaxed"
         ><span class="text-slate-500">// Return immediately, process in background</span>
 <span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } from <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
@@ -134,7 +134,7 @@
       </div>
       <pre
         phx-no-curly-interpolation
-        class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+        class="m-0 rounded-none bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm overflow-x-auto font-mono leading-relaxed"
       ><span class="text-slate-500">// Stripe webhook - return 200 immediately</span>
 <span class="text-purple-300">export async function</span> <span class="text-sky-300">POST</span>(req) {
   <span class="text-purple-300">const</span> event = <span class="text-purple-300">await</span> req.json();
@@ -274,7 +274,7 @@
           data-tab-content="curl"
           style="display:none"
           phx-no-curly-interpolation
-          class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+          class="m-0 rounded-none bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm overflow-x-auto font-mono leading-relaxed"
         ><span class="text-slate-500"># Each user gets their own queue — charges never overlap</span>
 <span class="text-purple-300">curl</span> -X POST https://runlater.eu/api/v1/tasks \
   -H <span class="text-green-300">"Authorization: Bearer YOUR_API_KEY"</span> \
@@ -287,7 +287,7 @@
         <pre
           data-tab-content="js"
           phx-no-curly-interpolation
-          class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+          class="m-0 rounded-none bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm overflow-x-auto font-mono leading-relaxed"
         ><span class="text-slate-500">// Each user gets their own queue — charges never overlap</span>
 <span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } from <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
@@ -331,7 +331,7 @@
           data-tab-content="curl"
           style="display:none"
           phx-no-curly-interpolation
-          class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+          class="m-0 rounded-none bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm overflow-x-auto font-mono leading-relaxed"
         ><span class="text-slate-500"># All Shopify sync tasks run one at a time</span>
 <span class="text-purple-300">curl</span> -X POST https://runlater.eu/api/v1/tasks \
   -H <span class="text-green-300">"Authorization: Bearer YOUR_API_KEY"</span> \
@@ -344,7 +344,7 @@
         <pre
           data-tab-content="js"
           phx-no-curly-interpolation
-          class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+          class="m-0 rounded-none bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm overflow-x-auto font-mono leading-relaxed"
         ><span class="text-slate-500">// All Shopify sync tasks run one at a time</span>
 <span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } from <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
@@ -390,7 +390,7 @@
           data-tab-content="curl"
           style="display:none"
           phx-no-curly-interpolation
-          class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+          class="m-0 rounded-none bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm overflow-x-auto font-mono leading-relaxed"
         ><span class="text-slate-500"># Create via API or dashboard</span>
 {
   <span class="text-sky-300">"name"</span>: <span class="text-green-300">"process-renewals"</span>,
@@ -401,7 +401,7 @@
         <pre
           data-tab-content="js"
           phx-no-curly-interpolation
-          class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+          class="m-0 rounded-none bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm overflow-x-auto font-mono leading-relaxed"
         ><span class="text-slate-500">// Process recurring billing daily at 6 AM UTC</span>
 <span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } from <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
@@ -440,7 +440,7 @@
           data-tab-content="curl"
           style="display:none"
           phx-no-curly-interpolation
-          class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+          class="m-0 rounded-none bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm overflow-x-auto font-mono leading-relaxed"
         ><span class="text-slate-500"># Create via API or dashboard</span>
 {
   <span class="text-sky-300">"name"</span>: <span class="text-green-300">"cleanup-sessions"</span>,
@@ -451,7 +451,7 @@
         <pre
           data-tab-content="js"
           phx-no-curly-interpolation
-          class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+          class="m-0 rounded-none bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm overflow-x-auto font-mono leading-relaxed"
         ><span class="text-slate-500">// Clean up old sessions every night at 2 AM</span>
 <span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } from <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)
@@ -490,7 +490,7 @@
           data-tab-content="curl"
           style="display:none"
           phx-no-curly-interpolation
-          class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+          class="m-0 rounded-none bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm overflow-x-auto font-mono leading-relaxed"
         ><span class="text-slate-500"># Create via API or dashboard</span>
 {
   <span class="text-sky-300">"name"</span>: <span class="text-green-300">"healthcheck-stripe"</span>,
@@ -501,7 +501,7 @@
         <pre
           data-tab-content="js"
           phx-no-curly-interpolation
-          class="m-0 rounded-none bg-slate-900 text-slate-100 p-5 text-sm overflow-x-auto font-mono leading-relaxed"
+          class="m-0 rounded-none bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm overflow-x-auto font-mono leading-relaxed"
         ><span class="text-slate-500">// Monitor external APIs every 15 minutes</span>
 <span class="text-purple-300">import</span> { <span class="text-sky-300">Runlater</span> } from <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>)

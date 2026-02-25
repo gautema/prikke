@@ -90,7 +90,7 @@
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     >npm install runlater-js</pre>
   </div>
 
@@ -100,7 +100,7 @@
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-slate-500">// No install needed — use the npm: specifier in your import:</span>
 import Runlater from "npm:runlater-js@0.2.0"</pre>
   </div>
@@ -115,7 +115,7 @@ import Runlater from "npm:runlater-js@0.2.0"</pre>
   <div class="glass-card rounded-2xl overflow-hidden mb-6">
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-slate-500"># .env (for local setup scripts)</span>
 RUNLATER_KEY=pk_live_your_api_key
 SUPABASE_URL=https://xyzproject.supabase.co
@@ -147,7 +147,7 @@ SUPABASE_ANON_KEY=your_supabase_anon_key</pre>
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Runlater</span> <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>!)
 
@@ -170,7 +170,7 @@ SUPABASE_ANON_KEY=your_supabase_anon_key</pre>
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> { createClient } <span class="text-purple-300">from</span> <span class="text-green-300">"@supabase/supabase-js"</span>
 
 Deno.serve(<span class="text-purple-300">async</span> () => {
@@ -231,7 +231,7 @@ Deno.serve(<span class="text-purple-300">async</span> () => {
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Runlater</span> <span class="text-purple-300">from</span> <span class="text-green-300">"npm:runlater-js"</span>
 
 Deno.serve(<span class="text-purple-300">async</span> (req) => {
@@ -266,7 +266,7 @@ Deno.serve(<span class="text-purple-300">async</span> (req) => {
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Runlater</span> <span class="text-purple-300">from</span> <span class="text-green-300">"npm:runlater-js"</span>
 
 Deno.serve(<span class="text-purple-300">async</span> (req) => {
@@ -323,7 +323,7 @@ Deno.serve(<span class="text-purple-300">async</span> (req) => {
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">await</span> <span class="text-sky-300">rl</span>.<span class="text-sky-300">cron</span>(<span class="text-green-300">"session-cleanup"</span>, {
   <span class="text-sky-300">url</span>: <span class="text-green-300">`${process.env.SUPABASE_URL}/functions/v1/cleanup-sessions`</span>,
   <span class="text-sky-300">schedule</span>: <span class="text-green-300">"0 3 * * *"</span>,
@@ -341,7 +341,7 @@ Deno.serve(<span class="text-purple-300">async</span> (req) => {
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> { createClient } <span class="text-purple-300">from</span> <span class="text-green-300">"@supabase/supabase-js"</span>
 
 Deno.serve(<span class="text-purple-300">async</span> () => {
@@ -374,7 +374,7 @@ Deno.serve(<span class="text-purple-300">async</span> () => {
     </div>
     <pre
       phx-no-curly-interpolation
-      class="m-0 bg-slate-900 text-slate-100 p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
     ><span class="text-purple-300">import</span> <span class="text-sky-300">Runlater</span> <span class="text-purple-300">from</span> <span class="text-green-300">"runlater-js"</span>
 <span class="text-purple-300">const</span> <span class="text-sky-300">rl</span> = <span class="text-purple-300">new</span> <span class="text-sky-300">Runlater</span>(process.env.<span class="text-sky-300">RUNLATER_KEY</span>!)
 
