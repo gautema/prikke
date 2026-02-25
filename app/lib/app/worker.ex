@@ -185,7 +185,7 @@ defmodule Prikke.Worker do
       "[Worker] Host #{host} is blocked for org #{String.slice(org_id, 0, 8)}, rescheduling execution #{execution.id}"
     )
 
-    case Executions.reschedule_execution(execution, reschedule_to) do
+    case safe_update(fn -> Executions.reschedule_execution(execution, reschedule_to) end) do
       {:ok, _} ->
         :ok
 
@@ -337,19 +337,19 @@ defmodule Prikke.Worker do
             Notifications.notify_failure(full_execution)
             Callbacks.send_callback(full_execution)
 
+            # Respect Retry-After header on 429 responses
+            retry_after_ms =
+              if response.status == 429 do
+                parse_retry_after(response.headers)
+              end
+
+            maybe_retry(full_execution, retry_after_ms)
+
           {:error, reason} ->
             Logger.error(
               "[Worker] Failed to update execution #{execution.id} to failed: #{inspect(reason)}"
             )
         end
-
-        # Respect Retry-After header on 429 responses
-        retry_after_ms =
-          if response.status == 429 do
-            parse_retry_after(response.headers)
-          end
-
-        maybe_retry(execution, retry_after_ms)
     end
   end
 
@@ -403,13 +403,13 @@ defmodule Prikke.Worker do
         Notifications.notify_failure(full_execution)
         Callbacks.send_callback(full_execution)
 
+        maybe_retry(full_execution, nil)
+
       {:error, reason} ->
         Logger.error(
           "[Worker] Failed to update execution #{execution.id} to timeout: #{inspect(reason)}"
         )
     end
-
-    maybe_retry(execution, nil)
   end
 
   defp handle_failure(execution, error, duration_ms) do
@@ -430,21 +430,23 @@ defmodule Prikke.Worker do
         Notifications.notify_failure(full_execution)
         Callbacks.send_callback(full_execution)
 
+        maybe_retry(full_execution, nil)
+
       {:error, reason} ->
         Logger.error(
           "[Worker] Failed to update execution #{execution.id} to failed: #{inspect(reason)}"
         )
     end
-
-    maybe_retry(execution, nil)
   end
 
   defp return_error(nil), do: :ok
 
   defp return_error(execution) do
-    Executions.fail_execution(execution, %{
-      error_message: "Internal error: execution or task not found"
-    })
+    safe_update(fn ->
+      Executions.fail_execution(execution, %{
+        error_message: "Internal error: execution or task not found"
+      })
+    end)
   end
 
   # Retry logic: only one-time tasks retry, cron tasks don't

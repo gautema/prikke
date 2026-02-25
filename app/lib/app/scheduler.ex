@@ -393,21 +393,23 @@ defmodule Prikke.Scheduler do
   end
 
   # Recursively computes all missed cron times from next_run_at until now.
+  # Caps at 100 missed runs to prevent transaction timeouts or memory bloat
+  # if a task is massively overdue.
   defp compute_missed_cron_times(task, now, acc) do
     current_run = task.next_run_at
 
-    if current_run && DateTime.compare(current_run, now) != :gt do
+    if current_run && DateTime.compare(current_run, now) != :gt and length(acc) < 100 do
       # This time is due, add it and compute next
       case compute_next_cron_time(task, current_run) do
         {:ok, next_run} ->
           updated_task = %{task | next_run_at: next_run}
-          compute_missed_cron_times(updated_task, now, acc ++ [current_run])
+          compute_missed_cron_times(updated_task, now, [current_run | acc])
 
         :error ->
-          acc ++ [current_run]
+          Enum.reverse([current_run | acc])
       end
     else
-      acc
+      Enum.reverse(acc)
     end
   end
 
@@ -523,16 +525,18 @@ defmodule Prikke.Scheduler do
           {:ok, next_run} ->
             task
             |> Ecto.Changeset.change(next_run_at: next_run)
-            |> Repo.update()
+            |> Repo.update!()
 
           :error ->
-            :ok
+            # If we can't compute next run, something is wrong with the expression.
+            # We must fail the transaction to avoid double-scheduling the current run.
+            raise "Failed to compute next cron time for task #{task.id}"
         end
 
       "once" ->
         task
         |> Ecto.Changeset.change(next_run_at: nil)
-        |> Repo.update()
+        |> Repo.update!()
 
       _ ->
         :ok
@@ -550,17 +554,17 @@ defmodule Prikke.Scheduler do
           {:ok, next_run} ->
             task
             |> Ecto.Changeset.change(next_run_at: next_run)
-            |> Repo.update()
+            |> Repo.update!()
 
           :error ->
-            :ok
+            raise "Failed to compute next cron time for task #{task.id}"
         end
 
       "once" ->
         # One-time tasks set next_run_at to nil
         task
         |> Ecto.Changeset.change(next_run_at: nil)
-        |> Repo.update()
+        |> Repo.update!()
 
       _ ->
         :ok
