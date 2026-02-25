@@ -213,7 +213,7 @@ defmodule PrikkeWeb.TaskLive.Show do
 
     opts =
       if get_status(socket.assigns.latest_info) in ["failed", "timeout"] do
-        [attempt: task.retry_attempts]
+        [attempt: task.retry_attempts + 1]
       else
         []
       end

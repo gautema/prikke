@@ -61,7 +61,7 @@ defmodule PrikkeWeb.TaskLive.ExecutionShow do
     task = socket.assigns.task
     now = DateTime.utc_now() |> DateTime.truncate(:second)
 
-    case Executions.create_execution_for_task(task, now, attempt: task.retry_attempts) do
+    case Executions.create_execution_for_task(task, now, attempt: task.retry_attempts + 1) do
       {:ok, execution} ->
         {:noreply,
          socket
@@ -112,7 +112,7 @@ defmodule PrikkeWeb.TaskLive.ExecutionShow do
             <%= if !@deleted and @execution.status in ["failed", "timeout", "missed"] do %>
               <button
                 phx-click="retry"
-                class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-600 transition-colors flex items-center gap-2"
+                class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 transition-colors flex items-center gap-2"
               >
                 <.icon name="hero-arrow-path" class="w-4 h-4" /> Retry Now
               </button>

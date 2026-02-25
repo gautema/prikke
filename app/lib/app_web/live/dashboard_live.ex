@@ -522,7 +522,7 @@ defmodule PrikkeWeb.DashboardLive do
           <p class="text-slate-500 mb-6">Organizations help you manage tasks and team members.</p>
           <a
             href={~p"/organizations/new"}
-            class="inline-block px-6 py-3 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors no-underline"
+            class="inline-block px-6 py-3 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-700 transition-colors no-underline"
           >
             Create Organization
           </a>

@@ -77,8 +77,8 @@ defmodule Prikke.Scheduler do
 
   ## Configuration
 
-  - `@tick_interval` - Tick interval (10 seconds)
-  - `@lookahead_seconds` - How far ahead to create executions (30 seconds)
+  - `@tick_interval` - Tick interval (5 seconds)
+  - `@lookahead_seconds` - How far ahead to create executions (10 seconds)
   - `@advisory_lock_id` - Unique ID for the Postgres advisory lock
 
   ## Testing

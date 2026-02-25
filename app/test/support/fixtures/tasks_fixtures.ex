@@ -26,7 +26,7 @@ defmodule Prikke.TasksFixtures do
         schedule_type: "cron",
         cron_expression: "0 * * * *",
         enabled: true,
-        retry_attempts: 3,
+        retry_attempts: 5,
         timeout_ms: 30000
       })
 

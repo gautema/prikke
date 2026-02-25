@@ -87,12 +87,17 @@ defmodule Prikke.ExecutionCounter do
     :ets.tab2list(@counter_table)
     |> Enum.each(fn {org_id, count} ->
       if count > 0 do
-        :ets.update_counter(@counter_table, org_id, {2, -count}, {org_id, 0})
+        # Write to DB first, then decrement ETS on success.
+        # This prevents data loss if the DB write fails.
+        {rows, _} =
+          Prikke.Repo.update_all(
+            from(o in Prikke.Accounts.Organization, where: o.id == ^org_id),
+            inc: [monthly_execution_count: count]
+          )
 
-        Prikke.Repo.update_all(
-          from(o in Prikke.Accounts.Organization, where: o.id == ^org_id),
-          inc: [monthly_execution_count: count]
-        )
+        if rows > 0 do
+          :ets.update_counter(@counter_table, org_id, {2, -count}, {org_id, 0})
+        end
       end
     end)
   end

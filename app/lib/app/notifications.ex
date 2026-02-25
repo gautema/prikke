@@ -86,9 +86,9 @@ defmodule Prikke.Notifications do
 
   defp should_notify_recovery?(task, {_failed_status, attempt}) do
     # For one-time tasks, failure notification is only sent when retries are
-    # exhausted (attempt >= retry_attempts). Only send recovery if that happened.
+    # exhausted (attempt > retry_attempts). Only send recovery if that happened.
     if task.schedule_type == "once" and task.retry_attempts > 0 do
-      attempt >= task.retry_attempts
+      attempt > task.retry_attempts
     else
       true
     end
@@ -99,7 +99,7 @@ defmodule Prikke.Notifications do
     org = task.organization
 
     # Skip notification if this one-time task still has retries remaining
-    if task.schedule_type == "once" and execution.attempt < task.retry_attempts do
+    if task.schedule_type == "once" and execution.attempt <= task.retry_attempts do
       Logger.debug(
         "[Notifications] Skipping notification - retry #{execution.attempt}/#{task.retry_attempts} pending"
       )
@@ -782,7 +782,7 @@ defmodule Prikke.Notifications do
     task = execution.task
 
     content = """
-    :white_check_mark: **Task Recovered: #{task.name}**
+    ✅ **Task Recovered: #{task.name}**
 
     • Status: `#{execution.status}`
     #{if execution.status_code, do: "• HTTP Status: `#{execution.status_code}`", else: ""}
@@ -969,7 +969,7 @@ defmodule Prikke.Notifications do
           Jason.encode!(%{text: String.trim(text)})
 
         discord_webhook?(webhook_url) ->
-          emoji = if event_type == :down, do: ":red_circle:", else: ":white_check_mark:"
+          emoji = if event_type == :down, do: "🔴", else: "✅"
           label = if event_type == :down, do: "Monitor Down", else: "Monitor Recovered"
 
           content = """

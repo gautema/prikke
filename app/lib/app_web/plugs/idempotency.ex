@@ -39,9 +39,19 @@ defmodule PrikkeWeb.Plugs.Idempotency do
               |> halt()
 
             :not_found ->
-              conn
-              |> assign(:idempotency_key, key)
-              |> register_before_send(&maybe_store_response/1)
+              lock_id = {:idempotency, org.id, key}
+
+              if :global.set_lock({lock_id, self()}, [node()], 0) do
+                conn
+                |> assign(:idempotency_key, key)
+                |> assign(:idempotency_lock, lock_id)
+                |> register_before_send(&maybe_store_response/1)
+              else
+                conn
+                |> put_resp_content_type("application/json")
+                |> send_resp(409, ~s({"error": "Request in progress. Please wait and retry."}))
+                |> halt()
+              end
           end
         end
     end
@@ -57,6 +67,11 @@ defmodule PrikkeWeb.Plugs.Idempotency do
   defp maybe_store_response(conn) do
     key = conn.assigns[:idempotency_key]
     org = conn.assigns[:current_organization]
+    lock_id = conn.assigns[:idempotency_lock]
+
+    if lock_id do
+      :global.del_lock({lock_id, self()})
+    end
 
     if key && org && conn.status >= 200 && conn.status < 300 do
       # resp_body may be iodata from Phoenix.Controller.json/2

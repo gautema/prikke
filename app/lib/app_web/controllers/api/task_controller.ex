@@ -332,7 +332,7 @@ defmodule PrikkeWeb.Api.TaskController do
       "cron_expression" => params["cron"],
       "enabled" => Map.get(params, "enabled", true),
       "timeout_ms" => params["timeout_ms"] || 30_000,
-      "retry_attempts" => params["retry_attempts"] || 3,
+      "retry_attempts" => params["retry_attempts"] || 5,
       "callback_url" => params["callback_url"],
       "expected_status_codes" => params["expected_status_codes"],
       "expected_body_pattern" => params["expected_body_pattern"],

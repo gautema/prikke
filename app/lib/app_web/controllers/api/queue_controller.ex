@@ -80,6 +80,7 @@ defmodule PrikkeWeb.Api.QueueController do
         json(conn, %{data: %{name: name, paused: false}, message: "Queue \"#{name}\" resumed"})
 
       :ok ->
+        # Queue didn't exist (nothing to resume) — treat as success
         json(conn, %{data: %{name: name, paused: false}, message: "Queue \"#{name}\" resumed"})
 
       {:error, changeset} ->

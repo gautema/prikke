@@ -808,7 +808,7 @@ defmodule PrikkeWeb.TaskLive.Edit do
           </.link>
           <button
             type="submit"
-            class="px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors"
+            class="px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-700 transition-colors"
           >
             Save Changes
           </button>

@@ -236,12 +236,13 @@ defmodule Prikke.NotificationsTest do
           retry_attempts: 3
         })
 
+      # With retry_attempts: 3, attempt 4 is the final attempt (retries exhausted)
       {:ok, execution} =
         Executions.create_execution(%{
           task_id: once_task.id,
           organization_id: once_task.organization_id,
           scheduled_for: DateTime.utc_now(),
-          attempt: 3
+          attempt: 4
         })
 
       {:ok, execution} =
@@ -264,7 +265,7 @@ defmodule Prikke.NotificationsTest do
         end)
 
       assert failure_email != nil,
-             "Expected failure email on final attempt (attempt 3/3)"
+             "Expected failure email on final attempt (attempt 4, retries: 3)"
     end
 
     test "does not send notification when disabled", %{org: org, task: task} do

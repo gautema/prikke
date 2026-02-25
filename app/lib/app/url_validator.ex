@@ -45,7 +45,8 @@ defmodule Prikke.UrlValidator do
     else
       # Try to resolve the hostname and check the IP
       case resolve_host(host) do
-        {:ok, ip} -> private_ip?(ip)
+        {:ok, :private} -> true
+        {:ok, :public} -> false
         # If we can't resolve, allow it (DNS may not be available at validation time)
         # The actual request will fail later if the host is invalid
         :error -> false
@@ -84,9 +85,27 @@ defmodule Prikke.UrlValidator do
   end
 
   defp resolve_host(host) do
-    case :inet.getaddr(String.to_charlist(host), :inet) do
-      {:ok, ip} -> {:ok, ip}
-      {:error, _} -> :error
+    char_host = String.to_charlist(host)
+    ipv4s = case :inet.getaddrs(char_host, :inet) do
+      {:ok, addrs} -> addrs
+      {:error, _} -> []
+    end
+    ipv6s = case :inet.getaddrs(char_host, :inet6) do
+      {:ok, addrs} -> addrs
+      {:error, _} -> []
+    end
+
+    all_addrs = ipv4s ++ ipv6s
+
+    if all_addrs == [] do
+      :error
+    else
+      # If any IP is private, we treat the host as private
+      if Enum.any?(all_addrs, &private_ip?/1) do
+        {:ok, :private}
+      else
+        {:ok, :public}
+      end
     end
   end
 
@@ -110,6 +129,23 @@ defmodule Prikke.UrlValidator do
   defp private_ip?({240, _, _, _}), do: true
   # Broadcast
   defp private_ip?({255, 255, 255, 255}), do: true
+  
+  # IPv6 Loopback
+  defp private_ip?({0, 0, 0, 0, 0, 0, 0, 1}), do: true
+  # IPv6 Unspecified
+  defp private_ip?({0, 0, 0, 0, 0, 0, 0, 0}), do: true
+  # IPv6 Unique Local Address (ULA) - FC00::/7
+  defp private_ip?({a, _, _, _, _, _, _, _}) when a >= 0xFC00 and a <= 0xFDFF, do: true
+  # IPv6 Link-Local
+  defp private_ip?({a, _, _, _, _, _, _, _}) when a >= 0xFE80 and a <= 0xFEBF, do: true
+  # IPv4-mapped IPv6
+  defp private_ip?({0, 0, 0, 0, 0, 0xFFFF, a, b}) do
+    a1 = div(a, 256)
+    a2 = rem(a, 256)
+    b1 = div(b, 256)
+    b2 = rem(b, 256)
+    private_ip?({a1, a2, b1, b2})
+  end
   defp private_ip?(_), do: false
 
   @doc """

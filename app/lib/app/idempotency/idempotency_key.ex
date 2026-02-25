@@ -16,8 +16,9 @@ defmodule Prikke.Idempotency.IdempotencyKey do
 
   def changeset(idempotency_key, attrs) do
     idempotency_key
-    |> cast(attrs, [:key, :status_code, :response_body])
+    |> cast(attrs, [:key, :status_code, :response_body, :organization_id])
     |> validate_required([:key, :status_code, :response_body])
     |> unique_constraint([:organization_id, :key])
+    |> foreign_key_constraint(:organization_id)
   end
 end

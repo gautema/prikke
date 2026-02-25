@@ -85,18 +85,13 @@ defmodule Prikke.HostBlocker do
   Auto-blocks after #{@failure_threshold} consecutive failures with escalating backoff.
   """
   def record_failure(org_id, host) do
-    {count, escalation} =
-      case :ets.lookup(@failures_table, {org_id, host}) do
-        [{{_, _}, {c, e}}] -> {c + 1, e}
-        [] -> {1, 0}
-      end
-
-    :ets.insert(@failures_table, {{org_id, host}, {count, escalation}})
+    count = :ets.update_counter(@failures_table, {org_id, host}, {2, 1}, {{org_id, host}, 0, 0})
 
     if count >= @failure_threshold do
+      escalation = :ets.lookup_element(@failures_table, {org_id, host}, 3)
       duration_ms = Enum.at(@backoff_durations, escalation, List.last(@backoff_durations))
       new_escalation = min(escalation + 1, length(@backoff_durations) - 1)
-      :ets.insert(@failures_table, {{org_id, host}, {count, new_escalation}})
+      :ets.update_element(@failures_table, {org_id, host}, {3, new_escalation})
       block(org_id, host, duration_ms, :consecutive_failures)
     end
 

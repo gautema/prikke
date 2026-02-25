@@ -455,7 +455,7 @@ defmodule Prikke.Worker do
   defp maybe_retry(execution, retry_after_ms) do
     task = execution.task
 
-    if task.schedule_type == "once" and execution.attempt < task.retry_attempts do
+    if task.schedule_type == "once" and execution.attempt <= task.retry_attempts do
       # Use Retry-After delay if provided, otherwise exponential backoff
       delay_ms =
         if retry_after_ms do
@@ -497,7 +497,8 @@ defmodule Prikke.Worker do
   defp safe_update(fun) do
     fun.()
   rescue
-    error -> {:error, Exception.message(error)}
+    error in [DBConnection.ConnectionError, Postgrex.Error, Ecto.StaleEntryError] ->
+      {:error, Exception.message(error)}
   end
 
   # Max response body size: 256KB

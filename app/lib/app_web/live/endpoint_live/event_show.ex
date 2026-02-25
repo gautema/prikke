@@ -21,6 +21,10 @@ defmodule PrikkeWeb.EndpointLive.EventShow do
           try do
             event = Endpoints.get_inbound_event!(endpoint, event_id)
 
+            if connected?(socket) do
+              Endpoints.subscribe_endpoints(org)
+            end
+
             {:ok,
              socket
              |> assign(:organization, org)
@@ -65,6 +69,28 @@ defmodule PrikkeWeb.EndpointLive.EventShow do
         {:noreply, put_flash(socket, :error, "Cannot replay: linked tasks have been deleted")}
     end
   end
+
+  @impl true
+  def handle_info({:endpoint_updated, endpoint}, socket) do
+    if endpoint.id == socket.assigns.endpoint.id do
+      {:noreply, assign(socket, :endpoint, endpoint)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info({:endpoint_deleted, endpoint}, socket) do
+    if endpoint.id == socket.assigns.endpoint.id do
+      {:noreply,
+       socket
+       |> put_flash(:info, "Endpoint was deleted")
+       |> push_navigate(to: ~p"/endpoints")}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info(_, socket), do: {:noreply, socket}
 
   defp get_organization(socket, session) do
     user = socket.assigns.current_scope.user

@@ -15,7 +15,7 @@ defmodule Prikke.Tasks.Task do
     field :interval_minutes, :integer
     field :scheduled_at, :utc_datetime
     field :enabled, :boolean, default: true
-    field :retry_attempts, :integer, default: 3
+    field :retry_attempts, :integer, default: 5
     field :timeout_ms, :integer, default: 30000
     field :next_run_at, :utc_datetime
     field :callback_url, :string

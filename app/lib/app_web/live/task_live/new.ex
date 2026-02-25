@@ -963,7 +963,7 @@ defmodule PrikkeWeb.TaskLive.New do
             </.link>
             <button
               type="submit"
-              class="px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-600 transition-colors"
+              class="px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-700 transition-colors"
             >
               Create Task
             </button>
