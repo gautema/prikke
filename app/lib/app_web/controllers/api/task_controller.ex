@@ -438,8 +438,13 @@ defmodule PrikkeWeb.Api.TaskController do
           message: "Task queued for execution"
         })
 
-      {:error, changeset} ->
+      {:error, %Ecto.Changeset{} = changeset} ->
         {:error, changeset}
+
+      {:error, _reason} ->
+        conn
+        |> put_status(:service_unavailable)
+        |> json(%{error: "Service temporarily unavailable. Please retry."})
     end
   end
 

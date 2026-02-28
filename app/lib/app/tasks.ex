@@ -1105,7 +1105,7 @@ defmodule Prikke.Tasks do
       exec_callback                     # $26
     ]
 
-    case Repo.query(sql, params) do
+    case Repo.query(sql, params, prepare: :named) do
       {:ok, _result} ->
         # Build Ecto structs from the data we already have
         task_struct = %Task{
@@ -1152,6 +1152,9 @@ defmodule Prikke.Tasks do
         {:ok, task_struct, exec_struct}
 
       {:error, %Postgrex.Error{} = error} ->
+        {:error, Exception.message(error)}
+
+      {:error, %DBConnection.ConnectionError{} = error} ->
         {:error, Exception.message(error)}
     end
   catch
