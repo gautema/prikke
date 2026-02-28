@@ -65,6 +65,17 @@ Added: `synchronous_commit=off`, `work_mem=16MB`, `maintenance_work_mem=512MB`, 
 
 **Ceiling: ~1300 req/s sustained at 100% success, p95 < 2s.**
 
+### Round 4: BEAM scheduler binding (+sbt db)
+
+Added `ERL_FLAGS: "+sbt db"` to bind BEAM schedulers to CPU cores for better cache locality.
+
+| Rate | Success | p50 | p95 Latency | Dropped | Notes |
+|------|---------|-----|-------------|---------|-------|
+| **1300/s** | **100%** | **985ms** | **1.70s** | 1,991 | Improved from 1.84s |
+| 1350/s | 100% | 1.95s | 2.36s | 10,029 | Threshold fail (was 2.41s) |
+
+**Ceiling: still ~1300 req/s.** `+sbt db` improved p95 by ~8% (1.84s → 1.70s at 1300/s) but not enough to push the ceiling higher.
+
 73% faster than the old Hetzner CX33 (750 req/s). The biggest wins were `synchronous_commit=off` and doubling the DB pool from 80 to 150.
 
 ## Results — Staging (Hetzner CX33, 4 shared cores, old production hardware)
@@ -270,6 +281,11 @@ Result: 850 req/s ceiling improved from p95=2.28s (threshold fail) to p95=1.49s 
 **File:** `config/deploy.yml`, `config/deploy.staging.yml`
 
 Docker defaults to `ulimit nofile=1024`. At ~900 req/s, the container runs out of file descriptors (each TCP connection uses one FD), causing `connection reset by peer` errors. Fix: `options: { ulimit: nofile=65536:65536 }` in Kamal deploy config. This was the single biggest throughput unlock — all previous hardware tests were hitting this ceiling.
+
+### 16. BEAM scheduler binding (+sbt db)
+**File:** `config/deploy.yml`
+
+Added `ERL_FLAGS: "+sbt db"` to bind BEAM schedulers to CPU cores. This improves CPU cache locality — each scheduler thread stays on the same core, reducing cache misses. Result: ~8% p95 improvement at 1300 req/s (1.84s → 1.70s), but not enough to raise the ceiling past 1300.
 
 ## Infrastructure Changes
 
