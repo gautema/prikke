@@ -4,12 +4,12 @@ image: gautema/runlater
 
 builder:
   arch: amd64
-  remote: ssh://root@46.225.66.205
+  remote: ssh://root@159.195.53.120
 
 servers:
   web:
     hosts:
-      - 46.225.66.205
+      - 159.195.53.120
     options:
       ulimit: nofile=65536:65536
 
@@ -21,7 +21,10 @@ proxy:
     path: /health
 
 registry:
-  server: localhost:5555
+  server: ghcr.io
+  username: gautema
+  password:
+    - KAMAL_REGISTRY_PASSWORD
 
 env:
   clear:
@@ -45,7 +48,8 @@ env:
 accessories:
   db:
     image: postgres:18
-    host: 46.225.66.205
+    host: 159.195.53.120
+    port: "5432:5432"
     env:
       clear:
         POSTGRES_DB: runlater_prod
