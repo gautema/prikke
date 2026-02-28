@@ -22,6 +22,8 @@ defmodule Prikke.Application do
         Prikke.ExecutionCounter,
         # Host blocker for rate-limited and down APIs (ETS-based, no DB)
         Prikke.HostBlocker,
+        # API key cache (ETS-based, 60s TTL)
+        Prikke.ApiKeyCache,
         # Task supervisor for async notifications
         {Task.Supervisor, name: Prikke.TaskSupervisor},
         # Start to serve requests, typically the last entry

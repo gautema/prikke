@@ -387,15 +387,14 @@ defmodule PrikkeWeb.Api.TaskController do
     do_create_once_task(conn, org, params, api_key_name, scheduled_at)
   end
 
-  defp do_create_once_task(conn, org, params, api_key_name, scheduled_at) do
-    pretty_time = Calendar.strftime(scheduled_at, "%d %b, %H:%M")
+  defp do_create_once_task(conn, org, params, _api_key_name, scheduled_at) do
     url = params["url"]
-    default_name = "#{url} · #{pretty_time}"
 
+    # Lazy-evaluate strftime — only compute when name not provided
     name =
       case params["name"] do
-        nil -> default_name
-        "" -> default_name
+        nil -> "#{url} · #{Calendar.strftime(scheduled_at, "%d %b, %H:%M")}"
+        "" -> "#{url} · #{Calendar.strftime(scheduled_at, "%d %b, %H:%M")}"
         n -> n
       end
 
@@ -418,33 +417,13 @@ defmodule PrikkeWeb.Api.TaskController do
       "notify_on_recovery" => params["notify_on_recovery"]
     }
 
-    execution_opts =
-      if params["callback_url"] do
-        [callback_url: params["callback_url"]]
-      else
-        []
-      end
+    callback_url = params["callback_url"]
 
-    # skip_next_run: task is created with next_run_at=nil, no UPDATE needed.
-    # skip_ssrf: API callers authenticate with API keys and choose their own target URLs.
-    result =
-      Prikke.Repo.transaction(fn ->
-        with {:ok, task} <-
-               Tasks.create_task(org, task_params,
-                 api_key_name: api_key_name,
-                 skip_ssrf: true,
-                 skip_next_run: true
-               ),
-             {:ok, execution} <-
-               Executions.create_execution_for_task(task, scheduled_at, execution_opts) do
-          {task, execution}
-        else
-          {:error, reason} -> Prikke.Repo.rollback(reason)
-        end
-      end)
-
-    case result do
-      {:ok, {task, execution}} ->
+    # Single CTE: inserts both task and execution in one DB round-trip.
+    case Tasks.create_task_with_execution(org, task_params, scheduled_at,
+           callback_url: callback_url
+         ) do
+      {:ok, task, execution} ->
         Tasks.notify_workers()
 
         conn

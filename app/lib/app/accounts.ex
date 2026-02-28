@@ -876,30 +876,60 @@ defmodule Prikke.Accounts do
   def verify_api_key(full_key) do
     case String.split(full_key, ".") do
       [key_id, secret] ->
-        case get_api_key_by_key_id(key_id) do
-          nil ->
-            {:error, :invalid_key}
-
-          api_key ->
-            if ApiKey.verify_secret(secret, api_key.key_hash) do
-              # Update last_used_at (debounced: only write if stale by 5+ minutes)
-              now = DateTime.utc_now(:second)
-
-              if is_nil(api_key.last_used_at) or
-                   DateTime.diff(now, api_key.last_used_at) > 300 do
-                api_key
-                |> Ecto.Changeset.change(last_used_at: now)
-                |> Repo.update()
-              end
-
-              {:ok, api_key.organization, api_key.name || api_key.key_id}
+        case Prikke.ApiKeyCache.lookup(key_id) do
+          {:ok, key_hash, organization, api_key_name} ->
+            # Cache hit — verify secret against cached hash
+            if ApiKey.verify_secret(secret, key_hash) do
+              debounce_last_used_at(key_id)
+              {:ok, organization, api_key_name}
             else
               {:error, :invalid_secret}
+            end
+
+          :miss ->
+            # Cache miss — fetch from DB, cache result
+            case get_api_key_by_key_id(key_id) do
+              nil ->
+                {:error, :invalid_key}
+
+              api_key ->
+                api_key_name = api_key.name || api_key.key_id
+
+                Prikke.ApiKeyCache.put(
+                  key_id,
+                  api_key.key_hash,
+                  api_key.organization,
+                  api_key_name
+                )
+
+                if ApiKey.verify_secret(secret, api_key.key_hash) do
+                  debounce_last_used_at(key_id)
+                  {:ok, api_key.organization, api_key_name}
+                else
+                  {:error, :invalid_secret}
+                end
             end
         end
 
       _ ->
         {:error, :invalid_format}
+    end
+  end
+
+  defp debounce_last_used_at(key_id) do
+    # Update last_used_at (debounced: only write if stale by 5+ minutes)
+    now = DateTime.utc_now(:second)
+
+    case Repo.get_by(ApiKey, key_id: key_id) do
+      nil ->
+        :ok
+
+      api_key ->
+        if is_nil(api_key.last_used_at) or DateTime.diff(now, api_key.last_used_at) > 300 do
+          api_key
+          |> Ecto.Changeset.change(last_used_at: now)
+          |> Repo.update()
+        end
     end
   end
 
@@ -931,6 +961,8 @@ defmodule Prikke.Accounts do
   def delete_api_key(api_key, opts \\ []) do
     case Repo.delete(api_key) do
       {:ok, deleted} ->
+        Prikke.ApiKeyCache.invalidate(deleted.key_id)
+
         audit_log(opts, :api_key_deleted, :api_key, deleted.id, deleted.organization_id,
           changes: %{"name" => deleted.name, "key_id" => deleted.key_id}
         )

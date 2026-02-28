@@ -1007,6 +1007,157 @@ defmodule Prikke.Tasks do
     end
   end
 
+  @doc """
+  Creates a one-time task and its pending execution in a single SQL CTE.
+
+  This avoids the 4-round-trip pattern (BEGIN + INSERT task + INSERT execution + COMMIT)
+  by combining both inserts into one statement.
+
+  Returns `{:ok, task, execution}` or `{:error, changeset}`.
+
+  ## Options
+
+    * `:api_key_name` - name of the API key for audit logging
+    * `:callback_url` - callback URL for the execution
+  """
+  def create_task_with_execution(%Organization{} = org, task_attrs, scheduled_for, opts \\ []) do
+    callback_url = Keyword.get(opts, :callback_url)
+
+    # Pre-generate UUID7s
+    task_id = Prikke.UUID7.generate()
+    execution_id = Prikke.UUID7.generate()
+
+    # Build and validate the task changeset
+    task_changeset =
+      Task.create_changeset(%Task{}, task_attrs, org.id, skip_ssrf: true, skip_next_run: true)
+
+    unless task_changeset.valid? do
+      throw({:invalid, task_changeset})
+    end
+
+    # Extract validated fields from the task changeset
+    task = Ecto.Changeset.apply_changes(task_changeset)
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    # Build execution attrs
+    exec_callback = callback_url || task.callback_url
+
+    sql = """
+    WITH new_task AS (
+      INSERT INTO tasks (
+        id, organization_id, name, url, method, headers, body,
+        schedule_type, cron_expression, interval_minutes, scheduled_at,
+        enabled, retry_attempts, timeout_ms, next_run_at,
+        callback_url, expected_status_codes, expected_body_pattern,
+        queue, notify_on_failure, notify_on_recovery,
+        inserted_at, updated_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7,
+        $8, $9, $10, $11,
+        $12, $13, $14, $15,
+        $16, $17, $18,
+        $19, $20, $21,
+        $22, $23
+      )
+      RETURNING id
+    )
+    INSERT INTO executions (
+      id, task_id, organization_id, scheduled_for, status, attempt,
+      callback_url, queue, inserted_at, updated_at
+    )
+    SELECT $24, id, $2, $25, 'pending', 1, $26, $19, $22, $23
+    FROM new_task
+    """
+
+    # Postgrex needs UUIDs as raw 16-byte binaries
+    {:ok, task_id_bin} = Ecto.UUID.dump(task_id)
+    {:ok, org_id_bin} = Ecto.UUID.dump(org.id)
+    {:ok, exec_id_bin} = Ecto.UUID.dump(execution_id)
+
+    params = [
+      # Task fields ($1-$23)
+      task_id_bin,                      # $1
+      org_id_bin,                       # $2
+      task.name,                        # $3
+      task.url,                         # $4
+      task.method || "POST",            # $5
+      task.headers || %{},              # $6 — Postgrex encodes maps as jsonb natively
+      task.body,                        # $7
+      "once",                           # $8  schedule_type
+      nil,                              # $9  cron_expression
+      nil,                              # $10 interval_minutes
+      scheduled_for,                    # $11 scheduled_at
+      true,                             # $12 enabled
+      task.retry_attempts || 5,         # $13
+      task.timeout_ms || 30_000,        # $14
+      nil,                              # $15 next_run_at
+      task.callback_url,                # $16
+      task.expected_status_codes,       # $17
+      task.expected_body_pattern,       # $18
+      task.queue,                       # $19
+      task.notify_on_failure,           # $20
+      task.notify_on_recovery,          # $21
+      now,                              # $22 inserted_at
+      now,                              # $23 updated_at
+      # Execution fields ($24-$26)
+      exec_id_bin,                      # $24
+      scheduled_for,                    # $25
+      exec_callback                     # $26
+    ]
+
+    case Repo.query(sql, params) do
+      {:ok, _result} ->
+        # Build Ecto structs from the data we already have
+        task_struct = %Task{
+          id: task_id,
+          organization_id: org.id,
+          name: task.name,
+          url: task.url,
+          method: task.method || "POST",
+          headers: task.headers || %{},
+          body: task.body,
+          schedule_type: "once",
+          cron_expression: nil,
+          interval_minutes: nil,
+          scheduled_at: scheduled_for,
+          enabled: true,
+          retry_attempts: task.retry_attempts || 5,
+          timeout_ms: task.timeout_ms || 30_000,
+          next_run_at: nil,
+          callback_url: task.callback_url,
+          expected_status_codes: task.expected_status_codes,
+          expected_body_pattern: task.expected_body_pattern,
+          queue: task.queue,
+          notify_on_failure: task.notify_on_failure,
+          notify_on_recovery: task.notify_on_recovery,
+          inserted_at: now,
+          updated_at: now
+        } |> Ecto.put_meta(state: :loaded)
+
+        exec_struct = %Prikke.Executions.Execution{
+          id: execution_id,
+          task_id: task_id,
+          organization_id: org.id,
+          scheduled_for: scheduled_for,
+          status: "pending",
+          attempt: 1,
+          callback_url: exec_callback,
+          queue: task.queue,
+          inserted_at: now,
+          updated_at: now
+        } |> Ecto.put_meta(state: :loaded)
+
+        broadcast(org, {:created, task_struct})
+
+        {:ok, task_struct, exec_struct}
+
+      {:error, %Postgrex.Error{} = error} ->
+        {:error, Exception.message(error)}
+    end
+  catch
+    {:invalid, changeset} -> {:error, changeset}
+  end
+
   defp not_deleted(query) do
     from(t in query, where: is_nil(t.deleted_at))
   end
