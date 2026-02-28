@@ -101,3 +101,8 @@ config :app, Prikke.Billing.Creem,
 
 # Configure mailer for development (admin notifications go to Swoosh mailbox)
 config :app, Prikke.Mailer, admin_email: "admin@localhost"
+
+# Raise rate limits for load testing
+config :app, PrikkeWeb.RateLimit,
+  limit_per_minute: 100_000,
+  limit_per_hour: 1_000_000
