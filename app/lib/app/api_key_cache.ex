@@ -51,6 +51,23 @@ defmodule Prikke.ApiKeyCache do
   end
 
   @doc """
+  Check if last_used_at should be written to DB (debounce 5 min).
+  Returns true if we should write, false to skip.
+  """
+  def should_update_last_used?(key_id) do
+    now = System.monotonic_time(:second)
+
+    case :ets.lookup(:api_key_last_used, key_id) do
+      [{^key_id, last_written}] when now - last_written < 300 ->
+        false
+
+      _ ->
+        :ets.insert(:api_key_last_used, {key_id, now})
+        true
+    end
+  end
+
+  @doc """
   Invalidates a cached API key by key_id.
   """
   def invalidate(key_id) do
@@ -75,6 +92,7 @@ defmodule Prikke.ApiKeyCache do
   @impl true
   def init(_) do
     :ets.new(@table, [:set, :public, :named_table, read_concurrency: true])
+    :ets.new(:api_key_last_used, [:set, :public, :named_table, read_concurrency: true])
     schedule_cleanup()
     {:ok, %{}}
   end

@@ -917,19 +917,12 @@ defmodule Prikke.Accounts do
   end
 
   defp debounce_last_used_at(key_id) do
-    # Update last_used_at (debounced: only write if stale by 5+ minutes)
-    now = DateTime.utc_now(:second)
+    # Only hit DB if 5+ minutes since last write (checked via ETS)
+    if Prikke.ApiKeyCache.should_update_last_used?(key_id) do
+      now = DateTime.utc_now(:second)
 
-    case Repo.get_by(ApiKey, key_id: key_id) do
-      nil ->
-        :ok
-
-      api_key ->
-        if is_nil(api_key.last_used_at) or DateTime.diff(now, api_key.last_used_at) > 300 do
-          api_key
-          |> Ecto.Changeset.change(last_used_at: now)
-          |> Repo.update()
-        end
+      from(a in ApiKey, where: a.key_id == ^key_id)
+      |> Repo.update_all(set: [last_used_at: now])
     end
   end
 
