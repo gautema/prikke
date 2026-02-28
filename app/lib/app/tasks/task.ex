@@ -24,7 +24,6 @@ defmodule Prikke.Tasks.Task do
     field :queue, :string
     field :last_execution_at, :utc_datetime
     field :last_execution_status, :string
-    field :badge_token, :string
     field :notify_on_failure, :boolean
     field :notify_on_recovery, :boolean
     field :deleted_at, :utc_datetime

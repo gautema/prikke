@@ -675,61 +675,6 @@ defmodule Prikke.Tasks do
     |> Enum.map(&(&1 |> String.trim() |> String.to_integer()))
   end
 
-  ## Badge tokens
-
-  @doc """
-  Looks up a task by its badge token. Returns nil if not found or no token set.
-  """
-  def get_task_by_badge_token(nil), do: nil
-
-  def get_task_by_badge_token(token) do
-    from(t in Task, where: t.badge_token == ^token, where: is_nil(t.deleted_at))
-    |> Repo.one()
-  end
-
-  @doc """
-  Enables the public badge for a task by generating a badge token.
-  """
-  def enable_badge(%Organization{} = org, %Task{} = task) do
-    if task.organization_id != org.id do
-      raise ArgumentError, "task does not belong to organization"
-    end
-
-    token = task.badge_token || Prikke.Badges.generate_token()
-
-    task
-    |> Ecto.Changeset.change(badge_token: token)
-    |> Repo.update()
-  end
-
-  @doc """
-  Disables the public badge for a task by clearing the badge token.
-  """
-  def disable_badge(%Organization{} = org, %Task{} = task) do
-    if task.organization_id != org.id do
-      raise ArgumentError, "task does not belong to organization"
-    end
-
-    task
-    |> Ecto.Changeset.change(badge_token: nil)
-    |> Repo.update()
-  end
-
-  @doc """
-  Lists all cron tasks with badges enabled for an organization.
-  Used by status pages to show public resource status.
-  """
-  def list_badge_enabled_tasks(%Organization{} = org) do
-    from(t in Task,
-      where: t.organization_id == ^org.id,
-      where: not is_nil(t.badge_token),
-      where: t.schedule_type == "cron",
-      where: is_nil(t.deleted_at),
-      order_by: [asc: t.name]
-    )
-    |> Repo.all()
-  end
-
   ## Platform-wide Stats (for superadmin)
 
   @doc """

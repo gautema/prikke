@@ -22,8 +22,9 @@ defmodule PrikkeWeb.PublicStatusLive do
         task_data = load_task_data(resources.tasks)
         monitor_data = load_monitor_data(resources.monitors)
         endpoint_data = load_endpoint_data(resources.endpoints)
+        queue_data = load_queue_data(resources.queues)
 
-        overall = compute_overall_status(task_data, monitor_data, endpoint_data)
+        overall = compute_overall_status(task_data, monitor_data, endpoint_data, queue_data)
 
         {:ok,
          socket
@@ -32,6 +33,7 @@ defmodule PrikkeWeb.PublicStatusLive do
          |> assign(:task_data, task_data)
          |> assign(:monitor_data, monitor_data)
          |> assign(:endpoint_data, endpoint_data)
+         |> assign(:queue_data, queue_data)
          |> assign(:overall, overall)
          |> assign(:hide_header, true)
          |> assign(:hide_footer, true)}
@@ -139,6 +141,31 @@ defmodule PrikkeWeb.PublicStatusLive do
               </div>
             </div>
           <% end %>
+
+          <%= for {queue, status_label, daily_status, uptime} <- @queue_data do %>
+            <div class="bg-white rounded-xl border border-slate-200 p-4">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <span class={["w-2 h-2 rounded-full shrink-0", status_dot(status_label)]} />
+                  <span class="text-sm font-medium text-slate-900">{queue.name}</span>
+                  <span class="text-xs text-slate-400">Queue</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <%= if uptime do %>
+                    <span class={["text-xs font-semibold tabular-nums", uptime_color(uptime)]}>
+                      {format_uptime(uptime)}
+                    </span>
+                  <% end %>
+                  <span class={["text-xs font-medium px-2 py-0.5 rounded", status_pill(status_label)]}>
+                    {status_label}
+                  </span>
+                </div>
+              </div>
+              <%= if daily_status != [] do %>
+                <.task_bars days={daily_status} />
+              <% end %>
+            </div>
+          <% end %>
         </div>
 
         <%!-- Footer --%>
@@ -228,6 +255,16 @@ defmodule PrikkeWeb.PublicStatusLive do
     end)
   end
 
+  defp load_queue_data(queues) do
+    Enum.map(queues, fn queue ->
+      daily_status = Executions.get_daily_status_for_queue(queue.organization_id, queue.name, 30)
+      uptime = Executions.queue_uptime_percentage(queue.organization_id, queue.name, 30)
+      last_status = Executions.get_last_queue_status(queue.organization_id, queue.name)
+      {label, _color} = queue_status(last_status)
+      {queue, label, daily_status, uptime}
+    end)
+  end
+
   # Status resolution (same logic as Badges module)
 
   defp task_status(%{enabled: false}), do: {"paused", "#94a3b8"}
@@ -264,13 +301,23 @@ defmodule PrikkeWeb.PublicStatusLive do
     end
   end
 
+  defp queue_status(last_status) do
+    case last_status do
+      "success" -> {"passing", "#10b981"}
+      "failed" -> {"failing", "#ef4444"}
+      "timeout" -> {"timeout", "#f97316"}
+      _ -> {"no data", "#94a3b8"}
+    end
+  end
+
   # Overall status computation
 
-  defp compute_overall_status(task_data, monitor_data, endpoint_data) do
+  defp compute_overall_status(task_data, monitor_data, endpoint_data, queue_data) do
     statuses =
       Enum.map(task_data, fn {_, label, _, _} -> label end) ++
         Enum.map(monitor_data, fn {_, label, _, _} -> label end) ++
-        Enum.map(endpoint_data, fn {_, label} -> label end)
+        Enum.map(endpoint_data, fn {_, label} -> label end) ++
+        Enum.map(queue_data, fn {_, label, _, _} -> label end)
 
     cond do
       statuses == [] -> :operational

@@ -1,8 +1,9 @@
 defmodule PrikkeWeb.BadgeController do
   use PrikkeWeb, :controller
+  import Ecto.Query, warn: false
 
   alias Prikke.Badges
-  alias Prikke.Tasks
+  alias Prikke.StatusPages
   alias Prikke.Monitors
   alias Prikke.Endpoints
   alias Prikke.Executions
@@ -12,78 +13,111 @@ defmodule PrikkeWeb.BadgeController do
   # -- Task badges --
 
   def task_status(conn, %{"token" => token}) do
-    case Tasks.get_task_by_badge_token(token) do
-      nil -> send_not_found_badge(conn)
-      task -> send_svg(conn, Badges.task_status_badge(task))
-    end
+    with_resource(conn, token, "task", fn task ->
+      send_svg(conn, Badges.task_status_badge(task))
+    end)
   end
 
   def task_uptime(conn, %{"token" => token}) do
-    case Tasks.get_task_by_badge_token(token) do
-      nil ->
-        send_not_found_badge(conn)
-
-      task ->
-        executions = Executions.list_task_executions(task, limit: 50)
-        send_svg(conn, Badges.task_uptime_bars(task, Enum.reverse(executions), name: task.name))
-    end
+    with_resource(conn, token, "task", fn task ->
+      executions = Executions.list_task_executions(task, limit: 50)
+      send_svg(conn, Badges.task_uptime_bars(task, Enum.reverse(executions), name: task.name))
+    end)
   end
 
   # -- Monitor badges --
 
   def monitor_status(conn, %{"token" => token}) do
-    case Monitors.get_monitor_by_badge_token(token) do
-      nil -> send_not_found_badge(conn)
-      monitor -> send_svg(conn, Badges.monitor_status_badge(monitor))
-    end
+    with_resource(conn, token, "monitor", fn monitor ->
+      send_svg(conn, Badges.monitor_status_badge(monitor))
+    end)
   end
 
   def monitor_uptime(conn, %{"token" => token}) do
-    case Monitors.get_monitor_by_badge_token(token) do
-      nil ->
-        send_not_found_badge(conn)
-
-      monitor ->
-        daily_status = Monitors.get_daily_status([monitor], 30)
-        days = Map.get(daily_status, monitor.id, [])
-        send_svg(conn, Badges.monitor_uptime_bars(monitor, days, name: monitor.name))
-    end
+    with_resource(conn, token, "monitor", fn monitor ->
+      daily_status = Monitors.get_daily_status([monitor], 30)
+      days = Map.get(daily_status, monitor.id, [])
+      send_svg(conn, Badges.monitor_uptime_bars(monitor, days, name: monitor.name))
+    end)
   end
 
   # -- Endpoint badges --
 
   def endpoint_status(conn, %{"token" => token}) do
-    case Endpoints.get_endpoint_by_badge_token(token) do
-      nil ->
-        send_not_found_badge(conn)
-
-      endpoint ->
-        last_status = Endpoints.get_last_event_status(endpoint)
-        send_svg(conn, Badges.endpoint_status_badge(endpoint, last_status))
-    end
+    with_resource(conn, token, "endpoint", fn endpoint ->
+      last_status = Endpoints.get_last_event_status(endpoint)
+      send_svg(conn, Badges.endpoint_status_badge(endpoint, last_status))
+    end)
   end
 
   def endpoint_uptime(conn, %{"token" => token}) do
-    case Endpoints.get_endpoint_by_badge_token(token) do
-      nil ->
-        send_not_found_badge(conn)
+    with_resource(conn, token, "endpoint", fn endpoint ->
+      last_status = Endpoints.get_last_event_status(endpoint)
+      events = Endpoints.list_inbound_events(endpoint, limit: 50)
 
-      endpoint ->
-        last_status = Endpoints.get_last_event_status(endpoint)
-        events = Endpoints.list_inbound_events(endpoint, limit: 50)
+      statuses =
+        events
+        |> Enum.reverse()
+        |> Enum.map(fn event ->
+          if event.execution, do: event.execution.status, else: "pending"
+        end)
 
-        statuses =
-          events
-          |> Enum.reverse()
-          |> Enum.map(fn event ->
-            if event.execution, do: event.execution.status, else: "pending"
-          end)
+      send_svg(conn, Badges.endpoint_uptime_bars(endpoint, statuses, last_status))
+    end)
+  end
 
-        send_svg(conn, Badges.endpoint_uptime_bars(endpoint, statuses, last_status))
-    end
+  # -- Queue badges --
+
+  def queue_status(conn, %{"token" => token}) do
+    with_resource(conn, token, "queue", fn queue ->
+      last_status = Executions.get_last_queue_status(queue.organization_id, queue.name)
+      send_svg(conn, Badges.queue_status_badge(queue.name, last_status))
+    end)
+  end
+
+  def queue_uptime(conn, %{"token" => token}) do
+    with_resource(conn, token, "queue", fn queue ->
+      last_status = Executions.get_last_queue_status(queue.organization_id, queue.name)
+      daily_status = Executions.get_daily_status_for_queue(queue.organization_id, queue.name, 30)
+      send_svg(conn, Badges.queue_uptime_bars(queue.name, daily_status, last_status))
+    end)
   end
 
   # -- Helpers --
+
+  defp with_resource(conn, token, expected_type, fun) do
+    case StatusPages.get_item_by_badge_token(token) do
+      nil ->
+        send_not_found_badge(conn)
+
+      %{resource_type: ^expected_type, resource_id: resource_id} ->
+        case load_resource(expected_type, resource_id) do
+          nil -> send_not_found_badge(conn)
+          resource -> fun.(resource)
+        end
+
+      _wrong_type ->
+        send_not_found_badge(conn)
+    end
+  end
+
+  defp load_resource("task", id) do
+    Prikke.Repo.one(
+      from t in Prikke.Tasks.Task, where: t.id == ^id and is_nil(t.deleted_at)
+    )
+  end
+
+  defp load_resource("monitor", id) do
+    Prikke.Repo.get(Prikke.Monitors.Monitor, id)
+  end
+
+  defp load_resource("endpoint", id) do
+    Prikke.Repo.get(Prikke.Endpoints.Endpoint, id)
+  end
+
+  defp load_resource("queue", id) do
+    Prikke.Repo.get(Prikke.Queues.Queue, id)
+  end
 
   defp send_svg(conn, svg) do
     conn

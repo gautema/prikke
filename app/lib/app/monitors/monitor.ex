@@ -15,7 +15,6 @@ defmodule Prikke.Monitors.Monitor do
     field :last_ping_at, :utc_datetime
     field :next_expected_at, :utc_datetime
     field :enabled, :boolean, default: true
-    field :badge_token, :string
     field :notify_on_failure, :boolean
     field :notify_on_recovery, :boolean
 

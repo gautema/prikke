@@ -8,6 +8,8 @@ defmodule PrikkeWeb.PublicStatusLiveTest do
   import Prikke.MonitorsFixtures
   import Prikke.EndpointsFixtures
 
+  alias Prikke.StatusPages
+
   describe "Public Status Page" do
     test "renders enabled status page", %{conn: conn} do
       org = organization_fixture()
@@ -35,14 +37,14 @@ defmodule PrikkeWeb.PublicStatusLiveTest do
       assert html =~ "Status page not found"
     end
 
-    test "shows badge-enabled tasks", %{conn: conn} do
+    test "shows visible tasks via status page items", %{conn: conn} do
       org = organization_fixture()
-      _sp = status_page_fixture(org, %{title: "Task Status", slug: "task-status", enabled: true})
+      sp = status_page_fixture(org, %{title: "Task Status", slug: "task-status", enabled: true})
 
       task = task_fixture(org, %{name: "Visible Task"})
-      {:ok, _} = Prikke.Tasks.enable_badge(org, task)
+      StatusPages.add_item(sp, "task", task.id)
 
-      # A task without badge should not appear
+      # A task without item should not appear
       _hidden = task_fixture(org, %{name: "Hidden Task"})
 
       {:ok, _view, html} = live(conn, ~p"/s/task-status")
@@ -51,12 +53,12 @@ defmodule PrikkeWeb.PublicStatusLiveTest do
       refute html =~ "Hidden Task"
     end
 
-    test "shows badge-enabled monitors", %{conn: conn} do
+    test "shows visible monitors via status page items", %{conn: conn} do
       org = organization_fixture()
-      _sp = status_page_fixture(org, %{title: "Mon Status", slug: "mon-status", enabled: true})
+      sp = status_page_fixture(org, %{title: "Mon Status", slug: "mon-status", enabled: true})
 
       monitor = monitor_fixture(org, %{name: "Visible Monitor"})
-      {:ok, _} = Prikke.Monitors.enable_badge(org, monitor)
+      StatusPages.add_item(sp, "monitor", monitor.id)
 
       _hidden = monitor_fixture(org, %{name: "Hidden Monitor"})
 
@@ -66,12 +68,12 @@ defmodule PrikkeWeb.PublicStatusLiveTest do
       refute html =~ "Hidden Monitor"
     end
 
-    test "shows badge-enabled endpoints", %{conn: conn} do
+    test "shows visible endpoints via status page items", %{conn: conn} do
       org = organization_fixture()
-      _sp = status_page_fixture(org, %{title: "EP Status", slug: "ep-status", enabled: true})
+      sp = status_page_fixture(org, %{title: "EP Status", slug: "ep-status", enabled: true})
 
       endpoint = endpoint_fixture(org, %{name: "Visible Endpoint"})
-      {:ok, _} = Prikke.Endpoints.enable_badge(org, endpoint)
+      StatusPages.add_item(sp, "endpoint", endpoint.id)
 
       _hidden = endpoint_fixture(org, %{name: "Hidden Endpoint"})
 
@@ -81,9 +83,22 @@ defmodule PrikkeWeb.PublicStatusLiveTest do
       refute html =~ "Hidden Endpoint"
     end
 
+    test "shows visible queues", %{conn: conn} do
+      org = organization_fixture()
+      sp = status_page_fixture(org, %{title: "Queue Status", slug: "queue-status", enabled: true})
+
+      queue = Prikke.Queues.get_or_create_queue!(org, "emails")
+      StatusPages.add_item(sp, "queue", queue.id)
+
+      {:ok, _view, html} = live(conn, ~p"/s/queue-status")
+
+      assert html =~ "emails"
+      assert html =~ "Queue"
+    end
+
     test "shows major outage when a task is failing", %{conn: conn} do
       org = organization_fixture()
-      _sp = status_page_fixture(org, %{title: "Outage", slug: "outage-test", enabled: true})
+      sp = status_page_fixture(org, %{title: "Outage", slug: "outage-test", enabled: true})
 
       task = task_fixture(org, %{name: "Failing Task"})
 
@@ -93,7 +108,7 @@ defmodule PrikkeWeb.PublicStatusLiveTest do
       |> Prikke.Repo.update!()
 
       task = Prikke.Tasks.get_task!(org, task.id)
-      {:ok, _} = Prikke.Tasks.enable_badge(org, task)
+      StatusPages.add_item(sp, "task", task.id)
 
       {:ok, _view, html} = live(conn, ~p"/s/outage-test")
 

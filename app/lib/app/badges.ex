@@ -69,6 +69,23 @@ defmodule Prikke.Badges do
     uptime_bars(endpoint.name, statuses, color)
   end
 
+  @doc """
+  Generates a status badge SVG for a queue.
+  """
+  def queue_status_badge(queue_name, last_status) do
+    {label, color} = queue_status(last_status)
+    flat_badge(queue_name, label, color)
+  end
+
+  @doc """
+  Generates an uptime bar chart SVG for a queue's daily execution status.
+  """
+  def queue_uptime_bars(queue_name, daily_status, last_status) do
+    {_label, color} = queue_status(last_status)
+    statuses = Enum.map(daily_status, fn {_date, %{status: s}} -> s end)
+    uptime_bars(queue_name, statuses, color)
+  end
+
   # -- Status resolution --
 
   defp task_status(%{enabled: false}), do: {"paused", "#94a3b8"}
@@ -105,6 +122,15 @@ defmodule Prikke.Badges do
       "timeout" -> {"timeout", "#f97316"}
       "running" -> {"running", "#3b82f6"}
       "pending" -> {"pending", "#94a3b8"}
+      _ -> {"no data", "#94a3b8"}
+    end
+  end
+
+  defp queue_status(last_status) do
+    case last_status do
+      "success" -> {"passing", "#10b981"}
+      "failed" -> {"failing", "#ef4444"}
+      "timeout" -> {"timeout", "#f97316"}
       _ -> {"no data", "#94a3b8"}
     end
   end

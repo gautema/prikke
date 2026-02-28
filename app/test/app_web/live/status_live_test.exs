@@ -7,6 +7,8 @@ defmodule PrikkeWeb.StatusLiveTest do
   import Prikke.MonitorsFixtures
   import Prikke.EndpointsFixtures
 
+  alias Prikke.StatusPages
+
   describe "Status Page Management" do
     setup :register_and_log_in_user
 
@@ -74,9 +76,11 @@ defmodule PrikkeWeb.StatusLiveTest do
 
       assert html =~ "Visible"
 
-      # Reload task to verify
-      updated_task = Prikke.Tasks.get_task!(org, task.id)
-      assert updated_task.badge_token != nil
+      # Verify item was created
+      {:ok, sp} = StatusPages.get_or_create_status_page(org)
+      item = StatusPages.get_item(sp, "task", task.id)
+      assert item != nil
+      assert String.starts_with?(item.badge_token, "bt_")
     end
 
     test "can toggle badge on a monitor", %{conn: conn, user: user} do
@@ -90,6 +94,25 @@ defmodule PrikkeWeb.StatusLiveTest do
         |> element(
           ~s{button[phx-click="enable_badge"][phx-value-type="monitor"][phx-value-id="#{monitor.id}"]}
         )
+        |> render_click()
+
+      assert html =~ "Visible"
+    end
+
+    test "can toggle badge on a queue", %{conn: conn, user: user} do
+      org = organization_fixture(%{user: user})
+      # Create a task with a queue to ensure queue record exists
+      _task = task_fixture(org, %{name: "Queue Task", queue: "emails"})
+
+      {:ok, view, html} = live(conn, ~p"/status-page")
+
+      assert html =~ "Queues"
+      assert html =~ "emails"
+
+      # Find and click the enable button for the queue
+      html =
+        view
+        |> element(~s{button[phx-click="enable_badge"][phx-value-type="queue"]})
         |> render_click()
 
       assert html =~ "Visible"
@@ -111,7 +134,10 @@ defmodule PrikkeWeb.StatusLiveTest do
     test "shows embed codes when badges are enabled", %{conn: conn, user: user} do
       org = organization_fixture(%{user: user})
       task = task_fixture(org, %{name: "Badged Task"})
-      {:ok, _} = Prikke.Tasks.enable_badge(org, task)
+
+      # Pre-create the status page and add item
+      {:ok, sp} = StatusPages.get_or_create_status_page(org)
+      StatusPages.add_item(sp, "task", task.id)
 
       {:ok, _view, html} = live(conn, ~p"/status-page")
 

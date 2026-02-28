@@ -83,6 +83,39 @@ defmodule Prikke.Queues do
   end
 
   @doc """
+  Gets a queue by ID within an organization.
+  """
+  def get_queue!(%Organization{} = org, queue_id) do
+    from(q in Queue,
+      where: q.organization_id == ^org.id and q.id == ^queue_id
+    )
+    |> Repo.one!()
+  end
+
+  @doc """
+  Ensures queue records exist for all task-referenced queues.
+  Creates Queue records for any queue name found in tasks but missing from the queues table.
+  """
+  def ensure_queues_exist(%Organization{} = org) do
+    task_queues = Prikke.Tasks.list_queues(org)
+
+    Enum.each(task_queues, fn queue_name ->
+      get_or_create_queue!(org, queue_name)
+    end)
+  end
+
+  @doc """
+  Lists all queues for an organization.
+  """
+  def list_queues(%Organization{} = org) do
+    from(q in Queue,
+      where: q.organization_id == ^org.id,
+      order_by: [asc: q.name]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Gets or creates a queue record.
   """
   def get_or_create_queue!(%Organization{} = org, queue_name) do

@@ -200,45 +200,6 @@ defmodule Prikke.Monitors do
     Monitor.create_changeset(%Monitor{}, attrs, org.id)
   end
 
-  ## Badge tokens
-
-  @doc """
-  Looks up a monitor by its badge token. Returns nil if not found.
-  """
-  def get_monitor_by_badge_token(nil), do: nil
-
-  def get_monitor_by_badge_token(token) do
-    from(m in Monitor, where: m.badge_token == ^token)
-    |> Repo.one()
-  end
-
-  @doc """
-  Enables the public badge for a monitor by generating a badge token.
-  """
-  def enable_badge(%Organization{} = org, %Monitor{} = monitor) do
-    if monitor.organization_id != org.id do
-      raise ArgumentError, "monitor does not belong to organization"
-    end
-
-    token = monitor.badge_token || Prikke.Badges.generate_token()
-
-    monitor
-    |> Ecto.Changeset.change(badge_token: token)
-    |> Repo.update()
-  end
-
-  @doc """
-  Disables the public badge for a monitor by clearing the badge token.
-  """
-  def disable_badge(%Organization{} = org, %Monitor{} = monitor) do
-    if monitor.organization_id != org.id do
-      raise ArgumentError, "monitor does not belong to organization"
-    end
-
-    monitor
-    |> Ecto.Changeset.change(badge_token: nil)
-    |> Repo.update()
-  end
 
   @doc """
   Returns the uptime percentage for a monitor over the given number of days.
@@ -273,19 +234,6 @@ defmodule Prikke.Monitors do
         Float.round(percent, 2)
       end
     end
-  end
-
-  @doc """
-  Lists all monitors with badges enabled for an organization.
-  Used by status pages to show public resource status.
-  """
-  def list_badge_enabled_monitors(%Organization{} = org) do
-    from(m in Monitor,
-      where: m.organization_id == ^org.id,
-      where: not is_nil(m.badge_token),
-      order_by: [asc: m.name]
-    )
-    |> Repo.all()
   end
 
   ## Ping Handling

@@ -26,4 +26,13 @@ defmodule Prikke.StatusPagesFixtures do
 
     status_page
   end
+
+  @doc """
+  Adds a resource to a status page, creating a status_page_item with a badge_token.
+  Returns the created item.
+  """
+  def add_status_page_item(status_page, resource_type, resource_id) do
+    {:ok, item} = Prikke.StatusPages.add_item(status_page, resource_type, resource_id)
+    item
+  end
 end

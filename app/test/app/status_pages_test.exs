@@ -100,24 +100,97 @@ defmodule Prikke.StatusPagesTest do
     end
   end
 
-  describe "list_visible_resources/1" do
-    test "returns only badge-enabled resources" do
+  describe "status page items" do
+    test "add_item/3 creates an item with badge token" do
       org = organization_fixture()
+      sp = status_page_fixture(org)
+      task = task_fixture(org, %{name: "My Task"})
 
-      # Create tasks - one with badge, one without
+      assert {:ok, item} = StatusPages.add_item(sp, "task", task.id)
+      assert item.resource_type == "task"
+      assert item.resource_id == task.id
+      assert item.status_page_id == sp.id
+      assert String.starts_with?(item.badge_token, "bt_")
+    end
+
+    test "add_item/3 prevents duplicate items" do
+      org = organization_fixture()
+      sp = status_page_fixture(org)
+      task = task_fixture(org)
+
+      {:ok, _} = StatusPages.add_item(sp, "task", task.id)
+      assert {:error, _changeset} = StatusPages.add_item(sp, "task", task.id)
+    end
+
+    test "remove_item/3 removes an existing item" do
+      org = organization_fixture()
+      sp = status_page_fixture(org)
+      task = task_fixture(org)
+
+      {:ok, _item} = StatusPages.add_item(sp, "task", task.id)
+      assert {:ok, _} = StatusPages.remove_item(sp, "task", task.id)
+      assert StatusPages.get_item(sp, "task", task.id) == nil
+    end
+
+    test "remove_item/3 returns error for missing item" do
+      org = organization_fixture()
+      sp = status_page_fixture(org)
+
+      assert {:error, :not_found} = StatusPages.remove_item(sp, "task", Ecto.UUID.generate())
+    end
+
+    test "get_item_by_badge_token/1 finds item by token" do
+      org = organization_fixture()
+      sp = status_page_fixture(org)
+      task = task_fixture(org)
+
+      {:ok, item} = StatusPages.add_item(sp, "task", task.id)
+
+      found = StatusPages.get_item_by_badge_token(item.badge_token)
+      assert found.id == item.id
+    end
+
+    test "get_item_by_badge_token/1 returns nil for missing token" do
+      assert StatusPages.get_item_by_badge_token("bt_nonexistent000000000000") == nil
+    end
+
+    test "get_item_by_badge_token/1 returns nil for nil" do
+      assert StatusPages.get_item_by_badge_token(nil) == nil
+    end
+
+    test "list_items/1 returns all items for a status page" do
+      org = organization_fixture()
+      sp = status_page_fixture(org)
+      task = task_fixture(org)
+      monitor = monitor_fixture(org)
+
+      {:ok, _} = StatusPages.add_item(sp, "task", task.id)
+      {:ok, _} = StatusPages.add_item(sp, "monitor", monitor.id)
+
+      items = StatusPages.list_items(sp)
+      assert length(items) == 2
+    end
+  end
+
+  describe "list_visible_resources/1" do
+    test "returns only resources with status page items" do
+      org = organization_fixture()
+      sp = status_page_fixture(org)
+
+      # Create tasks - one with item, one without
       task1 = task_fixture(org, %{name: "With Badge"})
       _task2 = task_fixture(org, %{name: "Without Badge"})
-      {:ok, _} = Prikke.Tasks.enable_badge(org, task1)
+      StatusPages.add_item(sp, "task", task1.id)
 
-      # Create monitors - one with badge, one without
+      # Create monitors - one with item, one without
       monitor1 = monitor_fixture(org, %{name: "With Badge Mon"})
       _monitor2 = monitor_fixture(org, %{name: "Without Badge Mon"})
-      {:ok, _} = Prikke.Monitors.enable_badge(org, monitor1)
+      StatusPages.add_item(sp, "monitor", monitor1.id)
 
-      # Create endpoints - one with badge, one without
+      # Create endpoints - one with item, one without
       endpoint1 = endpoint_fixture(org, %{name: "With Badge EP"})
       _endpoint2 = endpoint_fixture(org, %{name: "Without Badge EP"})
-      {:ok, _} = Prikke.Endpoints.enable_badge(org, endpoint1)
+      StatusPages.add_item(sp, "endpoint", endpoint1.id)
 
       resources = StatusPages.list_visible_resources(org)
 
@@ -129,13 +202,25 @@ defmodule Prikke.StatusPagesTest do
       assert hd(resources.endpoints).name == "With Badge EP"
     end
 
-    test "returns empty lists when no badges enabled" do
+    test "returns empty lists when no items" do
       org = organization_fixture()
       resources = StatusPages.list_visible_resources(org)
 
       assert resources.tasks == []
       assert resources.monitors == []
       assert resources.endpoints == []
+      assert resources.queues == []
+    end
+
+    test "includes queues" do
+      org = organization_fixture()
+      sp = status_page_fixture(org)
+      queue = Prikke.Queues.get_or_create_queue!(org, "emails")
+      StatusPages.add_item(sp, "queue", queue.id)
+
+      resources = StatusPages.list_visible_resources(org)
+      assert length(resources.queues) == 1
+      assert hd(resources.queues).name == "emails"
     end
   end
 

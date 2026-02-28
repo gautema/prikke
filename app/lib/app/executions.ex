@@ -961,6 +961,92 @@ defmodule Prikke.Executions do
     end
   end
 
+  @doc """
+  Returns daily execution status for all tasks in a queue over the given number of days.
+  Filters by organization_id and queue name.
+  """
+  def get_daily_status_for_queue(organization_id, queue_name, days \\ 30) do
+    since = DateTime.utc_now() |> DateTime.add(-days, :day)
+    today = Date.utc_today()
+
+    data =
+      from(e in Execution,
+        where:
+          e.organization_id == ^organization_id and
+            e.queue == ^queue_name and
+            e.scheduled_for >= ^since,
+        group_by: fragment("DATE(?)", e.scheduled_for),
+        select: {
+          fragment("DATE(?)", e.scheduled_for),
+          %{
+            total: count(),
+            success: count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status)),
+            failed: count(fragment("CASE WHEN ? IN ('failed', 'timeout') THEN 1 END", e.status))
+          }
+        }
+      )
+      |> Repo.all()
+      |> Map.new()
+
+    Enum.map(0..(days - 1), fn offset ->
+      date = Date.add(today, -days + 1 + offset)
+      stats = Map.get(data, date, %{total: 0, success: 0, failed: 0})
+
+      status =
+        cond do
+          stats.total == 0 -> "none"
+          stats.failed > 0 -> "failed"
+          true -> "success"
+        end
+
+      {date, %{status: status, total: stats.total, success: stats.success, failed: stats.failed}}
+    end)
+  end
+
+  @doc """
+  Returns the uptime percentage for a queue over the given number of days.
+  Calculated as successful executions / total completed executions.
+  Returns nil if there are no executions.
+  """
+  def queue_uptime_percentage(organization_id, queue_name, days \\ 30) do
+    since = DateTime.utc_now() |> DateTime.add(-days, :day)
+
+    stats =
+      from(e in Execution,
+        where:
+          e.organization_id == ^organization_id and
+            e.queue == ^queue_name and
+            e.scheduled_for >= ^since,
+        where: e.status in ["success", "failed", "timeout"],
+        select: %{
+          total: count(),
+          success: count(fragment("CASE WHEN ? = 'success' THEN 1 END", e.status))
+        }
+      )
+      |> Repo.one()
+
+    case stats do
+      %{total: 0} -> nil
+      %{total: total, success: success} -> Float.round(success / total * 100, 2)
+    end
+  end
+
+  @doc """
+  Returns the last execution status for a queue.
+  """
+  def get_last_queue_status(organization_id, queue_name) do
+    from(e in Execution,
+      where:
+        e.organization_id == ^organization_id and
+          e.queue == ^queue_name and
+          e.status in ["success", "failed", "timeout"],
+      order_by: [desc: e.scheduled_for],
+      limit: 1,
+      select: e.status
+    )
+    |> Repo.one()
+  end
+
   def executions_by_day_for_org(organization, days \\ 14) do
     since = DateTime.utc_now() |> DateTime.add(-days, :day)
     today = Date.utc_today()

@@ -11,7 +11,6 @@ defmodule Prikke.Endpoints.Endpoint do
     field :enabled, :boolean, default: true
     field :retry_attempts, :integer, default: 5
     field :use_queue, :boolean, default: true
-    field :badge_token, :string
     field :notify_on_failure, :boolean
     field :notify_on_recovery, :boolean
 

@@ -182,59 +182,6 @@ defmodule Prikke.Endpoints do
     Endpoint.create_changeset(%Endpoint{}, attrs, org.id)
   end
 
-  ## Badge tokens
-
-  @doc """
-  Looks up an endpoint by its badge token. Returns nil if not found.
-  """
-  def get_endpoint_by_badge_token(nil), do: nil
-
-  def get_endpoint_by_badge_token(token) do
-    from(e in Endpoint, where: e.badge_token == ^token)
-    |> Repo.one()
-  end
-
-  @doc """
-  Enables the public badge for an endpoint by generating a badge token.
-  """
-  def enable_badge(%Organization{} = org, %Endpoint{} = endpoint) do
-    if endpoint.organization_id != org.id do
-      raise ArgumentError, "endpoint does not belong to organization"
-    end
-
-    token = endpoint.badge_token || Prikke.Badges.generate_token()
-
-    endpoint
-    |> Ecto.Changeset.change(badge_token: token)
-    |> Repo.update()
-  end
-
-  @doc """
-  Disables the public badge for an endpoint by clearing the badge token.
-  """
-  def disable_badge(%Organization{} = org, %Endpoint{} = endpoint) do
-    if endpoint.organization_id != org.id do
-      raise ArgumentError, "endpoint does not belong to organization"
-    end
-
-    endpoint
-    |> Ecto.Changeset.change(badge_token: nil)
-    |> Repo.update()
-  end
-
-  @doc """
-  Lists all endpoints with badges enabled for an organization.
-  Used by status pages to show public resource status.
-  """
-  def list_badge_enabled_endpoints(%Organization{} = org) do
-    from(e in Endpoint,
-      where: e.organization_id == ^org.id,
-      where: not is_nil(e.badge_token),
-      order_by: [asc: e.name]
-    )
-    |> Repo.all()
-  end
-
   def get_last_event_status(%Endpoint{} = endpoint) do
     event =
       from(e in InboundEvent,
