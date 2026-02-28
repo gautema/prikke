@@ -2,7 +2,7 @@
 
 ## Summary
 
-Two rounds of load testing revealed and eliminated bottlenecks. The first round (production, 4 shared cores) optimized DB queries and reached 500 req/s. The second round (staging, 16 vCPUs) discovered that **Docker's default `ulimit nofile=1024` was the #1 throughput bottleneck** — once raised to 65536, the ceiling jumped from ~900 req/s to **4000 req/s on a €30/mo server**.
+Three rounds of load testing revealed and eliminated bottlenecks. The first round (production, Hetzner CX33 4 shared cores) optimized DB queries and reached 500 req/s. The second round (staging, 16 vCPUs) discovered that **Docker's default `ulimit nofile=1024` was the #1 throughput bottleneck** — once raised to 65536, the ceiling jumped from ~900 req/s to **4000 req/s on a €30/mo server**. The third round (new production, netcup 4 dedicated cores) reached **1300 req/s at p95 < 2s** after full Postgres and kernel tuning — **73% faster than the old server**.
 
 All earlier hardware comparisons (4 shared → 8 shared → 8 dedicated) were hitting the FD limit, not actual hardware limits.
 
@@ -27,7 +27,47 @@ All earlier hardware comparisons (4 shared → 8 shared → 8 dedicated) were hi
 
 **Ceiling: ~4000 req/s sustained at 100% success, p95 253ms.**
 
-## Results — Staging (CX33, 4 shared cores, production-identical hardware)
+## Results — Production (netcup, 4 dedicated AMD EPYC cores, 8GB RAM)
+
+New production server (159.195.53.120). Tested with ulimit fix, k6 from remote (over internet + TLS). Three rounds of tuning:
+
+### Round 1: Baseline (POOL_SIZE=80, default Postgres)
+
+| Rate | Success | p50 | p95 Latency | Notes |
+|------|---------|-----|-------------|-------|
+| **750/s** | **100%** | **145ms** | **509ms** | Clean |
+| 850/s | 100% | 142ms | 2.28s | Threshold fail |
+
+**Ceiling: ~750 req/s.** Same as old server.
+
+### Round 2: Postgres WAL/IO tuning
+
+Added: `wal_level=minimal`, `random_page_cost=1.1`, `effective_io_concurrency=200`, `max_wal_size=4GB`.
+
+| Rate | Success | p50 | p95 Latency | Notes |
+|------|---------|-----|-------------|-------|
+| **850/s** | **100%** | **244ms** | **1.49s** | Now passes |
+| 1000/s | 100% | 670ms | 3.53s | Threshold fail |
+
+**Ceiling: ~850 req/s.** 13% improvement from WAL/IO tuning.
+
+### Round 3: synchronous_commit=off + POOL_SIZE=150 + max_connections=200
+
+Added: `synchronous_commit=off`, `work_mem=16MB`, `maintenance_work_mem=512MB`, `max_connections=200`, `POOL_SIZE=150`. Kernel tuning: `tcp_max_syn_backlog=4096`, `netdev_max_backlog=5000`, `vm.swappiness=10`.
+
+| Rate | Success | p50 | p95 Latency | Dropped | Notes |
+|------|---------|-----|-------------|---------|-------|
+| **1000/s** | **100%** | **272ms** | **778ms** | **0** | Clean |
+| **1150/s** | **100%** | **314ms** | **1.39s** | 538 | Clean |
+| **1250/s** | **100%** | **470ms** | **1.60s** | 1,066 | Clean |
+| **1300/s** | **100%** | **1.01s** | **1.84s** | 2,260 | **Sweet spot** |
+| 1350/s | 100% | 1.87s | 2.41s | 10,016 | Threshold fail |
+
+**Ceiling: ~1300 req/s sustained at 100% success, p95 < 2s.**
+
+73% faster than the old Hetzner CX33 (750 req/s). The biggest wins were `synchronous_commit=off` and doubling the DB pool from 80 to 150.
+
+## Results — Staging (Hetzner CX33, 4 shared cores, old production hardware)
 
 Tested with ulimit fix, POOL_SIZE=80, workers active, k6 from remote (over internet + TLS).
 
@@ -109,13 +149,14 @@ Sustained tests are harder than burst tests because data accumulates (100k+ task
 1. **Docker ulimit nofile=1024** — The #1 bottleneck. Capped throughput at ~900 req/s on every machine. Fix: `ulimit: nofile=65536:65536` in Kamal deploy config.
 2. **DB query optimization** (round 1) — Subqueries, missing indexes, redundant fetches. Fixed via denormalization, LATERAL joins, ETS buffering.
 3. **Finch pool `count: 1`** — Serialized TLS handshakes through one process. Fixed to `count: 4`.
-4. **DB pool size** — 20 connections too few at high throughput. Tested 40/60/80/100/120 at 750 req/s — 80 is optimal for CX33. Increased to 80 (prod + staging).
+4. **DB pool size** — 20 connections too few at high throughput. Tested 40/60/80/100/120 at 750 req/s — 80 was optimal for CX33. On netcup with dedicated cores, bumped to 150 (max_connections=200) for 1300 req/s ceiling.
 5. **Rate limiter** — 100k/min = 1667/s effective ceiling. Bumped for staging tests.
 
 ## Capacity Estimates
 
 | Hardware | Cost | API Throughput | Pool Size | Est. Users (500k exec/mo) |
 |----------|------|----------------|-----------|---------------------------|
+| netcup (4 dedicated) | current prod | 1300 req/s (tested) | 150 | ~800 |
 | CX33 (4 shared) | ~€6/mo | 750 req/s (tested) | 80 | ~500 |
 | CPX62 (16 vCPU) | ~€30/mo | 4000 req/s (tested) | 100 | ~2000+ |
 
@@ -214,6 +255,17 @@ Workers made ephemeral HTTP connections — every request did a fresh TLS handsh
 
 Default Postgres config only used 128MB shared_buffers on a 7.6GB server. Tuned to: shared_buffers=2GB, effective_cache_size=4GB, work_mem=64MB. Improves caching and aggregate query performance.
 
+### 15. Postgres WAL and IO tuning (netcup migration)
+**File:** `config/deploy.yml`
+
+After migrating from Hetzner to netcup, tuned Postgres for the new hardware:
+- `wal_level=minimal` (was `replica` from migration, no longer replicating) + `max_wal_senders=0`
+- `random_page_cost=1.1` (was 4, default for spinning disk — actual disk is NVMe-backed, 367k IOPS)
+- `effective_io_concurrency=200` (was 16, too low for fast storage)
+- `max_wal_size=4GB` (was 1GB, reduces checkpoint frequency under heavy writes)
+
+Result: 850 req/s ceiling improved from p95=2.28s (threshold fail) to p95=1.49s (threshold pass).
+
 ### 14. Docker file descriptor limit
 **File:** `config/deploy.yml`, `config/deploy.staging.yml`
 
@@ -222,9 +274,10 @@ Docker defaults to `ulimit nofile=1024`. At ~900 req/s, the container runs out o
 ## Infrastructure Changes
 
 - Enabled `pg_stat_statements` in docker-compose.yml and deploy.yml
-- DB pool increased from 20 to 80 (prod + staging) — tested 40/60/80/100/120, 80 optimal
+- DB pool increased from 20 to 150 (prod), 80 (staging) — tested 40/60/80/100/120/150
 - Postgres shared memory increased from 64MB to 256MB (Docker `--shm-size`)
 - Postgres tuned: shared_buffers=2GB, effective_cache_size=4GB, work_mem=64MB
+- Postgres WAL/IO tuned (netcup): wal_level=minimal, random_page_cost=1.1, effective_io_concurrency=200, max_wal_size=4GB
 - Docker ulimit: nofile=65536:65536 (prod + staging)
 - Superadmin dashboard: replaced disk usage with peak throughput metric
 
@@ -232,7 +285,7 @@ Docker defaults to `ulimit nofile=1024`. At ~900 req/s, the container runs out o
 
 ```bash
 # Query pg_stat_statements (top queries by total time)
-ssh root@46.225.66.205 'docker exec runlater-db psql -U cronly -d cronly_prod -c "
+ssh root@159.195.53.120 'docker exec runlater-db psql -U cronly -d cronly_prod -c "
   SELECT left(query, 120) as query, calls, round(mean_exec_time::numeric, 2) as avg_ms,
          round(total_exec_time::numeric, 0) as total_ms
   FROM pg_stat_statements
@@ -242,13 +295,13 @@ ssh root@46.225.66.205 'docker exec runlater-db psql -U cronly -d cronly_prod -c
 "'
 
 # Reset stats between test runs
-ssh root@46.225.66.205 'docker exec runlater-db psql -U cronly -d cronly_prod -c "SELECT pg_stat_statements_reset();"'
+ssh root@159.195.53.120 'docker exec runlater-db psql -U cronly -d cronly_prod -c "SELECT pg_stat_statements_reset();"'
 
 # Check query plan for a specific query
-ssh root@46.225.66.205 'docker exec runlater-db psql -U cronly -d cronly_prod -c "EXPLAIN ANALYZE <query>;"'
+ssh root@159.195.53.120 'docker exec runlater-db psql -U cronly -d cronly_prod -c "EXPLAIN ANALYZE <query>;"'
 
 # Check table sizes and dead tuples
-ssh root@46.225.66.205 'docker exec runlater-db psql -U cronly -d cronly_prod -c "
+ssh root@159.195.53.120 'docker exec runlater-db psql -U cronly -d cronly_prod -c "
   SELECT relname, n_live_tup, n_dead_tup,
          pg_size_pretty(pg_relation_size(relid)) as table_size,
          pg_size_pretty(pg_indexes_size(relid)) as index_size
@@ -256,17 +309,17 @@ ssh root@46.225.66.205 'docker exec runlater-db psql -U cronly -d cronly_prod -c
 "'
 
 # Check CPU and memory
-ssh root@46.225.66.205 'nproc && free -h | head -2'
+ssh root@159.195.53.120 'nproc && free -h | head -2'
 
 # Check app logs
-ssh root@46.225.66.205 'docker logs $(docker ps --filter label=service=runlater --filter label=role=web -q) 2>&1 | grep -c "connection not available"'
+ssh root@159.195.53.120 'docker logs $(docker ps --filter label=service=runlater --filter label=role=web -q) 2>&1 | grep -c "connection not available"'
 ```
 
 ## Scaling Path
 
 The DB layer is fully optimized — all queries are sub-millisecond. The bottleneck is CPU. To scale:
 
-1. **Now (4 shared cores, ~€6/mo)**: ~800-1200 req/s (estimated with ulimit fix), production server
+1. **Now (4 dedicated cores, netcup)**: ~1300 req/s tested, production server
 2. **CPX62 (16 vCPU, ~€30/mo)**: 4000 req/s, p95=253ms — tested on staging
 3. **Add second app node**: Kamal multi-host, SKIP LOCKED handles coordination — doubles capacity
 4. **Separate DB server**: App gets all CPU cores, DB gets dedicated resources
