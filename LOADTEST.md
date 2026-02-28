@@ -76,6 +76,17 @@ Added `ERL_FLAGS: "+sbt db"` to bind BEAM schedulers to CPU cores for better cac
 
 **Ceiling: still ~1300 req/s.** `+sbt db` improved p95 by ~8% (1.84s → 1.70s at 1300/s) but not enough to push the ceiling higher.
 
+### Round 5: Drop unused indexes
+
+Dropped 4 task indexes with 0 scans (51 MB covering index, enabled, badge_token, deleted_at). Also tried dropping 2 execution indexes (finished_at+status, scheduled_for+status) but that caused the claim query to double from 2.50ms to 5.09ms — immediately rolled back.
+
+| Rate | Success | p50 | p95 Latency | Dropped | Notes |
+|------|---------|-----|-------------|---------|-------|
+| **1300/s** | **100%** | **922ms** | **1.74s** | 1,811 | Task-only drops, within noise of 1.70s |
+| 1350/s | 100% | 1.82s | 2.31s | 10,344 | Threshold fail |
+
+**Ceiling: still ~1300 req/s.** Task index drops had negligible impact — the write overhead of small unused indexes is minimal. Execution indexes MUST NOT be dropped — even "barely used" indexes are critical for the worker claim query's query plan.
+
 73% faster than the old Hetzner CX33 (750 req/s). The biggest wins were `synchronous_commit=off` and doubling the DB pool from 80 to 150.
 
 ## Results — Staging (Hetzner CX33, 4 shared cores, old production hardware)
@@ -286,6 +297,11 @@ Docker defaults to `ulimit nofile=1024`. At ~900 req/s, the container runs out o
 **File:** `config/deploy.yml`
 
 Added `ERL_FLAGS: "+sbt db"` to bind BEAM schedulers to CPU cores. This improves CPU cache locality — each scheduler thread stays on the same core, reducing cache misses. Result: ~8% p95 improvement at 1300 req/s (1.84s → 1.70s), but not enough to raise the ceiling past 1300.
+
+### 17. Drop unused task indexes
+**Migration:** `drop_unused_indexes`, `restore_execution_indexes`
+
+Dropped 4 task indexes with 0 scans in pg_stat_user_indexes: covering index (51 MB), enabled partial, badge_token partial, deleted_at partial. Also tried dropping 2 execution indexes but the claim query regressed from 2.50ms to 5.09ms — restored immediately. Lesson: `idx_scan=0` doesn't mean an index is unused — Postgres may use it for query planning or FK checks even without recorded scans.
 
 ## Infrastructure Changes
 
