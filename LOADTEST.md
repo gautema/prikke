@@ -2,7 +2,9 @@
 
 ## Summary
 
-Multiple rounds of load testing on production and staging revealed and eliminated bottlenecks. Starting from 50 req/s on old hardware, optimizations progressed through DB query fixes, connection pooling, Postgres tuning, and application-level caching to reach **1450 req/s on a 4-core dedicated server** and **4000 req/s on a 16 vCPU staging server**.
+Multiple rounds of load testing on production and staging revealed and eliminated bottlenecks. Starting from 50 req/s on old hardware, optimizations progressed through DB query fixes, connection pooling, Postgres tuning, and application-level caching to reach **1500 req/s on a 4-core dedicated server** and **4000 req/s on a 16 vCPU staging server**.
+
+Throughput scales roughly linearly with CPU cores (~375 req/s per core).
 
 The single biggest unlock was discovering Docker's default `ulimit nofile=1024` — all earlier hardware comparisons were hitting this FD limit, not actual hardware limits.
 
@@ -84,6 +86,36 @@ Also tried a CTE-based combined task+execution INSERT but it was **slower** than
 
 **Ceiling: ~1450 req/s.** +12% over Round 5. ETS cache eliminates ~2 DB queries per request (~2900 queries/s saved at peak).
 
+### Round 7: nginx TLS termination (reverted)
+
+Hypothesis: Go's `crypto/tls` in kamal-proxy is slower than nginx/OpenSSL for TLS termination. Added nginx as a Kamal accessory in front of kamal-proxy: `Client → nginx (TLS on 443) → kamal-proxy (HTTP on 8080) → Phoenix (HTTP on 4000)`.
+
+| Rate | Success | p50 | p95 | Errors | Notes |
+|------|---------|-----|-----|--------|-------|
+| **1250/s** | **100%** | **178ms** | **572ms** | **0%** | Clean |
+| 1350/s | 88.5% | 1.15s | 1.73s | 11.4% | 503s + resets |
+| 1450/s | 94.3% | 1.07s | 2.0s | 5.7% | 503s + resets |
+
+**Result: nginx was SLOWER than kamal-proxy direct TLS.** The extra network hop added latency and connection overhead that outweighed any TLS crypto savings. At 1350 req/s, nginx had 11.4% errors vs 0% with kamal-proxy direct. Reverted.
+
+Note: nginx container also needed `ulimit: nofile=65536:65536` — without it, `accept4() failed (24: No file descriptors available)` at ~1250 req/s.
+
+### Round 8: Confirmed ceiling with proper test isolation
+
+Previous rounds had inconsistent results at 1350-1450 req/s due to TCP TIME_WAIT from back-to-back runs. Thousands of sockets sit in TIME_WAIT for ~60s after each test. Running too quickly means the OS is still cleaning up connections from the previous run. Added 60s wait between runs for clean results.
+
+| Rate | Success | p50 | p95 | Dropped | Notes |
+|------|---------|-----|-----|---------|-------|
+| **1300/s** | **100%** | **44ms** | **293ms** | 327 | Clean |
+| **1350/s** | **100%** | **231ms** | **582ms** | 0 | Clean |
+| **1400/s** | **100%** | **359ms** | **869ms** | 0 | Clean |
+| **1450/s** | **100%** | **368ms** | **870ms** | 0 | Clean |
+| **1500/s** | **100%** | **520ms** | **1.93s** | 1,410 | 0 errors but many dropped |
+
+**Ceiling: ~1500 req/s.** With proper 60s isolation between runs, 1450 passes cleanly and 1500 is the practical limit (0 errors but p95 approaches 2s and iterations start dropping).
+
+**Test methodology:** Always wait 60s between runs, delete loadtest data, and VACUUM FULL before re-testing. Even running `htop` on the server during a test can tip results at the margin.
+
 ## Staging Results (CPX62, 16 vCPUs, 32GB RAM)
 
 Hetzner CPX62 (~€30/mo). App + Postgres on same VPS. DB pool: 100. k6 run from inside Docker on same server (no network latency).
@@ -107,12 +139,13 @@ Hetzner CPX62 (~€30/mo). App + Postgres on same VPS. DB pool: 100. k6 run from
 4. **DB pool size** — 20 connections too few at high throughput. Tested 40/60/80/100/120/150 — sweet spot depends on hardware (80 for CX33, 150 for netcup).
 5. **API key auth queries** — 2 DB queries per request just for auth. Fixed with ETS cache (60s TTL). Saves ~2900 queries/s at peak.
 6. **Rate limiter** — Default 500/min too low for load testing. Raised to 100k/min.
+7. **TLS termination is NOT a bottleneck** — nginx in front of kamal-proxy was slower due to extra hop overhead. kamal-proxy's Go crypto/tls is fast enough.
 
 ## Capacity Estimates
 
 | Hardware | Cost | API Throughput | Pool Size | Est. Users (500k exec/mo) |
 |----------|------|----------------|-----------|---------------------------|
-| netcup (4 dedicated) | current prod | 1450 req/s (tested) | 150 | ~900 |
+| netcup (4 dedicated) | ~€8/mo current prod | 1500 req/s (tested) | 150 | ~900 |
 | CX33 (4 shared) | ~€6/mo | 750 req/s (tested) | 80 | ~500 |
 | CPX62 (16 vCPU) | ~€30/mo | 4000 req/s (tested) | 100 | ~2000+ |
 
@@ -272,7 +305,7 @@ ssh root@159.195.53.120 'docker logs $(docker ps --filter label=service=runlater
 
 The DB layer is fully optimized — all queries are sub-millisecond. The bottleneck is CPU. To scale:
 
-1. **Now (4 dedicated cores, netcup)**: ~1450 req/s tested, production server
+1. **Now (4 dedicated cores, netcup)**: ~1500 req/s tested, production server (~375 req/s per core)
 2. **CPX62 (16 vCPU, ~€30/mo)**: 4000 req/s, p95=253ms — tested on staging
 3. **Add second app node**: Kamal multi-host, SKIP LOCKED handles coordination — doubles capacity
 4. **Separate DB server**: App gets all CPU cores, DB gets dedicated resources
