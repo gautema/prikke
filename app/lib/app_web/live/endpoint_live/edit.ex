@@ -11,11 +11,19 @@ defmodule PrikkeWeb.EndpointLive.Edit do
       endpoint = Endpoints.get_endpoint!(org, id)
       changeset = Endpoints.change_endpoint(endpoint)
 
+      forward_headers_json =
+        if endpoint.forward_headers && endpoint.forward_headers != %{} do
+          Jason.encode!(endpoint.forward_headers, pretty: true)
+        else
+          ""
+        end
+
       {:ok,
        socket
        |> assign(:organization, org)
        |> assign(:endpoint, endpoint)
        |> assign(:page_title, "Edit #{endpoint.name}")
+       |> assign(:forward_headers_json, forward_headers_json)
        |> assign_form(changeset)}
     else
       {:ok,
@@ -27,6 +35,7 @@ defmodule PrikkeWeb.EndpointLive.Edit do
 
   @impl true
   def handle_event("validate", %{"endpoint" => params}, socket) do
+    {params, forward_headers_json} = parse_forward_headers_json(params)
     params = normalize_forward_urls(params)
     params = cast_notification_overrides(params)
 
@@ -35,10 +44,14 @@ defmodule PrikkeWeb.EndpointLive.Edit do
       |> Endpoints.change_endpoint(params)
       |> Map.put(:action, :validate)
 
-    {:noreply, assign_form(socket, changeset)}
+    {:noreply,
+     socket
+     |> assign(:forward_headers_json, forward_headers_json)
+     |> assign_form(changeset)}
   end
 
   def handle_event("save", %{"endpoint" => params}, socket) do
+    {params, forward_headers_json} = parse_forward_headers_json(params)
     params = normalize_forward_urls(params)
     params = cast_notification_overrides(params)
     org = socket.assigns.organization
@@ -55,6 +68,7 @@ defmodule PrikkeWeb.EndpointLive.Edit do
         {:noreply,
          socket
          |> put_flash(:error, "Could not update endpoint")
+         |> assign(:forward_headers_json, forward_headers_json)
          |> assign_form(Map.put(changeset, :action, :validate))}
     end
   end
@@ -83,6 +97,23 @@ defmodule PrikkeWeb.EndpointLive.Edit do
       {:noreply, assign_form(socket, new_changeset)}
     else
       {:noreply, socket}
+    end
+  end
+
+  defp parse_forward_headers_json(params) do
+    json = Map.get(params, "forward_headers_json", "")
+    params = Map.delete(params, "forward_headers_json")
+
+    if json == "" or is_nil(json) do
+      {Map.put(params, "forward_headers", %{}), json}
+    else
+      case Jason.decode(json) do
+        {:ok, headers} when is_map(headers) ->
+          {Map.put(params, "forward_headers", headers), json}
+
+        _ ->
+          {params, json}
+      end
     end
   end
 
@@ -235,6 +266,75 @@ defmodule PrikkeWeb.EndpointLive.Edit do
           </p>
 
           <div class="pt-4 border-t border-slate-100 mt-4">
+            <h3 class="text-sm font-semibold text-slate-900 mb-3">Custom Forwarding</h3>
+            <p class="text-sm text-slate-500 mb-4">
+              Override method, headers, and body for all forwarded requests.
+            </p>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">
+                  Custom Method
+                </label>
+                <select
+                  name={@form[:forward_method].name}
+                  id="endpoint_forward_method"
+                  class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
+                >
+                  <option
+                    value=""
+                    selected={
+                      is_nil(@form[:forward_method].value) or @form[:forward_method].value == ""
+                    }
+                  >
+                    Use original method
+                  </option>
+                  <option value="GET" selected={@form[:forward_method].value == "GET"}>GET</option>
+                  <option value="POST" selected={@form[:forward_method].value == "POST"}>POST</option>
+                  <option value="PUT" selected={@form[:forward_method].value == "PUT"}>PUT</option>
+                  <option value="PATCH" selected={@form[:forward_method].value == "PATCH"}>
+                    PATCH
+                  </option>
+                  <option value="DELETE" selected={@form[:forward_method].value == "DELETE"}>
+                    DELETE
+                  </option>
+                </select>
+                <p class="text-xs text-slate-500 mt-1">
+                  Override the HTTP method for all forwarded requests. Leave empty to forward the original method.
+                </p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">
+                  Custom Headers (JSON)
+                </label>
+                <textarea
+                  name="endpoint[forward_headers_json]"
+                  id="endpoint_forward_headers_json"
+                  rows="3"
+                  placeholder="{\u0022Authorization\u0022: \u0022Bearer ...\u0022}"
+                  class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
+                >{if @forward_headers_json && @forward_headers_json != "", do: @forward_headers_json, else: ""}</textarea>
+                <p class="text-xs text-slate-500 mt-1">
+                  These headers are merged with the original webhook headers. Custom headers override originals.
+                </p>
+              </div>
+
+              <div>
+                <.input
+                  field={@form[:forward_body]}
+                  type="textarea"
+                  label="Custom Body"
+                  placeholder="Leave empty to forward original body"
+                />
+                <p class="text-xs text-slate-500 mt-1">
+                  When set, replaces the original webhook body for all forwarded requests.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-100 mt-4">
             <h3 class="text-sm font-semibold text-slate-900 mb-3">Notifications</h3>
             <p class="text-sm text-slate-500 mb-4">
               Override organization-level notification settings for forwarded events.
@@ -293,6 +393,30 @@ defmodule PrikkeWeb.EndpointLive.Edit do
                     Disabled
                   </option>
                 </select>
+              </div>
+
+              <div>
+                <.input
+                  field={@form[:on_failure_url]}
+                  type="url"
+                  label="On failure URL"
+                  placeholder="https://..."
+                />
+                <p class="text-xs text-slate-500 mt-1">
+                  POST to this URL when a forwarded event fails. Independent of notification settings above.
+                </p>
+              </div>
+
+              <div>
+                <.input
+                  field={@form[:on_recovery_url]}
+                  type="url"
+                  label="On recovery URL"
+                  placeholder="https://..."
+                />
+                <p class="text-xs text-slate-500 mt-1">
+                  POST to this URL when a forwarded event recovers after a failure.
+                </p>
               </div>
             </div>
           </div>

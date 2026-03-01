@@ -1,0 +1,527 @@
+<.docs_layout current_scope={@current_scope}>
+  <h1>Automated DNS Failover with Runlater</h1>
+  <p class="text-xl text-slate-600 mb-10">
+    Detect server outages in seconds and automatically update DNS records to point traffic at a
+    backup server. No manual intervention, no pager duty at 3 AM.
+  </p>
+
+  <h2>Why automate DNS failover?</h2>
+  <p>
+    When your primary server goes down, every minute of downtime costs you users and revenue. Manual
+    failover means someone has to notice the outage, log in to your DNS provider, update the A record,
+    and wait for propagation. That's 10-30 minutes on a good day.
+  </p>
+  <p>
+    With Runlater, you can detect failures within 60 seconds and trigger an automatic DNS update via
+    your provider's API. Your backup server starts receiving traffic before most users even notice
+    something went wrong.
+  </p>
+
+  <h2>Architecture</h2>
+  <p>
+    The setup uses three Runlater features working together: a cron task for health checks, an endpoint
+    for the DNS update, and the
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">on_failure_url</code>
+    hook that connects them.
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >Cron task (every 1 min)
+    |
+    |  GET https://your-server.com/health
+    |
+    +-- 200 OK? --&gt; do nothing, wait for next tick
+    |
+    +-- timeout/5xx? --&gt; task fails
+            |
+            |  on_failure_url fires automatically
+            v
+    Runlater endpoint (ep_xxx)
+            |
+            |  forwards to DNS provider API
+            v
+    Cloudflare / Route53 / your DNS
+            |
+            |  A record updated: primary IP &rarr; backup IP
+            v
+    Traffic now goes to backup server</pre>
+  </div>
+
+  <h2>Step 1: Create the health check cron task</h2>
+  <p>
+    Create a cron task that pings your primary server's health endpoint every minute. If the server is
+    down, the task will fail &mdash; which is exactly what triggers the failover.
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">Using fetch</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-purple-300">const</span> res = <span class="text-purple-300">await</span> fetch(<span class="text-green-300">"https://runlater.eu/api/v1/tasks"</span>, {
+  <span class="text-sky-300">method</span>: <span class="text-green-300">"POST"</span>,
+  <span class="text-sky-300">headers</span>: {
+    <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.RUNLATER_KEY}`</span>,
+    <span class="text-green-300">"Content-Type"</span>: <span class="text-green-300">"application/json"</span>,
+  },
+  <span class="text-sky-300">body</span>: JSON.stringify({
+    <span class="text-sky-300">name</span>: <span class="text-green-300">"Health check: primary server"</span>,
+    <span class="text-sky-300">url</span>: <span class="text-green-300">"https://your-server.com/health"</span>,
+    <span class="text-sky-300">method</span>: <span class="text-green-300">"GET"</span>,
+    <span class="text-sky-300">cron</span>: <span class="text-green-300">"* * * * *"</span>,              <span class="text-slate-500">// Every minute</span>
+    <span class="text-sky-300">timeout_ms</span>: <span class="text-orange-300">10000</span>,             <span class="text-slate-500">// 10s timeout — fail fast</span>
+    <span class="text-sky-300">expected_status_codes</span>: [<span class="text-orange-300">200</span>],  <span class="text-slate-500">// Anything else = failure</span>
+  }),
+})
+
+<span class="text-purple-300">const</span> { data } = <span class="text-purple-300">await</span> res.json()
+console.log(<span class="text-green-300">"Task ID:"</span>, data.id)
+<span class="text-slate-500">// Save this — you'll need it in Step 3</span></pre>
+  </div>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">Using curl</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X POST https://runlater.eu/api/v1/tasks \
+  -H "Authorization: Bearer pk_xxx.sk_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Health check: primary server",
+    "url": "https://your-server.com/health",
+    "method": "GET",
+    "cron": "* * * * *",
+    "timeout_ms": 10000,
+    "expected_status_codes": [200]
+  }'</pre>
+  </div>
+
+  <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg my-6">
+    <strong class="text-amber-800">Pro tier required.</strong>
+    <span class="text-amber-700">
+      Minute-interval cron tasks (<code class="bg-amber-100 px-1 rounded text-sm">* * * * *</code>)
+      require the Pro plan. Free tier tasks can run at most once per hour.
+    </span>
+  </div>
+
+  <h2>Step 2: Create the DNS failover endpoint</h2>
+  <p>
+    Create an inbound endpoint that, when triggered, calls your DNS provider's API to update the
+    A record. The endpoint stores the API credentials and request body so the failover happens
+    without any application code running.
+  </p>
+
+  <h3>Cloudflare example</h3>
+  <p>
+    Cloudflare's DNS API lets you update a record with a
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">PUT</code>
+    request. You'll need your
+    Zone ID, the DNS Record ID, and an API token with DNS edit permissions.
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">Using fetch</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-purple-300">const</span> ZONE_ID = <span class="text-green-300">"your-cloudflare-zone-id"</span>
+<span class="text-purple-300">const</span> RECORD_ID = <span class="text-green-300">"your-dns-record-id"</span>
+<span class="text-purple-300">const</span> BACKUP_IP = <span class="text-green-300">"203.0.113.50"</span>
+
+<span class="text-purple-300">const</span> res = <span class="text-purple-300">await</span> fetch(<span class="text-green-300">"https://runlater.eu/api/v1/endpoints"</span>, {
+  <span class="text-sky-300">method</span>: <span class="text-green-300">"POST"</span>,
+  <span class="text-sky-300">headers</span>: {
+    <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.RUNLATER_KEY}`</span>,
+    <span class="text-green-300">"Content-Type"</span>: <span class="text-green-300">"application/json"</span>,
+  },
+  <span class="text-sky-300">body</span>: JSON.stringify({
+    <span class="text-sky-300">name</span>: <span class="text-green-300">"DNS failover: switch to backup"</span>,
+    <span class="text-sky-300">forward_urls</span>: [
+      <span class="text-green-300">`https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records/${RECORD_ID}`</span>
+    ],
+    <span class="text-sky-300">forward_headers</span>: {
+      <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.CLOUDFLARE_API_TOKEN}`</span>,
+      <span class="text-green-300">"Content-Type"</span>: <span class="text-green-300">"application/json"</span>,
+    },
+    <span class="text-sky-300">forward_body</span>: JSON.stringify({
+      <span class="text-sky-300">type</span>: <span class="text-green-300">"A"</span>,
+      <span class="text-sky-300">name</span>: <span class="text-green-300">"your-domain.com"</span>,
+      <span class="text-sky-300">content</span>: BACKUP_IP,
+      <span class="text-sky-300">ttl</span>: <span class="text-orange-300">60</span>,
+      <span class="text-sky-300">proxied</span>: <span class="text-orange-300">true</span>,
+    }),
+    <span class="text-sky-300">retry_attempts</span>: <span class="text-orange-300">3</span>,
+  }),
+})
+
+<span class="text-purple-300">const</span> { data } = <span class="text-purple-300">await</span> res.json()
+console.log(<span class="text-green-300">"Inbound URL:"</span>, data.inbound_url)
+<span class="text-slate-500">// https://runlater.eu/in/ep_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span></pre>
+  </div>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">Using curl</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X POST https://runlater.eu/api/v1/endpoints \
+  -H "Authorization: Bearer pk_xxx.sk_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "DNS failover: switch to backup",
+    "forward_urls": [
+      "https://api.cloudflare.com/client/v4/zones/ZONE_ID/dns_records/RECORD_ID"
+    ],
+    "forward_headers": {
+      "Authorization": "Bearer cf-api-token-here",
+      "Content-Type": "application/json"
+    },
+    "forward_body": "{\"type\":\"A\",\"name\":\"your-domain.com\",\"content\":\"203.0.113.50\",\"ttl\":60,\"proxied\":true}",
+    "retry_attempts": 3
+  }'</pre>
+  </div>
+
+  <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded-r-lg my-6">
+    <strong class="text-emerald-800">Credentials stay safe.</strong>
+    <span class="text-emerald-700">
+      Your DNS provider API token is stored in the endpoint's
+      <code class="bg-emerald-100 px-1 rounded text-sm">forward_headers</code>
+      on Runlater's servers.
+      It's never exposed in logs or webhook payloads.
+    </span>
+  </div>
+
+  <h2>Step 3: Connect them with on_failure_url</h2>
+  <p>
+    Now update the health check task so that when it fails, it automatically triggers the failover
+    endpoint. Set <code class="bg-slate-100 px-2 py-1 rounded text-sm">on_failure_url</code> to
+    the endpoint's inbound URL.
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">Using fetch</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500">// Update the health check task with the failover URL</span>
+<span class="text-purple-300">const</span> TASK_ID = <span class="text-green-300">"task-id-from-step-1"</span>
+<span class="text-purple-300">const</span> FAILOVER_URL = <span class="text-green-300">"https://runlater.eu/in/ep_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"</span>
+
+<span class="text-purple-300">await</span> fetch(<span class="text-green-300">`https://runlater.eu/api/v1/tasks/${TASK_ID}`</span>, {
+  <span class="text-sky-300">method</span>: <span class="text-green-300">"PUT"</span>,
+  <span class="text-sky-300">headers</span>: {
+    <span class="text-green-300">"Authorization"</span>: <span class="text-green-300">`Bearer ${process.env.RUNLATER_KEY}`</span>,
+    <span class="text-green-300">"Content-Type"</span>: <span class="text-green-300">"application/json"</span>,
+  },
+  <span class="text-sky-300">body</span>: JSON.stringify({
+    <span class="text-sky-300">on_failure_url</span>: FAILOVER_URL,
+  }),
+})</pre>
+  </div>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">Using curl</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl -X PUT https://runlater.eu/api/v1/tasks/TASK_ID \
+  -H "Authorization: Bearer pk_xxx.sk_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "on_failure_url": "https://runlater.eu/in/ep_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  }'</pre>
+  </div>
+
+  <p>
+    You can also set <code class="bg-slate-100 px-2 py-1 rounded text-sm">on_failure_url</code>
+    when
+    creating the task in Step 1 &mdash; just add it to the request body. We separated the steps here
+    for clarity, since you need the endpoint's inbound URL first.
+  </p>
+
+  <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded-r-lg my-6">
+    <strong class="text-emerald-800">All in one request.</strong>
+    <span class="text-emerald-700">
+      If you create the endpoint first, you can include
+      <code class="bg-emerald-100 px-1 rounded text-sm">on_failure_url</code>
+      directly in the
+      task creation call in Step 1.
+    </span>
+  </div>
+
+  <h2>Step 4: (Optional) Automatic recovery</h2>
+  <p>
+    When your primary server comes back up, you probably want DNS to switch back automatically. Create
+    a second endpoint that points the A record back to your primary IP, and set it as the task's <code class="bg-slate-100 px-2 py-1 rounded text-sm">on_recovery_url</code>.
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">Using curl</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500"># 1. Create the recovery endpoint (same DNS API, but with PRIMARY_IP)</span>
+curl -X POST https://runlater.eu/api/v1/endpoints \
+  -H "Authorization: Bearer pk_xxx.sk_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "DNS recovery: switch to primary",
+    "forward_urls": [
+      "https://api.cloudflare.com/client/v4/zones/ZONE_ID/dns_records/RECORD_ID"
+    ],
+    "forward_headers": {
+      "Authorization": "Bearer cf-api-token-here",
+      "Content-Type": "application/json"
+    },
+    "forward_body": "{\"type\":\"A\",\"name\":\"your-domain.com\",\"content\":\"198.51.100.10\",\"ttl\":60,\"proxied\":true}",
+    "retry_attempts": 3
+  }'
+
+<span class="text-slate-500"># 2. Update the health check task with both URLs</span>
+curl -X PUT https://runlater.eu/api/v1/tasks/TASK_ID \
+  -H "Authorization: Bearer pk_xxx.sk_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "on_failure_url": "https://runlater.eu/in/ep_failover_slug_here",
+    "on_recovery_url": "https://runlater.eu/in/ep_recovery_slug_here"
+  }'</pre>
+  </div>
+
+  <p>
+    Now you have a fully automated loop:
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >Primary goes down
+    &rarr; health check fails
+    &rarr; on_failure_url fires
+    &rarr; DNS updated to backup IP
+
+Primary comes back up
+    &rarr; health check succeeds (after previous failure)
+    &rarr; on_recovery_url fires
+    &rarr; DNS updated back to primary IP</pre>
+  </div>
+
+  <h2>DNS provider examples</h2>
+
+  <h3>Cloudflare</h3>
+  <p>
+    Cloudflare is the most common choice. You need three values from your Cloudflare dashboard:
+  </p>
+  <ul>
+    <li>
+      <strong>Zone ID</strong> &mdash; found on the Overview page of your domain
+    </li>
+    <li>
+      <strong>DNS Record ID</strong>
+      &mdash; get it via the
+      <code class="bg-slate-100 px-2 py-1 rounded text-sm">GET /zones/:zone_id/dns_records</code>
+      API
+    </li>
+    <li>
+      <strong>API Token</strong>
+      &mdash; create one with <em>Zone &gt; DNS &gt; Edit</em>
+      permissions
+    </li>
+  </ul>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+      <span class="text-xs text-slate-400 font-mono">Find your DNS Record ID</span>
+    </div>
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    >curl https://api.cloudflare.com/client/v4/zones/ZONE_ID/dns_records \
+  -H "Authorization: Bearer cf-api-token" \
+  | jq '.result[] | select(.name == "your-domain.com") | .id'</pre>
+  </div>
+
+  <h3>Generic REST API</h3>
+  <p>
+    Any DNS provider with a REST API works. The pattern is the same:
+  </p>
+  <ol>
+    <li>Find the API endpoint that updates a DNS record</li>
+    <li>
+      Put the URL in <code class="bg-slate-100 px-2 py-1 rounded text-sm">forward_urls</code>
+    </li>
+    <li>
+      Put auth headers in
+      <code class="bg-slate-100 px-2 py-1 rounded text-sm">forward_headers</code>
+    </li>
+    <li>
+      Put the update payload in
+      <code class="bg-slate-100 px-2 py-1 rounded text-sm">forward_body</code>
+    </li>
+  </ol>
+
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm border border-slate-200 rounded-lg">
+      <thead class="bg-slate-50">
+        <tr>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Provider</th>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">API endpoint</th>
+          <th class="text-left p-3 border-b border-slate-200 font-semibold">Auth</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-semibold">Cloudflare</td>
+          <td class="p-3 border-b border-slate-100 font-mono text-sm">
+            PUT /client/v4/zones/:zone/dns_records/:id
+          </td>
+          <td class="p-3 border-b border-slate-100">Bearer token</td>
+        </tr>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-semibold">DigitalOcean</td>
+          <td class="p-3 border-b border-slate-100 font-mono text-sm">
+            PUT /v2/domains/:domain/records/:id
+          </td>
+          <td class="p-3 border-b border-slate-100">Bearer token</td>
+        </tr>
+        <tr>
+          <td class="p-3 border-b border-slate-100 font-semibold">Hetzner</td>
+          <td class="p-3 border-b border-slate-100 font-mono text-sm">
+            PUT /api/v1/records/:id
+          </td>
+          <td class="p-3 border-b border-slate-100">Auth-API-Token header</td>
+        </tr>
+        <tr>
+          <td class="p-3 font-semibold">Porkbun</td>
+          <td class="p-3 font-mono text-sm">
+            POST /api/json/v3/dns/editByNameType/:domain/A
+          </td>
+          <td class="p-3">API key + secret in body</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Testing the failover</h2>
+  <p>
+    Before relying on this in production, test the full flow:
+  </p>
+
+  <h3>1. Test the endpoint directly</h3>
+  <p>
+    Send a request to the endpoint's inbound URL to verify the DNS update works:
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500"># Trigger the failover endpoint manually</span>
+curl -X POST https://runlater.eu/in/ep_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+<span class="text-slate-500"># Check that DNS was updated</span>
+dig your-domain.com A +short
+<span class="text-slate-500"># Should show: 203.0.113.50 (backup IP)</span></pre>
+  </div>
+
+  <h3>2. Test the full chain</h3>
+  <p>
+    Temporarily change the health check URL to something that will fail &mdash; for example, a
+    non-existent path on your server:
+  </p>
+
+  <div class="glass-card rounded-2xl overflow-hidden mb-6">
+    <pre
+      phx-no-curly-interpolation
+      class="m-0 bg-slate-900 text-slate-100 p-3 sm:p-5 text-sm font-mono leading-relaxed overflow-x-auto"
+    ><span class="text-slate-500"># Point health check at a URL that returns 404</span>
+curl -X PUT https://runlater.eu/api/v1/tasks/TASK_ID \
+  -H "Authorization: Bearer pk_xxx.sk_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{ "url": "https://your-server.com/this-will-404" }'
+
+<span class="text-slate-500"># Wait 1-2 minutes, then check DNS</span>
+dig your-domain.com A +short
+
+<span class="text-slate-500"># Switch back to the real health check URL when done</span>
+curl -X PUT https://runlater.eu/api/v1/tasks/TASK_ID \
+  -H "Authorization: Bearer pk_xxx.sk_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{ "url": "https://your-server.com/health" }'</pre>
+  </div>
+
+  <h3>3. Verify recovery</h3>
+  <p>
+    If you set up the optional recovery endpoint from Step 4, the DNS should switch back to
+    the primary IP after the health check succeeds again. Check with
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">dig</code>
+    after a couple of minutes.
+  </p>
+
+  <h2>Tips</h2>
+  <ul>
+    <li>
+      <strong>Use a low TTL.</strong>
+      Set your DNS record's TTL to 60 seconds so the failover takes effect quickly. High TTLs
+      (3600+) mean clients will keep connecting to the dead server for up to an hour after the
+      DNS change.
+    </li>
+    <li>
+      <strong>Use expected_status_codes.</strong>
+      Set <code class="bg-slate-100 px-2 py-1 rounded text-sm">expected_status_codes</code>
+      to <code class="bg-slate-100 px-2 py-1 rounded text-sm">[200]</code>
+      on your health check task.
+      This way a 500 or 503 response is treated as a failure, not just timeouts.
+    </li>
+    <li>
+      <strong>Keep the timeout short.</strong>
+      A 10-second timeout on the health check means failure detection within ~70 seconds (60s cron
+      interval + 10s timeout). Don't set it to 30s or higher.
+    </li>
+    <li>
+      <strong>Set up org-level notifications too.</strong>
+      Configure email or Slack notifications in your
+      <a href="/organizations/notifications">organization settings</a>
+      so you know when a failover happens, even if the recovery is automatic.
+    </li>
+    <li>
+      <strong>Health endpoint should check dependencies.</strong>
+      Your <code class="bg-slate-100 px-2 py-1 rounded text-sm">/health</code>
+      endpoint should
+      verify database connectivity, not just return 200. A server that can't reach its database
+      is effectively down.
+    </li>
+  </ul>
+
+  <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded-r-lg my-8">
+    <strong class="text-emerald-800">Ready to set up failover?</strong>
+    <span class="text-emerald-700">
+      <a href="/users/register" class="text-emerald-700 underline">Create a free account</a>
+      and set up automated DNS failover in under 5 minutes. Upgrade to Pro for minute-level health
+      checks. See the <a href="/api/v1/docs" class="text-emerald-700 underline">API docs</a>
+      for the full task and endpoint reference.
+    </span>
+  </div>
+
+  <p class="text-sm text-slate-500">
+    <a href="/guides">Back to all guides</a>
+  </p>
+</.docs_layout>

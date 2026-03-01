@@ -225,6 +225,80 @@ defmodule PrikkeWeb.Api.EndpointControllerTest do
     end
   end
 
+  describe "POST /api/v1/endpoints (custom forwarding)" do
+    test "creates endpoint with forward_headers and forward_body", %{conn: conn} do
+      conn =
+        post(conn, ~p"/api/v1/endpoints", %{
+          name: "Custom Forward",
+          forward_urls: ["https://api.cloudflare.com/dns"],
+          forward_headers: %{"Authorization" => "Bearer cf-token"},
+          forward_body: ~s({"type":"A","content":"1.2.3.4"}),
+          forward_method: "PUT"
+        })
+
+      response = json_response(conn, 201)
+      assert response["data"]["forward_headers"] == %{"Authorization" => "Bearer cf-token"}
+      assert response["data"]["forward_body"] == ~s({"type":"A","content":"1.2.3.4"})
+      assert response["data"]["forward_method"] == "PUT"
+    end
+
+    test "creates endpoint with on_failure_url and on_recovery_url", %{conn: conn} do
+      conn =
+        post(conn, ~p"/api/v1/endpoints", %{
+          name: "With Webhooks",
+          forward_urls: ["https://example.com/hook"],
+          on_failure_url: "https://hooks.example.com/fail",
+          on_recovery_url: "https://hooks.example.com/recover"
+        })
+
+      response = json_response(conn, 201)
+      assert response["data"]["on_failure_url"] == "https://hooks.example.com/fail"
+      assert response["data"]["on_recovery_url"] == "https://hooks.example.com/recover"
+    end
+  end
+
+  describe "PUT /api/v1/endpoints/:id (custom forwarding)" do
+    test "updates endpoint with custom forwarding fields", %{conn: conn, org: org} do
+      endpoint = endpoint_fixture(org)
+
+      conn =
+        put(conn, ~p"/api/v1/endpoints/#{endpoint.id}", %{
+          forward_headers: %{"X-Custom" => "value"},
+          forward_body: "custom body",
+          forward_method: "PATCH",
+          on_failure_url: "https://hooks.example.com/fail"
+        })
+
+      response = json_response(conn, 200)
+      assert response["data"]["forward_headers"] == %{"X-Custom" => "value"}
+      assert response["data"]["forward_body"] == "custom body"
+      assert response["data"]["forward_method"] == "PATCH"
+      assert response["data"]["on_failure_url"] == "https://hooks.example.com/fail"
+    end
+  end
+
+  describe "GET /api/v1/endpoints/:id (includes new fields)" do
+    test "returns endpoint with all new fields", %{conn: conn, org: org} do
+      endpoint =
+        endpoint_fixture(org, %{
+          forward_headers: %{"Auth" => "Bearer tok"},
+          forward_body: "body",
+          forward_method: "POST",
+          on_failure_url: "https://fail.example.com",
+          on_recovery_url: "https://recover.example.com"
+        })
+
+      conn = get(conn, ~p"/api/v1/endpoints/#{endpoint.id}")
+      response = json_response(conn, 200)
+
+      assert response["data"]["forward_headers"] == %{"Auth" => "Bearer tok"}
+      assert response["data"]["forward_body"] == "body"
+      assert response["data"]["forward_method"] == "POST"
+      assert response["data"]["on_failure_url"] == "https://fail.example.com"
+      assert response["data"]["on_recovery_url"] == "https://recover.example.com"
+    end
+  end
+
   describe "POST /api/v1/endpoints/:endpoint_id/events/:event_id/replay" do
     test "replays an event and returns executions array", %{conn: conn, org: org} do
       endpoint = endpoint_fixture(org)

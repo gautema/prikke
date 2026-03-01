@@ -26,6 +26,8 @@ defmodule Prikke.Tasks.Task do
     field :last_execution_status, :string
     field :notify_on_failure, :boolean
     field :notify_on_recovery, :boolean
+    field :on_failure_url, :string
+    field :on_recovery_url, :string
     field :deleted_at, :utc_datetime
 
     # Virtual field for form editing
@@ -65,7 +67,9 @@ defmodule Prikke.Tasks.Task do
         :expected_body_pattern,
         :queue,
         :notify_on_failure,
-        :notify_on_recovery
+        :notify_on_recovery,
+        :on_failure_url,
+        :on_recovery_url
       ])
       |> trim_url()
       |> maybe_generate_name()
@@ -74,6 +78,8 @@ defmodule Prikke.Tasks.Task do
       |> validate_inclusion(:schedule_type, @schedule_types)
       |> validate_url(:url)
       |> validate_callback_url()
+      |> validate_optional_url(:on_failure_url)
+      |> validate_optional_url(:on_recovery_url)
 
     cs = if skip_ssrf, do: cs, else: Prikke.UrlValidator.validate_webhook_url_safe(cs, :url)
 
@@ -139,6 +145,23 @@ defmodule Prikke.Tasks.Task do
 
         _ ->
           [{:callback_url, "must be a valid HTTP or HTTPS URL"}]
+      end
+    end)
+  end
+
+  defp validate_optional_url(changeset, field) do
+    validate_change(changeset, field, fn _, url ->
+      if url == "" or is_nil(url) do
+        []
+      else
+        case URI.parse(url) do
+          %URI{scheme: scheme, host: host}
+          when scheme in ["http", "https"] and not is_nil(host) ->
+            []
+
+          _ ->
+            [{field, "must be a valid HTTP or HTTPS URL"}]
+        end
       end
     end)
   end

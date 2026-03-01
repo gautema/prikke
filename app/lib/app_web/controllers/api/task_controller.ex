@@ -338,7 +338,9 @@ defmodule PrikkeWeb.Api.TaskController do
       "expected_body_pattern" => params["expected_body_pattern"],
       "queue" => params["queue"],
       "notify_on_failure" => params["notify_on_failure"],
-      "notify_on_recovery" => params["notify_on_recovery"]
+      "notify_on_recovery" => params["notify_on_recovery"],
+      "on_failure_url" => params["on_failure_url"],
+      "on_recovery_url" => params["on_recovery_url"]
     }
 
     case Tasks.create_task(org, task_params, api_key_name: api_key_name) do
@@ -415,7 +417,9 @@ defmodule PrikkeWeb.Api.TaskController do
       "expected_body_pattern" => params["expected_body_pattern"],
       "queue" => params["queue"],
       "notify_on_failure" => params["notify_on_failure"],
-      "notify_on_recovery" => params["notify_on_recovery"]
+      "notify_on_recovery" => params["notify_on_recovery"],
+      "on_failure_url" => params["on_failure_url"],
+      "on_recovery_url" => params["on_recovery_url"]
     }
 
     execution_opts =
@@ -485,6 +489,8 @@ defmodule PrikkeWeb.Api.TaskController do
       queue: task.queue,
       notify_on_failure: task.notify_on_failure,
       notify_on_recovery: task.notify_on_recovery,
+      on_failure_url: task.on_failure_url,
+      on_recovery_url: task.on_recovery_url,
       next_run_at: task.next_run_at,
       inserted_at: task.inserted_at,
       updated_at: task.updated_at

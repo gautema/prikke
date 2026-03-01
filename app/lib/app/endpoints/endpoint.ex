@@ -13,6 +13,11 @@ defmodule Prikke.Endpoints.Endpoint do
     field :use_queue, :boolean, default: true
     field :notify_on_failure, :boolean
     field :notify_on_recovery, :boolean
+    field :on_failure_url, :string
+    field :on_recovery_url, :string
+    field :forward_headers, :map, default: %{}
+    field :forward_body, :string
+    field :forward_method, :string
 
     belongs_to :organization, Prikke.Accounts.Organization
     has_many :inbound_events, Prikke.Endpoints.InboundEvent
@@ -29,12 +34,22 @@ defmodule Prikke.Endpoints.Endpoint do
       :retry_attempts,
       :use_queue,
       :notify_on_failure,
-      :notify_on_recovery
+      :notify_on_recovery,
+      :on_failure_url,
+      :on_recovery_url,
+      :forward_headers,
+      :forward_body,
+      :forward_method
     ])
     |> validate_required([:name])
     |> validate_number(:retry_attempts, greater_than_or_equal_to: 0, less_than_or_equal_to: 10)
     |> validate_forward_urls_required()
     |> validate_forward_urls()
+    |> validate_optional_url(:on_failure_url)
+    |> validate_optional_url(:on_recovery_url)
+    |> validate_inclusion(:forward_method, ~w(GET POST PUT PATCH DELETE HEAD OPTIONS),
+      message: "must be a valid HTTP method"
+    )
   end
 
   def create_changeset(endpoint, attrs, organization_id) do
@@ -75,6 +90,23 @@ defmodule Prikke.Endpoints.Endpoint do
             [{:forward_urls, "contains an invalid URL: #{url}"}]
         end
       end)
+    end)
+  end
+
+  defp validate_optional_url(changeset, field) do
+    validate_change(changeset, field, fn _, url ->
+      if url == "" or is_nil(url) do
+        []
+      else
+        case URI.parse(url) do
+          %URI{scheme: scheme, host: host}
+          when scheme in ["http", "https"] and not is_nil(host) ->
+            []
+
+          _ ->
+            [{field, "must be a valid HTTP or HTTPS URL"}]
+        end
+      end
     end)
   end
 

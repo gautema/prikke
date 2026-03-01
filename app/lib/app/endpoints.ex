@@ -106,7 +106,12 @@ defmodule Prikke.Endpoints do
             :forward_urls,
             :enabled,
             :retry_attempts,
-            :use_queue
+            :use_queue,
+            :forward_headers,
+            :forward_body,
+            :forward_method,
+            :on_failure_url,
+            :on_recovery_url
           ])
 
         audit_log(opts, :updated, :endpoint, updated.id, org.id,
@@ -269,7 +274,26 @@ defmodule Prikke.Endpoints do
     org = endpoint.organization
 
     # Build forwarding headers: pass through original headers but drop hop-by-hop headers
-    forward_headers = filter_forward_headers(attrs.headers || %{})
+    # Then merge endpoint's custom forward_headers (custom headers override originals)
+    forward_headers =
+      filter_forward_headers(attrs.headers || %{})
+      |> Map.merge(endpoint.forward_headers || %{})
+
+    # Use endpoint's custom body if set, otherwise forward original body
+    forward_body =
+      if endpoint.forward_body && endpoint.forward_body != "" do
+        endpoint.forward_body
+      else
+        attrs.body || ""
+      end
+
+    # Use endpoint's custom method if set, otherwise forward original method
+    forward_method =
+      if endpoint.forward_method && endpoint.forward_method != "" do
+        endpoint.forward_method
+      else
+        to_string(attrs.method)
+      end
 
     result =
       Repo.transaction(fn ->
@@ -304,9 +328,9 @@ defmodule Prikke.Endpoints do
             task_attrs = %{
               "name" => task_name,
               "url" => url,
-              "method" => to_string(attrs.method),
+              "method" => forward_method,
               "headers" => forward_headers,
-              "body" => attrs.body || "",
+              "body" => forward_body,
               "schedule_type" => "once",
               "scheduled_at" => now,
               "enabled" => true,
@@ -314,7 +338,9 @@ defmodule Prikke.Endpoints do
               "retry_attempts" => endpoint.retry_attempts,
               "queue" => if(endpoint.use_queue, do: slugify_name(endpoint.name), else: nil),
               "notify_on_failure" => endpoint.notify_on_failure,
-              "notify_on_recovery" => endpoint.notify_on_recovery
+              "notify_on_recovery" => endpoint.notify_on_recovery,
+              "on_failure_url" => endpoint.on_failure_url,
+              "on_recovery_url" => endpoint.on_recovery_url
             }
 
             # skip_next_run: task is created with next_run_at=nil, no UPDATE needed

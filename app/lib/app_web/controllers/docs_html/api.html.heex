@@ -253,11 +253,25 @@
             Comma-separated status codes that count as success, e.g. "200,201". Empty means any 2xx. (optional)
           </td>
         </tr>
-        <tr>
+        <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">expected_body_pattern</code></td>
           <td class="py-2 pr-4 text-slate-500">string</td>
           <td class="py-2 text-slate-600">
             Response body must contain this text to count as success. Empty means any body. (optional)
+          </td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">on_failure_url</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            URL to POST to when the task fails. Receives a JSON payload with task and execution details. (optional)
+          </td>
+        </tr>
+        <tr>
+          <td class="py-2 pr-4"><code class="text-sky-600">on_recovery_url</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            URL to POST to when the task recovers after a failure. Receives a JSON payload with task and execution details. (optional)
           </td>
         </tr>
       </table>
@@ -1006,12 +1020,26 @@
             = use org default. (optional)
           </td>
         </tr>
-        <tr>
+        <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">notify_on_recovery</code></td>
           <td class="py-2 pr-4 text-slate-500">boolean | null</td>
           <td class="py-2 text-slate-600">
             Override org-level recovery notification setting. <code>null</code>
             = use org default. (optional)
+          </td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">on_failure_url</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            URL to POST to when the monitor goes down. Receives a JSON payload with monitor details. (optional)
+          </td>
+        </tr>
+        <tr>
+          <td class="py-2 pr-4"><code class="text-sky-600">on_recovery_url</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            URL to POST to when the monitor recovers after downtime. Receives a JSON payload with monitor details. (optional)
           </td>
         </tr>
       </table>
@@ -1386,10 +1414,45 @@
             Serialized delivery (one at a time). false for parallel. (default: true)
           </td>
         </tr>
-        <tr>
+        <tr class="border-b border-slate-50">
           <td class="py-2 pr-4"><code class="text-sky-600">enabled</code></td>
           <td class="py-2 pr-4 text-slate-500">boolean</td>
           <td class="py-2 text-slate-600">Whether the endpoint accepts events (default: true)</td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">forward_headers</code></td>
+          <td class="py-2 pr-4 text-slate-500">object</td>
+          <td class="py-2 text-slate-600">
+            Custom headers merged with the original inbound headers when forwarding. (optional)
+          </td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">forward_body</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            Custom body replacing the original inbound body when forwarding. (optional)
+          </td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">forward_method</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            Custom HTTP method replacing the original inbound method when forwarding: GET, POST, PUT, PATCH, DELETE. (optional)
+          </td>
+        </tr>
+        <tr class="border-b border-slate-50">
+          <td class="py-2 pr-4"><code class="text-sky-600">on_failure_url</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            URL to POST to when forwarding fails. Receives a JSON payload with endpoint and execution details. (optional)
+          </td>
+        </tr>
+        <tr>
+          <td class="py-2 pr-4"><code class="text-sky-600">on_recovery_url</code></td>
+          <td class="py-2 pr-4 text-slate-500">string</td>
+          <td class="py-2 text-slate-600">
+            URL to POST to when forwarding recovers after a failure. Receives a JSON payload with endpoint and execution details. (optional)
+          </td>
         </tr>
       </table>
     </div>

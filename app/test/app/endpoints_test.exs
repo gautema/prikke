@@ -636,4 +636,210 @@ defmodule Prikke.EndpointsTest do
       assert urls == ["https://a.com/hook", "https://b.com/hook"]
     end
   end
+
+  describe "custom forwarding" do
+    test "create_endpoint/2 accepts forward_headers and forward_body" do
+      org = organization_fixture()
+
+      {:ok, endpoint} =
+        Endpoints.create_endpoint(org, %{
+          name: "Custom Forward",
+          forward_urls: ["https://example.com/hook"],
+          forward_headers: %{"Authorization" => "Bearer test123"},
+          forward_body: ~s({"action": "deploy"})
+        })
+
+      assert endpoint.forward_headers == %{"Authorization" => "Bearer test123"}
+      assert endpoint.forward_body == ~s({"action": "deploy"})
+    end
+
+    test "create_endpoint/2 accepts forward_method" do
+      org = organization_fixture()
+
+      {:ok, endpoint} =
+        Endpoints.create_endpoint(org, %{
+          name: "Custom Method",
+          forward_urls: ["https://example.com/hook"],
+          forward_method: "PUT"
+        })
+
+      assert endpoint.forward_method == "PUT"
+    end
+
+    test "create_endpoint/2 defaults forward_headers to empty map" do
+      org = organization_fixture()
+
+      {:ok, endpoint} =
+        Endpoints.create_endpoint(org, %{
+          name: "No Headers",
+          forward_urls: ["https://example.com/hook"]
+        })
+
+      assert endpoint.forward_headers == %{}
+      assert endpoint.forward_body == nil
+      assert endpoint.forward_method == nil
+    end
+
+    test "receive_event/2 merges custom headers with original" do
+      org = organization_fixture()
+
+      endpoint =
+        endpoint_fixture(org, %{
+          forward_headers: %{"Authorization" => "Bearer secret", "X-Custom" => "yes"}
+        })
+
+      {:ok, event} =
+        Endpoints.receive_event(endpoint, %{
+          method: "POST",
+          headers: %{"content-type" => "application/json", "x-original" => "keep"},
+          body: "test",
+          source_ip: "1.2.3.4"
+        })
+
+      task = Prikke.Repo.get!(Prikke.Tasks.Task, hd(event.task_ids))
+      # Custom headers should be merged (custom wins)
+      assert task.headers["Authorization"] == "Bearer secret"
+      assert task.headers["X-Custom"] == "yes"
+      assert task.headers["x-original"] == "keep"
+      assert task.headers["content-type"] == "application/json"
+    end
+
+    test "receive_event/2 uses custom body when set" do
+      org = organization_fixture()
+
+      endpoint =
+        endpoint_fixture(org, %{
+          forward_body: ~s({"override": true})
+        })
+
+      {:ok, event} =
+        Endpoints.receive_event(endpoint, %{
+          method: "POST",
+          headers: %{},
+          body: "original body",
+          source_ip: "1.2.3.4"
+        })
+
+      task = Prikke.Repo.get!(Prikke.Tasks.Task, hd(event.task_ids))
+      assert task.body == ~s({"override": true})
+    end
+
+    test "receive_event/2 uses original body when forward_body is nil" do
+      org = organization_fixture()
+      endpoint = endpoint_fixture(org)
+
+      {:ok, event} =
+        Endpoints.receive_event(endpoint, %{
+          method: "POST",
+          headers: %{},
+          body: "original body",
+          source_ip: "1.2.3.4"
+        })
+
+      task = Prikke.Repo.get!(Prikke.Tasks.Task, hd(event.task_ids))
+      assert task.body == "original body"
+    end
+
+    test "receive_event/2 uses custom method when set" do
+      org = organization_fixture()
+
+      endpoint =
+        endpoint_fixture(org, %{
+          forward_method: "PUT"
+        })
+
+      {:ok, event} =
+        Endpoints.receive_event(endpoint, %{
+          method: "POST",
+          headers: %{},
+          body: "test",
+          source_ip: "1.2.3.4"
+        })
+
+      task = Prikke.Repo.get!(Prikke.Tasks.Task, hd(event.task_ids))
+      assert task.method == "PUT"
+    end
+
+    test "receive_event/2 uses original method when forward_method is nil" do
+      org = organization_fixture()
+      endpoint = endpoint_fixture(org)
+
+      {:ok, event} =
+        Endpoints.receive_event(endpoint, %{
+          method: "PUT",
+          headers: %{},
+          body: "test",
+          source_ip: "1.2.3.4"
+        })
+
+      task = Prikke.Repo.get!(Prikke.Tasks.Task, hd(event.task_ids))
+      assert task.method == "PUT"
+    end
+  end
+
+  describe "webhook action URLs" do
+    test "create_endpoint/2 accepts on_failure_url and on_recovery_url" do
+      org = organization_fixture()
+
+      {:ok, endpoint} =
+        Endpoints.create_endpoint(org, %{
+          name: "With Webhooks",
+          forward_urls: ["https://example.com/hook"],
+          on_failure_url: "https://hooks.example.com/fail",
+          on_recovery_url: "https://hooks.example.com/recover"
+        })
+
+      assert endpoint.on_failure_url == "https://hooks.example.com/fail"
+      assert endpoint.on_recovery_url == "https://hooks.example.com/recover"
+    end
+
+    test "create_endpoint/2 validates URL format for on_failure_url" do
+      org = organization_fixture()
+
+      assert {:error, changeset} =
+               Endpoints.create_endpoint(org, %{
+                 name: "Bad URL",
+                 forward_urls: ["https://example.com/hook"],
+                 on_failure_url: "not-a-url"
+               })
+
+      assert errors_on(changeset).on_failure_url != []
+    end
+
+    test "receive_event/2 passes webhook URLs to created tasks" do
+      org = organization_fixture()
+
+      endpoint =
+        endpoint_fixture(org, %{
+          on_failure_url: "https://hooks.example.com/fail",
+          on_recovery_url: "https://hooks.example.com/recover"
+        })
+
+      {:ok, event} =
+        Endpoints.receive_event(endpoint, %{
+          method: "POST",
+          headers: %{},
+          body: "test",
+          source_ip: "1.2.3.4"
+        })
+
+      task = Prikke.Repo.get!(Prikke.Tasks.Task, hd(event.task_ids))
+      assert task.on_failure_url == "https://hooks.example.com/fail"
+      assert task.on_recovery_url == "https://hooks.example.com/recover"
+    end
+
+    test "update_endpoint/4 updates webhook URLs" do
+      org = organization_fixture()
+      endpoint = endpoint_fixture(org)
+
+      {:ok, updated} =
+        Endpoints.update_endpoint(org, endpoint, %{
+          on_failure_url: "https://new.example.com/fail",
+          on_recovery_url: "https://new.example.com/recover"
+        })
+
+      assert updated.on_failure_url == "https://new.example.com/fail"
+      assert updated.on_recovery_url == "https://new.example.com/recover"
+    end
+  end
 end

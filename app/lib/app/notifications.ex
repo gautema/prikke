@@ -54,9 +54,9 @@ defmodule Prikke.Notifications do
     task = execution.task
     org = task.organization
 
-    if should_notify_on_recovery?(task, org) do
-      previous = Prikke.Executions.get_previous_execution_info(task, execution.id)
+    previous = Prikke.Executions.get_previous_execution_info(task, execution.id)
 
+    if should_notify_on_recovery?(task, org) do
       if should_notify_recovery?(task, previous) do
         if email = notification_email(org) do
           send_recovery_email_throttled(execution, email, org)
@@ -65,6 +65,12 @@ defmodule Prikke.Notifications do
         if webhook_url = org.notification_webhook_url do
           send_recovery_webhook(execution, webhook_url)
         end
+
+        # Fire action webhook (on_recovery_url) - independent of org settings
+        send_action_webhook(
+          task.on_recovery_url,
+          build_task_recovery_action_payload(execution)
+        )
       else
         Logger.debug(
           "[Notifications] Skipping recovery notification - no failure notification was sent"
@@ -72,6 +78,14 @@ defmodule Prikke.Notifications do
       end
     else
       Logger.debug("[Notifications] Recovery notifications disabled for org #{org.id}")
+
+      # Fire action webhook even when org notifications are disabled
+      if should_notify_recovery?(task, previous) do
+        send_action_webhook(
+          task.on_recovery_url,
+          build_task_recovery_action_payload(execution)
+        )
+      end
     end
   end
 
@@ -119,11 +133,21 @@ defmodule Prikke.Notifications do
           if webhook_url = org.notification_webhook_url do
             send_failure_webhook(execution, webhook_url)
           end
+
+          # Fire action webhook (on_failure_url) - independent of org settings
+          send_action_webhook(task.on_failure_url, build_task_failure_action_payload(execution))
         else
           Logger.debug("[Notifications] Skipping notification - previous execution also failed")
         end
       else
         Logger.debug("[Notifications] Notifications disabled for org #{org.id}")
+
+        # Fire action webhook even when org notifications are disabled (status change still applies)
+        previous_status = Prikke.Executions.get_previous_status(task, execution.id)
+
+        if should_notify?(previous_status) do
+          send_action_webhook(task.on_failure_url, build_task_failure_action_payload(execution))
+        end
       end
     end
   end
@@ -849,6 +873,9 @@ defmodule Prikke.Notifications do
         send_monitor_webhook(monitor, webhook_url, :down)
       end
     end
+
+    # Fire action webhook - independent of org notification settings
+    send_action_webhook(monitor.on_failure_url, build_monitor_down_action_payload(monitor))
   end
 
   defp send_monitor_recovery_notifications(monitor) do
@@ -863,6 +890,9 @@ defmodule Prikke.Notifications do
         send_monitor_webhook(monitor, webhook_url, :recovered)
       end
     end
+
+    # Fire action webhook - independent of org notification settings
+    send_action_webhook(monitor.on_recovery_url, build_monitor_recovery_action_payload(monitor))
   end
 
   defp send_monitor_down_email(monitor, to_email) do
@@ -1094,6 +1124,92 @@ defmodule Prikke.Notifications do
     </body>
     </html>
     """
+  end
+
+  ## Action webhooks (on_failure_url / on_recovery_url)
+  ## These fire independently of org notification settings.
+
+  defp send_action_webhook(nil, _payload), do: :ok
+  defp send_action_webhook("", _payload), do: :ok
+
+  defp send_action_webhook(url, payload) do
+    headers = [{"content-type", "application/json"}, {"user-agent", "Runlater/1.0"}]
+
+    case Req.post(url, body: Jason.encode!(payload), headers: headers) do
+      {:ok, %{status: status}} when status in 200..299 ->
+        Logger.info("[Notifications] Action webhook sent to #{url}")
+        :ok
+
+      {:ok, %{status: status, body: body}} ->
+        Logger.error(
+          "[Notifications] Action webhook to #{url} failed with status #{status}: #{inspect(body)}"
+        )
+
+        :error
+
+      {:error, reason} ->
+        Logger.error("[Notifications] Action webhook to #{url} failed: #{inspect(reason)}")
+        :error
+    end
+  end
+
+  defp build_task_failure_action_payload(execution) do
+    task = execution.task
+
+    %{
+      event: "task.failed",
+      task: %{id: task.id, name: task.name, url: task.url, method: task.method},
+      execution: %{
+        id: execution.id,
+        status: execution.status,
+        status_code: execution.status_code,
+        error_message: execution.error_message,
+        scheduled_for: execution.scheduled_for,
+        finished_at: execution.finished_at,
+        duration_ms: execution.duration_ms
+      }
+    }
+  end
+
+  defp build_task_recovery_action_payload(execution) do
+    task = execution.task
+
+    %{
+      event: "task.recovered",
+      task: %{id: task.id, name: task.name, url: task.url, method: task.method},
+      execution: %{
+        id: execution.id,
+        status: execution.status,
+        status_code: execution.status_code,
+        scheduled_for: execution.scheduled_for,
+        finished_at: execution.finished_at,
+        duration_ms: execution.duration_ms
+      }
+    }
+  end
+
+  defp build_monitor_down_action_payload(monitor) do
+    %{
+      event: "monitor.down",
+      monitor: %{
+        id: monitor.id,
+        name: monitor.name,
+        status: "down",
+        last_ping_at: monitor.last_ping_at
+      }
+    }
+  end
+
+  defp build_monitor_recovery_action_payload(monitor) do
+    %{
+      event: "monitor.recovered",
+      monitor: %{
+        id: monitor.id,
+        name: monitor.name,
+        status: "up",
+        last_ping_at: monitor.last_ping_at
+      }
+    }
   end
 
   # Per-resource notification override helpers.

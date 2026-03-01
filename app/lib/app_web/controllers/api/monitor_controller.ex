@@ -182,6 +182,8 @@ defmodule PrikkeWeb.Api.MonitorController do
       enabled: m.enabled,
       notify_on_failure: m.notify_on_failure,
       notify_on_recovery: m.notify_on_recovery,
+      on_failure_url: m.on_failure_url,
+      on_recovery_url: m.on_recovery_url,
       last_ping_at: m.last_ping_at,
       next_expected_at: m.next_expected_at,
       inserted_at: m.inserted_at,

@@ -243,6 +243,11 @@ defmodule PrikkeWeb.Api.EndpointController do
       use_queue: e.use_queue,
       notify_on_failure: e.notify_on_failure,
       notify_on_recovery: e.notify_on_recovery,
+      on_failure_url: e.on_failure_url,
+      on_recovery_url: e.on_recovery_url,
+      forward_headers: e.forward_headers,
+      forward_body: e.forward_body,
+      forward_method: e.forward_method,
       inserted_at: e.inserted_at,
       updated_at: e.updated_at
     }

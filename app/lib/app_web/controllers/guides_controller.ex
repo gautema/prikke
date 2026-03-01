@@ -29,4 +29,8 @@ defmodule PrikkeWeb.GuidesController do
   def webhook_proxy(conn, _params) do
     render(conn, :webhook_proxy, page_title: "Never Lose a Webhook Again")
   end
+
+  def dns_failover(conn, _params) do
+    render(conn, :dns_failover, page_title: "Automated DNS Failover with Runlater")
+  end
 end

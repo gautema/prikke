@@ -454,4 +454,48 @@ defmodule PrikkeWeb.Api.TaskControllerTest do
       assert length(response["data"]) == 2
     end
   end
+
+  describe "task webhook action URLs via API" do
+    test "creates cron task with on_failure_url and on_recovery_url", %{conn: conn} do
+      params = %{
+        "url" => "https://example.com/webhook",
+        "cron" => "0 * * * *",
+        "name" => "With Webhooks",
+        "on_failure_url" => "https://hooks.example.com/fail",
+        "on_recovery_url" => "https://hooks.example.com/recover"
+      }
+
+      conn = post(conn, ~p"/api/v1/tasks", params)
+      response = json_response(conn, 201)
+
+      assert response["data"]["on_failure_url"] == "https://hooks.example.com/fail"
+      assert response["data"]["on_recovery_url"] == "https://hooks.example.com/recover"
+    end
+
+    test "GET task includes on_failure_url and on_recovery_url", %{conn: conn, org: org} do
+      task =
+        task_fixture(org, %{
+          on_failure_url: "https://hooks.example.com/fail",
+          on_recovery_url: "https://hooks.example.com/recover"
+        })
+
+      conn = get(conn, ~p"/api/v1/tasks/#{task.id}")
+      response = json_response(conn, 200)
+
+      assert response["data"]["on_failure_url"] == "https://hooks.example.com/fail"
+      assert response["data"]["on_recovery_url"] == "https://hooks.example.com/recover"
+    end
+
+    test "updates task webhook URLs", %{conn: conn, org: org} do
+      task = task_fixture(org)
+
+      conn =
+        put(conn, ~p"/api/v1/tasks/#{task.id}", %{
+          on_failure_url: "https://hooks.example.com/fail"
+        })
+
+      response = json_response(conn, 200)
+      assert response["data"]["on_failure_url"] == "https://hooks.example.com/fail"
+    end
+  end
 end

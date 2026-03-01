@@ -216,6 +216,30 @@ defmodule PrikkeWeb.MonitorLive.Edit do
                   </option>
                 </select>
               </div>
+
+              <div>
+                <.input
+                  field={@form[:on_failure_url]}
+                  type="url"
+                  label="On failure URL"
+                  placeholder="https://..."
+                />
+                <p class="text-xs text-slate-500 mt-1">
+                  POST to this URL when the monitor goes down. Independent of notification settings above.
+                </p>
+              </div>
+
+              <div>
+                <.input
+                  field={@form[:on_recovery_url]}
+                  type="url"
+                  label="On recovery URL"
+                  placeholder="https://..."
+                />
+                <p class="text-xs text-slate-500 mt-1">
+                  POST to this URL when the monitor recovers after being down.
+                </p>
+              </div>
             </div>
           </div>
 

@@ -92,6 +92,18 @@ defmodule PrikkeWeb.Schemas do
           description:
             "Override org-level recovery notification setting. null = use org default, true = always notify, false = never notify."
         },
+        on_failure_url: %Schema{
+          type: :string,
+          format: :uri,
+          nullable: true,
+          description: "URL to POST to on failure. Fires independently of notification settings."
+        },
+        on_recovery_url: %Schema{
+          type: :string,
+          format: :uri,
+          nullable: true,
+          description: "URL to POST to on recovery after a failure."
+        },
         next_run_at: %Schema{
           type: :string,
           format: :"date-time",
@@ -188,6 +200,18 @@ defmodule PrikkeWeb.Schemas do
           type: :boolean,
           nullable: true,
           description: "Override org-level recovery notification setting. null = use org default."
+        },
+        on_failure_url: %Schema{
+          type: :string,
+          format: :uri,
+          nullable: true,
+          description: "URL to POST to on failure. Fires independently of notification settings."
+        },
+        on_recovery_url: %Schema{
+          type: :string,
+          format: :uri,
+          nullable: true,
+          description: "URL to POST to on recovery after a failure."
         }
       },
       example: %{
@@ -465,6 +489,19 @@ defmodule PrikkeWeb.Schemas do
           nullable: true,
           description: "Override org-level recovery notification setting. null = use org default."
         },
+        on_failure_url: %Schema{
+          type: :string,
+          format: :uri,
+          nullable: true,
+          description:
+            "URL to POST to when the monitor goes down. Fires independently of notification settings."
+        },
+        on_recovery_url: %Schema{
+          type: :string,
+          format: :uri,
+          nullable: true,
+          description: "URL to POST to when the monitor recovers after being down."
+        },
         last_ping_at: %Schema{
           type: :string,
           format: :"date-time",
@@ -542,6 +579,19 @@ defmodule PrikkeWeb.Schemas do
           type: :boolean,
           nullable: true,
           description: "Override org-level recovery notification setting. null = use org default."
+        },
+        on_failure_url: %Schema{
+          type: :string,
+          format: :uri,
+          nullable: true,
+          description:
+            "URL to POST to when the monitor goes down. Fires independently of notification settings."
+        },
+        on_recovery_url: %Schema{
+          type: :string,
+          format: :uri,
+          nullable: true,
+          description: "URL to POST to when the monitor recovers after being down."
         }
       },
       example: %{
@@ -673,6 +723,37 @@ defmodule PrikkeWeb.Schemas do
           description:
             "Override org-level recovery notification setting for forwarded events. null = use org default."
         },
+        on_failure_url: %Schema{
+          type: :string,
+          format: :uri,
+          nullable: true,
+          description: "URL to POST to on failure. Fires independently of notification settings."
+        },
+        on_recovery_url: %Schema{
+          type: :string,
+          format: :uri,
+          nullable: true,
+          description: "URL to POST to on recovery after a failure."
+        },
+        forward_headers: %Schema{
+          type: :object,
+          additionalProperties: %Schema{type: :string},
+          description:
+            "Custom headers merged with original webhook headers when forwarding. Custom headers override originals."
+        },
+        forward_body: %Schema{
+          type: :string,
+          nullable: true,
+          description:
+            "Custom body that replaces the original webhook body when forwarding. Leave empty to forward original body."
+        },
+        forward_method: %Schema{
+          type: :string,
+          nullable: true,
+          enum: ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"],
+          description:
+            "Custom HTTP method that overrides the original webhook method when forwarding. Leave empty to forward the original method."
+        },
         inserted_at: %Schema{
           type: :string,
           format: :"date-time",
@@ -742,6 +823,37 @@ defmodule PrikkeWeb.Schemas do
           nullable: true,
           description:
             "Override org-level recovery notification setting for forwarded events. null = use org default."
+        },
+        on_failure_url: %Schema{
+          type: :string,
+          format: :uri,
+          nullable: true,
+          description: "URL to POST to on failure. Fires independently of notification settings."
+        },
+        on_recovery_url: %Schema{
+          type: :string,
+          format: :uri,
+          nullable: true,
+          description: "URL to POST to on recovery after a failure."
+        },
+        forward_headers: %Schema{
+          type: :object,
+          additionalProperties: %Schema{type: :string},
+          description:
+            "Custom headers merged with original webhook headers when forwarding. Custom headers override originals."
+        },
+        forward_body: %Schema{
+          type: :string,
+          nullable: true,
+          description:
+            "Custom body that replaces the original webhook body when forwarding. Leave empty to forward original body."
+        },
+        forward_method: %Schema{
+          type: :string,
+          nullable: true,
+          enum: ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"],
+          description:
+            "Custom HTTP method that overrides the original webhook method when forwarding. Leave empty to forward the original method."
         }
       },
       example: %{

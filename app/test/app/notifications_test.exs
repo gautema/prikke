@@ -1437,6 +1437,288 @@ defmodule Prikke.NotificationsTest do
     end
   end
 
+  describe "action webhooks (on_failure_url)" do
+    setup do
+      if !Process.whereis(Prikke.TaskSupervisor) do
+        start_supervised!({Task.Supervisor, name: Prikke.TaskSupervisor})
+      end
+
+      user = user_fixture()
+      flush_emails()
+
+      {:ok, org} = Accounts.create_organization(user, %{name: "Action Webhook Org"})
+
+      {:ok, org} =
+        Accounts.update_notification_settings(org, %{
+          notify_on_failure: true,
+          notification_email: "alerts@example.com"
+        })
+
+      %{org: org}
+    end
+
+    test "fires on_failure_url when task fails", %{org: org} do
+      bypass = Bypass.open()
+
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: "Task With Action Webhook",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *",
+          on_failure_url: "http://localhost:#{bypass.port}/action"
+        })
+
+      Bypass.expect_once(bypass, "POST", "/action", fn conn ->
+        {:ok, body, conn} = Plug.Conn.read_body(conn)
+        payload = Jason.decode!(body)
+
+        assert payload["event"] == "task.failed"
+        assert payload["task"]["name"] == "Task With Action Webhook"
+
+        Plug.Conn.resp(conn, 200, "OK")
+      end)
+
+      {:ok, execution} =
+        Executions.create_execution(%{
+          task_id: task.id,
+          organization_id: task.organization_id,
+          scheduled_for: DateTime.utc_now()
+        })
+
+      {:ok, execution} =
+        Executions.fail_execution(execution, %{
+          status_code: 500,
+          error_message: "Server Error"
+        })
+
+      execution = Executions.get_execution_with_task(execution.id)
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_failure(execution)
+      Process.sleep(200)
+    end
+
+    test "fires on_failure_url even when org notifications are disabled", %{org: org} do
+      {:ok, _org} =
+        Accounts.update_notification_settings(org, %{notify_on_failure: false})
+
+      bypass = Bypass.open()
+
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: "Action Webhook Even Disabled",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *",
+          on_failure_url: "http://localhost:#{bypass.port}/action",
+          notify_on_failure: false
+        })
+
+      Bypass.expect_once(bypass, "POST", "/action", fn conn ->
+        {:ok, body, conn} = Plug.Conn.read_body(conn)
+        payload = Jason.decode!(body)
+        assert payload["event"] == "task.failed"
+        Plug.Conn.resp(conn, 200, "OK")
+      end)
+
+      {:ok, execution} =
+        Executions.create_execution(%{
+          task_id: task.id,
+          organization_id: task.organization_id,
+          scheduled_for: DateTime.utc_now()
+        })
+
+      {:ok, execution} =
+        Executions.fail_execution(execution, %{
+          status_code: 500,
+          error_message: "Server Error"
+        })
+
+      execution = Executions.get_execution_with_task(execution.id)
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_failure(execution)
+      Process.sleep(200)
+
+      # No emails should be sent (org disabled + task override disabled)
+      emails = collect_emails()
+      assert emails == []
+    end
+
+    test "fires on_recovery_url when task recovers after failure", %{org: org} do
+      {:ok, org} =
+        Accounts.update_notification_settings(org, %{
+          notify_on_recovery: true
+        })
+
+      bypass = Bypass.open()
+
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: "Recovery Action Webhook",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *",
+          on_recovery_url: "http://localhost:#{bypass.port}/recover"
+        })
+
+      Bypass.expect_once(bypass, "POST", "/recover", fn conn ->
+        {:ok, body, conn} = Plug.Conn.read_body(conn)
+        payload = Jason.decode!(body)
+        assert payload["event"] == "task.recovered"
+        Plug.Conn.resp(conn, 200, "OK")
+      end)
+
+      # Create a failed execution first
+      {:ok, failed_exec} =
+        Executions.create_execution(%{
+          task_id: task.id,
+          organization_id: task.organization_id,
+          scheduled_for: DateTime.add(DateTime.utc_now(), -120, :second)
+        })
+
+      {:ok, _} =
+        Executions.fail_execution(failed_exec, %{
+          status_code: 500,
+          error_message: "Error"
+        })
+
+      # Create a successful execution
+      {:ok, success_exec} =
+        Executions.create_execution(%{
+          task_id: task.id,
+          organization_id: task.organization_id,
+          scheduled_for: DateTime.utc_now()
+        })
+
+      {:ok, success_exec} =
+        Executions.complete_execution(success_exec, %{
+          status_code: 200,
+          response_body: "OK",
+          duration_ms: 100
+        })
+
+      execution = Executions.get_execution_with_task(success_exec.id)
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_recovery(execution)
+      Process.sleep(200)
+    end
+
+    test "does not fire on_failure_url when it is nil", %{org: org} do
+      {:ok, task} =
+        Tasks.create_task(org, %{
+          name: "No Action Webhook",
+          url: "https://example.com/webhook",
+          schedule_type: "cron",
+          cron_expression: "0 * * * *"
+        })
+
+      assert is_nil(task.on_failure_url)
+
+      {:ok, execution} =
+        Executions.create_execution(%{
+          task_id: task.id,
+          organization_id: task.organization_id,
+          scheduled_for: DateTime.utc_now()
+        })
+
+      {:ok, execution} =
+        Executions.fail_execution(execution, %{
+          status_code: 500,
+          error_message: "Server Error"
+        })
+
+      execution = Executions.get_execution_with_task(execution.id)
+      flush_emails()
+
+      # Should not crash when on_failure_url is nil
+      {:ok, _pid} = Notifications.notify_failure(execution)
+      Process.sleep(100)
+    end
+  end
+
+  describe "monitor action webhooks (on_failure_url)" do
+    setup do
+      if !Process.whereis(Prikke.TaskSupervisor) do
+        start_supervised!({Task.Supervisor, name: Prikke.TaskSupervisor})
+      end
+
+      user = user_fixture()
+      flush_emails()
+
+      {:ok, org} = Accounts.create_organization(user, %{name: "Monitor Action Org"})
+
+      {:ok, org} =
+        Accounts.update_notification_settings(org, %{
+          notify_on_failure: true,
+          notification_email: "alerts@example.com"
+        })
+
+      %{org: org}
+    end
+
+    test "fires on_failure_url when monitor goes down", %{org: org} do
+      bypass = Bypass.open()
+
+      {:ok, monitor} =
+        Prikke.Monitors.create_monitor(org, %{
+          name: "Monitor With Action",
+          schedule_type: "interval",
+          interval_seconds: 3600,
+          grace_period_seconds: 300,
+          on_failure_url: "http://localhost:#{bypass.port}/down"
+        })
+
+      monitor = Prikke.Repo.preload(monitor, :organization)
+
+      Bypass.expect_once(bypass, "POST", "/down", fn conn ->
+        {:ok, body, conn} = Plug.Conn.read_body(conn)
+        payload = Jason.decode!(body)
+        assert payload["event"] == "monitor.down"
+        assert payload["monitor"]["name"] == "Monitor With Action"
+        Plug.Conn.resp(conn, 200, "OK")
+      end)
+
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_monitor_down(monitor)
+      Process.sleep(200)
+    end
+
+    test "fires on_recovery_url when monitor recovers", %{org: org} do
+      {:ok, org} =
+        Accounts.update_notification_settings(org, %{notify_on_recovery: true})
+
+      bypass = Bypass.open()
+
+      {:ok, monitor} =
+        Prikke.Monitors.create_monitor(org, %{
+          name: "Monitor Recovery Action",
+          schedule_type: "interval",
+          interval_seconds: 3600,
+          grace_period_seconds: 300,
+          on_recovery_url: "http://localhost:#{bypass.port}/recover"
+        })
+
+      monitor = Prikke.Repo.preload(monitor, :organization)
+      monitor = %{monitor | last_ping_at: DateTime.utc_now()}
+
+      Bypass.expect_once(bypass, "POST", "/recover", fn conn ->
+        {:ok, body, conn} = Plug.Conn.read_body(conn)
+        payload = Jason.decode!(body)
+        assert payload["event"] == "monitor.recovered"
+        Plug.Conn.resp(conn, 200, "OK")
+      end)
+
+      flush_emails()
+
+      {:ok, _pid} = Notifications.notify_monitor_recovery(monitor)
+      Process.sleep(200)
+    end
+  end
+
   # Helper to collect all emails from the mailbox
   defp collect_emails(acc \\ []) do
     receive do

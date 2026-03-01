@@ -17,6 +17,8 @@ defmodule Prikke.Monitors.Monitor do
     field :enabled, :boolean, default: true
     field :notify_on_failure, :boolean
     field :notify_on_recovery, :boolean
+    field :on_failure_url, :string
+    field :on_recovery_url, :string
 
     belongs_to :organization, Prikke.Accounts.Organization
     has_many :pings, Prikke.Monitors.MonitorPing
@@ -36,7 +38,9 @@ defmodule Prikke.Monitors.Monitor do
       :grace_period_seconds,
       :enabled,
       :notify_on_failure,
-      :notify_on_recovery
+      :notify_on_recovery,
+      :on_failure_url,
+      :on_recovery_url
     ])
     |> validate_required([:name, :schedule_type])
     |> validate_inclusion(:schedule_type, @schedule_types)
@@ -45,6 +49,8 @@ defmodule Prikke.Monitors.Monitor do
       less_than_or_equal_to: 3600
     )
     |> validate_schedule()
+    |> validate_optional_url(:on_failure_url)
+    |> validate_optional_url(:on_recovery_url)
   end
 
   def create_changeset(monitor, attrs, organization_id) do
@@ -82,6 +88,23 @@ defmodule Prikke.Monitors.Monitor do
       case Crontab.CronExpression.Parser.parse(expression) do
         {:ok, _} -> []
         {:error, _} -> [cron_expression: "is not a valid cron expression"]
+      end
+    end)
+  end
+
+  defp validate_optional_url(changeset, field) do
+    validate_change(changeset, field, fn _, url ->
+      if url == "" or is_nil(url) do
+        []
+      else
+        case URI.parse(url) do
+          %URI{scheme: scheme, host: host}
+          when scheme in ["http", "https"] and not is_nil(host) ->
+            []
+
+          _ ->
+            [{field, "must be a valid HTTP or HTTPS URL"}]
+        end
       end
     end)
   end

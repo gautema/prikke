@@ -953,6 +953,30 @@ defmodule PrikkeWeb.TaskLive.New do
                   </option>
                 </select>
               </div>
+
+              <div>
+                <.input
+                  field={@form[:on_failure_url]}
+                  type="url"
+                  label="On failure URL"
+                  placeholder="https://..."
+                />
+                <p class="text-xs text-slate-500 mt-1">
+                  POST to this URL when a failure occurs. Independent of notification settings above.
+                </p>
+              </div>
+
+              <div>
+                <.input
+                  field={@form[:on_recovery_url]}
+                  type="url"
+                  label="On recovery URL"
+                  placeholder="https://..."
+                />
+                <p class="text-xs text-slate-500 mt-1">
+                  POST to this URL when recovery occurs after a failure.
+                </p>
+              </div>
             </div>
           </div>
           
