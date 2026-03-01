@@ -15,6 +15,8 @@ defmodule PrikkeWeb.MonitorLive.New do
        socket
        |> assign(:organization, org)
        |> assign(:page_title, "New Monitor")
+       |> assign(:failure_notification_mode, "default")
+       |> assign(:recovery_notification_mode, "default")
        |> assign_form(changeset)}
     else
       {:ok,
@@ -26,18 +28,22 @@ defmodule PrikkeWeb.MonitorLive.New do
 
   @impl true
   def handle_event("validate", %{"monitor" => params}, socket) do
-    params = cast_notification_overrides(params)
+    {params, failure_mode, recovery_mode} = cast_notification_overrides(params, socket)
 
     changeset =
       %Monitor{}
       |> Monitors.change_monitor(params)
       |> Map.put(:action, :validate)
 
-    {:noreply, assign_form(socket, changeset)}
+    {:noreply,
+     socket
+     |> assign(:failure_notification_mode, failure_mode)
+     |> assign(:recovery_notification_mode, recovery_mode)
+     |> assign_form(changeset)}
   end
 
   def handle_event("save", %{"monitor" => params}, socket) do
-    params = cast_notification_overrides(params)
+    {params, _, _} = cast_notification_overrides(params, socket)
 
     case Monitors.create_monitor(socket.assigns.organization, params,
            scope: socket.assigns.current_scope
@@ -56,19 +62,30 @@ defmodule PrikkeWeb.MonitorLive.New do
     end
   end
 
-  defp cast_notification_overrides(params) do
-    params
-    |> cast_notification_field("notify_on_failure")
-    |> cast_notification_field("notify_on_recovery")
+  defp cast_notification_overrides(params, socket) do
+    failure_mode = Map.get(params, "failure_notification_mode", socket.assigns.failure_notification_mode)
+    recovery_mode = Map.get(params, "recovery_notification_mode", socket.assigns.recovery_notification_mode)
+
+    params =
+      params
+      |> Map.delete("failure_notification_mode")
+      |> Map.delete("recovery_notification_mode")
+      |> cast_notification_mode(failure_mode, "notify_on_failure", "on_failure_url")
+      |> cast_notification_mode(recovery_mode, "notify_on_recovery", "on_recovery_url")
+
+    {params, failure_mode, recovery_mode}
   end
 
-  defp cast_notification_field(params, field) do
-    case Map.get(params, field) do
-      "" -> Map.put(params, field, nil)
-      "true" -> Map.put(params, field, true)
-      "false" -> Map.put(params, field, false)
-      _ -> params
-    end
+  defp cast_notification_mode(params, "custom", notify_field, _url_field) do
+    Map.put(params, notify_field, nil)
+  end
+
+  defp cast_notification_mode(params, "disabled", notify_field, url_field) do
+    params |> Map.put(notify_field, false) |> Map.put(url_field, nil)
+  end
+
+  defp cast_notification_mode(params, _default, notify_field, url_field) do
+    params |> Map.put(notify_field, nil) |> Map.put(url_field, nil)
   end
 
   defp get_organization(socket, session) do
@@ -171,78 +188,68 @@ defmodule PrikkeWeb.MonitorLive.New do
                   Failure notifications
                 </label>
                 <select
-                  name={@form[:notify_on_failure].name}
-                  id="monitor_notify_on_failure"
+                  name={"#{@form.name}[failure_notification_mode]"}
+                  id="monitor_failure_notification_mode"
                   class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
                 >
-                  <option value="" selected={is_nil(@form[:notify_on_failure].value)}>
-                    Use org default
+                  <option value="default" selected={@failure_notification_mode == "default"}>
+                    Default
                   </option>
-                  <option
-                    value="true"
-                    selected={@form[:notify_on_failure].value == true}
-                  >
-                    Enabled
+                  <option value="custom" selected={@failure_notification_mode == "custom"}>
+                    Custom URL
                   </option>
-                  <option
-                    value="false"
-                    selected={@form[:notify_on_failure].value == false}
-                  >
+                  <option value="disabled" selected={@failure_notification_mode == "disabled"}>
                     Disabled
                   </option>
                 </select>
               </div>
+              <%= if @failure_notification_mode == "custom" do %>
+                <div>
+                  <.input
+                    field={@form[:on_failure_url]}
+                    type="url"
+                    label="On failure URL"
+                    placeholder="https://..."
+                  />
+                  <p class="text-xs text-slate-500 mt-1">
+                    POST to this URL when the monitor goes down.
+                  </p>
+                </div>
+              <% end %>
 
               <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">
                   Recovery notifications
                 </label>
                 <select
-                  name={@form[:notify_on_recovery].name}
-                  id="monitor_notify_on_recovery"
+                  name={"#{@form.name}[recovery_notification_mode]"}
+                  id="monitor_recovery_notification_mode"
                   class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
                 >
-                  <option value="" selected={is_nil(@form[:notify_on_recovery].value)}>
-                    Use org default
+                  <option value="default" selected={@recovery_notification_mode == "default"}>
+                    Default
                   </option>
-                  <option
-                    value="true"
-                    selected={@form[:notify_on_recovery].value == true}
-                  >
-                    Enabled
+                  <option value="custom" selected={@recovery_notification_mode == "custom"}>
+                    Custom URL
                   </option>
-                  <option
-                    value="false"
-                    selected={@form[:notify_on_recovery].value == false}
-                  >
+                  <option value="disabled" selected={@recovery_notification_mode == "disabled"}>
                     Disabled
                   </option>
                 </select>
               </div>
-
-              <div>
-                <.input
-                  field={@form[:on_failure_url]}
-                  type="url"
-                  label="On failure URL"
-                  placeholder="https://..."
-                />
-                <p class="text-xs text-slate-500 mt-1">
-                  POST to this URL when the monitor goes down. Independent of notification settings above.
-                </p>
-              </div>
-
-              <div>
-                <.input
-                  field={@form[:on_recovery_url]}
-                  type="url"
-                  label="On recovery URL"
-                  placeholder="https://..."
-                />
-                <p class="text-xs text-slate-500 mt-1">
-                  POST to this URL when the monitor recovers after being down.
-                </p>
-              </div>
+              <%= if @recovery_notification_mode == "custom" do %>
+                <div>
+                  <.input
+                    field={@form[:on_recovery_url]}
+                    type="url"
+                    label="On recovery URL"
+                    placeholder="https://..."
+                  />
+                  <p class="text-xs text-slate-500 mt-1">
+                    POST to this URL when the monitor recovers after being down.
+                  </p>
+                </div>
+              <% end %>
             </div>
           </div>
 
