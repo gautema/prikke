@@ -328,7 +328,7 @@ defmodule PrikkeWeb.EndpointLive.New do
                   name="endpoint[forward_headers_json]"
                   id="endpoint_forward_headers_json"
                   rows="3"
-                  placeholder="{\u0022Authorization\u0022: \u0022Bearer ...\u0022}"
+                  placeholder={~s({"Authorization": "Bearer ..."})}
                   class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-slate-900 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
                 >{if @forward_headers_json && @forward_headers_json != "", do: @forward_headers_json, else: ""}</textarea>
                 <p class="text-xs text-slate-500 mt-1">
