@@ -341,9 +341,14 @@ docker run --network=host ghcr.io/runlater-eu/dev</pre>
     </li>
     <li><strong>1-second simulated delay</strong> &mdash; mimics real-world network latency</li>
     <li>
-      <strong>No monitor alerting</strong> &mdash; pings update status but monitors never fire alerts
+      <strong>No monitor alerting</strong>
+      &mdash; pings update status but monitors never fire alerts
     </li>
-    <li><strong>No declarative sync</strong> &mdash; the <code class="bg-slate-100 px-1 rounded">PUT /api/v1/sync</code> endpoint is not emulated</li>
+    <li>
+      <strong>No declarative sync</strong>
+      &mdash; the <code class="bg-slate-100 px-1 rounded">PUT /api/v1/sync</code>
+      endpoint is not emulated
+    </li>
     <li><strong>No rate limits, SSRF protection, or tier limits</strong></li>
   </ul>
 

@@ -398,7 +398,7 @@ defmodule Prikke.Scheduler do
   defp compute_missed_cron_times(task, now, acc) do
     current_run = task.next_run_at
 
-    if current_run && DateTime.compare(current_run, now) != :gt and length(acc) < 100 do
+    if (current_run && DateTime.compare(current_run, now) != :gt) and length(acc) < 100 do
       # This time is due, add it and compute next
       case compute_next_cron_time(task, current_run) do
         {:ok, next_run} ->

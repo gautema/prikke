@@ -200,7 +200,6 @@ defmodule Prikke.Monitors do
     Monitor.create_changeset(%Monitor{}, attrs, org.id)
   end
 
-
   @doc """
   Returns the uptime percentage for a monitor over the given number of days.
   Calculated as actual pings received / expected pings, with minute resolution.

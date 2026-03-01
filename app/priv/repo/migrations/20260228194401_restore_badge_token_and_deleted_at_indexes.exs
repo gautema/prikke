@@ -12,6 +12,7 @@ defmodule Prikke.Repo.Migrations.RestoreBadgeTokenAndDeletedAtIndexes do
 
   def up do
     execute "CREATE INDEX IF NOT EXISTS tasks_badge_token_index ON tasks (badge_token) WHERE badge_token IS NOT NULL"
+
     execute "CREATE INDEX IF NOT EXISTS tasks_deleted_at_idx ON tasks (deleted_at) WHERE deleted_at IS NOT NULL"
   end
 

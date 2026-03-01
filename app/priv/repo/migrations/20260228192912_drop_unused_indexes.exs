@@ -39,11 +39,14 @@ defmodule Prikke.Repo.Migrations.DropUnusedIndexes do
 
     execute "CREATE INDEX tasks_enabled_idx ON tasks (enabled) WHERE enabled = true"
     execute "CREATE INDEX tasks_inserted_at_DESC_index ON tasks (inserted_at DESC)"
+
     execute "CREATE INDEX tasks_badge_token_index ON tasks (badge_token) WHERE badge_token IS NOT NULL"
+
     execute "CREATE INDEX tasks_deleted_at_idx ON tasks (deleted_at) WHERE deleted_at IS NOT NULL"
 
     # Executions
     execute "CREATE INDEX executions_finished_at_status_index ON executions (finished_at, status)"
+
     execute "CREATE INDEX executions_scheduled_for_status_index ON executions (scheduled_for, status)"
   end
 end

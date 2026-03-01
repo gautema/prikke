@@ -46,7 +46,11 @@ defmodule Prikke.ApiKeyCache do
   Caches an API key lookup result.
   """
   def put(key_id, key_hash, organization, api_key_name) do
-    :ets.insert(@table, {key_id, {key_hash, organization, api_key_name, System.monotonic_time(:second)}})
+    :ets.insert(
+      @table,
+      {key_id, {key_hash, organization, api_key_name, System.monotonic_time(:second)}}
+    )
+
     :ok
   end
 

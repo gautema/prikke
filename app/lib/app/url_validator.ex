@@ -86,14 +86,18 @@ defmodule Prikke.UrlValidator do
 
   defp resolve_host(host) do
     char_host = String.to_charlist(host)
-    ipv4s = case :inet.getaddrs(char_host, :inet) do
-      {:ok, addrs} -> addrs
-      {:error, _} -> []
-    end
-    ipv6s = case :inet.getaddrs(char_host, :inet6) do
-      {:ok, addrs} -> addrs
-      {:error, _} -> []
-    end
+
+    ipv4s =
+      case :inet.getaddrs(char_host, :inet) do
+        {:ok, addrs} -> addrs
+        {:error, _} -> []
+      end
+
+    ipv6s =
+      case :inet.getaddrs(char_host, :inet6) do
+        {:ok, addrs} -> addrs
+        {:error, _} -> []
+      end
 
     all_addrs = ipv4s ++ ipv6s
 
@@ -129,7 +133,7 @@ defmodule Prikke.UrlValidator do
   defp private_ip?({240, _, _, _}), do: true
   # Broadcast
   defp private_ip?({255, 255, 255, 255}), do: true
-  
+
   # IPv6 Loopback
   defp private_ip?({0, 0, 0, 0, 0, 0, 0, 1}), do: true
   # IPv6 Unspecified
@@ -146,6 +150,7 @@ defmodule Prikke.UrlValidator do
     b2 = rem(b, 256)
     private_ip?({a1, a2, b1, b2})
   end
+
   defp private_ip?(_), do: false
 
   @doc """

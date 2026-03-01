@@ -181,7 +181,11 @@ defmodule PrikkeWeb.BadgeControllerTest do
       assert get(conn, "/badge/task/#{token}/status.svg") |> response(404) =~ "<svg"
     end
 
-    test "monitor badge not accessible after removing item", %{conn: conn, org: org, status_page: sp} do
+    test "monitor badge not accessible after removing item", %{
+      conn: conn,
+      org: org,
+      status_page: sp
+    } do
       monitor = monitor_fixture(org)
       item = add_status_page_item(sp, "monitor", monitor.id)
       token = item.badge_token
@@ -193,7 +197,11 @@ defmodule PrikkeWeb.BadgeControllerTest do
       assert get(conn, "/badge/monitor/#{token}/status.svg") |> response(404) =~ "<svg"
     end
 
-    test "endpoint badge not accessible after removing item", %{conn: conn, org: org, status_page: sp} do
+    test "endpoint badge not accessible after removing item", %{
+      conn: conn,
+      org: org,
+      status_page: sp
+    } do
       endpoint = endpoint_fixture(org)
       item = add_status_page_item(sp, "endpoint", endpoint.id)
       token = item.badge_token

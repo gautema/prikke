@@ -224,7 +224,11 @@ defmodule PrikkeWeb.StatusLive.Index do
                       ]} />
                       <span class="text-sm font-medium text-slate-900 truncate">{task.name}</span>
                     </div>
-                    <.visibility_toggle type="task" id={task.id} visible={visible?(@visible_set, "task", task.id)} />
+                    <.visibility_toggle
+                      type="task"
+                      id={task.id}
+                      visible={visible?(@visible_set, "task", task.id)}
+                    />
                   </div>
                 <% end %>
               </div>
@@ -247,7 +251,11 @@ defmodule PrikkeWeb.StatusLive.Index do
                       ]} />
                       <span class="text-sm font-medium text-slate-900 truncate">{monitor.name}</span>
                     </div>
-                    <.visibility_toggle type="monitor" id={monitor.id} visible={visible?(@visible_set, "monitor", monitor.id)} />
+                    <.visibility_toggle
+                      type="monitor"
+                      id={monitor.id}
+                      visible={visible?(@visible_set, "monitor", monitor.id)}
+                    />
                   </div>
                 <% end %>
               </div>
@@ -270,7 +278,11 @@ defmodule PrikkeWeb.StatusLive.Index do
                       ]} />
                       <span class="text-sm font-medium text-slate-900 truncate">{endpoint.name}</span>
                     </div>
-                    <.visibility_toggle type="endpoint" id={endpoint.id} visible={visible?(@visible_set, "endpoint", endpoint.id)} />
+                    <.visibility_toggle
+                      type="endpoint"
+                      id={endpoint.id}
+                      visible={visible?(@visible_set, "endpoint", endpoint.id)}
+                    />
                   </div>
                 <% end %>
               </div>
@@ -293,7 +305,11 @@ defmodule PrikkeWeb.StatusLive.Index do
                       ]} />
                       <span class="text-sm font-medium text-slate-900 truncate">{queue.name}</span>
                     </div>
-                    <.visibility_toggle type="queue" id={queue.id} visible={visible?(@visible_set, "queue", queue.id)} />
+                    <.visibility_toggle
+                      type="queue"
+                      id={queue.id}
+                      visible={visible?(@visible_set, "queue", queue.id)}
+                    />
                   </div>
                 <% end %>
               </div>

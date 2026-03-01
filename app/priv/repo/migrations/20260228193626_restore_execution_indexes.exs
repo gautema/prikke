@@ -9,6 +9,7 @@ defmodule Prikke.Repo.Migrations.RestoreExecutionIndexes do
 
   def up do
     execute "CREATE INDEX IF NOT EXISTS executions_finished_at_status_index ON executions (finished_at, status)"
+
     execute "CREATE INDEX IF NOT EXISTS executions_scheduled_for_status_index ON executions (scheduled_for, status)"
   end
 

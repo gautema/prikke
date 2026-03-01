@@ -66,8 +66,8 @@
   <h2>Why you need this</h2>
   <p>
     Supabase Edge Functions run on Deno Deploy &mdash; they're serverless and stateless. There's no built-in way
-    to call an Edge Function on a schedule. You <em>can</em> build it yourself: use
-    <code class="bg-slate-100 px-2 py-1 rounded text-sm">pg_cron</code>
+    to call an Edge Function on a schedule. You <em>can</em>
+    build it yourself: use <code class="bg-slate-100 px-2 py-1 rounded text-sm">pg_cron</code>
     to populate queue tables, set up database webhooks to trigger Edge Functions, add deduplication logic,
     error handling, and retry mechanisms. It works, but it's a lot of moving parts for what should be a
     simple task.
@@ -76,7 +76,8 @@
     Runlater replaces all of that with a single SDK call. You define scheduled tasks via the SDK, and
     Runlater calls your Edge Functions on schedule with the right auth headers. No queue tables, no
     database webhooks, no deduplication logic &mdash; just
-    <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.cron()</code> and you're done.
+    <code class="bg-slate-100 px-2 py-1 rounded text-sm">rl.cron()</code>
+    and you're done.
   </p>
 
   <h2>Setup</h2>

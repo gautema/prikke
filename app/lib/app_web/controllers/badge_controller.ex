@@ -102,9 +102,7 @@ defmodule PrikkeWeb.BadgeController do
   end
 
   defp load_resource("task", id) do
-    Prikke.Repo.one(
-      from t in Prikke.Tasks.Task, where: t.id == ^id and is_nil(t.deleted_at)
-    )
+    Prikke.Repo.one(from t in Prikke.Tasks.Task, where: t.id == ^id and is_nil(t.deleted_at))
   end
 
   defp load_resource("monitor", id) do

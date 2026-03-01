@@ -4,7 +4,10 @@ defmodule Prikke.Repo.Migrations.CreateStatusPageItems do
   def up do
     create table(:status_page_items, primary_key: false) do
       add :id, :binary_id, primary_key: true
-      add :status_page_id, references(:status_pages, type: :binary_id, on_delete: :delete_all), null: false
+
+      add :status_page_id, references(:status_pages, type: :binary_id, on_delete: :delete_all),
+        null: false
+
       add :resource_type, :text, null: false
       add :resource_id, :binary_id, null: false
       add :badge_token, :text, null: false
