@@ -2,11 +2,13 @@
 
 ## Summary
 
-Multiple rounds of load testing on production and staging revealed and eliminated bottlenecks. Starting from 50 req/s on old hardware, optimizations progressed through DB query fixes, connection pooling, Postgres tuning, and application-level caching to reach **1500 req/s on a 4-core dedicated server** and **4000 req/s on a 16 vCPU staging server**.
+Multiple rounds of load testing on production, staging, and a dedicated 192 vCPU GCP instance revealed and eliminated bottlenecks. Starting from 50 req/s on old hardware, optimizations progressed through DB query fixes, connection pooling, Postgres tuning, and application-level caching to reach **1500 req/s on a 4-core dedicated server**, **4000 req/s on a 16 vCPU staging server**, and **17,000 req/s on a 192 vCPU GCP C4D** (direct to Phoenix, bypassing kamal-proxy).
 
-Throughput scales roughly linearly with CPU cores (~375 req/s per core).
-
-The single biggest unlock was discovering Docker's default `ulimit nofile=1024` — all earlier hardware comparisons were hitting this FD limit, not actual hardware limits.
+Key discoveries:
+- Docker's default `ulimit nofile=1024` was the single biggest throughput unlock early on
+- **kamal-proxy TLS halves throughput** — 8k req/s through kamal-proxy vs 17k req/s direct to Phoenix on the same hardware
+- **DB pool size is the hard ceiling** — 150 connections capped at 16k req/s; raising to 500 pushed past 17k
+- **Workers competing for DB connections** during tests was the #1 source of inconsistent results
 
 ## Current Production Results (netcup, 4 dedicated AMD EPYC cores, 8GB RAM)
 
@@ -116,6 +118,55 @@ Previous rounds had inconsistent results at 1350-1450 req/s due to TCP TIME_WAIT
 
 **Test methodology:** Always wait 60s between runs, delete loadtest data, and VACUUM FULL before re-testing. Even running `htop` on the server during a test can tip results at the margin.
 
+## GCP C4D Results (192 vCPUs, 744GB RAM)
+
+GCP c4d-standard-192-lssd (AMD EPYC Genoa). App + Postgres on same instance via Docker/Kamal. k6 run from same server. `deploy.loadtest.yml` config.
+
+### Round 9: Through kamal-proxy (TLS)
+
+POOL_SIZE=150, max_connections=300. k6 run from server to `https://load.runlater.eu`.
+
+| Rate | Success | p95 | Dropped | Notes |
+|------|---------|-----|---------|-------|
+| **5,000/s** | **100%** | **22ms** | **0** | Very clean |
+| **6,000/s** | **100%** | **115ms** | **0** | Clean |
+| **7,000/s** | **100%** | **166ms** | **0** | Clean |
+| **8,000/s** | **100%** | **82ms** | **0** | **Ceiling** |
+| 9,000/s | 81% | 782ms | 5,179 | 18.8% failures |
+| 10,000/s | 43% | 2.9s | 20,285 | 57% failures |
+
+**kamal-proxy TLS ceiling: ~8,000 req/s.** Server CPU only at ~30% — kamal-proxy (single Go process doing TLS) is the bottleneck, not the app.
+
+### Round 10: Direct to Phoenix (bypass kamal-proxy)
+
+Hitting `http://<container-ip>:4000` directly — no TLS, no kamal-proxy.
+
+**POOL_SIZE=150, max_connections=300:**
+
+| Rate | Success | p95 | Dropped | Notes |
+|------|---------|-----|---------|-------|
+| **8,000/s** | **100%** | **48ms** | **0** | Half the p95 of kamal-proxy |
+| **15,000/s** | **100%** | **396ms** | **0** | Clean |
+| **16,000/s** | **100%** | **308ms** | **0** | Pool limit approaching |
+| 17,000/s | 22% | — | — | DB pool exhausted |
+
+**POOL_SIZE=500, max_connections=1000:**
+
+| Rate | Success | p95 | Dropped | Notes |
+|------|---------|-----|---------|-------|
+| **17,000/s** | **100%** | **189ms** | **0** | Clean, ~50% CPU |
+| 20,000/s | 29% | — | 87,531 | k6 + app competing for CPU |
+
+**Direct Phoenix ceiling: ~17,000 req/s** (with pool=500). Server at ~50% CPU at 17k — not CPU-bound. The cliff at 20k is partly k6 itself (single Go process) competing with the app for CPU on the same server.
+
+### Key takeaways from GCP testing
+
+1. **kamal-proxy TLS halves throughput**: 8k vs 17k req/s on identical hardware. The Go `crypto/tls` single-process TLS termination is the bottleneck at scale, not CPU.
+2. **DB pool is the hard ceiling**: 150 connections → 16k max. 500 connections → 17k+. Each API request holds a connection for the transaction duration.
+3. **Workers compete with API for DB pool**: During a test, workers process created tasks and consume pool connections. Must wait 30+ seconds between tests for workers to drain, otherwise results are unreliable. Previous test failures at 7k-9k were caused by this.
+4. **VACUUM FULL required between tests**: Regular VACUUM doesn't reclaim space fast enough after mass DELETEs. Dead tuples cause severe performance degradation.
+5. **k6 on same server is a bottleneck above 17k**: At 20k+ req/s, k6 spawns 20k+ goroutines competing for CPU with the app and Postgres. Need a separate load generator for higher rates.
+
 ## Staging Results (CPX62, 16 vCPUs, 32GB RAM)
 
 Hetzner CPX62 (~€30/mo). App + Postgres on same VPS. DB pool: 100. k6 run from inside Docker on same server (no network latency).
@@ -133,21 +184,24 @@ Hetzner CPX62 (~€30/mo). App + Postgres on same VPS. DB pool: 100. k6 run from
 
 ## Key Bottlenecks Found (in order of impact)
 
-1. **Docker ulimit nofile=1024** — Capped throughput at ~900 req/s on every machine. Fix: `ulimit: nofile=65536:65536` in Kamal deploy config.
-2. **DB query optimization** — Subqueries, missing indexes, redundant fetches. Fixed via denormalization, LATERAL joins, ETS buffering.
-3. **Finch pool `count: 1`** — Serialized TLS handshakes through one process. Fixed to `count: 4`.
-4. **DB pool size** — 20 connections too few at high throughput. Tested 40/60/80/100/120/150 — sweet spot depends on hardware (80 for CX33, 150 for netcup).
-5. **API key auth queries** — 2 DB queries per request just for auth. Fixed with ETS cache (60s TTL). Saves ~2900 queries/s at peak.
-6. **Rate limiter** — Default 500/min too low for load testing. Raised to 100k/min.
-7. **TLS termination is NOT a bottleneck** — nginx in front of kamal-proxy was slower due to extra hop overhead. kamal-proxy's Go crypto/tls is fast enough.
+1. **kamal-proxy TLS termination** — Single Go process doing TLS halves throughput (8k vs 17k req/s on 192 vCPU). The biggest bottleneck at scale.
+2. **DB connection pool size** — 150 connections capped at ~16k req/s. Raising to 500 pushed past 17k. Each API request holds a connection for the transaction.
+3. **Docker ulimit nofile=1024** — Capped throughput at ~900 req/s on every machine. Fix: `ulimit: nofile=65536:65536` in Kamal deploy config.
+4. **DB query optimization** — Subqueries, missing indexes, redundant fetches. Fixed via denormalization, LATERAL joins, ETS buffering.
+5. **Finch pool `count: 1`** — Serialized TLS handshakes through one process. Fixed to `count: 4`.
+6. **API key auth queries** — 2 DB queries per request just for auth. Fixed with ETS cache (60s TTL). Saves ~2900 queries/s at peak.
+7. **Rate limiter** — Default 500/min too low for load testing. Raised to 100k/min.
+8. **nginx TLS termination** — Tested as alternative to kamal-proxy but was SLOWER due to extra hop overhead. Reverted.
 
 ## Capacity Estimates
 
-| Hardware | Cost | API Throughput | Pool Size | Est. Users (500k exec/mo) |
-|----------|------|----------------|-----------|---------------------------|
-| netcup (4 dedicated) | ~€8/mo current prod | 1500 req/s (tested) | 150 | ~900 |
-| CX33 (4 shared) | ~€6/mo | 750 req/s (tested) | 80 | ~500 |
-| CPX62 (16 vCPU) | ~€30/mo | 4000 req/s (tested) | 100 | ~2000+ |
+| Hardware | Cost | API Throughput | Pool Size | Notes |
+|----------|------|----------------|-----------|-------|
+| netcup (4 dedicated) | ~€8/mo current prod | 1,500 req/s | 150 | Through kamal-proxy TLS |
+| CX33 (4 shared) | ~€6/mo | 750 req/s | 80 | Through kamal-proxy TLS |
+| CPX62 (16 vCPU) | ~€30/mo | 4,000 req/s | 100 | Through kamal-proxy TLS |
+| GCP C4D (192 vCPU) | ~€5/hr spot | 8,000 req/s | 150 | Through kamal-proxy TLS |
+| GCP C4D (192 vCPU) | ~€5/hr spot | 17,000 req/s | 500 | Direct to Phoenix (no TLS proxy) |
 
 Workers are the real execution bottleneck: 20 workers at ~100ms avg = ~200 executions/s. API ingestion has massive headroom.
 
@@ -303,15 +357,17 @@ ssh root@159.195.53.120 'docker logs $(docker ps --filter label=service=runlater
 
 ## Scaling Path
 
-The DB layer is fully optimized — all queries are sub-millisecond. The bottleneck is CPU. To scale:
+The DB layer is fully optimized — all queries are sub-millisecond. The bottleneck at scale is kamal-proxy TLS termination (single Go process), then DB pool size.
 
-1. **Now (4 dedicated cores, netcup)**: ~1500 req/s tested, production server (~375 req/s per core)
-2. **CPX62 (16 vCPU, ~€30/mo)**: 4000 req/s, p95=253ms — tested on staging
-3. **Add second app node**: Kamal multi-host, SKIP LOCKED handles coordination — doubles capacity
-4. **Separate DB server**: App gets all CPU cores, DB gets dedicated resources
-5. **AX102 + dedicated Postgres (~€300-400/mo)**: For 10k+ users, ~274 exec/s, €3.5M ARR
+1. **Now (4 dedicated cores, netcup)**: ~1,500 req/s through kamal-proxy TLS. Production server.
+2. **CPX62 (16 vCPU, ~€30/mo)**: 4,000 req/s — tested on staging
+3. **Bigger single server (e.g. 16-32 cores)**: kamal-proxy caps around 8k req/s regardless of core count
+4. **Add TLS termination in front of kamal-proxy**: nginx or HAProxy doing TLS → kamal-proxy HTTP. Unlocks Phoenix's full throughput (~17k+ req/s on big hardware)
+5. **Add second app node**: Kamal multi-host, SKIP LOCKED handles coordination — doubles capacity
+6. **Separate DB server**: App gets all CPU cores, DB gets dedicated resources with its own pool
+7. **Increase DB pool**: 150 → 500 connections pushed ceiling from 16k to 17k+. Scale pool with hardware.
 
-Architecture supports horizontal scaling with zero code changes.
+Architecture supports horizontal scaling with zero code changes. The production bottleneck won't be hit for a very long time — 1,500 req/s on the current €8/mo server is enormous headroom.
 
 ## Historical Results
 
